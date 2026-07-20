@@ -1,0 +1,26 @@
+# dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# local environments
+.env
+.env.*
+!.env.example
+
+# Vercel and Supabase local state
+.vercel/
+supabase/.temp/
+supabase/.branches/
+
+# tests and reports
+coverage/
+playwright-report/
+test-results/
+lighthouse/
+
+# system files
+.DS_Store
+Thumbs.db
