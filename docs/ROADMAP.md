@@ -16,16 +16,39 @@
 - [x] Approval and rejection actions
 - [x] History and calendar summary
 - [x] Server Actions and database transition function
-- [ ] Validate pgTAP against local Supabase
+- [x] Decision confirmations with required notes
+- [x] Monthly coverage calendar and overlap indicators
+- [x] Validated session persistence with in-memory fallback
+- [x] Validate pgTAP against local Supabase
 - [ ] Validate Google OAuth with two invited test accounts
+
+## Local security validation
+
+- [x] Multi-organization pgTAP scenarios prepared
+- [x] Draft submission aligned across domain, Server Actions and SQL
+- [x] Install or enable a Docker-compatible runtime
+- [x] Reset the local database and execute pgTAP
+- [x] Generate TypeScript database types from the validated local schema
+- [x] Add the database validation job to CI after local reproducibility is proven
 
 ## Next module depth
 
-1. Tasks: ownership, due dates, dependencies and activity history.
+1. [x] Tasks: ownership, due dates, dependencies and activity history.
 2. Incidents: priority, assignment, SLA states and resolution trail.
 3. People: safe profile directory and organization lifecycle.
 4. Changelog: draft, approval and publication.
 5. Treasury and Payroll: synthetic-only structures with stricter permissions.
+
+## Tasks vertical
+
+- [x] Independent task status and priority domains
+- [x] Personal inbox, filters, creation, assignment and editing
+- [x] Blocking, review and completion workflow
+- [x] Directed dependencies with cycle prevention
+- [x] Comments and immutable activity events
+- [x] Version 1 to version 2 guest session migration
+- [x] Authenticated reads, Server Actions and typed Supabase clients
+- [x] Multi-organization RLS and pgTAP coverage
 
 ## External gates
 

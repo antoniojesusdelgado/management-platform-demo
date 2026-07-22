@@ -1,4 +1,10 @@
-import { eachDayOfInterval, isAfter, isWeekend, parseISO } from "date-fns";
+import {
+  eachDayOfInterval,
+  isAfter,
+  isWeekend,
+  isWithinInterval,
+  parseISO,
+} from "date-fns";
 import { z } from "zod";
 
 export const leaveRequestStatuses = [
@@ -85,4 +91,18 @@ export function calculateBusinessDays(startDate: string, endDate: string) {
     start: parseISO(startDate),
     end: parseISO(endDate),
   }).filter((date) => !isWeekend(date)).length;
+}
+
+export function getActiveLeaveRequestsForDate(
+  requests: LeaveRequest[],
+  date: Date,
+) {
+  return requests.filter(
+    (request) =>
+      (request.status === "submitted" || request.status === "approved") &&
+      isWithinInterval(date, {
+        start: parseISO(request.startDate),
+        end: parseISO(request.endDate),
+      }),
+  );
 }

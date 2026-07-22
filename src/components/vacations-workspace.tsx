@@ -6,16 +6,21 @@ import {
   IconCalendarEvent,
   IconCheck,
   IconClock,
+  IconEye,
   IconHistory,
   IconPlus,
+  IconSend,
   IconX,
 } from "@tabler/icons-react";
-import { format, parseISO } from "date-fns";
+import { format, isAfter, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
+import { LeaveCalendar } from "@/components/leave-calendar";
+import { LeaveTransitionDialog } from "@/components/leave-transition-dialog";
 import {
   leaveRequestInputSchema,
+  calculateBusinessDays,
   type LeaveRequest,
   type LeaveRequestEvent,
   type LeaveRequestInput,
@@ -25,12 +30,20 @@ import {
 type VacationsWorkspaceProps = {
   requests: LeaveRequest[];
   events: LeaveRequestEvent[];
-  onCreate: (input: LeaveRequestInput) => void;
+  pending?: boolean;
+  loadError?: string;
+  onCreate: (input: LeaveRequestInput) => boolean | Promise<boolean>;
   onTransition: (
     requestId: string,
     status: LeaveRequestStatus,
     note: string,
-  ) => void;
+  ) => boolean | Promise<boolean>;
+};
+
+type TransitionIntent = {
+  requestId: string;
+  employeeName: string;
+  status: "rejected" | "cancelled";
 };
 
 const statusLabels: Record<LeaveRequestStatus, string> = {
@@ -48,11 +61,16 @@ function formatDate(value: string) {
 export function VacationsWorkspace({
   requests,
   events,
+  pending = false,
+  loadError,
   onCreate,
   onTransition,
 }: VacationsWorkspaceProps) {
   const [filter, setFilter] = useState<"all" | LeaveRequestStatus>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [transitionIntent, setTransitionIntent] =
+    useState<TransitionIntent | null>(null);
   const filtered = useMemo(
     () =>
       filter === "all"
@@ -63,9 +81,18 @@ export function VacationsWorkspace({
   const approvedDays = requests
     .filter((request) => request.status === "approved")
     .reduce((total, request) => total + request.businessDays, 0);
-  const pending = requests.filter(
+  const pendingCount = requests.filter(
     (request) => request.status === "submitted",
   ).length;
+  const pendingDays = requests
+    .filter((request) => request.status === "submitted")
+    .reduce((total, request) => total + request.businessDays, 0);
+  const selectedRequest = requests.find(
+    (request) => request.id === selectedRequestId,
+  );
+  const selectedEvents = events.filter(
+    (event) => event.requestId === selectedRequestId,
+  );
   const form = useForm<LeaveRequestInput>({
     resolver: zodResolver(leaveRequestInputSchema),
     defaultValues: {
@@ -75,11 +102,22 @@ export function VacationsWorkspace({
       reason: "",
     },
   });
+  const [startDate, endDate] = useWatch({
+    control: form.control,
+    name: ["startDate", "endDate"],
+  });
+  const businessDaysPreview = useMemo(() => {
+    if (!startDate || !endDate) return null;
+    if (isAfter(parseISO(startDate), parseISO(endDate))) return null;
+    return calculateBusinessDays(startDate, endDate);
+  }, [endDate, startDate]);
 
-  function submit(input: LeaveRequestInput) {
-    onCreate(input);
-    form.reset();
-    setDialogOpen(false);
+  async function submit(input: LeaveRequestInput) {
+    const completed = await onCreate(input);
+    if (completed) {
+      form.reset();
+      setDialogOpen(false);
+    }
   }
 
   return (
@@ -174,6 +212,18 @@ export function VacationsWorkspace({
                       </p>
                     ) : null}
                   </div>
+                  {businessDaysPreview !== null ? (
+                    <div className="leave-preview field-span" role="status">
+                      <IconCalendarEvent aria-hidden="true" size={20} />
+                      <span>
+                        El periodo incluye <strong>{businessDaysPreview}</strong>{" "}
+                        {businessDaysPreview === 1
+                          ? "día laborable"
+                          : "días laborables"}
+                        .
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
                 <div className="dialog-actions">
                   <Dialog.Close asChild>
@@ -181,8 +231,12 @@ export function VacationsWorkspace({
                       Cancelar
                     </button>
                   </Dialog.Close>
-                  <button className="button button-primary" type="submit">
-                    Enviar solicitud
+                  <button
+                    className="button button-primary"
+                    type="submit"
+                    disabled={pending}
+                  >
+                    {pending ? "Enviando…" : "Enviar solicitud"}
                   </button>
                 </div>
               </form>
@@ -191,10 +245,17 @@ export function VacationsWorkspace({
         </Dialog.Root>
       </div>
 
+      {loadError ? (
+        <div className="inline-alert" role="alert">
+          <strong>No se pudieron cargar las solicitudes.</strong>
+          <span>{loadError}</span>
+        </div>
+      ) : null}
+
       <section className="cards-grid" aria-label="Resumen de vacaciones">
         <article className="card">
           <span className="muted">Pendientes de decisión</span>
-          <strong className="metric-value">{pending}</strong>
+          <strong className="metric-value">{pendingCount}</strong>
         </article>
         <article className="card">
           <span className="muted">Días aprobados en la demo</span>
@@ -203,6 +264,10 @@ export function VacationsWorkspace({
         <article className="card">
           <span className="muted">Solicitudes registradas</span>
           <strong className="metric-value">{requests.length}</strong>
+        </article>
+        <article className="card">
+          <span className="muted">Días pendientes de revisión</span>
+          <strong className="metric-value">{pendingDays}</strong>
         </article>
       </section>
 
@@ -215,14 +280,14 @@ export function VacationsWorkspace({
         </div>
         <div className="toolbar">
           <div className="segmented" aria-label="Filtrar solicitudes">
-            {(
-              [
-                ["all", "Todas"],
-                ["submitted", "Pendientes"],
-                ["approved", "Aprobadas"],
-                ["draft", "Borradores"],
-              ] as const
-            ).map(([value, label]) => (
+            {([
+              ["all", "Todas"],
+              ["submitted", "Pendientes"],
+              ["approved", "Aprobadas"],
+              ["draft", "Borradores"],
+              ["rejected", "Rechazadas"],
+              ["cancelled", "Canceladas"],
+            ] as const).map(([value, label]) => (
               <button
                 key={value}
                 className="segment"
@@ -269,11 +334,23 @@ export function VacationsWorkspace({
                     </span>
                   </td>
                   <td data-label="Acciones">
-                    {request.status === "submitted" ? (
-                      <span style={{ display: "flex", gap: ".35rem", flexWrap: "wrap" }}>
+                    <span className="table-actions">
+                      <button
+                        type="button"
+                        className="button button-quiet"
+                        disabled={pending}
+                        onClick={() => setSelectedRequestId(request.id)}
+                        aria-label={`Ver detalle de la solicitud de ${request.employeeName}`}
+                      >
+                        <IconEye aria-hidden="true" size={17} />
+                        Detalle
+                      </button>
+                      {request.status === "submitted" ? (
+                        <>
                         <button
                           type="button"
                           className="button button-quiet"
+                          disabled={pending}
                           onClick={() =>
                             onTransition(
                               request.id,
@@ -289,60 +366,237 @@ export function VacationsWorkspace({
                         <button
                           type="button"
                           className="button button-danger"
+                          disabled={pending}
                           onClick={() =>
-                            onTransition(
-                              request.id,
-                              "rejected",
-                              "Solicitud rechazada en la demo.",
-                            )
+                            setTransitionIntent({
+                              requestId: request.id,
+                              employeeName: request.employeeName,
+                              status: "rejected",
+                            })
                           }
                           aria-label={`Rechazar solicitud de ${request.employeeName}`}
                         >
                           <IconX aria-hidden="true" size={17} />
                           Rechazar
                         </button>
-                      </span>
-                    ) : (
-                      <span className="muted">Sin acciones</span>
-                    )}
+                        </>
+                      ) : null}
+                    </span>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {filtered.length === 0 ? (
+            <div className="table-empty">
+              No hay solicitudes con este estado en la sesión actual.
+            </div>
+          ) : null}
         </div>
       </section>
 
+      <Dialog.Root
+        open={Boolean(selectedRequest)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedRequestId(null);
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay className="dialog-overlay" />
+          {selectedRequest ? (
+            <Dialog.Content className="dialog-content request-detail">
+              <div className="dialog-header">
+                <div>
+                  <p className="eyebrow">Solicitud {selectedRequest.id}</p>
+                  <Dialog.Title asChild>
+                    <h2>{selectedRequest.employeeName}</h2>
+                  </Dialog.Title>
+                  <Dialog.Description className="muted">
+                    {formatDate(selectedRequest.startDate)} –{" "}
+                    {formatDate(selectedRequest.endDate)}
+                  </Dialog.Description>
+                </div>
+                <Dialog.Close asChild>
+                  <button
+                    className="icon-button"
+                    type="button"
+                    aria-label="Cerrar detalle"
+                  >
+                    <IconX aria-hidden="true" size={20} />
+                  </button>
+                </Dialog.Close>
+              </div>
+
+              <dl className="request-facts">
+                <div>
+                  <dt>Estado</dt>
+                  <dd>
+                    <span className={`status status-${selectedRequest.status}`}>
+                      {statusLabels[selectedRequest.status]}
+                    </span>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Tipo</dt>
+                  <dd>
+                    {selectedRequest.type === "vacation"
+                      ? "Vacaciones"
+                      : "Asunto personal"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Días laborables</dt>
+                  <dd>{selectedRequest.businessDays}</dd>
+                </div>
+              </dl>
+
+              <section className="request-reason" aria-labelledby="reason-title">
+                <h3 id="reason-title">Motivo</h3>
+                <p>{selectedRequest.reason}</p>
+              </section>
+
+              <section aria-labelledby="request-history-title">
+                <h3 id="request-history-title">Trazabilidad</h3>
+                {selectedEvents.length > 0 ? (
+                  <ol className="request-timeline">
+                    {selectedEvents.map((event) => (
+                      <li key={event.id}>
+                        <span className="timeline-dot" aria-hidden="true" />
+                        <div>
+                          <strong>{statusLabels[event.to]}</strong>
+                          <p>{event.note}</p>
+                          <span className="muted">
+                            {event.actorName} ·{" "}
+                            {format(parseISO(event.createdAt), "d MMM yyyy, HH:mm", {
+                              locale: es,
+                            })}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="muted">Aún no hay eventos registrados.</p>
+                )}
+              </section>
+
+              <div className="dialog-actions request-actions">
+                {selectedRequest.status === "draft" ? (
+                  <button
+                    className="button button-primary"
+                    type="button"
+                    disabled={pending}
+                    onClick={() =>
+                      onTransition(
+                        selectedRequest.id,
+                        "submitted",
+                        "Borrador enviado a revisión en la demo.",
+                      )
+                    }
+                  >
+                    <IconSend aria-hidden="true" size={17} />
+                    Enviar a revisión
+                  </button>
+                ) : null}
+                {selectedRequest.status === "submitted" ? (
+                  <>
+                    <button
+                      className="button button-primary"
+                      type="button"
+                      disabled={pending}
+                      onClick={() =>
+                        onTransition(
+                          selectedRequest.id,
+                          "approved",
+                          "Cobertura validada en la demo.",
+                        )
+                      }
+                    >
+                      <IconCheck aria-hidden="true" size={17} />
+                      Aprobar
+                    </button>
+                    <button
+                      className="button button-danger"
+                      type="button"
+                      disabled={pending}
+                      onClick={() =>
+                        setTransitionIntent({
+                          requestId: selectedRequest.id,
+                          employeeName: selectedRequest.employeeName,
+                          status: "rejected",
+                        })
+                      }
+                    >
+                      <IconX aria-hidden="true" size={17} />
+                      Rechazar
+                    </button>
+                  </>
+                ) : null}
+                {selectedRequest.status === "draft" ||
+                selectedRequest.status === "submitted" ||
+                selectedRequest.status === "approved" ? (
+                  <button
+                    className="button button-secondary"
+                    type="button"
+                    disabled={pending}
+                    onClick={() =>
+                      setTransitionIntent({
+                        requestId: selectedRequest.id,
+                        employeeName: selectedRequest.employeeName,
+                        status: "cancelled",
+                      })
+                    }
+                  >
+                    Cancelar solicitud
+                  </button>
+                ) : null}
+              </div>
+            </Dialog.Content>
+          ) : null}
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      <LeaveTransitionDialog
+        open={Boolean(transitionIntent)}
+        title={
+          transitionIntent?.status === "rejected"
+            ? "Rechazar solicitud"
+            : "Cancelar solicitud"
+        }
+        description={
+          transitionIntent
+            ? `Esta decisión se registrará en el historial de ${transitionIntent.employeeName}.`
+            : ""
+        }
+        confirmLabel={
+          transitionIntent?.status === "rejected"
+            ? "Rechazar solicitud"
+            : "Cancelar solicitud"
+        }
+        destructive
+        pending={pending}
+        onOpenChange={(open) => {
+          if (!open) setTransitionIntent(null);
+        }}
+        onConfirm={(note) => {
+          if (!transitionIntent) return false;
+          return onTransition(
+            transitionIntent.requestId,
+            transitionIntent.status,
+            note,
+          );
+        }}
+      />
+
       <div className="module-placeholder section-block">
-        <section className="card" aria-labelledby="calendar-title">
-          <p className="eyebrow">Cobertura</p>
-          <h2 id="calendar-title">Calendario operativo</h2>
-          <p className="muted">
-            Vista resumida de ausencias aprobadas y solicitudes pendientes.
-          </p>
-          <ul className="activity-list">
-            {requests.slice(0, 4).map((request) => (
-              <li className="activity-item" key={`calendar-${request.id}`}>
-                <span className="attention-icon">
-                  <IconCalendarEvent aria-hidden="true" size={20} />
-                </span>
-                <span>
-                  <strong>{request.employeeName}</strong>
-                  <br />
-                  <span className="muted">
-                    {formatDate(request.startDate)} · {statusLabels[request.status]}
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <LeaveCalendar requests={requests} />
 
         <section className="card" aria-labelledby="history-title">
           <p className="eyebrow">Auditoría</p>
           <h2 id="history-title">Historial reciente</h2>
-          <ul className="activity-list">
-            {events.slice(0, 5).map((event) => (
+          {events.length > 0 ? (
+            <ul className="activity-list">
+              {events.slice(0, 5).map((event) => (
               <li className="activity-item" key={event.id}>
                 <span className="attention-icon cyan">
                   {event.to === "approved" ? (
@@ -359,8 +613,14 @@ export function VacationsWorkspace({
                   <span className="muted">{event.note}</span>
                 </span>
               </li>
-            ))}
-          </ul>
+              ))}
+            </ul>
+          ) : (
+            <div className="compact-empty-state">
+              <IconHistory aria-hidden="true" size={24} />
+              <span>Aún no hay decisiones registradas.</span>
+            </div>
+          )}
         </section>
       </div>
     </main>

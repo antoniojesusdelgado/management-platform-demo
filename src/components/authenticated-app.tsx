@@ -7,9 +7,17 @@ import {
   createLeaveRequestAction,
   transitionLeaveRequestAction,
 } from "@/app/app/vacation-actions";
+import {
+  addTaskCommentAction,
+  addTaskDependencyAction,
+  createTaskAction,
+  transitionTaskAction,
+  updateTaskAction,
+} from "@/app/app/task-actions";
 import { AppShell } from "@/components/app-shell";
 import { Dashboard } from "@/components/dashboard";
 import { ModuleWorkspace } from "@/components/module-workspace";
+import { TasksWorkspace } from "@/components/tasks-workspace";
 import { VacationsWorkspace } from "@/components/vacations-workspace";
 import type { ModuleId } from "@/domain/modules";
 import type {
@@ -18,12 +26,29 @@ import type {
   LeaveRequestInput,
   LeaveRequestStatus,
 } from "@/domain/vacations";
+import type { ActionResult } from "@/domain/action-result";
+import type {
+  TaskComment,
+  TaskDependency,
+  TaskEvent,
+  TaskInput,
+  TaskItem,
+  TaskStatus,
+} from "@/domain/tasks";
 
 type AuthenticatedAppProps = {
   activeModule: ModuleId;
   organizationName: string;
   leaveRequests?: LeaveRequest[];
   leaveEvents?: LeaveRequestEvent[];
+  leaveLoadError?: string;
+  tasks?: TaskItem[];
+  taskDependencies?: TaskDependency[];
+  taskComments?: TaskComment[];
+  taskEvents?: TaskEvent[];
+  taskAssignees?: string[];
+  currentUserName?: string;
+  taskLoadError?: string;
 };
 
 export function AuthenticatedApp({
@@ -31,10 +56,36 @@ export function AuthenticatedApp({
   organizationName,
   leaveRequests = [],
   leaveEvents = [],
+  leaveLoadError,
+  tasks = [],
+  taskDependencies = [],
+  taskComments = [],
+  taskEvents = [],
+  taskAssignees = [],
+  currentUserName,
+  taskLoadError,
 }: AuthenticatedAppProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [localName, setLocalName] = useState(organizationName);
+
+  function performAction(
+    action: () => Promise<ActionResult>,
+    successMessage: string,
+  ): Promise<boolean> {
+    return new Promise((resolve) => {
+      startTransition(async () => {
+        const result = await action();
+        if (result.ok) {
+          toast.success(successMessage);
+          resolve(true);
+          return;
+        }
+        toast.error(result.message);
+        resolve(false);
+      });
+    });
+  }
 
   function navigate(module: ModuleId) {
     router.push(`/app/${module}`);
@@ -48,35 +99,80 @@ export function AuthenticatedApp({
       <VacationsWorkspace
         requests={leaveRequests}
         events={leaveEvents}
+        pending={pending}
+        loadError={leaveLoadError}
         onCreate={(input: LeaveRequestInput) => {
-          startTransition(async () => {
-            try {
-              await createLeaveRequestAction(input);
-              toast.success("Solicitud enviada");
-            } catch {
-              toast.error("No se pudo registrar la solicitud");
-            }
-          });
+          return performAction(
+            () => createLeaveRequestAction(input),
+            "Solicitud enviada",
+          );
         }}
         onTransition={(
           requestId: string,
           status: LeaveRequestStatus,
           note: string,
         ) => {
-          if (!["approved", "rejected", "cancelled"].includes(status)) return;
-          startTransition(async () => {
-            try {
-              await transitionLeaveRequestAction({
+          if (
+            !["submitted", "approved", "rejected", "cancelled"].includes(
+              status,
+            )
+          ) {
+            return false;
+          }
+          return performAction(
+            () =>
+              transitionLeaveRequestAction({
                 requestId,
-                status: status as "approved" | "rejected" | "cancelled",
+                status: status as
+                  | "submitted"
+                  | "approved"
+                  | "rejected"
+                  | "cancelled",
                 note,
-              });
-              toast.success("Solicitud actualizada");
-            } catch {
-              toast.error("No se pudo actualizar la solicitud");
-            }
-          });
+              }),
+            "Solicitud actualizada",
+          );
         }}
+      />
+    );
+  } else if (activeModule === "tareas") {
+    content = (
+      <TasksWorkspace
+        tasks={tasks}
+        dependencies={taskDependencies}
+        comments={taskComments}
+        events={taskEvents}
+        assigneeOptions={taskAssignees}
+        currentUserName={currentUserName}
+        pending={pending}
+        loadError={taskLoadError}
+        onCreate={(input: TaskInput) =>
+          performAction(() => createTaskAction(input), "Tarea creada")
+        }
+        onUpdate={(taskId: string, input: TaskInput) =>
+          performAction(
+            () => updateTaskAction(taskId, input),
+            "Tarea actualizada",
+          )
+        }
+        onTransition={(taskId: string, status: TaskStatus, note: string) =>
+          performAction(
+            () => transitionTaskAction({ taskId, status, note }),
+            "Estado actualizado",
+          )
+        }
+        onComment={(taskId: string, body: string) =>
+          performAction(
+            () => addTaskCommentAction({ taskId, body }),
+            "Comentario añadido",
+          )
+        }
+        onDependency={(taskId: string, dependsOnTaskId: string) =>
+          performAction(
+            () => addTaskDependencyAction({ taskId, dependsOnTaskId }),
+            "Dependencia añadida",
+          )
+        }
       />
     );
   } else {
