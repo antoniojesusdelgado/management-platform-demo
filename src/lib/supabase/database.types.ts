@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -723,9 +723,27 @@ export type Database = {
           to_status?: Database["public"]["Enums"]["payroll_run_status"]
         }
         Relationships: [
-          { foreignKeyName: "payroll_events_actor_profile_id_fkey"; columns: ["actor_profile_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
-          { foreignKeyName: "payroll_events_organization_id_fkey"; columns: ["organization_id"]; isOneToOne: false; referencedRelation: "organizations"; referencedColumns: ["id"] },
-          { foreignKeyName: "payroll_events_run_id_fkey"; columns: ["run_id"]; isOneToOne: false; referencedRelation: "payroll_runs"; referencedColumns: ["id"] },
+          {
+            foreignKeyName: "payroll_events_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_events_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_runs"
+            referencedColumns: ["id"]
+          },
         ]
       }
       payroll_runs: {
@@ -736,7 +754,7 @@ export type Database = {
           deduction_total_cents: number
           gross_total_cents: number
           id: string
-          net_total_cents: number
+          net_total_cents: number | null
           notes: string
           organization_id: string
           people_count: number
@@ -752,7 +770,7 @@ export type Database = {
           deduction_total_cents?: number
           gross_total_cents?: number
           id?: string
-          net_total_cents?: never
+          net_total_cents?: number | null
           notes?: string
           organization_id: string
           people_count?: number
@@ -768,7 +786,7 @@ export type Database = {
           deduction_total_cents?: number
           gross_total_cents?: number
           id?: string
-          net_total_cents?: never
+          net_total_cents?: number | null
           notes?: string
           organization_id?: string
           people_count?: number
@@ -1369,12 +1387,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      ensure_public_demo_workspace: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
       create_payroll_run: {
-        Args: { expected_organization_id: string; target_currency: string; target_deduction_total_cents: number; target_gross_total_cents: number; target_notes: string; target_people_count: number; target_period_end: string; target_period_start: string }
+        Args: {
+          expected_organization_id: string
+          target_currency: string
+          target_deduction_total_cents: number
+          target_gross_total_cents: number
+          target_notes: string
+          target_people_count: number
+          target_period_end: string
+          target_period_start: string
+        }
         Returns: string
       }
       create_treasury_entry: {
@@ -1387,6 +1410,7 @@ export type Database = {
         }
         Returns: string
       }
+      ensure_public_demo_workspace: { Args: never; Returns: string }
       transition_changelog_entry: {
         Args: {
           expected_organization_id: string
@@ -1415,7 +1439,12 @@ export type Database = {
         Returns: undefined
       }
       transition_payroll_run: {
-        Args: { expected_organization_id: string; target_run_id: string; target_status: Database["public"]["Enums"]["payroll_run_status"]; transition_note: string }
+        Args: {
+          expected_organization_id: string
+          target_run_id: string
+          target_status: Database["public"]["Enums"]["payroll_run_status"]
+          transition_note: string
+        }
         Returns: undefined
       }
       transition_task: {
@@ -1446,7 +1475,17 @@ export type Database = {
         Returns: undefined
       }
       update_payroll_collecting_run: {
-        Args: { expected_organization_id: string; target_currency: string; target_deduction_total_cents: number; target_gross_total_cents: number; target_notes: string; target_people_count: number; target_period_end: string; target_period_start: string; target_run_id: string }
+        Args: {
+          expected_organization_id: string
+          target_currency: string
+          target_deduction_total_cents: number
+          target_gross_total_cents: number
+          target_notes: string
+          target_people_count: number
+          target_period_end: string
+          target_period_start: string
+          target_run_id: string
+        }
         Returns: undefined
       }
       update_module_setting: {
@@ -1503,7 +1542,12 @@ export type Database = {
         | "cancelled"
       leave_type: "vacation" | "personal"
       membership_status: "invited" | "active" | "suspended"
-      payroll_run_status: "collecting" | "validating" | "calculated" | "reviewed" | "closed"
+      payroll_run_status:
+        | "collecting"
+        | "validating"
+        | "calculated"
+        | "reviewed"
+        | "closed"
       people_event_kind: "created" | "updated" | "status" | "role"
       person_role_code: "admin" | "manager" | "collaborator" | "viewer"
       person_status: "invited" | "active" | "suspended" | "inactive"
@@ -1690,7 +1734,13 @@ export const Constants = {
       ],
       leave_type: ["vacation", "personal"],
       membership_status: ["invited", "active", "suspended"],
-      payroll_run_status: ["collecting", "validating", "calculated", "reviewed", "closed"],
+      payroll_run_status: [
+        "collecting",
+        "validating",
+        "calculated",
+        "reviewed",
+        "closed",
+      ],
       people_event_kind: ["created", "updated", "status", "role"],
       person_role_code: ["admin", "manager", "collaborator", "viewer"],
       person_status: ["invited", "active", "suspended", "inactive"],
