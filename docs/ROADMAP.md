@@ -95,7 +95,7 @@
 - [x] Version 5 to version 6 guest session migration
 - [x] Authenticated reads and normalized Server Actions through privileged RPCs
 - [x] Multi-organization RLS and pgTAP scenarios authored
-- [ ] Re-run local reset, database lint and pgTAP, then regenerate types when Docker responds
+- [x] Re-run database reset, lint and pgTAP in CI, then regenerate local schema types
 - [x] Responsive filters, explicit aggregate-data notice and accessible dialogs
 
 ## External gates

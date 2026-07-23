@@ -1465,6 +1465,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_module_setting: {
+        Args: {
+          expected_organization_id: string
+          target_enabled: boolean
+          target_module_id: string
+          target_sort_order: number
+        }
+        Returns: undefined
+      }
       update_membership_access: {
         Args: {
           expected_organization_id: string
@@ -1485,15 +1494,6 @@ export type Database = {
           target_period_end: string
           target_period_start: string
           target_run_id: string
-        }
-        Returns: undefined
-      }
-      update_module_setting: {
-        Args: {
-          expected_organization_id: string
-          target_enabled: boolean
-          target_module_id: string
-          target_sort_order: number
         }
         Returns: undefined
       }
