@@ -1465,21 +1465,21 @@ export type Database = {
         }
         Returns: undefined
       }
-      update_module_setting: {
-        Args: {
-          expected_organization_id: string
-          target_enabled: boolean
-          target_module_id: string
-          target_sort_order: number
-        }
-        Returns: undefined
-      }
       update_membership_access: {
         Args: {
           expected_organization_id: string
           target_membership_id: string
           target_role_id: string
           target_status: Database["public"]["Enums"]["membership_status"]
+        }
+        Returns: undefined
+      }
+      update_module_setting: {
+        Args: {
+          expected_organization_id: string
+          target_enabled: boolean
+          target_module_id: string
+          target_sort_order: number
         }
         Returns: undefined
       }
