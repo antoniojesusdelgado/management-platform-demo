@@ -101,11 +101,24 @@
 ## External gates
 
 - [x] Authorize external provisioning, Preview and production deployment
-- [ ] Confirm the target Supabase organization and exact cost
-- [ ] Create an independent Supabase project in
+- [x] Confirm the target Supabase organization and exact cost (Free plan, $0)
+- [x] Create an independent Supabase project in
   `eu-central-1`
-- [ ] Configure Google OAuth and redirect URLs
-- [ ] Create and validate the first Vercel Preview
-- [ ] Set exact `PORTFOLIO_ORIGIN` and `NEXT_PUBLIC_APP_URL`
-- [ ] Re-run CSP, RLS, accessibility and visual QA on the final Preview
-- [ ] Promote the validated Vercel artifact to production
+- [x] Configure Google OAuth and redirect URLs
+- [x] Create and validate the first Vercel Preview
+- [x] Set exact `PORTFOLIO_ORIGIN` and `NEXT_PUBLIC_APP_URL`
+- [x] Re-run CSP, RLS, accessibility and visual QA on the final Preview
+- [x] Promote the validated Vercel artifact to production
+
+## Release status
+
+- Production: <https://management-platform-demo.vercel.app>
+- Stable Preview:
+  <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
+- Released revision: `f0a0712`
+- Google OAuth login, logout and protected-route redirects validated in
+  Preview and Production.
+- Public guest flows validated in desktop and mobile with Playwright and Axe.
+- Live provisioning was validated with one Google identity. Isolation between
+  two identities remains a manual acceptance check; database isolation is
+  covered by multi-organization pgTAP scenarios.

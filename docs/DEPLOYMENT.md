@@ -106,3 +106,21 @@ environment values. After promotion:
 3. Confirm the portfolio embed origin.
 4. Confirm Google OAuth uses the production origin.
 5. Keep the previous deployment available for rollback.
+
+## Current release
+
+- Production: <https://management-platform-demo.vercel.app>
+- Stable Preview:
+  <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
+- Source revision: `f0a0712`
+- Supabase region and plan: `eu-central-1`, Free
+- Production and Preview use environment-specific application and portfolio
+  origins.
+- The final Preview and Production each passed the remote Playwright suite:
+  43 tests passed and one desktop-only duplicate scenario was intentionally
+  skipped.
+- Google OAuth login, logout, callback and protected-route redirects were
+  validated in both environments. The superseded Google client secret was
+  disabled and removed after the production check.
+- Live isolation with a second Google identity remains a manual acceptance
+  check. Multi-organization access isolation is covered by pgTAP.
