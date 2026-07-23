@@ -15,6 +15,7 @@ export type WorkspaceAccess =
       organizationId: string;
       organizationName: string;
       roleCode: string;
+      simulatedRole: "admin" | "manager" | "collaborator" | "viewer" | null;
     };
 
 export const getWorkspaceAccess = cache(async (): Promise<WorkspaceAccess> => {
@@ -30,7 +31,7 @@ export const getWorkspaceAccess = cache(async (): Promise<WorkspaceAccess> => {
   const { data: membership } = await supabase
     .from("memberships")
     .select(
-      "organization_id, roles!inner(code), organizations!inner(name)",
+      "organization_id, roles!inner(code), organizations!inner(name), profiles!inner(simulated_role)",
     )
     .eq("profile_id", user.id)
     .eq("status", "active")
@@ -43,6 +44,14 @@ export const getWorkspaceAccess = cache(async (): Promise<WorkspaceAccess> => {
 
   const role = membership.roles as unknown as { code: string };
   const organization = membership.organizations as unknown as { name: string };
+  const profile = membership.profiles as unknown as {
+    simulated_role:
+      | "admin"
+      | "manager"
+      | "collaborator"
+      | "viewer"
+      | null;
+  };
 
   return {
     status: "active",
@@ -51,5 +60,6 @@ export const getWorkspaceAccess = cache(async (): Promise<WorkspaceAccess> => {
     organizationId: membership.organization_id,
     organizationName: organization.name,
     roleCode: role.code,
+    simulatedRole: profile.simulated_role,
   };
 });

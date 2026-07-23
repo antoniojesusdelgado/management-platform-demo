@@ -84,7 +84,7 @@ select is(
     )
       and enabled
   ),
-  9::bigint,
+  11::bigint,
   'all modules are enabled in the demo workspace'
 );
 select is(

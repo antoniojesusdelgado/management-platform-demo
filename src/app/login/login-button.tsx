@@ -26,7 +26,7 @@ export function LoginButton() {
 
   return (
     <button
-      className="button button-primary"
+      className="button google-oauth-button"
       type="button"
       disabled={!configured || loading}
       onClick={signIn}

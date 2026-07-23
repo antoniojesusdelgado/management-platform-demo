@@ -33,16 +33,16 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Start local database
-        run: bunx supabase db start
+        run: bunx supabase start
 
       - name: Apply migrations and seed data
-        run: bunx supabase db reset --local
+        run: bunx supabase db reset
 
       - name: Run database tests
-        run: bunx supabase test db --local
+        run: bunx supabase test db
 
       - name: Lint database schemas
-        run: bunx supabase db lint --local --level warning --fail-on error
+        run: bunx supabase db lint --level warning --fail-on error
 
       - name: Verify generated database types
         run: |

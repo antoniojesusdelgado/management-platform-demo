@@ -12,7 +12,10 @@ import { ModuleIcon } from "@/components/module-icon";
 import { modules, type ModuleId } from "@/domain/modules";
 
 type ModuleWorkspaceProps = {
-  moduleId: Exclude<ModuleId, "inicio" | "vacaciones">;
+  moduleId: Exclude<
+    ModuleId,
+    "inicio" | "centro-control" | "vacaciones" | "proyectos"
+  >;
   organizationName: string;
   onRenameOrganization: (name: string) => void;
 };

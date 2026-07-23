@@ -104,6 +104,12 @@ test("task detail has no detectable WCAG A/AA violations", async (
     .getByRole("navigation", { name: "Módulos de la plataforma" })
     .filter({ visible: true });
   await navigation.getByRole("button", { name: "Tareas", exact: true }).click();
+  if (testInfo.project.name === "mobile") {
+    await expect(page.getByRole("dialog", { name: "Módulos" })).toBeHidden();
+    await page
+      .getByRole("button", { name: "Lista", exact: true })
+      .click({ force: true });
+  }
   await page.getByRole("button", { name: /Preparar el informe semanal/ }).click();
   await expect(
     page.getByRole("dialog", { name: "Preparar el informe semanal" }),

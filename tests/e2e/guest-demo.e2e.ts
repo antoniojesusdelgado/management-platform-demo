@@ -17,6 +17,9 @@ async function navigateToModule(
     .getByRole("navigation", { name: "Módulos de la plataforma" })
     .filter({ visible: true });
   await navigation.getByRole("button", { name: label, exact: true }).click();
+  if (mobile) {
+    await expect(page.getByRole("dialog", { name: "Módulos" })).toBeHidden();
+  }
 }
 
 test("navigates through every module", async ({ page }, testInfo) => {
@@ -116,6 +119,11 @@ test("creates, progresses and restores a task from the personal inbox", async ({
   page,
 }, testInfo) => {
   await navigateToModule(page, "Tareas", testInfo.project.name === "mobile");
+  if (testInfo.project.name === "mobile") {
+    await page
+      .getByRole("button", { name: "Lista", exact: true })
+      .click({ force: true });
+  }
   await page.getByRole("button", { name: "Nueva tarea" }).click();
   const createDialog = page.getByRole("dialog", { name: "Nueva tarea" });
   await createDialog.getByLabel("Título").fill("Preparar validación sintética");
@@ -128,9 +136,9 @@ test("creates, progresses and restores a task from the personal inbox", async ({
   await createDialog.getByRole("button", { name: "Guardar tarea" }).click();
 
   const task = page.getByRole("button", { name: /Preparar validación sintética/ });
-  await expect(task).toContainText("Pendiente");
   await task.click();
   const detail = page.getByRole("dialog", { name: "Preparar validación sintética" });
+  await expect(detail).toContainText("Pendiente");
   await detail.getByLabel("Nota de actividad").fill("Trabajo iniciado en la demo.");
   await detail.getByRole("button", { name: "En curso" }).click();
   await expect(detail).toContainText("En curso");
@@ -141,8 +149,14 @@ test("creates, progresses and restores a task from the personal inbox", async ({
 
   await page.reload({ waitUntil: "domcontentloaded" });
   await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+  if (testInfo.project.name === "mobile") {
+    await page
+      .getByRole("button", { name: "Lista", exact: true })
+      .click({ force: true });
+  }
+  await page.getByRole("button", { name: /Preparar validación sintética/ }).click();
   await expect(
-    page.getByRole("button", { name: /Preparar validación sintética/ }),
+    page.getByRole("dialog", { name: "Preparar validación sintética" }),
   ).toContainText("En curso");
 });
 
@@ -187,7 +201,7 @@ test("creates, reviews and publishes a changelog entry", async ({ page }, testIn
   await navigateToModule(page, "Novedades", testInfo.project.name === "mobile");
   await page.getByRole("button", { name: "Nueva entrada" }).click();
   const createDialog = page.getByRole("dialog", { name: "Nueva novedad" });
-  await createDialog.getByLabel("Versión").fill("0.6.0");
+  await createDialog.getByLabel("Versión").fill("99.0.0");
   await createDialog.getByLabel("Título").fill("Novedad sintética de Playwright");
   await createDialog.getByLabel("Resumen").fill("Contenido demostrativo sin referencias profesionales reales.");
   await createDialog.getByRole("button", { name: "Guardar borrador" }).click();

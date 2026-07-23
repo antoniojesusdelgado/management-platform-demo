@@ -20,11 +20,26 @@ function failure(error: unknown): ActionResult<never> {
 async function resolveAssigneeId(organizationId: string, name: string | null) {
   if (!name) return null;
   const supabase = await createClient();
-  const { data, error } = await supabase.from("memberships").select("profile_id,profiles!inner(display_name)").eq("organization_id", organizationId).eq("status", "active");
+  const { data, error } = await supabase.from("people").select("id,display_name").eq("organization_id", organizationId).eq("status", "active");
   if (error) throw new Error("Assignee lookup failed");
-  const member = data.find((item) => (item.profiles as unknown as { display_name: string }).display_name === name);
+  const member = data.find((item) => item.display_name === name);
   if (!member) throw new z.ZodError([]);
-  return member.profile_id;
+  return member.id;
+}
+
+async function resolveCurrentPersonId(
+  organizationId: string,
+  profileId: string,
+) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("people")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("profile_id", profileId)
+    .single();
+  if (error || !data) throw new Error("Current person unavailable");
+  return data.id;
 }
 
 export async function createIncidentAction(input: IncidentInput): Promise<ActionResult> {
@@ -32,12 +47,14 @@ export async function createIncidentAction(input: IncidentInput): Promise<Action
     const payload = incidentInputSchema.parse(input);
     const access = await requirePermission("incidents.tickets.manage");
     const assigneeId = await resolveAssigneeId(access.organizationId, payload.assigneeName);
+    const requesterPersonId = await resolveCurrentPersonId(access.organizationId, access.userId);
     const supabase = await createClient();
     const { error } = await supabase.from("incidents").insert({
       organization_id: access.organizationId, reference: `INC-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
       title: payload.title, description: payload.description, status: "registered",
       priority: payload.priority, category: payload.category, requester_profile_id: access.userId,
-      assignee_profile_id: assigneeId, sla_due_at: calculateSyntheticSlaDueAt(payload.priority),
+      requester_person_id: requesterPersonId, assignee_person_id: assigneeId,
+      project_id: payload.projectId ?? null, sla_due_at: calculateSyntheticSlaDueAt(payload.priority),
     });
     if (error) return actionFailure("conflict", "No se pudo registrar la incidencia.");
     revalidatePath("/app/incidencias");
@@ -52,7 +69,7 @@ export async function updateIncidentAction(id: string, input: IncidentInput): Pr
     const access = await requirePermission("incidents.tickets.manage");
     const assigneeId = await resolveAssigneeId(access.organizationId, payload.assigneeName);
     const supabase = await createClient();
-    const { error } = await supabase.from("incidents").update({ title: payload.title, description: payload.description, priority: payload.priority, category: payload.category, assignee_profile_id: assigneeId, updated_at: new Date().toISOString() }).eq("id", incidentId).eq("organization_id", access.organizationId);
+    const { error } = await supabase.from("incidents").update({ title: payload.title, description: payload.description, priority: payload.priority, category: payload.category, project_id: payload.projectId ?? null, assignee_person_id: assigneeId, updated_at: new Date().toISOString() }).eq("id", incidentId).eq("organization_id", access.organizationId);
     if (error) return actionFailure("conflict", "No se pudo actualizar la incidencia.");
     revalidatePath("/app/incidencias");
     return actionSuccess();

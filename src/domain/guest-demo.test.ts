@@ -28,8 +28,8 @@ import {
 
 describe("management modules", () => {
   test("defines every planned module once", () => {
-    expect(modules).toHaveLength(9);
-    expect(new Set(modules.map((module) => module.id)).size).toBe(9);
+    expect(modules).toHaveLength(11);
+    expect(new Set(modules.map((module) => module.id)).size).toBe(11);
   });
 });
 
@@ -79,13 +79,14 @@ describe("guest demo", () => {
     };
     const migrated = parseGuestDemoState(legacy);
 
-    expect(migrated?.version).toBe(6);
+    expect(migrated?.version).toBe(9);
     expect(migrated?.leaveRequests).toEqual(legacy.leaveRequests);
     expect(migrated?.tasks.length).toBeGreaterThan(0);
     expect(migrated?.incidents.length).toBeGreaterThan(0);
     expect(migrated?.people.length).toBeGreaterThan(0);
     expect(migrated?.treasuryEntries.length).toBeGreaterThan(0);
     expect(migrated?.payrollRuns.length).toBeGreaterThan(0);
+    expect(migrated?.projects.length).toBeGreaterThan(0);
   });
 
   test("migrates version 2 sessions without losing task data", () => {
@@ -101,7 +102,7 @@ describe("guest demo", () => {
       taskEvents: initialGuestDemoState.taskEvents,
     };
     const migrated = parseGuestDemoState(legacy);
-    expect(migrated?.version).toBe(6);
+    expect(migrated?.version).toBe(9);
     expect(migrated?.tasks).toEqual(legacy.tasks);
   });
 
@@ -122,7 +123,7 @@ describe("guest demo", () => {
       peopleEvents: initialGuestDemoState.peopleEvents,
     };
     const migrated = parseGuestDemoState(legacy);
-    expect(migrated?.version).toBe(6);
+    expect(migrated?.version).toBe(9);
     expect(migrated?.incidents).toEqual(legacy.incidents);
     expect(migrated?.roles.length).toBeGreaterThan(0);
   });
@@ -134,7 +135,7 @@ describe("guest demo", () => {
     void payrollRuns;
     void payrollEvents;
     const migrated = parseGuestDemoState({ ...legacyState, version: 4 });
-    expect(migrated?.version).toBe(6);
+    expect(migrated?.version).toBe(9);
     expect(migrated?.roles).toEqual(legacyState.roles);
     expect(migrated?.treasuryEntries.length).toBeGreaterThan(0);
   });
@@ -144,9 +145,59 @@ describe("guest demo", () => {
     void payrollRuns;
     void payrollEvents;
     const migrated = parseGuestDemoState({ ...legacyState, version: 5 });
-    expect(migrated?.version).toBe(6);
+    expect(migrated?.version).toBe(9);
     expect(migrated?.treasuryEntries).toEqual(legacyState.treasuryEntries);
     expect(migrated?.payrollRuns.length).toBeGreaterThan(0);
+  });
+
+  test("migrates version 7 sessions with neutral connectors", () => {
+    const {
+      integrationConnectors,
+      integrationRuns,
+      dataQualityIssues,
+      preferences,
+      savedAnalyticsViews,
+      ...version7State
+    } = initialGuestDemoState;
+    void integrationConnectors;
+    void integrationRuns;
+    void dataQualityIssues;
+    void preferences;
+    void savedAnalyticsViews;
+
+    const migrated = parseGuestDemoState({ ...version7State, version: 7 });
+
+    expect(migrated?.version).toBe(9);
+    expect(migrated?.integrationConnectors).toHaveLength(4);
+    expect(migrated?.integrationRuns).toEqual([]);
+  });
+
+  test("migrates version 8 sessions with safe user preferences", () => {
+    const { preferences, savedAnalyticsViews, ...version8State } =
+      initialGuestDemoState;
+    void preferences;
+    void savedAnalyticsViews;
+
+    const migrated = parseGuestDemoState({ ...version8State, version: 8 });
+
+    expect(migrated?.version).toBe(9);
+    expect(migrated?.preferences.simulatedRole).toBeNull();
+    expect(migrated?.savedAnalyticsViews).toEqual([]);
+  });
+
+  test("simulates an idempotent neutral integration inside the session", () => {
+    const connector = initialGuestDemoState.integrationConnectors.find(
+      ({ kind }) => kind === "financial",
+    )!;
+    const next = guestDemoReducer(initialGuestDemoState, {
+      type: "simulate-integration",
+      connectorId: connector.id,
+    });
+
+    expect(next.integrationRuns).toHaveLength(1);
+    expect(next.integrationRuns[0].connectorId).toBe(connector.id);
+    expect(next.integrationRuns[0].processedCount).toBe(36);
+    expect(next.integrationRuns[0].triggerKind).toBe("manual");
   });
 
   test("ignores invalid leave transitions without corrupting guest state", () => {

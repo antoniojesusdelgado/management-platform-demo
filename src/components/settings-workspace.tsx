@@ -26,7 +26,12 @@ type Props = {
 
 const permissionLabels: Record<PermissionCode, string> = {
   "vacations.requests.view": "Vacaciones · consultar", "vacations.requests.create": "Vacaciones · solicitar", "vacations.requests.approve": "Vacaciones · aprobar",
-  "tasks.items.view": "Tareas · consultar", "tasks.items.manage": "Tareas · gestionar", "incidents.tickets.view": "Incidencias · consultar", "incidents.tickets.manage": "Incidencias · gestionar",
+  "tasks.items.view": "Tareas · consultar", "tasks.items.create": "Tareas · crear", "tasks.items.update_assigned": "Tareas · actualizar asignadas", "tasks.items.manage": "Tareas · gestionar",
+  "incidents.tickets.view": "Incidencias · consultar", "incidents.tickets.create": "Incidencias · crear", "incidents.tickets.update_assigned": "Incidencias · actualizar asignadas", "incidents.tickets.manage": "Incidencias · gestionar",
+  "projects.items.view": "Proyectos · consultar", "projects.items.manage": "Proyectos · gestionar",
+  "profile.self.update": "Perfil · actualizar datos propios",
+  "analytics.dashboards.view": "Analítica · consultar", "analytics.dashboards.export": "Analítica · exportar",
+  "integrations.runs.view": "Integraciones · consultar", "integrations.runs.manage": "Integraciones · gestionar",
   "treasury.entries.view": "Tesorería · consultar", "treasury.entries.manage": "Tesorería · gestionar", "payroll.runs.view": "Nóminas · consultar", "payroll.runs.manage": "Nóminas · gestionar", "people.profiles.view": "Personal · consultar", "people.profiles.manage": "Personal · gestionar",
   "changelog.entries.view": "Novedades · consultar", "changelog.entries.manage": "Novedades · gestionar", "settings.workspace.manage": "Configuración · administrar",
 };

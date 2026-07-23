@@ -1,8 +1,11 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
+  IconAdjustments,
   IconChevronDown,
+  IconDatabase,
   IconGridDots,
   IconLogout,
   IconMenu2,
@@ -89,6 +92,12 @@ export function AppShell({
     router.refresh();
   }
 
+  function openProfile() {
+    router.push(
+      mode === "authenticated" ? "/app/perfil" : "/app/configuracion",
+    );
+  }
+
   return (
     <div className="app-frame">
       <aside className="sidebar">
@@ -159,28 +168,83 @@ export function AppShell({
             <span className="badge">
               {mode === "guest" ? "Datos de demostración" : organizationName}
             </span>
-            {mode === "authenticated" ? (
-              <button
-                type="button"
-                className="button button-quiet"
-                disabled={signingOut}
-                onClick={signOut}
-              >
-                <IconLogout aria-hidden="true" size={18} />
-                <span>{signingOut ? "Cerrando sesión…" : "Cerrar sesión"}</span>
-              </button>
-            ) : null}
-            <span
-              className="profile-indicator"
-              role="img"
-              aria-label={
-                mode === "guest"
-                  ? "Perfil de usuario invitado"
-                  : "Perfil de usuario autenticado"
-              }
-            >
-              <IconUserCircle aria-hidden="true" size={27} />
-            </span>
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <button
+                  className="profile-indicator"
+                  type="button"
+                  aria-label="Abrir menú de usuario"
+                >
+                  <IconUserCircle aria-hidden="true" size={27} />
+                  <IconChevronDown aria-hidden="true" size={14} />
+                </button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  className="user-menu"
+                  align="end"
+                  sideOffset={8}
+                >
+                  <div className="user-menu-header">
+                    <strong>
+                      {mode === "guest" ? "Usuario invitado" : "Mi cuenta"}
+                    </strong>
+                    <span>
+                      {mode === "guest" ? "Sesión local" : organizationName}
+                    </span>
+                  </div>
+                  <DropdownMenu.Separator className="user-menu-separator" />
+                  <DropdownMenu.Item
+                    className="user-menu-item"
+                    onSelect={openProfile}
+                  >
+                    <IconUserCircle aria-hidden="true" size={18} />
+                    {mode === "authenticated"
+                      ? "Mi perfil"
+                      : "Preferencias de la demo"}
+                  </DropdownMenu.Item>
+                  {mode === "authenticated" ? (
+                    <>
+                      <DropdownMenu.Item
+                        className="user-menu-item"
+                        onSelect={() => router.push("/app/perfil#role-title")}
+                      >
+                        <IconAdjustments aria-hidden="true" size={18} />
+                        Cambiar modo de rol
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item
+                        className="user-menu-item"
+                        onSelect={() => router.push("/app/perfil#workspace")}
+                      >
+                        <IconDatabase aria-hidden="true" size={18} />
+                        Estado del workspace
+                      </DropdownMenu.Item>
+                    </>
+                  ) : onReset ? (
+                    <DropdownMenu.Item
+                      className="user-menu-item"
+                      onSelect={onReset}
+                    >
+                      <IconRefresh aria-hidden="true" size={18} />
+                      Restaurar demo
+                    </DropdownMenu.Item>
+                  ) : null}
+                  {mode === "authenticated" ? (
+                    <>
+                      <DropdownMenu.Separator className="user-menu-separator" />
+                      <DropdownMenu.Item
+                        className="user-menu-item user-menu-danger"
+                        disabled={signingOut}
+                        onSelect={signOut}
+                      >
+                        <IconLogout aria-hidden="true" size={18} />
+                        {signingOut ? "Cerrando sesión…" : "Cerrar sesión"}
+                      </DropdownMenu.Item>
+                    </>
+                  ) : null}
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
           </div>
         </header>
         {children}

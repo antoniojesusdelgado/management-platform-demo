@@ -26,7 +26,7 @@ select is(
         'task_dependencies', 'task_comments', 'task_events', 'incidents',
         'incident_events', 'people_events', 'changelog_events',
         'treasury_entries', 'treasury_events', 'payroll_runs', 'payroll_events', 'people', 'changelog_entries',
-        'audit_events'
+        'audit_events', 'projects', 'project_members', 'project_events'
       ])
   ),
   true,

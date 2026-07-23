@@ -1,4 +1,11 @@
-export type PermissionAction = "view" | "create" | "update" | "approve" | "manage";
+export type PermissionAction =
+  | "view"
+  | "create"
+  | "update"
+  | "update_assigned"
+  | "approve"
+  | "manage"
+  | "export";
 
 export type PermissionCode = `${string}.${string}.${PermissionAction}`;
 
@@ -23,9 +30,20 @@ export const permissionCatalog = [
   "vacations.requests.create",
   "vacations.requests.approve",
   "tasks.items.view",
+  "tasks.items.create",
+  "tasks.items.update_assigned",
   "tasks.items.manage",
   "incidents.tickets.view",
+  "incidents.tickets.create",
+  "incidents.tickets.update_assigned",
   "incidents.tickets.manage",
+  "projects.items.view",
+  "projects.items.manage",
+  "profile.self.update",
+  "analytics.dashboards.view",
+  "analytics.dashboards.export",
+  "integrations.runs.view",
+  "integrations.runs.manage",
   "treasury.entries.view",
   "treasury.entries.manage",
   "payroll.runs.view",

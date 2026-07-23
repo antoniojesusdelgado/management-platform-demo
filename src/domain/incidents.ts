@@ -23,7 +23,11 @@ export type Incident = {
   status: IncidentStatus;
   priority: IncidentPriority;
   category: IncidentCategory;
+  projectId?: string | null;
+  projectName?: string | null;
+  requesterPersonId?: string;
   requesterName: string;
+  assigneePersonId?: string | null;
   assigneeName: string | null;
   slaDueAt: string;
   resolution: string | null;
@@ -47,10 +51,11 @@ export const incidentInputSchema = z.object({
   description: z.string().trim().min(3).max(2_000),
   priority: z.enum(incidentPriorities),
   category: z.enum(incidentCategories),
+  projectId: z.uuid().nullable().optional(),
   assigneeName: z.string().trim().min(2).max(100).nullable(),
 });
 
-export type IncidentInput = z.infer<typeof incidentInputSchema>;
+export type IncidentInput = z.input<typeof incidentInputSchema>;
 
 const allowedTransitions: Record<IncidentStatus, readonly IncidentStatus[]> = {
   registered: ["triaged"],

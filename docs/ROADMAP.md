@@ -122,3 +122,27 @@
 - Live provisioning was validated with one Google identity. Isolation between
   two identities remains a manual acceptance check; database isolation is
   covered by multi-organization pgTAP scenarios.
+
+## Advanced evolution
+
+- [x] Separate `profiles`, `people`, `memberships` and `auth.users`
+- [x] Safe role simulation that cannot elevate real permissions
+- [x] Projects portfolio with health, ownership, members and activity
+- [x] Project references in Tasks and Incidents
+- [x] Deterministic synthetic scenario with 24 people, 8 projects, 180 tasks,
+  96 leave requests, 120 incidents and 540 Treasury entries
+- [x] Offline aggregate adapters and documented data provenance
+- [x] SaaS OAuth screen, original visual assets and self-service profile
+- [x] Accessible Kanban, keyboard/list alternative, swimlanes, WIP and
+  pagination
+- [x] Neutral Financial, Payroll and People integration simulations
+- [x] Scheduled nightly integration worker with idempotent run sequences
+- [x] Global Control Center, per-module analytics and saved analytical views
+- [x] Editorial Changelog presentation and configurable workspace policies
+- [x] Guest state migrations through V9 with session-only persistence
+- [x] Remote Supabase migrations and validated Vercel Preview
+- [x] Production promotion from the validated Preview artifact
+
+The only remaining manual acceptance check is live OAuth isolation with a
+second Google identity. It does not block the public guest demo and is covered
+at the database boundary by multi-organization pgTAP tests.

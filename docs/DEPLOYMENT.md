@@ -14,10 +14,10 @@ passes database, browser, accessibility and security checks.
 
 ```powershell
 bun install --frozen-lockfile
-bunx supabase db start
-bunx supabase db reset --local
-bunx supabase test db --local
-bunx supabase db lint --local --level warning --fail-on error
+bunx supabase start
+bunx supabase db reset
+bunx supabase test db
+bunx supabase db lint --level warning --fail-on error
 bunx supabase gen types --lang typescript --local
 bun run lint
 bun run typecheck
@@ -110,17 +110,18 @@ environment values. After promotion:
 ## Current release
 
 - Production: <https://management-platform-demo.vercel.app>
-- Stable Preview:
-  <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Source revision: `f0a0712`
+- Validated Preview:
+  <https://management-platform-demo-gdypdqqc8.vercel.app>
+- Preview deployment: `dpl_EHDvDs6CinyJ2hzUNiz9584WNsRU`
+- Production promotion: `dpl_4oUGGMp5nVBbHehz1NhV3tLTacQP`
 - Supabase region and plan: `eu-central-1`, Free
 - Production and Preview use environment-specific application and portfolio
   origins.
-- The final Preview and Production each passed the remote Playwright suite:
+- The final local build and Preview passed the Playwright suite:
   43 tests passed and one desktop-only duplicate scenario was intentionally
   skipped.
-- Google OAuth login, logout, callback and protected-route redirects were
-  validated in both environments. The superseded Google client secret was
-  disabled and removed after the production check.
+- The remote database contains all 17 ordered migrations, RLS policies,
+  deterministic scenario provisioning and the neutral nightly integration
+  schedule at 02:15 UTC.
 - Live isolation with a second Google identity remains a manual acceptance
   check. Multi-organization access isolation is covered by pgTAP.

@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { PermissionCode } from "@/domain/permissions";
+import { simulatedRoleAllows } from "@/domain/role-simulation";
 import { getWorkspaceAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -38,6 +39,12 @@ export async function requirePermission(permissionCode: PermissionCode) {
   });
 
   if (!permissionCodes.includes(permissionCode)) {
+    throw new Error("Permission denied");
+  }
+  if (
+    access.simulatedRole &&
+    !simulatedRoleAllows(access.simulatedRole, permissionCode)
+  ) {
     throw new Error("Permission denied");
   }
 

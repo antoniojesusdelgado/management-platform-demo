@@ -16,16 +16,26 @@ import {
 } from "@/app/app/task-actions";
 import { createIncidentAction, transitionIncidentAction, updateIncidentAction } from "@/app/app/incident-actions";
 import { createPersonAction, updatePersonAction } from "@/app/app/people-actions";
+import {
+  createProjectAction,
+  updateProjectAction,
+} from "@/app/app/project-actions";
 import { createChangelogAction, transitionChangelogAction, updateChangelogAction } from "@/app/app/changelog-actions";
 import { createInvitationAction, renameOrganizationAction, updateMembershipAction, updateModuleSettingAction, updateRoleMetadataAction, updateRolePermissionsAction } from "@/app/app/settings-actions";
 import { createTreasuryAction, transitionTreasuryAction, updateTreasuryAction } from "@/app/app/treasury-actions";
 import { createPayrollAction, transitionPayrollAction, updatePayrollAction } from "@/app/app/payroll-actions";
+import { simulateIntegrationAction } from "@/app/app/integration-actions";
+import { saveAnalyticsViewAction } from "@/app/app/analytics-actions";
 import { AppShell } from "@/components/app-shell";
 import { Dashboard } from "@/components/dashboard";
+import { ControlCenter } from "@/components/control-center";
+import { IntegrationsCenter } from "@/components/integrations-center";
+import { ModuleAnalytics } from "@/components/module-analytics";
 import { IncidentsWorkspace } from "@/components/incidents-workspace";
 import { ChangelogWorkspace } from "@/components/changelog-workspace";
 import { ModuleWorkspace } from "@/components/module-workspace";
 import { PeopleWorkspace } from "@/components/people-workspace";
+import { ProjectsWorkspace } from "@/components/projects-workspace";
 import { SettingsWorkspace } from "@/components/settings-workspace";
 import { TasksWorkspace } from "@/components/tasks-workspace";
 import { TreasuryWorkspace } from "@/components/treasury-workspace";
@@ -37,6 +47,11 @@ import type { PermissionCode } from "@/domain/permissions";
 import type { AdminAuditEvent, ConfigurableRole, ModuleSetting, WorkspaceInvitation, WorkspaceMembership, WorkspaceMembershipStatus } from "@/domain/settings";
 import type { Incident, IncidentEvent, IncidentInput, IncidentStatus } from "@/domain/incidents";
 import type { Person, PersonEvent, PersonInput } from "@/domain/people";
+import type {
+  Project,
+  ProjectEvent,
+  ProjectInput,
+} from "@/domain/projects";
 import type {
   LeaveRequest,
   LeaveRequestEvent,
@@ -54,6 +69,7 @@ import type {
 } from "@/domain/tasks";
 import type { TreasuryEntry, TreasuryEvent, TreasuryInput, TreasuryStatus } from "@/domain/treasury";
 import type { PayrollEvent, PayrollInput, PayrollRun, PayrollStatus } from "@/domain/payroll";
+import type { DataQualityIssue, IntegrationConnector, IntegrationRun, SavedAnalyticsView } from "@/domain/integrations";
 
 type AuthenticatedAppProps = {
   activeModule: ModuleId;
@@ -75,6 +91,10 @@ type AuthenticatedAppProps = {
   people?: Person[];
   peopleEvents?: PersonEvent[];
   peopleLoadError?: string;
+  projects?: Project[];
+  projectEvents?: ProjectEvent[];
+  projectsLoadError?: string;
+  canManageProjects?: boolean;
   changelogEntries?: ChangelogEntry[];
   changelogEvents?: ChangelogEvent[];
   changelogLoadError?: string;
@@ -87,6 +107,11 @@ type AuthenticatedAppProps = {
   payrollEvents?: PayrollEvent[];
   payrollLoadError?: string;
   canManagePayroll?: boolean;
+  integrationConnectors?: IntegrationConnector[];
+  integrationRuns?: IntegrationRun[];
+  dataQualityIssues?: DataQualityIssue[];
+  canManageIntegrations?: boolean;
+  savedAnalyticsViews?: SavedAnalyticsView[];
   moduleSettings?: ModuleSetting[];
   roles?: ConfigurableRole[];
   memberships?: WorkspaceMembership[];
@@ -116,6 +141,10 @@ export function AuthenticatedApp({
   people = [],
   peopleEvents = [],
   peopleLoadError,
+  projects = [],
+  projectEvents = [],
+  projectsLoadError,
+  canManageProjects = false,
   changelogEntries = [],
   changelogEvents = [],
   changelogLoadError,
@@ -128,6 +157,11 @@ export function AuthenticatedApp({
   payrollEvents = [],
   payrollLoadError,
   canManagePayroll = false,
+  integrationConnectors = [],
+  integrationRuns = [],
+  dataQualityIssues = [],
+  canManageIntegrations = false,
+  savedAnalyticsViews = [],
   moduleSettings = [],
   roles = [],
   memberships = [],
@@ -140,8 +174,8 @@ export function AuthenticatedApp({
   const [pending, startTransition] = useTransition();
   const [localName, setLocalName] = useState(organizationName);
 
-  function performAction(
-    action: () => Promise<ActionResult>,
+  function performAction<T = undefined>(
+    action: () => Promise<ActionResult<T>>,
     successMessage: string,
   ): Promise<boolean> {
     return new Promise((resolve) => {
@@ -165,6 +199,28 @@ export function AuthenticatedApp({
   let content;
   if (activeModule === "inicio") {
     content = <Dashboard onNavigate={navigate} />;
+  } else if (activeModule === "centro-control") {
+    content = (
+      <ControlCenter
+        projects={projects}
+        tasks={tasks}
+        incidents={incidents}
+        people={people}
+        leaveRequests={leaveRequests}
+        treasuryEntries={treasuryEntries}
+        savedViews={savedAnalyticsViews}
+        onSaveView={(view) =>
+          performAction(
+            () =>
+              saveAnalyticsViewAction({
+                name: view.name,
+                projectId: view.filters.projectId,
+              }),
+            "Vista analítica guardada",
+          )
+        }
+      />
+    );
   } else if (activeModule === "vacaciones") {
     content = (
       <VacationsWorkspace
@@ -213,6 +269,7 @@ export function AuthenticatedApp({
         dependencies={taskDependencies}
         comments={taskComments}
         events={taskEvents}
+        projectOptions={projects.map(({ id, name }) => ({ id, name }))}
         assigneeOptions={taskAssignees}
         currentUserName={currentUserName}
         pending={pending}
@@ -247,15 +304,32 @@ export function AuthenticatedApp({
       />
     );
   } else if (activeModule === "incidencias") {
-    content = <IncidentsWorkspace incidents={incidents} events={incidentEvents} assigneeOptions={incidentAssignees} pending={pending} loadError={incidentLoadError} onCreate={(input: IncidentInput) => performAction(() => createIncidentAction(input), "Incidencia registrada")} onUpdate={(id: string, input: IncidentInput) => performAction(() => updateIncidentAction(id, input), "Incidencia actualizada")} onTransition={(id: string, status: IncidentStatus, note: string) => performAction(() => transitionIncidentAction({ incidentId: id, status, note }), "Estado actualizado")} />;
+    content = <IncidentsWorkspace incidents={incidents} events={incidentEvents} assigneeOptions={incidentAssignees} projectOptions={projects.map(({ id, name }) => ({ id, name }))} pending={pending} loadError={incidentLoadError} onCreate={(input: IncidentInput) => performAction(() => createIncidentAction(input), "Incidencia registrada")} onUpdate={(id: string, input: IncidentInput) => performAction(() => updateIncidentAction(id, input), "Incidencia actualizada")} onTransition={(id: string, status: IncidentStatus, note: string) => performAction(() => transitionIncidentAction({ incidentId: id, status, note }), "Estado actualizado")} />;
+  } else if (activeModule === "proyectos") {
+    content = <ProjectsWorkspace projects={projects} events={projectEvents} people={people} tasks={tasks} incidents={incidents} pending={pending} loadError={projectsLoadError} canManage={canManageProjects} onCreate={(input: ProjectInput) => performAction(() => createProjectAction(input), "Proyecto creado")} onUpdate={(id: string, input: ProjectInput) => performAction(() => updateProjectAction(id, input), "Proyecto actualizado")} />;
   } else if (activeModule === "personal") {
-    content = <PeopleWorkspace people={people} events={peopleEvents} leaveRequests={leaveRequests} pending={pending} loadError={peopleLoadError} onCreate={(input: PersonInput) => performAction(() => createPersonAction(input), "Perfil añadido")} onUpdate={(id: string, input: PersonInput) => performAction(() => updatePersonAction(id, input), "Perfil actualizado")} />;
+    content = (
+      <>
+        <PeopleWorkspace people={people} events={peopleEvents} leaveRequests={leaveRequests} pending={pending} loadError={peopleLoadError} onCreate={(input: PersonInput) => performAction(() => createPersonAction(input), "Perfil añadido")} onUpdate={(id: string, input: PersonInput) => performAction(() => updatePersonAction(id, input), "Perfil actualizado")} />
+        <IntegrationsCenter connectors={integrationConnectors} runs={integrationRuns} issues={dataQualityIssues} kind="people" pending={pending} canManage={canManageIntegrations} onSimulate={(connectorId) => performAction(() => simulateIntegrationAction(connectorId), "Sincronización sintética completada")} />
+      </>
+    );
   } else if (activeModule === "novedades") {
     content = <ChangelogWorkspace entries={changelogEntries} events={changelogEvents} pending={pending} loadError={changelogLoadError} canManage={canManageChangelog} onCreate={(input: ChangelogInput) => performAction(() => createChangelogAction(input), "Borrador creado")} onUpdate={(id: string, input: ChangelogInput) => performAction(() => updateChangelogAction(id, input), "Novedad actualizada")} onTransition={(id: string, status: ChangelogStatus, note: string) => performAction(() => transitionChangelogAction({ entryId: id, status, note }), status === "published" ? "Novedad publicada" : "Flujo actualizado")} />;
   } else if (activeModule === "tesoreria") {
-    content = <TreasuryWorkspace entries={treasuryEntries} events={treasuryEvents} pending={pending} loadError={treasuryLoadError} canManage={canManageTreasury} onCreate={(input: TreasuryInput) => performAction(() => createTreasuryAction(input), "Borrador sintético creado")} onUpdate={(id: string, input: TreasuryInput) => performAction(() => updateTreasuryAction(id, input), "Borrador actualizado")} onTransition={(id: string, status: TreasuryStatus, note: string) => performAction(() => transitionTreasuryAction(id, status, note), "Control de Tesorería registrado")} />;
+    content = (
+      <>
+        <TreasuryWorkspace entries={treasuryEntries} events={treasuryEvents} pending={pending} loadError={treasuryLoadError} canManage={canManageTreasury} onCreate={(input: TreasuryInput) => performAction(() => createTreasuryAction(input), "Borrador sintético creado")} onUpdate={(id: string, input: TreasuryInput) => performAction(() => updateTreasuryAction(id, input), "Borrador actualizado")} onTransition={(id: string, status: TreasuryStatus, note: string) => performAction(() => transitionTreasuryAction(id, status, note), "Control de Tesorería registrado")} />
+        <IntegrationsCenter connectors={integrationConnectors} runs={integrationRuns} issues={dataQualityIssues} kind="financial" pending={pending} canManage={canManageIntegrations} onSimulate={(connectorId) => performAction(() => simulateIntegrationAction(connectorId), "Importación sintética completada")} />
+      </>
+    );
   } else if (activeModule === "nominas") {
-    content = <PayrollWorkspace runs={payrollRuns} events={payrollEvents} pending={pending} loadError={payrollLoadError} canManage={canManagePayroll} onCreate={(input: PayrollInput) => performAction(() => createPayrollAction(input), "Ciclo sintético creado")} onUpdate={(id: string, input: PayrollInput) => performAction(() => updatePayrollAction(id, input), "Recopilación agregada actualizada")} onTransition={(id: string, status: PayrollStatus, note: string) => performAction(() => transitionPayrollAction(id, status, note), "Control de Nóminas registrado")} />;
+    content = (
+      <>
+        <PayrollWorkspace runs={payrollRuns} events={payrollEvents} pending={pending} loadError={payrollLoadError} canManage={canManagePayroll} onCreate={(input: PayrollInput) => performAction(() => createPayrollAction(input), "Ciclo sintético creado")} onUpdate={(id: string, input: PayrollInput) => performAction(() => updatePayrollAction(id, input), "Recopilación agregada actualizada")} onTransition={(id: string, status: PayrollStatus, note: string) => performAction(() => transitionPayrollAction(id, status, note), "Control de Nóminas registrado")} />
+        <IntegrationsCenter connectors={integrationConnectors} runs={integrationRuns} issues={dataQualityIssues} kind="payroll" pending={pending} canManage={canManageIntegrations} onSimulate={(connectorId) => performAction(() => simulateIntegrationAction(connectorId), "Sincronización agregada completada")} />
+      </>
+    );
   } else if (activeModule === "configuracion") {
     content = canManageSettings ? <SettingsWorkspace organizationName={localName} moduleSettings={moduleSettings} roles={roles} memberships={memberships} invitations={invitations} auditEvents={adminAuditEvents} pending={pending} loadError={settingsLoadError} onRenameOrganization={(name: string) => performAction(() => renameOrganizationAction(name), "Identidad actualizada").then((ok) => { if (ok) setLocalName(name); return ok; })} onUpdateModule={(moduleId: ModuleId, enabled: boolean, sortOrder: number) => performAction(() => updateModuleSettingAction({ moduleId, enabled, sortOrder }), "Módulo actualizado")} onUpdateRoleMetadata={(roleId: string, name: string, color: string) => performAction(() => updateRoleMetadataAction(roleId, name, color), "Rol actualizado")} onUpdateRolePermissions={(roleId: string, permissions: PermissionCode[]) => performAction(() => updateRolePermissionsAction(roleId, permissions), "Permisos actualizados")} onCreateInvitation={(email: string, roleId: string) => performAction(() => createInvitationAction(email, roleId), "Invitación creada sin envío externo")} onUpdateMembership={(membershipId: string, roleId: string, status: WorkspaceMembershipStatus) => performAction(() => updateMembershipAction(membershipId, roleId, status), "Acceso actualizado")} /> : <main className="workspace" id="main-content"><div className="page-heading"><div><p className="eyebrow">Administración</p><h1>Configuración</h1><p className="lede">Tu rol no permite realizar cambios administrativos en esta organización.</p></div></div><div className="inline-alert" role="status"><strong>Configuración en modo lectura.</strong><span>Solicita el permiso estable <code>settings.workspace.manage</code> a una persona administradora.</span></div></main>;
   } else {
@@ -281,7 +355,20 @@ export function AuthenticatedApp({
         mode="authenticated"
         onNavigate={navigate}
       >
-        <div aria-busy={pending}>{content}</div>
+        <div aria-busy={pending}>
+          {content}
+          <ModuleAnalytics
+            moduleId={activeModule}
+            projects={projects}
+            tasks={tasks}
+            incidents={incidents}
+            people={people}
+            leaveRequests={leaveRequests}
+            treasuryEntries={treasuryEntries}
+            payrollRuns={payrollRuns}
+            changelogEntries={changelogEntries}
+          />
+        </div>
       </AppShell>
       <Toaster position="bottom-right" richColors />
     </>

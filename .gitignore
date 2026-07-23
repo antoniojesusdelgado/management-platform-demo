@@ -42,6 +42,7 @@ debug.log
 /playwright-report/
 /test-results/
 /lighthouse-reports/
+/.demo-data/
 
 # typescript
 *.tsbuildinfo

@@ -8,7 +8,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? 1 : 2,
   expect: {
     timeout: 15_000,
   },
@@ -35,10 +35,9 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        command:
-          "bun run build && bun run start -- --hostname 127.0.0.1 --port 3001",
+        command: "bun run start -- --hostname 127.0.0.1 --port 3001",
         url: `${baseURL}/demo/embed`,
         reuseExistingServer: !process.env.CI,
-        timeout: 300_000,
+        timeout: 120_000,
       },
 });

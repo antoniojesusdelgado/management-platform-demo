@@ -56,18 +56,14 @@ async function resolveAssigneeId(
   if (!assigneeName) return null;
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("memberships")
-    .select("profile_id,profiles!inner(display_name)")
+    .from("people")
+    .select("id,display_name")
     .eq("organization_id", organizationId)
     .eq("status", "active");
   if (error) throw new Error("Assignee lookup failed");
-  const membership = data.find(
-    (item) =>
-      (item.profiles as unknown as { display_name: string }).display_name ===
-      assigneeName,
-  );
-  if (!membership) throw new z.ZodError([]);
-  return membership.profile_id;
+  const person = data.find((item) => item.display_name === assigneeName);
+  if (!person) throw new z.ZodError([]);
+  return person.id;
 }
 
 export async function createTaskAction(input: TaskInput): Promise<ActionResult> {
@@ -85,7 +81,8 @@ export async function createTaskAction(input: TaskInput): Promise<ActionResult> 
       description: payload.description,
       status: "pending",
       priority: payload.priority,
-      assignee_profile_id: assigneeId,
+      project_id: payload.projectId ?? null,
+      assignee_person_id: assigneeId,
       due_date: payload.dueDate,
       created_by: access.userId,
     });
@@ -116,7 +113,8 @@ export async function updateTaskAction(
         title: payload.title,
         description: payload.description,
         priority: payload.priority,
-        assignee_profile_id: assigneeId,
+        project_id: payload.projectId ?? null,
+        assignee_person_id: assigneeId,
         due_date: payload.dueDate,
         updated_at: new Date().toISOString(),
       })

@@ -23,6 +23,20 @@ import {
 } from "@/domain/incidents";
 import { moduleIds, type ModuleId } from "@/domain/modules";
 import {
+  createDefaultIntegrationConnectors,
+  dataQualityIssueSchema,
+  guestPreferencesSchema,
+  integrationConnectorSchema,
+  integrationRunSchema,
+  savedAnalyticsViewSchema,
+  simulateGuestIntegrationRun,
+  type DataQualityIssue,
+  type GuestPreferences,
+  type IntegrationConnector,
+  type IntegrationRun,
+  type SavedAnalyticsView,
+} from "@/domain/integrations";
+import {
   canTransitionPayroll,
   payrollCurrencies,
   payrollInputSchema,
@@ -41,6 +55,14 @@ import {
   type PersonEvent,
   type PersonInput,
 } from "@/domain/people";
+import {
+  projectHealthValues,
+  projectInputSchema,
+  projectStatuses,
+  type Project,
+  type ProjectEvent,
+  type ProjectInput,
+} from "@/domain/projects";
 import {
   createDefaultModuleSettings,
   invitationInputSchema,
@@ -88,9 +110,11 @@ import {
   type LeaveRequestInput,
   type LeaveRequestStatus,
 } from "@/domain/vacations";
+import { generateDemoScenario } from "@/demo-data/scenario";
 
 export type GuestDemoState = {
-  version: 6;
+  version: 9;
+  scenarioVersion: 1;
   activeModule: ModuleId;
   organizationName: string;
   leaveRequests: LeaveRequest[];
@@ -103,6 +127,8 @@ export type GuestDemoState = {
   incidentEvents: IncidentEvent[];
   people: Person[];
   peopleEvents: PersonEvent[];
+  projects: Project[];
+  projectEvents: ProjectEvent[];
   changelogEntries: ChangelogEntry[];
   changelogEvents: ChangelogEvent[];
   moduleSettings: ModuleSetting[];
@@ -114,6 +140,11 @@ export type GuestDemoState = {
   treasuryEvents: TreasuryEvent[];
   payrollRuns: PayrollRun[];
   payrollEvents: PayrollEvent[];
+  integrationConnectors: IntegrationConnector[];
+  integrationRuns: IntegrationRun[];
+  dataQualityIssues: DataQualityIssue[];
+  preferences: GuestPreferences;
+  savedAnalyticsViews: SavedAnalyticsView[];
 };
 
 const leaveRequestSchema = z.object({
@@ -153,6 +184,9 @@ const taskSchema = z.object({
   description: z.string().max(2_000),
   status: z.enum(taskStatuses),
   priority: z.enum(taskPriorities),
+  projectId: z.string().nullable().optional(),
+  projectName: z.string().nullable().optional(),
+  assigneePersonId: z.string().nullable().optional(),
   assigneeName: z.string().min(2).max(100).nullable(),
   dueDate: z.iso.date().nullable(),
   createdBy: z.string().min(1),
@@ -201,7 +235,11 @@ const incidentSchema = z.object({
   status: z.enum(incidentStatuses),
   priority: z.enum(incidentPriorities),
   category: z.enum(incidentCategories),
+  projectId: z.string().nullable().optional(),
+  projectName: z.string().nullable().optional(),
+  requesterPersonId: z.string().optional(),
   requesterName: z.string().min(1),
+  assigneePersonId: z.string().nullable().optional(),
   assigneeName: z.string().min(2).max(100).nullable(),
   slaDueAt: z.iso.datetime(),
   resolution: z.string().max(2_000).nullable(),
@@ -299,31 +337,86 @@ const payrollEventSchema = z.object({
   actorName: z.string().min(1), createdAt: z.iso.datetime(),
 });
 
-export const guestDemoStateSchema = guestDemoStateV5Schema.extend({
+const guestDemoStateV6Schema = guestDemoStateV5Schema.extend({
   version: z.literal(6),
   payrollRuns: z.array(payrollRunSchema),
   payrollEvents: z.array(payrollEventSchema),
+});
+
+const projectSchema = z.object({
+  id: z.string().min(1),
+  code: z.string().min(2).max(16),
+  name: z.string().min(3).max(120),
+  summary: z.string().max(1_000),
+  status: z.enum(projectStatuses),
+  health: z.enum(projectHealthValues),
+  ownerPersonId: z.string().nullable(),
+  ownerName: z.string().nullable(),
+  startDate: z.iso.date().nullable(),
+  targetDate: z.iso.date().nullable(),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  memberIds: z.array(z.string()),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
+const projectEventSchema = z.object({
+  id: z.string().min(1),
+  projectId: z.string().min(1),
+  kind: z.enum(["created", "updated", "status", "health", "member"]),
+  note: z.string().min(3).max(1_000),
+  actorName: z.string().min(1),
+  createdAt: z.iso.datetime(),
+});
+
+const guestDemoStateV7Schema = guestDemoStateV6Schema.extend({
+  version: z.literal(7),
+  scenarioVersion: z.literal(1),
+  projects: z.array(projectSchema),
+  projectEvents: z.array(projectEventSchema),
+});
+
+const guestDemoStateV8Schema = guestDemoStateV7Schema.extend({
+  version: z.literal(8),
+  integrationConnectors: z.array(integrationConnectorSchema),
+  integrationRuns: z.array(integrationRunSchema),
+  dataQualityIssues: z.array(dataQualityIssueSchema),
+});
+
+export const guestDemoStateSchema = guestDemoStateV8Schema.extend({
+  version: z.literal(9),
+  preferences: guestPreferencesSchema,
+  savedAnalyticsViews: z.array(savedAnalyticsViewSchema),
 });
 
 export function parseGuestDemoState(value: unknown): GuestDemoState | null {
   const result = guestDemoStateSchema.safeParse(value);
   if (result.success) return result.data;
 
+  const version8 = guestDemoStateV8Schema.safeParse(value);
+  if (version8.success) return migrateVersion8(version8.data);
+
+  const version7 = guestDemoStateV7Schema.safeParse(value);
+  if (version7.success) return migrateVersion8(migrateVersion7(version7.data));
+
+  const version6 = guestDemoStateV6Schema.safeParse(value);
+  if (version6.success) return migrateVersion8(migrateVersion7(migrateVersion6(version6.data)));
+
   const version5 = guestDemoStateV5Schema.safeParse(value);
-  if (version5.success) return migrateVersion5(version5.data);
+  if (version5.success) return migrateVersion8(migrateVersion7(migrateVersion6(migrateVersion5(version5.data))));
 
   const version4 = guestDemoStateV4Schema.safeParse(value);
-  if (version4.success) return migrateVersion5(migrateVersion4(version4.data));
+  if (version4.success) return migrateVersion8(migrateVersion7(migrateVersion6(migrateVersion5(migrateVersion4(version4.data)))));
 
   const version3 = guestDemoStateV3Schema.safeParse(value);
-  if (version3.success) return migrateVersion5(migrateVersion4(migrateVersion3(version3.data)));
+  if (version3.success) return migrateVersion8(migrateVersion7(migrateVersion6(migrateVersion5(migrateVersion4(migrateVersion3(version3.data))))));
 
   const version2 = guestDemoStateV2Schema.safeParse(value);
-  if (version2.success) return migrateVersion5(migrateVersion4(migrateVersion3(migrateVersion2(version2.data))));
+  if (version2.success) return migrateVersion8(migrateVersion7(migrateVersion6(migrateVersion5(migrateVersion4(migrateVersion3(migrateVersion2(version2.data)))))));
 
   const version1 = guestDemoStateV1Schema.safeParse(value);
   if (!version1.success) return null;
-  return migrateVersion5(migrateVersion4(migrateVersion3(migrateVersion2({ ...version1.data, version: 2, ...createInitialTaskState() }))));
+  return migrateVersion8(migrateVersion7(migrateVersion6(migrateVersion5(migrateVersion4(migrateVersion3(migrateVersion2({ ...version1.data, version: 2, ...createInitialTaskState() })))))));
 }
 
 export type GuestDemoAction =
@@ -346,6 +439,8 @@ export type GuestDemoAction =
   | { type: "transition-incident"; incidentId: string; status: IncidentStatus; note: string }
   | { type: "create-person"; input: PersonInput }
   | { type: "update-person"; personId: string; input: PersonInput }
+  | { type: "create-project"; input: ProjectInput }
+  | { type: "update-project"; projectId: string; input: ProjectInput }
   | { type: "create-changelog"; input: ChangelogInput }
   | { type: "update-changelog"; entryId: string; input: ChangelogInput }
   | { type: "transition-changelog"; entryId: string; status: ChangelogStatus; note: string }
@@ -361,6 +456,9 @@ export type GuestDemoAction =
   | { type: "create-invitation"; email: string; roleId: string }
   | { type: "update-membership"; membershipId: string; roleId: string; status: WorkspaceMembershipStatus }
   | { type: "rename-organization"; name: string }
+  | { type: "simulate-integration"; connectorId: string }
+  | { type: "update-preferences"; preferences: GuestPreferences }
+  | { type: "save-analytics-view"; view: SavedAnalyticsView }
   | { type: "reset" };
 
 function createInitialTaskState(): Pick<
@@ -375,6 +473,9 @@ function createInitialTaskState(): Pick<
         description: "Consolidar los avances sintéticos del equipo y preparar la revisión.",
         status: "in_progress",
         priority: "high",
+        projectId: "project-001",
+        projectName: "Eficiencia operativa",
+        assigneePersonId: null,
         assigneeName: "Usuario invitado",
         dueDate: "2026-07-24",
         createdBy: "Responsable demo",
@@ -387,6 +488,9 @@ function createInitialTaskState(): Pick<
         description: "Comprobar estructura, enlaces y ejemplos completamente sintéticos.",
         status: "pending",
         priority: "medium",
+        projectId: "project-001",
+        projectName: "Eficiencia operativa",
+        assigneePersonId: "person-001",
         assigneeName: "Elena Martín",
         dueDate: "2026-07-29",
         createdBy: "Responsable demo",
@@ -399,6 +503,9 @@ function createInitialTaskState(): Pick<
         description: "Verificar la matriz demostrativa antes de pasar el cambio a revisión.",
         status: "blocked",
         priority: "urgent",
+        projectId: "project-002",
+        projectName: "Calidad del dato",
+        assigneePersonId: null,
         assigneeName: "Usuario invitado",
         dueDate: "2026-07-23",
         createdBy: "Responsable demo",
@@ -411,6 +518,9 @@ function createInitialTaskState(): Pick<
         description: "Preparar un resumen interno sin referencias a proyectos u organizaciones reales.",
         status: "in_review",
         priority: "low",
+        projectId: "project-003",
+        projectName: "Experiencia de usuario",
+        assigneePersonId: null,
         assigneeName: null,
         dueDate: null,
         createdBy: "Responsable demo",
@@ -463,7 +573,11 @@ function createInitialIncidentPeopleState(): Pick<
         status: "investigating",
         priority: "high",
         category: "access",
+        projectId: "project-001",
+        projectName: "Eficiencia operativa",
+        requesterPersonId: "person-003",
         requesterName: "Marta Soler",
+        assigneePersonId: "person-001",
         assigneeName: "Elena Martín",
         slaDueAt: "2026-07-23T08:30:00.000Z",
         resolution: null,
@@ -477,7 +591,11 @@ function createInitialIncidentPeopleState(): Pick<
         status: "registered",
         priority: "medium",
         category: "software",
+        projectId: "project-002",
+        projectName: "Calidad del dato",
+        requesterPersonId: "person-002",
         requesterName: "Diego Santos",
+        assigneePersonId: null,
         assigneeName: null,
         slaDueAt: "2026-07-25T09:00:00.000Z",
         resolution: null,
@@ -626,14 +744,190 @@ function createInitialPayrollState(): Pick<GuestDemoState, "payrollRuns" | "payr
   };
 }
 
-function migrateVersion5(state: z.infer<typeof guestDemoStateV5Schema>): GuestDemoState {
+function migrateVersion5(
+  state: z.infer<typeof guestDemoStateV5Schema>,
+): z.infer<typeof guestDemoStateV6Schema> {
   return { ...state, version: 6, ...createInitialPayrollState() };
 }
 
-export const initialGuestDemoState: GuestDemoState = {
-  version: 6,
+function createInitialProjectState(): Pick<
+  GuestDemoState,
+  "projects" | "projectEvents"
+> {
+  return {
+    projects: [
+      {
+        id: "project-001",
+        code: "OPS-01",
+        name: "Eficiencia operativa",
+        summary:
+          "Mejora del flujo interno de solicitudes y tiempos de respuesta.",
+        status: "active",
+        health: "on_track",
+        ownerPersonId: "person-001",
+        ownerName: "Elena Martín",
+        startDate: "2026-04-01",
+        targetDate: "2026-09-30",
+        color: "#4f46e5",
+        memberIds: ["person-001", "person-002"],
+        createdAt: "2026-04-01T08:00:00.000Z",
+        updatedAt: "2026-07-20T11:30:00.000Z",
+      },
+      {
+        id: "project-002",
+        code: "DATA-02",
+        name: "Calidad del dato",
+        summary:
+          "Controles sintéticos de integridad y trazabilidad para los módulos.",
+        status: "active",
+        health: "at_risk",
+        ownerPersonId: "person-002",
+        ownerName: "Diego Santos",
+        startDate: "2026-05-15",
+        targetDate: "2026-08-31",
+        color: "#0d9488",
+        memberIds: ["person-002", "person-003"],
+        createdAt: "2026-05-15T08:00:00.000Z",
+        updatedAt: "2026-07-21T15:00:00.000Z",
+      },
+      {
+        id: "project-003",
+        code: "EXP-03",
+        name: "Experiencia de usuario",
+        summary:
+          "Evolución accesible y responsive de la experiencia de gestión.",
+        status: "planned",
+        health: "on_track",
+        ownerPersonId: "person-003",
+        ownerName: "Marta Soler",
+        startDate: "2026-08-01",
+        targetDate: "2026-11-15",
+        color: "#d97706",
+        memberIds: ["person-001", "person-003"],
+        createdAt: "2026-07-01T08:00:00.000Z",
+        updatedAt: "2026-07-18T09:00:00.000Z",
+      },
+    ],
+    projectEvents: [
+      {
+        id: "project-event-001",
+        projectId: "project-001",
+        kind: "health",
+        note: "Revisión semanal completada; el proyecto continúa en plazo.",
+        actorName: "Elena Martín",
+        createdAt: "2026-07-20T11:30:00.000Z",
+      },
+      {
+        id: "project-event-002",
+        projectId: "project-002",
+        kind: "health",
+        note: "Se identifica riesgo por dependencias bloqueadas.",
+        actorName: "Diego Santos",
+        createdAt: "2026-07-21T15:00:00.000Z",
+      },
+    ],
+  };
+}
+
+function migrateVersion6(
+  state: z.infer<typeof guestDemoStateV6Schema>,
+): z.infer<typeof guestDemoStateV7Schema> {
+  const initialProjects = createInitialProjectState();
+  const projectNames = new Map(
+    initialProjects.projects.map((project) => [project.id, project.name]),
+  );
+  return guestDemoStateV7Schema.parse({
+    ...state,
+    version: 7,
+    scenarioVersion: 1,
+    ...initialProjects,
+    tasks: state.tasks.map((task, index) => ({
+      ...task,
+      projectId:
+        task.projectId ?? initialProjects.projects[index % 2]?.id ?? null,
+      projectName:
+        task.projectName ??
+        projectNames.get(
+          task.projectId ?? initialProjects.projects[index % 2]?.id ?? "",
+        ) ??
+        null,
+      assigneePersonId:
+        task.assigneePersonId ??
+        state.people.find((person) => person.displayName === task.assigneeName)
+          ?.id ??
+        null,
+    })),
+    incidents: state.incidents.map((incident, index) => ({
+      ...incident,
+      projectId:
+        incident.projectId ??
+        initialProjects.projects[index % 2]?.id ??
+        null,
+      projectName:
+        incident.projectName ??
+        projectNames.get(
+          incident.projectId ??
+            initialProjects.projects[index % 2]?.id ??
+            "",
+        ) ??
+        null,
+      requesterPersonId:
+        incident.requesterPersonId ??
+        state.people.find(
+          (person) => person.displayName === incident.requesterName,
+        )?.id ?? "person-001",
+      assigneePersonId:
+        incident.assigneePersonId ??
+        state.people.find(
+          (person) => person.displayName === incident.assigneeName,
+        )?.id ?? null,
+    })),
+  });
+}
+
+function migrateVersion7(
+  state: z.infer<typeof guestDemoStateV7Schema>,
+): z.infer<typeof guestDemoStateV8Schema> {
+  return guestDemoStateV8Schema.parse({
+    ...state,
+    version: 8,
+    integrationConnectors: createDefaultIntegrationConnectors(),
+    integrationRuns: [],
+    dataQualityIssues: [],
+  });
+}
+
+function migrateVersion8(
+  state: z.infer<typeof guestDemoStateV8Schema>,
+): GuestDemoState {
+  return guestDemoStateSchema.parse({
+    ...state,
+    version: 9,
+    preferences: {
+      simulatedRole: null,
+      defaultDashboard: "control-center",
+      theme: "system",
+      density: "comfortable",
+    },
+    savedAnalyticsViews: [],
+  });
+}
+
+const initialGuestDemoStateBase: GuestDemoState = {
+  version: 9,
+  scenarioVersion: 1,
   activeModule: "inicio",
   organizationName: "Organización demo",
+  integrationConnectors: createDefaultIntegrationConnectors(),
+  integrationRuns: [],
+  dataQualityIssues: [],
+  preferences: {
+    simulatedRole: null,
+    defaultDashboard: "control-center",
+    theme: "system",
+    density: "comfortable",
+  },
+  savedAnalyticsViews: [],
   leaveRequests: [
     {
       id: "leave-001",
@@ -694,10 +988,241 @@ export const initialGuestDemoState: GuestDemoState = {
   ],
   ...createInitialTaskState(),
   ...createInitialIncidentPeopleState(),
+  ...createInitialProjectState(),
   ...createInitialChangelogSettingsState(),
   ...createInitialTreasuryState(),
   ...createInitialPayrollState(),
 };
+
+function addStandardScenario(base: GuestDemoState): GuestDemoState {
+  const scenario = generateDemoScenario();
+  const peopleById = new Map(
+    scenario.people.map((person) => [person.id, person]),
+  );
+  const projectsById = new Map(
+    scenario.projects.map((project) => [project.id, project]),
+  );
+  const taskEvents: TaskEvent[] = scenario.tasks.map((task) => ({
+    id: `event-${task.id}`,
+    taskId: task.id,
+    kind: "created",
+    fromStatus: null,
+    toStatus: task.status,
+    note: "Tarea incorporada por el generador sintético.",
+    actorName: "Generador de escenario",
+    createdAt: task.createdAt,
+  }));
+  const incidentEvents: IncidentEvent[] = scenario.incidents.map(
+    (incident) => ({
+      id: `event-${incident.id}`,
+      incidentId: incident.id,
+      kind: "created",
+      fromStatus: null,
+      toStatus: incident.status,
+      note: "Incidencia incorporada por el generador sintético.",
+      actorName: "Generador de escenario",
+      createdAt: incident.createdAt,
+    }),
+  );
+
+  return {
+    ...base,
+    people: [
+      ...base.people,
+      ...scenario.people.map((person) => ({
+        ...person,
+        createdAt: scenario.generatedAt,
+        updatedAt: scenario.generatedAt,
+      })),
+    ],
+    peopleEvents: [
+      ...base.peopleEvents,
+      ...scenario.people.map((person) => ({
+        id: `event-${person.id}`,
+        personId: person.id,
+        kind: "created" as const,
+        note: "Perfil creado por el generador sintético.",
+        actorName: "Generador de escenario",
+        createdAt: scenario.generatedAt,
+      })),
+    ],
+    projects: [
+      ...base.projects,
+      ...scenario.projects.map((project) => ({
+        ...project,
+        ownerName:
+          peopleById.get(project.ownerPersonId)?.displayName ?? null,
+        createdAt: scenario.generatedAt,
+        updatedAt: scenario.generatedAt,
+      })),
+    ],
+    projectEvents: [
+      ...base.projectEvents,
+      ...scenario.projects.map((project) => ({
+        id: `event-${project.id}`,
+        projectId: project.id,
+        kind: "created" as const,
+        note: "Proyecto creado por el generador sintético.",
+        actorName: "Generador de escenario",
+        createdAt: scenario.generatedAt,
+      })),
+    ],
+    tasks: [
+      ...base.tasks,
+      ...scenario.tasks.map((task) => ({
+        ...task,
+        projectName: projectsById.get(task.projectId)?.name ?? null,
+        assigneeName: task.assigneePersonId
+          ? peopleById.get(task.assigneePersonId)?.displayName ?? null
+          : null,
+        createdBy: "Generador de escenario",
+      })),
+    ],
+    taskDependencies: [
+      ...base.taskDependencies,
+      ...scenario.taskDependencies.map((dependency) => ({
+        ...dependency,
+        createdAt: scenario.generatedAt,
+      })),
+    ],
+    taskComments: [
+      ...base.taskComments,
+      ...scenario.taskComments.map((comment) => ({
+        id: comment.id,
+        taskId: comment.taskId,
+        authorName:
+          peopleById.get(comment.authorPersonId)?.displayName ??
+          "Persona sintética",
+        body: comment.body,
+        createdAt: comment.createdAt,
+      })),
+    ],
+    taskEvents: [...base.taskEvents, ...taskEvents],
+    leaveRequests: [
+      ...base.leaveRequests,
+      ...scenario.leaveRequests.map((request) => ({
+        id: request.id,
+        employeeName:
+          peopleById.get(request.personId)?.displayName ??
+          "Persona sintética",
+        startDate: request.startDate,
+        endDate: request.endDate,
+        businessDays: calculateBusinessDays(
+          request.startDate,
+          request.endDate,
+        ),
+        type: request.type,
+        reason: request.reason,
+        status: request.status,
+        createdAt: scenario.generatedAt,
+        updatedAt: scenario.generatedAt,
+      })),
+    ],
+    leaveEvents: [
+      ...base.leaveEvents,
+      ...scenario.leaveRequests.map((request) => ({
+        id: `event-${request.id}`,
+        requestId: request.id,
+        from: null,
+        to: request.status,
+        note: "Solicitud incorporada por el generador sintético.",
+        actorName: "Generador de escenario",
+        createdAt: scenario.generatedAt,
+      })),
+    ],
+    incidents: [
+      ...base.incidents,
+      ...scenario.incidents.map((incident) => ({
+        ...incident,
+        projectName:
+          projectsById.get(incident.projectId)?.name ?? null,
+        requesterName:
+          peopleById.get(incident.requesterPersonId)?.displayName ??
+          "Persona sintética",
+        assigneeName: incident.assigneePersonId
+          ? peopleById.get(incident.assigneePersonId)?.displayName ?? null
+          : null,
+      })),
+    ],
+    incidentEvents: [...base.incidentEvents, ...incidentEvents],
+    treasuryEntries: [
+      ...base.treasuryEntries,
+      ...scenario.treasuryEntries.map((entry) => ({
+        id: entry.id,
+        entryDate: entry.entryDate,
+        concept: entry.concept,
+        amountCents: entry.amountCents,
+        currency: entry.currency,
+        status: entry.status,
+        createdBy: entry.source,
+        createdAt: scenario.generatedAt,
+        updatedAt: scenario.generatedAt,
+      })),
+    ],
+    treasuryEvents: [
+      ...base.treasuryEvents,
+      ...scenario.treasuryEntries.map((entry) => ({
+        id: `event-${entry.id}`,
+        entryId: entry.id,
+        kind: "created" as const,
+        fromStatus: null,
+        toStatus: entry.status,
+        note: `Importación sintética desde ${entry.source}.`,
+        actorName: "Integración demo",
+        createdAt: scenario.generatedAt,
+      })),
+    ],
+    payrollRuns: [
+      ...base.payrollRuns,
+      ...scenario.payrollRuns.map((run) => ({
+        ...run,
+        notes:
+          "Ciclo agregado completamente sintético; no contiene retribuciones individuales.",
+        createdBy: "Payroll Master",
+        createdAt: scenario.generatedAt,
+        updatedAt: scenario.generatedAt,
+      })),
+    ],
+    payrollEvents: [
+      ...base.payrollEvents,
+      ...scenario.payrollRuns.map((run) => ({
+        id: `event-${run.id}`,
+        runId: run.id,
+        kind: "created" as const,
+        fromStatus: null,
+        toStatus: run.status,
+        note: "Ciclo agregado incorporado por Payroll Master.",
+        actorName: "Integración demo",
+        createdAt: scenario.generatedAt,
+      })),
+    ],
+    changelogEntries: [
+      ...base.changelogEntries,
+      ...scenario.changelogEntries.map((entry) => ({
+        ...entry,
+        createdBy: "Equipo demo",
+        createdAt: scenario.generatedAt,
+        updatedAt: entry.publishedAt ?? scenario.generatedAt,
+      })),
+    ],
+    changelogEvents: [
+      ...base.changelogEvents,
+      ...scenario.changelogEntries.map((entry) => ({
+        id: `event-${entry.id}`,
+        entryId: entry.id,
+        fromStatus: null,
+        toStatus: entry.status,
+        note: "Entrada editorial incorporada por el generador sintético.",
+        actorName: "Generador de escenario",
+        createdAt: entry.publishedAt ?? scenario.generatedAt,
+      })),
+    ],
+  };
+}
+
+export const initialGuestDemoState = addStandardScenario(
+  initialGuestDemoStateBase,
+);
 
 function stableId(prefix: string, state: GuestDemoState) {
   return `${prefix}-${String(
@@ -711,12 +1236,16 @@ function stableId(prefix: string, state: GuestDemoState) {
       state.incidentEvents.length +
       state.people.length +
       state.peopleEvents.length +
+      state.projects.length +
+      state.projectEvents.length +
       state.changelogEntries.length +
       state.changelogEvents.length +
       state.treasuryEntries.length +
       state.treasuryEvents.length +
       state.payrollRuns.length +
       state.payrollEvents.length +
+      state.integrationRuns.length +
+      state.dataQualityIssues.length +
       state.adminAuditEvents.length +
       1,
   ).padStart(3, "0")}`;
@@ -728,7 +1257,7 @@ export function guestDemoReducer(
 ): GuestDemoState {
   switch (action.type) {
     case "hydrate":
-      return action.state.version === 6 ? action.state : state;
+      return action.state.version === 9 ? action.state : state;
     case "navigate":
       return { ...state, activeModule: action.module };
     case "create-leave": {
@@ -804,6 +1333,15 @@ export function guestDemoReducer(
       const task: TaskItem = {
         id,
         ...action.input,
+        projectId: action.input.projectId ?? null,
+        projectName:
+          state.projects.find(
+            (project) => project.id === action.input.projectId,
+          )?.name ?? null,
+        assigneePersonId:
+          state.people.find(
+            (person) => person.displayName === action.input.assigneeName,
+          )?.id ?? null,
         status: "pending",
         createdBy: "Usuario invitado",
         createdAt,
@@ -836,7 +1374,21 @@ export function guestDemoReducer(
         ...state,
         tasks: state.tasks.map((task) =>
           task.id === action.taskId
-            ? { ...task, ...action.input, updatedAt: createdAt }
+            ? {
+                ...task,
+                ...action.input,
+                projectId: action.input.projectId ?? null,
+                projectName:
+                  state.projects.find(
+                    (project) => project.id === action.input.projectId,
+                  )?.name ?? null,
+                assigneePersonId:
+                  state.people.find(
+                    (person) =>
+                      person.displayName === action.input.assigneeName,
+                  )?.id ?? null,
+                updatedAt: createdAt,
+              }
             : task,
         ),
         taskEvents: [
@@ -878,6 +1430,102 @@ export function guestDemoReducer(
             createdAt,
           },
           ...state.taskEvents,
+        ],
+      };
+    }
+    case "create-project": {
+      const parsed = projectInputSchema.safeParse(action.input);
+      if (
+        !parsed.success ||
+        state.projects.some((project) => project.code === parsed.data.code)
+      ) {
+        return state;
+      }
+      const createdAt = new Date().toISOString();
+      const id = stableId("project", state);
+      const owner =
+        state.people.find(
+          (person) => person.id === parsed.data.ownerPersonId,
+        ) ?? null;
+      return {
+        ...state,
+        projects: [
+          {
+            id,
+            ...parsed.data,
+            ownerName: owner?.displayName ?? null,
+            createdAt,
+            updatedAt: createdAt,
+          },
+          ...state.projects,
+        ],
+        projectEvents: [
+          {
+            id: stableId("project-event", state),
+            projectId: id,
+            kind: "created",
+            note: "Proyecto creado en modo invitado.",
+            actorName: "Usuario invitado",
+            createdAt,
+          },
+          ...state.projectEvents,
+        ],
+      };
+    }
+    case "update-project": {
+      const current = state.projects.find(
+        (project) => project.id === action.projectId,
+      );
+      const parsed = projectInputSchema.safeParse(action.input);
+      if (
+        !current ||
+        !parsed.success ||
+        state.projects.some(
+          (project) =>
+            project.id !== action.projectId &&
+            project.code === parsed.data.code,
+        )
+      ) {
+        return state;
+      }
+      const createdAt = new Date().toISOString();
+      const owner =
+        state.people.find(
+          (person) => person.id === parsed.data.ownerPersonId,
+        ) ?? null;
+      const kind: ProjectEvent["kind"] =
+        current.status !== parsed.data.status
+          ? "status"
+          : current.health !== parsed.data.health
+            ? "health"
+            : "updated";
+      return {
+        ...state,
+        projects: state.projects.map((project) =>
+          project.id === action.projectId
+            ? {
+                ...project,
+                ...parsed.data,
+                ownerName: owner?.displayName ?? null,
+                updatedAt: createdAt,
+              }
+            : project,
+        ),
+        projectEvents: [
+          {
+            id: stableId("project-event", state),
+            projectId: action.projectId,
+            kind,
+            note:
+              kind === "status"
+                ? "Estado del proyecto actualizado."
+                : kind === "health"
+                  ? "Salud del proyecto actualizada."
+                  : "Proyecto actualizado.",
+            actorName: "Usuario invitado",
+            createdAt,
+          },
+          ...state.projectEvents,
         ],
       };
     }
@@ -971,8 +1619,18 @@ export function guestDemoReducer(
       const incident: Incident = {
         id,
         ...action.input,
+        projectId: action.input.projectId ?? null,
+        projectName:
+          state.projects.find(
+            (project) => project.id === action.input.projectId,
+          )?.name ?? null,
         status: "registered",
+        requesterPersonId: "person-001",
         requesterName: "Usuario invitado",
+        assigneePersonId:
+          state.people.find(
+            (person) => person.displayName === action.input.assigneeName,
+          )?.id ?? null,
         slaDueAt: calculateSyntheticSlaDueAt(action.input.priority, createdAt),
         resolution: null,
         createdAt,
@@ -1014,6 +1672,16 @@ export function guestDemoReducer(
             ? {
                 ...incident,
                 ...action.input,
+                projectId: action.input.projectId ?? null,
+                projectName:
+                  state.projects.find(
+                    (project) => project.id === action.input.projectId,
+                  )?.name ?? null,
+                assigneePersonId:
+                  state.people.find(
+                    (person) =>
+                      person.displayName === action.input.assigneeName,
+                  )?.id ?? null,
                 slaDueAt: priorityChanged
                   ? calculateSyntheticSlaDueAt(action.input.priority, incident.createdAt)
                   : incident.slaDueAt,
@@ -1264,6 +1932,40 @@ export function guestDemoReducer(
         adminAuditEvents: action.name.trim()
           ? [{ id: stableId("admin-audit", state), eventType: "organization.renamed", entityType: "organization", entityId: null, actorName: "Usuario invitado", summary: "Identidad de la organización actualizada.", createdAt: new Date().toISOString() }, ...state.adminAuditEvents]
           : state.adminAuditEvents,
+      };
+    case "simulate-integration": {
+      const connector = state.integrationConnectors.find(
+        (item) => item.id === action.connectorId && item.enabled,
+      );
+      if (!connector) return state;
+      const { run, issue } = simulateGuestIntegrationRun(
+        connector,
+        state.integrationRuns,
+      );
+      return {
+        ...state,
+        integrationConnectors: state.integrationConnectors.map((item) =>
+          item.id === connector.id
+            ? { ...item, lastRunAt: run.finishedAt }
+            : item,
+        ),
+        integrationRuns: [run, ...state.integrationRuns],
+        dataQualityIssues: issue
+          ? [issue, ...state.dataQualityIssues]
+          : state.dataQualityIssues,
+      };
+    }
+    case "update-preferences":
+      return { ...state, preferences: action.preferences };
+    case "save-analytics-view":
+      return {
+        ...state,
+        savedAnalyticsViews: [
+          action.view,
+          ...state.savedAnalyticsViews.filter(
+            (view) => view.id !== action.view.id,
+          ),
+        ],
       };
     case "reset":
       return structuredClone(initialGuestDemoState);

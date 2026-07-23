@@ -1,6 +1,8 @@
 export const moduleIds = [
   "inicio",
+  "centro-control",
   "vacaciones",
+  "proyectos",
   "tareas",
   "incidencias",
   "tesoreria",
@@ -31,6 +33,18 @@ export const modules: readonly ModuleDefinition[] = [
     label: "Vacaciones",
     description: "Solicitudes, aprobaciones, calendario e historial.",
     route: "/app/vacaciones",
+  },
+  {
+    id: "centro-control",
+    label: "Centro de control",
+    description: "Indicadores, tendencias y riesgos de toda la operación.",
+    route: "/app/centro-control",
+  },
+  {
+    id: "proyectos",
+    label: "Proyectos",
+    description: "Portfolio, responsables, salud y evolución del trabajo.",
+    route: "/app/proyectos",
   },
   {
     id: "tareas",

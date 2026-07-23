@@ -4,6 +4,9 @@ import dynamic from "next/dynamic";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Dashboard } from "@/components/dashboard";
+import { ControlCenter } from "@/components/control-center";
+import { IntegrationsCenter } from "@/components/integrations-center";
+import { ModuleAnalytics } from "@/components/module-analytics";
 import {
   guestDemoReducer,
   initialGuestDemoState,
@@ -16,6 +19,8 @@ import type { PermissionCode } from "@/domain/permissions";
 import type { WorkspaceMembershipStatus } from "@/domain/settings";
 import { canTransitionIncident, type IncidentInput, type IncidentStatus } from "@/domain/incidents";
 import type { PersonInput } from "@/domain/people";
+import type { ProjectInput } from "@/domain/projects";
+import type { SavedAnalyticsView } from "@/domain/integrations";
 import { canTransitionPayroll, type PayrollInput, type PayrollStatus } from "@/domain/payroll";
 import { canTransitionTreasury, type TreasuryInput, type TreasuryStatus } from "@/domain/treasury";
 import {
@@ -30,13 +35,6 @@ import type {
 } from "@/domain/vacations";
 
 const STORAGE_KEY = "management-platform-demo:v1";
-const ModuleWorkspace = dynamic(
-  () =>
-    import("@/components/module-workspace").then(
-      (module) => module.ModuleWorkspace,
-    ),
-  { loading: () => <WorkspaceLoading /> },
-);
 const VacationsWorkspace = dynamic(
   () =>
     import("@/components/vacations-workspace").then(
@@ -73,6 +71,13 @@ const TreasuryWorkspace = dynamic(
 );
 const PayrollWorkspace = dynamic(
   () => import("@/components/payroll-workspace").then((module) => module.PayrollWorkspace),
+  { loading: () => <WorkspaceLoading /> },
+);
+const ProjectsWorkspace = dynamic(
+  () =>
+    import("@/components/projects-workspace").then(
+      (module) => module.ProjectsWorkspace,
+    ),
   { loading: () => <WorkspaceLoading /> },
 );
 
@@ -280,6 +285,24 @@ export function GuestDemoApp() {
     return true;
   }
 
+  function createProject(input: ProjectInput) {
+    if (!ready || state.projects.some((project) => project.code === input.code)) {
+      return false;
+    }
+    dispatch({ type: "create-project", input });
+    notify("Proyecto creado en esta sesión");
+    return true;
+  }
+
+  function updateProject(projectId: string, input: ProjectInput) {
+    if (!ready || !state.projects.some((project) => project.id === projectId)) {
+      return false;
+    }
+    dispatch({ type: "update-project", projectId, input });
+    notify("Proyecto actualizado");
+    return true;
+  }
+
   function createChangelog(input: ChangelogInput) { if (!ready || state.changelogEntries.some((entry) => entry.version === input.version)) return false; dispatch({ type: "create-changelog", input }); notify("Borrador creado"); return true; }
   function updateChangelog(entryId: string, input: ChangelogInput) { if (!ready) return false; dispatch({ type: "update-changelog", entryId, input }); notify("Novedad actualizada"); return true; }
   function transitionChangelog(entryId: string, status: ChangelogStatus, note: string) { const entry = state.changelogEntries.find((item) => item.id === entryId); if (!ready || !entry || !canTransitionChangelog(entry.status, status)) return false; dispatch({ type: "transition-changelog", entryId, status, note }); notify(status === "published" ? "Novedad publicada" : "Flujo editorial actualizado"); return true; }
@@ -294,12 +317,39 @@ export function GuestDemoApp() {
   function createPayroll(input: PayrollInput) { if (!ready || state.payrollRuns.some((run) => run.periodStart === input.periodStart && run.periodEnd === input.periodEnd)) return false; dispatch({ type: "create-payroll", input }); notify("Ciclo sintético creado"); return true; }
   function updatePayroll(runId: string, input: PayrollInput) { const run = state.payrollRuns.find((item) => item.id === runId); if (!ready || !run || run.status !== "collecting") return false; dispatch({ type: "update-payroll", runId, input }); notify("Recopilación agregada actualizada"); return true; }
   function transitionPayroll(runId: string, status: PayrollStatus, note: string) { const run = state.payrollRuns.find((item) => item.id === runId); if (!ready || !run || !canTransitionPayroll(run.status, status) || note.trim().length < 3) return false; dispatch({ type: "transition-payroll", runId, status, note }); notify("Control de Nóminas registrado"); return true; }
+  function simulateIntegration(connectorId: string) {
+    if (!ready || !state.integrationConnectors.some(({ id }) => id === connectorId)) return false;
+    dispatch({ type: "simulate-integration", connectorId });
+    notify("Ejecución sintética completada en esta sesión");
+    return true;
+  }
+  function saveAnalyticsView(view: SavedAnalyticsView) {
+    if (!ready) return false;
+    dispatch({ type: "save-analytics-view", view });
+    notify("Vista analítica guardada en esta sesión");
+    return true;
+  }
 
   function content() {
     if (!ready) return <WorkspaceLoading />;
 
     if (state.activeModule === "inicio") {
       return <Dashboard onNavigate={navigate} />;
+    }
+
+    if (state.activeModule === "centro-control") {
+      return (
+        <ControlCenter
+          projects={state.projects}
+          tasks={state.tasks}
+          incidents={state.incidents}
+          people={state.people}
+          leaveRequests={state.leaveRequests}
+          treasuryEntries={state.treasuryEntries}
+          savedViews={state.savedAnalyticsViews}
+          onSaveView={saveAnalyticsView}
+        />
+      );
     }
 
     if (state.activeModule === "vacaciones") {
@@ -320,6 +370,7 @@ export function GuestDemoApp() {
           dependencies={state.taskDependencies}
           comments={state.taskComments}
           events={state.taskEvents}
+          projectOptions={state.projects.map(({ id, name }) => ({ id, name }))}
           onCreate={createTask}
           onUpdate={updateTask}
           onTransition={transitionTask}
@@ -329,12 +380,31 @@ export function GuestDemoApp() {
       );
     }
 
+    if (state.activeModule === "proyectos") {
+      return (
+        <ProjectsWorkspace
+          projects={state.projects}
+          events={state.projectEvents}
+          people={state.people}
+          tasks={state.tasks}
+          incidents={state.incidents}
+          onCreate={createProject}
+          onUpdate={updateProject}
+        />
+      );
+    }
+
     if (state.activeModule === "incidencias") {
-      return <IncidentsWorkspace incidents={state.incidents} events={state.incidentEvents} assigneeOptions={state.people.filter((person) => person.status === "active").map((person) => person.displayName)} onCreate={createIncident} onUpdate={updateIncident} onTransition={transitionIncident} />;
+      return <IncidentsWorkspace incidents={state.incidents} events={state.incidentEvents} assigneeOptions={state.people.filter((person) => person.status === "active").map((person) => person.displayName)} projectOptions={state.projects.map(({ id, name }) => ({ id, name }))} onCreate={createIncident} onUpdate={updateIncident} onTransition={transitionIncident} />;
     }
 
     if (state.activeModule === "personal") {
-      return <PeopleWorkspace people={state.people} events={state.peopleEvents} leaveRequests={state.leaveRequests} onCreate={createPerson} onUpdate={updatePerson} />;
+      return (
+        <>
+          <PeopleWorkspace people={state.people} events={state.peopleEvents} leaveRequests={state.leaveRequests} onCreate={createPerson} onUpdate={updatePerson} />
+          <IntegrationsCenter connectors={state.integrationConnectors} runs={state.integrationRuns} issues={state.dataQualityIssues} kind="people" onSimulate={simulateIntegration} />
+        </>
+      );
     }
 
     if (state.activeModule === "novedades") {
@@ -342,32 +412,28 @@ export function GuestDemoApp() {
     }
 
     if (state.activeModule === "tesoreria") {
-      return <TreasuryWorkspace entries={state.treasuryEntries} events={state.treasuryEvents} onCreate={createTreasury} onUpdate={updateTreasury} onTransition={transitionTreasury} />;
+      return (
+        <>
+          <TreasuryWorkspace entries={state.treasuryEntries} events={state.treasuryEvents} onCreate={createTreasury} onUpdate={updateTreasury} onTransition={transitionTreasury} />
+          <IntegrationsCenter connectors={state.integrationConnectors} runs={state.integrationRuns} issues={state.dataQualityIssues} kind="financial" onSimulate={simulateIntegration} />
+        </>
+      );
     }
 
     if (state.activeModule === "nominas") {
-      return <PayrollWorkspace runs={state.payrollRuns} events={state.payrollEvents} onCreate={createPayroll} onUpdate={updatePayroll} onTransition={transitionPayroll} />;
+      return (
+        <>
+          <PayrollWorkspace runs={state.payrollRuns} events={state.payrollEvents} onCreate={createPayroll} onUpdate={updatePayroll} onTransition={transitionPayroll} />
+          <IntegrationsCenter connectors={state.integrationConnectors} runs={state.integrationRuns} issues={state.dataQualityIssues} kind="payroll" onSimulate={simulateIntegration} />
+        </>
+      );
     }
 
     if (state.activeModule === "configuracion") {
       return <SettingsWorkspace organizationName={state.organizationName} moduleSettings={state.moduleSettings} roles={state.roles} memberships={state.memberships} invitations={state.invitations} auditEvents={state.adminAuditEvents} onRenameOrganization={(name) => { dispatch({ type: "rename-organization", name }); notify("Identidad actualizada"); return true; }} onUpdateModule={updateModuleSetting} onUpdateRoleMetadata={updateRoleMetadata} onUpdateRolePermissions={updateRolePermissions} onCreateInvitation={createInvitation} onUpdateMembership={updateMembership} />;
     }
 
-    return (
-      <ModuleWorkspace
-        moduleId={
-          state.activeModule as Exclude<
-            ModuleId,
-            "inicio" | "vacaciones" | "tareas" | "incidencias" | "personal" | "novedades" | "tesoreria" | "nominas" | "configuracion"
-          >
-        }
-        organizationName={state.organizationName}
-        onRenameOrganization={(name) => {
-          dispatch({ type: "rename-organization", name });
-          notify("Nombre actualizado en esta sesión");
-        }}
-      />
-    );
+    return null;
   }
 
   return (
@@ -393,6 +459,19 @@ export function GuestDemoApp() {
         }}
       >
         {content()}
+        {ready ? (
+          <ModuleAnalytics
+            moduleId={state.activeModule}
+            projects={state.projects}
+            tasks={state.tasks}
+            incidents={state.incidents}
+            people={state.people}
+            leaveRequests={state.leaveRequests}
+            treasuryEntries={state.treasuryEntries}
+            payrollRuns={state.payrollRuns}
+            changelogEntries={state.changelogEntries}
+          />
+        ) : null}
       </AppShell>
       <div
         className="local-toast"

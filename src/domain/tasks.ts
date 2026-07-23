@@ -19,6 +19,9 @@ export type TaskItem = {
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
+  projectId?: string | null;
+  projectName?: string | null;
+  assigneePersonId?: string | null;
   assigneeName: string | null;
   dueDate: string | null;
   createdBy: string;
@@ -56,11 +59,12 @@ export const taskInputSchema = z.object({
   title: z.string().trim().min(3).max(160),
   description: z.string().trim().max(2_000),
   priority: z.enum(taskPriorities),
+  projectId: z.uuid().nullable().optional(),
   assigneeName: z.string().trim().min(2).max(100).nullable(),
   dueDate: z.iso.date().nullable(),
 });
 
-export type TaskInput = z.infer<typeof taskInputSchema>;
+export type TaskInput = z.input<typeof taskInputSchema>;
 
 const allowedTransitions: Record<TaskStatus, readonly TaskStatus[]> = {
   pending: ["in_progress", "blocked"],

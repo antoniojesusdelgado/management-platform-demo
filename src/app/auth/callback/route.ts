@@ -25,9 +25,15 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/login?error=oauth", url.origin));
   }
 
-  const { error: provisioningError } = await supabase.rpc(
+  const { data: organizationId, error: provisioningError } = await supabase.rpc(
     "ensure_public_demo_workspace",
   );
+
+  if (!provisioningError && organizationId) {
+    await supabase.rpc("touch_demo_workspace", {
+      expected_organization_id: organizationId,
+    });
+  }
 
   return NextResponse.redirect(
     new URL(provisioningError ? "/login?error=workspace" : next, url.origin),

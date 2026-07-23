@@ -8,6 +8,8 @@ import {
   IconSettings,
   IconUsersGroup,
   IconAlertCircle,
+  IconFolders,
+  IconChartHistogram,
   type IconProps,
 } from "@tabler/icons-react";
 import type { ComponentType } from "react";
@@ -15,7 +17,9 @@ import type { ModuleId } from "@/domain/modules";
 
 const icons: Record<ModuleId, ComponentType<IconProps>> = {
   inicio: IconHome,
+  "centro-control": IconChartHistogram,
   vacaciones: IconCalendarEvent,
+  proyectos: IconFolders,
   tareas: IconChecklist,
   incidencias: IconAlertCircle,
   tesoreria: IconBuildingBank,

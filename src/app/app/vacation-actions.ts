@@ -47,9 +47,22 @@ export async function createLeaveRequestAction(
     const payload = leaveRequestInputSchema.parse(input);
     const access = await requirePermission("vacations.requests.create");
     const supabase = await createClient();
+    const { data: person, error: personError } = await supabase
+      .from("people")
+      .select("id")
+      .eq("organization_id", access.organizationId)
+      .eq("profile_id", access.userId)
+      .single();
+    if (personError || !person) {
+      return actionFailure(
+        "conflict",
+        "No se encontró la ficha profesional vinculada.",
+      );
+    }
     const { error } = await supabase.from("leave_requests").insert({
       organization_id: access.organizationId,
       profile_id: access.userId,
+      person_id: person.id,
       start_date: payload.startDate,
       end_date: payload.endDate,
       leave_type: payload.type,

@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -191,6 +191,54 @@ export type Database = {
           },
         ]
       }
+      data_quality_issues: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          organization_id: string
+          resolved_at: string | null
+          run_id: string
+          safe_message: string
+          severity: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          resolved_at?: string | null
+          run_id: string
+          safe_message: string
+          severity: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          resolved_at?: string | null
+          run_id?: string
+          safe_message?: string
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_quality_issues_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_quality_issues_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "integration_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incident_events: {
         Row: {
           actor_profile_id: string | null
@@ -251,6 +299,7 @@ export type Database = {
       }
       incidents: {
         Row: {
+          assignee_person_id: string | null
           assignee_profile_id: string | null
           category: Database["public"]["Enums"]["incident_category"]
           created_at: string
@@ -258,7 +307,9 @@ export type Database = {
           id: string
           organization_id: string
           priority: Database["public"]["Enums"]["incident_priority"]
+          project_id: string | null
           reference: string
+          requester_person_id: string
           requester_profile_id: string
           resolution: string | null
           sla_due_at: string
@@ -267,6 +318,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assignee_person_id?: string | null
           assignee_profile_id?: string | null
           category?: Database["public"]["Enums"]["incident_category"]
           created_at?: string
@@ -274,7 +326,9 @@ export type Database = {
           id?: string
           organization_id: string
           priority?: Database["public"]["Enums"]["incident_priority"]
+          project_id?: string | null
           reference: string
+          requester_person_id: string
           requester_profile_id: string
           resolution?: string | null
           sla_due_at?: string
@@ -283,6 +337,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assignee_person_id?: string | null
           assignee_profile_id?: string | null
           category?: Database["public"]["Enums"]["incident_category"]
           created_at?: string
@@ -290,7 +345,9 @@ export type Database = {
           id?: string
           organization_id?: string
           priority?: Database["public"]["Enums"]["incident_priority"]
+          project_id?: string | null
           reference?: string
+          requester_person_id?: string
           requester_profile_id?: string
           resolution?: string | null
           sla_due_at?: string
@@ -299,6 +356,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "incidents_assignee_person_id_fkey"
+            columns: ["assignee_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "incidents_assignee_profile_id_fkey"
             columns: ["assignee_profile_id"]
@@ -314,10 +378,246 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "incidents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_requester_person_id_fkey"
+            columns: ["requester_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "incidents_requester_profile_id_fkey"
             columns: ["requester_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_connectors: {
+        Row: {
+          code: string
+          created_at: string
+          enabled: boolean
+          id: string
+          kind: Database["public"]["Enums"]["integration_kind"]
+          last_run_at: string | null
+          name: string
+          organization_id: string
+          schedule_cron: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          kind: Database["public"]["Enums"]["integration_kind"]
+          last_run_at?: string | null
+          name: string
+          organization_id: string
+          schedule_cron?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          kind?: Database["public"]["Enums"]["integration_kind"]
+          last_run_at?: string | null
+          name?: string
+          organization_id?: string
+          schedule_cron?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_connectors_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_mappings: {
+        Row: {
+          connector_id: string
+          created_at: string
+          enabled: boolean
+          id: string
+          organization_id: string
+          priority: number
+          source_pattern: string
+          target_code: string
+        }
+        Insert: {
+          connector_id: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          organization_id: string
+          priority?: number
+          source_pattern: string
+          target_code: string
+        }
+        Update: {
+          connector_id?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          organization_id?: string
+          priority?: number
+          source_pattern?: string
+          target_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_mappings_connector_id_fkey"
+            columns: ["connector_id"]
+            isOneToOne: false
+            referencedRelation: "integration_connectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integration_mappings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_run_items: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          outcome: string
+          run_id: string
+          safe_message: string
+          source_sequence: number
+          target_kind: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          outcome: string
+          run_id: string
+          safe_message?: string
+          source_sequence: number
+          target_kind: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          outcome?: string
+          run_id?: string
+          safe_message?: string
+          source_sequence?: number
+          target_kind?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_run_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integration_run_items_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "integration_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_runs: {
+        Row: {
+          connector_id: string
+          created_at: string
+          created_by: string | null
+          duplicate_count: number
+          effective_date: string
+          error_count: number
+          finished_at: string | null
+          id: string
+          imported_count: number
+          organization_id: string
+          processed_count: number
+          safe_summary: string
+          source_sequence: number
+          started_at: string | null
+          status: Database["public"]["Enums"]["integration_run_status"]
+          trigger_kind: string
+        }
+        Insert: {
+          connector_id: string
+          created_at?: string
+          created_by?: string | null
+          duplicate_count?: number
+          effective_date: string
+          error_count?: number
+          finished_at?: string | null
+          id?: string
+          imported_count?: number
+          organization_id: string
+          processed_count?: number
+          safe_summary?: string
+          source_sequence?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["integration_run_status"]
+          trigger_kind: string
+        }
+        Update: {
+          connector_id?: string
+          created_at?: string
+          created_by?: string | null
+          duplicate_count?: number
+          effective_date?: string
+          error_count?: number
+          finished_at?: string | null
+          id?: string
+          imported_count?: number
+          organization_id?: string
+          processed_count?: number
+          safe_summary?: string
+          source_sequence?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["integration_run_status"]
+          trigger_kind?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_runs_connector_id_fkey"
+            columns: ["connector_id"]
+            isOneToOne: false
+            referencedRelation: "integration_connectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integration_runs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integration_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -493,6 +793,7 @@ export type Database = {
           id: string
           leave_type: Database["public"]["Enums"]["leave_type"]
           organization_id: string
+          person_id: string
           profile_id: string
           reason: string
           start_date: string
@@ -506,6 +807,7 @@ export type Database = {
           id?: string
           leave_type: Database["public"]["Enums"]["leave_type"]
           organization_id: string
+          person_id: string
           profile_id: string
           reason: string
           start_date: string
@@ -519,6 +821,7 @@ export type Database = {
           id?: string
           leave_type?: Database["public"]["Enums"]["leave_type"]
           organization_id?: string
+          person_id?: string
           profile_id?: string
           reason?: string
           start_date?: string
@@ -531,6 +834,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_requests_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
@@ -668,21 +978,27 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          last_active_at: string
           name: string
+          scenario_version: number | null
           slug: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           id?: string
+          last_active_at?: string
           name: string
+          scenario_version?: number | null
           slug: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
+          last_active_at?: string
           name?: string
+          scenario_version?: number | null
           slug?: string
           updated_at?: string
         }
@@ -938,30 +1254,242 @@ export type Database = {
       }
       profiles: {
         Row: {
+          alias: string | null
           avatar_url: string | null
           created_at: string
+          default_dashboard: string
+          density: string
           display_name: string
           email: string | null
+          high_contrast: boolean
           id: string
+          locale: string
+          notification_preferences: Json
+          reduced_motion: boolean
+          simulated_role: Database["public"]["Enums"]["person_role_code"] | null
+          theme: string
+          timezone: string
           updated_at: string
         }
         Insert: {
+          alias?: string | null
           avatar_url?: string | null
           created_at?: string
+          default_dashboard?: string
+          density?: string
           display_name: string
           email?: string | null
+          high_contrast?: boolean
           id: string
+          locale?: string
+          notification_preferences?: Json
+          reduced_motion?: boolean
+          simulated_role?:
+            | Database["public"]["Enums"]["person_role_code"]
+            | null
+          theme?: string
+          timezone?: string
           updated_at?: string
         }
         Update: {
+          alias?: string | null
           avatar_url?: string | null
           created_at?: string
+          default_dashboard?: string
+          density?: string
           display_name?: string
           email?: string | null
+          high_contrast?: boolean
           id?: string
+          locale?: string
+          notification_preferences?: Json
+          reduced_motion?: boolean
+          simulated_role?:
+            | Database["public"]["Enums"]["person_role_code"]
+            | null
+          theme?: string
+          timezone?: string
           updated_at?: string
         }
         Relationships: []
+      }
+      project_events: {
+        Row: {
+          actor_profile_id: string | null
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["project_event_kind"]
+          note: string
+          organization_id: string
+          project_id: string
+        }
+        Insert: {
+          actor_profile_id?: string | null
+          created_at?: string
+          id?: string
+          kind: Database["public"]["Enums"]["project_event_kind"]
+          note: string
+          organization_id: string
+          project_id: string
+        }
+        Update: {
+          actor_profile_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["project_event_kind"]
+          note?: string
+          organization_id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_events_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_members: {
+        Row: {
+          created_at: string
+          created_by: string
+          organization_id: string
+          person_id: string
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          organization_id: string
+          person_id: string
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          organization_id?: string
+          person_id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_members_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_members_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          code: string
+          color: string
+          created_at: string
+          created_by: string
+          health: Database["public"]["Enums"]["project_health"]
+          id: string
+          name: string
+          organization_id: string
+          owner_person_id: string | null
+          start_date: string | null
+          status: Database["public"]["Enums"]["project_status"]
+          summary: string
+          target_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          color?: string
+          created_at?: string
+          created_by: string
+          health?: Database["public"]["Enums"]["project_health"]
+          id?: string
+          name: string
+          organization_id: string
+          owner_person_id?: string | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["project_status"]
+          summary?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          color?: string
+          created_at?: string
+          created_by?: string
+          health?: Database["public"]["Enums"]["project_health"]
+          id?: string
+          name?: string
+          organization_id?: string
+          owner_person_id?: string | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["project_status"]
+          summary?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_owner_person_id_fkey"
+            columns: ["owner_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       role_permissions: {
         Row: {
@@ -1033,6 +1561,54 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_analytics_views: {
+        Row: {
+          created_at: string
+          filters: Json
+          id: string
+          module_id: string
+          name: string
+          organization_id: string
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          filters?: Json
+          id?: string
+          module_id: string
+          name: string
+          organization_id: string
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          filters?: Json
+          id?: string
+          module_id?: string
+          name?: string
+          organization_id?: string
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_analytics_views_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_analytics_views_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1202,6 +1778,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          assignee_person_id: string | null
           assignee_profile_id: string | null
           created_at: string
           created_by: string
@@ -1210,11 +1787,13 @@ export type Database = {
           id: string
           organization_id: string
           priority: Database["public"]["Enums"]["task_priority"]
+          project_id: string | null
           status: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at: string
         }
         Insert: {
+          assignee_person_id?: string | null
           assignee_profile_id?: string | null
           created_at?: string
           created_by: string
@@ -1223,11 +1802,13 @@ export type Database = {
           id?: string
           organization_id: string
           priority?: Database["public"]["Enums"]["task_priority"]
+          project_id?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at?: string
         }
         Update: {
+          assignee_person_id?: string | null
           assignee_profile_id?: string | null
           created_at?: string
           created_by?: string
@@ -1236,11 +1817,19 @@ export type Database = {
           id?: string
           organization_id?: string
           priority?: Database["public"]["Enums"]["task_priority"]
+          project_id?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tasks_assignee_person_id_fkey"
+            columns: ["assignee_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tasks_assignee_profile_id_fkey"
             columns: ["assignee_profile_id"]
@@ -1260,6 +1849,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -1382,6 +1978,57 @@ export type Database = {
           },
         ]
       }
+      workspace_configuration: {
+        Row: {
+          analytics_policy: Json
+          incident_policy: Json
+          integration_policy: Json
+          organization_id: string
+          task_policy: Json
+          treasury_policy: Json
+          updated_at: string
+          updated_by: string | null
+          vacation_policy: Json
+        }
+        Insert: {
+          analytics_policy?: Json
+          incident_policy?: Json
+          integration_policy?: Json
+          organization_id: string
+          task_policy?: Json
+          treasury_policy?: Json
+          updated_at?: string
+          updated_by?: string | null
+          vacation_policy?: Json
+        }
+        Update: {
+          analytics_policy?: Json
+          incident_policy?: Json
+          integration_policy?: Json
+          organization_id?: string
+          task_policy?: Json
+          treasury_policy?: Json
+          updated_at?: string
+          updated_by?: string | null
+          vacation_policy?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_configuration_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_configuration_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1411,6 +2058,30 @@ export type Database = {
         Returns: string
       }
       ensure_public_demo_workspace: { Args: never; Returns: string }
+      get_demo_workspace_status: {
+        Args: { expected_organization_id: string }
+        Returns: {
+          database_size_bytes: number
+          free_plan_read_only_threshold_bytes: number
+          last_active_at: string
+          scenario_version: number
+        }[]
+      }
+      restore_demo_scenario: {
+        Args: { expected_organization_id: string; target_module?: string }
+        Returns: undefined
+      }
+      simulate_integration_run: {
+        Args: {
+          expected_connector_id: string
+          expected_organization_id: string
+        }
+        Returns: string
+      }
+      touch_demo_workspace: {
+        Args: { expected_organization_id: string }
+        Returns: undefined
+      }
       transition_changelog_entry: {
         Args: {
           expected_organization_id: string
@@ -1483,6 +2154,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_own_profile_preferences: {
+        Args: {
+          target_alias: string
+          target_default_dashboard: string
+          target_density: string
+          target_high_contrast: boolean
+          target_locale: string
+          target_notification_preferences: Json
+          target_reduced_motion: boolean
+          target_simulated_role: Database["public"]["Enums"]["person_role_code"]
+          target_theme: string
+          target_timezone: string
+        }
+        Returns: undefined
+      }
       update_payroll_collecting_run: {
         Args: {
           expected_organization_id: string
@@ -1534,6 +2220,14 @@ export type Database = {
         | "investigating"
         | "resolved"
         | "closed"
+      integration_kind: "financial" | "payroll" | "people"
+      integration_run_status:
+        | "scheduled"
+        | "running"
+        | "succeeded"
+        | "partial"
+        | "failed"
+        | "cancelled"
       leave_request_status:
         | "draft"
         | "submitted"
@@ -1551,6 +2245,14 @@ export type Database = {
       people_event_kind: "created" | "updated" | "status" | "role"
       person_role_code: "admin" | "manager" | "collaborator" | "viewer"
       person_status: "invited" | "active" | "suspended" | "inactive"
+      project_event_kind: "created" | "updated" | "status" | "health" | "member"
+      project_health: "on_track" | "at_risk" | "off_track"
+      project_status:
+        | "planned"
+        | "active"
+        | "on_hold"
+        | "completed"
+        | "cancelled"
       task_event_kind:
         | "created"
         | "updated"
@@ -1725,6 +2427,15 @@ export const Constants = {
         "resolved",
         "closed",
       ],
+      integration_kind: ["financial", "payroll", "people"],
+      integration_run_status: [
+        "scheduled",
+        "running",
+        "succeeded",
+        "partial",
+        "failed",
+        "cancelled",
+      ],
       leave_request_status: [
         "draft",
         "submitted",
@@ -1744,6 +2455,15 @@ export const Constants = {
       people_event_kind: ["created", "updated", "status", "role"],
       person_role_code: ["admin", "manager", "collaborator", "viewer"],
       person_status: ["invited", "active", "suspended", "inactive"],
+      project_event_kind: ["created", "updated", "status", "health", "member"],
+      project_health: ["on_track", "at_risk", "off_track"],
+      project_status: [
+        "planned",
+        "active",
+        "on_hold",
+        "completed",
+        "cancelled",
+      ],
       task_event_kind: [
         "created",
         "updated",

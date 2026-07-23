@@ -26,6 +26,7 @@ import {
   type TaskPriority,
   type TaskStatus,
 } from "@/domain/tasks";
+import { TaskKanban } from "@/components/task-kanban";
 
 type TasksWorkspaceProps = {
   tasks: TaskItem[];
@@ -35,6 +36,7 @@ type TasksWorkspaceProps = {
   pending?: boolean;
   loadError?: string;
   assigneeOptions?: string[];
+  projectOptions?: Array<{ id: string; name: string }>;
   currentUserName?: string;
   onCreate: (input: TaskInput) => boolean | Promise<boolean>;
   onUpdate: (taskId: string, input: TaskInput) => boolean | Promise<boolean>;
@@ -72,6 +74,7 @@ function emptyInput(): TaskInput {
     title: "",
     description: "",
     priority: "medium",
+    projectId: null,
     assigneeName: null,
     dueDate: null,
   };
@@ -85,6 +88,7 @@ export function TasksWorkspace({
   pending = false,
   loadError,
   assigneeOptions = defaultAssignees,
+  projectOptions = [],
   currentUserName = "Usuario invitado",
   onCreate,
   onUpdate,
@@ -97,6 +101,21 @@ export function TasksWorkspace({
   const [priorityFilter, setPriorityFilter] = useState<"all" | TaskPriority>("all");
   const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [dueFilter, setDueFilter] = useState<"all" | "overdue" | "upcoming" | "none">("all");
+  const [projectFilter, setProjectFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<"kanban" | "list" | "backlog">(
+    "kanban",
+  );
+  const [swimlane, setSwimlane] = useState<
+    "none" | "project" | "assignee"
+  >("none");
+  const [wipLimits, setWipLimits] = useState<Record<TaskStatus, number>>({
+    pending: 30,
+    in_progress: 8,
+    blocked: 6,
+    in_review: 5,
+    completed: 99,
+  });
+  const [boardMessage, setBoardMessage] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formValue, setFormValue] = useState<TaskInput>(emptyInput());
@@ -105,12 +124,14 @@ export function TasksWorkspace({
   const [transitionNote, setTransitionNote] = useState("");
   const [commentBody, setCommentBody] = useState("");
   const [dependencyId, setDependencyId] = useState("");
+  const [page, setPage] = useState(1);
 
   const filteredTasks = useMemo(
     () =>
       tasks.filter((task) => {
         if (statusFilter !== "all" && task.status !== statusFilter) return false;
         if (priorityFilter !== "all" && task.priority !== priorityFilter) return false;
+        if (projectFilter !== "all" && task.projectId !== projectFilter) return false;
         if (assigneeFilter !== "all") {
           if (assigneeFilter === "unassigned" && task.assigneeName !== null) return false;
           if (assigneeFilter !== "unassigned" && task.assigneeName !== assigneeFilter) return false;
@@ -120,7 +141,26 @@ export function TasksWorkspace({
         if (dueFilter === "none" && task.dueDate !== null) return false;
         return true;
       }),
-    [assigneeFilter, dueFilter, priorityFilter, statusFilter, tasks, today],
+    [
+      assigneeFilter,
+      dueFilter,
+      priorityFilter,
+      projectFilter,
+      statusFilter,
+      tasks,
+      today,
+    ],
+  );
+  const visibleTasks =
+    viewMode === "backlog"
+      ? filteredTasks.filter((task) => task.status === "pending")
+      : filteredTasks;
+  const pageSize = 40;
+  const totalPages = Math.max(1, Math.ceil(visibleTasks.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pagedTasks = visibleTasks.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
   );
 
   const selected = tasks.find((task) => task.id === selectedId) ?? null;
@@ -148,6 +188,7 @@ export function TasksWorkspace({
       title: task.title,
       description: task.description,
       priority: task.priority,
+      projectId: task.projectId ?? null,
       assigneeName: task.assigneeName,
       dueDate: task.dueDate,
     });
@@ -173,6 +214,27 @@ export function TasksWorkspace({
     if (!selected || transitionNote.trim().length < 3) return;
     const completed = await onTransition(selected.id, status, transitionNote.trim());
     if (completed) setTransitionNote("");
+  }
+
+  async function moveFromBoard(task: TaskItem, status: TaskStatus) {
+    setBoardMessage("");
+    if (!canTransitionTask(task.status, status)) return false;
+    const targetCount = tasks.filter((item) => item.status === status).length;
+    if (status !== "completed" && targetCount >= wipLimits[status]) {
+      setBoardMessage(
+        `La columna ${statusLabels[status]} ha alcanzado su límite WIP de ${wipLimits[status]}.`,
+      );
+      return false;
+    }
+    const completed = await onTransition(
+      task.id,
+      status,
+      "Movimiento registrado desde el tablero Kanban.",
+    );
+    if (!completed) {
+      setBoardMessage("No se pudo mover la tarea. Revisa la transición.");
+    }
+    return completed;
   }
 
   async function addComment(event: React.FormEvent<HTMLFormElement>) {
@@ -221,23 +283,69 @@ export function TasksWorkspace({
       <section className="section-block" aria-labelledby="task-inbox-title">
         <div className="section-header">
           <div><p className="eyebrow">Bandeja</p><h2 id="task-inbox-title">Trabajo planificado</h2></div>
-          <button className="button button-quiet" type="button" onClick={() => setAssigneeFilter(currentUserName)}>
-            <IconUser aria-hidden="true" size={18} /> Mi bandeja
-          </button>
+          <div className="task-view-actions">
+            <div className="segmented-control" aria-label="Vista de tareas">
+              {(["kanban", "list", "backlog"] as const).map((mode) => (
+                <button
+                  className={viewMode === mode ? "is-active" : ""}
+                  type="button"
+                  key={mode}
+                  aria-pressed={viewMode === mode}
+                  onClick={() => setViewMode(mode)}
+                >
+                  {mode === "kanban"
+                    ? "Kanban"
+                    : mode === "list"
+                      ? "Lista"
+                      : "Backlog"}
+                </button>
+              ))}
+            </div>
+            <button className="button button-quiet" type="button" onClick={() => setAssigneeFilter(currentUserName)}>
+              <IconUser aria-hidden="true" size={18} /> Mi bandeja
+            </button>
+          </div>
         </div>
         <div className="task-filters" aria-label="Filtros de tareas">
           <label>Estado<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "all" | TaskStatus)}><option value="all">Todos</option>{taskStatuses.map((status) => <option value={status} key={status}>{statusLabels[status]}</option>)}</select></label>
           <label>Prioridad<select value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value as "all" | TaskPriority)}><option value="all">Todas</option>{taskPriorities.map((priority) => <option value={priority} key={priority}>{priorityLabels[priority]}</option>)}</select></label>
           <label>Responsable<select value={assigneeFilter} onChange={(event) => setAssigneeFilter(event.target.value)}><option value="all">Todas las personas</option><option value="unassigned">Sin asignar</option>{assigneeOptions.map((name) => <option value={name} key={name}>{name}</option>)}</select></label>
+          <label>Proyecto<select value={projectFilter} onChange={(event) => setProjectFilter(event.target.value)}><option value="all">Todos los proyectos</option>{projectOptions.map((project) => <option value={project.id} key={project.id}>{project.name}</option>)}</select></label>
           <label>Vencimiento<select value={dueFilter} onChange={(event) => setDueFilter(event.target.value as typeof dueFilter)}><option value="all">Cualquier fecha</option><option value="overdue">Vencidas</option><option value="upcoming">Próximas</option><option value="none">Sin fecha</option></select></label>
+          {viewMode === "kanban" ? (
+            <label>Agrupar<select value={swimlane} onChange={(event) => setSwimlane(event.target.value as typeof swimlane)}><option value="none">Sin swimlanes</option><option value="project">Por proyecto</option><option value="assignee">Por responsable</option></select></label>
+          ) : null}
         </div>
 
-        {filteredTasks.length ? (
+        {boardMessage ? (
+          <p className="inline-alert compact" role="status">{boardMessage}</p>
+        ) : null}
+
+        {pagedTasks.length && viewMode === "kanban" ? (
+          <TaskKanban
+            tasks={pagedTasks}
+            today={today}
+            pending={pending}
+            swimlane={swimlane}
+            wipLimits={wipLimits}
+            statusLabels={statusLabels}
+            onOpen={setSelectedId}
+            onMove={moveFromBoard}
+            onWipLimitChange={(status, limit) =>
+              setWipLimits((current) => ({
+                ...current,
+                [status]: Number.isFinite(limit)
+                  ? Math.min(99, Math.max(1, limit))
+                  : current[status],
+              }))
+            }
+          />
+        ) : pagedTasks.length ? (
           <div className="task-list">
-            {filteredTasks.map((task) => (
+            {pagedTasks.map((task) => (
               <button className="task-row" type="button" key={task.id} onClick={() => setSelectedId(task.id)}>
                 <span className={`task-priority priority-${task.priority}`} aria-label={`Prioridad ${priorityLabels[task.priority]}`} />
-                <span className="task-row-main"><strong>{task.title}</strong><span className="muted">{task.assigneeName ?? "Sin asignar"} · {task.dueDate ?? "Sin vencimiento"}</span></span>
+                <span className="task-row-main"><strong>{task.title}</strong><span className="muted">{task.projectName ?? "Sin proyecto"} · {task.assigneeName ?? "Sin asignar"} · {task.dueDate ?? "Sin vencimiento"}</span></span>
                 <span className={`status-chip task-status-${task.status}`}>{statusLabels[task.status]}</span>
                 {isTaskOverdue(task, today) ? <IconAlertTriangle aria-label="Vencida" size={19} /> : <IconArrowRight aria-hidden="true" size={19} />}
               </button>
@@ -246,6 +354,30 @@ export function TasksWorkspace({
         ) : (
           <div className="empty-state"><IconCheck aria-hidden="true" size={30} /><strong>No hay tareas para estos filtros</strong><span>Prueba otra combinación o crea una nueva tarea.</span></div>
         )}
+
+        {visibleTasks.length > pageSize ? (
+          <nav className="pagination" aria-label="Paginación de tareas">
+            <button
+              className="button button-secondary"
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => setPage(currentPage - 1)}
+            >
+              Anterior
+            </button>
+            <span>
+              Página {currentPage} de {totalPages} · {visibleTasks.length} tareas
+            </span>
+            <button
+              className="button button-secondary"
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() => setPage(currentPage + 1)}
+            >
+              Siguiente
+            </button>
+          </nav>
+        ) : null}
       </section>
 
       <Dialog.Root open={formOpen} onOpenChange={setFormOpen}>
@@ -258,6 +390,7 @@ export function TasksWorkspace({
               <div className="field field-span"><label htmlFor="task-description">Descripción</label><textarea id="task-description" value={formValue.description} maxLength={2000} onChange={(event) => setFormValue({ ...formValue, description: event.target.value })} /></div>
               <div className="field"><label htmlFor="task-priority">Prioridad</label><select id="task-priority" value={formValue.priority} onChange={(event) => setFormValue({ ...formValue, priority: event.target.value as TaskPriority })}>{taskPriorities.map((priority) => <option value={priority} key={priority}>{priorityLabels[priority]}</option>)}</select></div>
               <div className="field"><label htmlFor="task-assignee">Responsable</label><select id="task-assignee" value={formValue.assigneeName ?? ""} onChange={(event) => setFormValue({ ...formValue, assigneeName: event.target.value || null })}><option value="">Sin asignar</option>{assigneeOptions.map((name) => <option value={name} key={name}>{name}</option>)}</select></div>
+              <div className="field"><label htmlFor="task-project">Proyecto</label><select id="task-project" value={formValue.projectId ?? ""} onChange={(event) => setFormValue({ ...formValue, projectId: event.target.value || null })}><option value="">Sin proyecto</option>{projectOptions.map((project) => <option value={project.id} key={project.id}>{project.name}</option>)}</select></div>
               <div className="field field-span"><label htmlFor="task-due-date">Fecha límite</label><input id="task-due-date" type="date" value={formValue.dueDate ?? ""} onChange={(event) => setFormValue({ ...formValue, dueDate: event.target.value || null })} /></div>
             </div>
             <div className="dialog-actions"><Dialog.Close asChild><button className="button button-secondary" type="button">Cancelar</button></Dialog.Close><button className="button button-primary" type="submit" disabled={pending}>{pending ? "Guardando…" : "Guardar tarea"}</button></div>
@@ -269,7 +402,7 @@ export function TasksWorkspace({
         <Dialog.Portal><Dialog.Overlay className="dialog-overlay" /><Dialog.Content className="dialog-content task-detail-dialog">
           {selected ? <><div className="dialog-header"><div><p className="eyebrow">{priorityLabels[selected.priority]} · {statusLabels[selected.status]}</p><Dialog.Title asChild><h2>{selected.title}</h2></Dialog.Title><Dialog.Description className="muted">{selected.description || "Sin descripción"}</Dialog.Description></div><Dialog.Close asChild><button className="icon-button" type="button" aria-label="Cerrar detalle"><IconX aria-hidden="true" size={20} /></button></Dialog.Close></div>
             <div className="task-detail-grid">
-              <section><h3>Planificación</h3><p className="muted">Responsable: {selected.assigneeName ?? "Sin asignar"}<br />Fecha límite: {selected.dueDate ?? "Sin fecha"}</p><button className="button button-secondary" type="button" onClick={() => openEdit(selected)}>Editar tarea</button></section>
+              <section><h3>Planificación</h3><p className="muted">Proyecto: {selected.projectName ?? "Sin proyecto"}<br />Responsable: {selected.assigneeName ?? "Sin asignar"}<br />Fecha límite: {selected.dueDate ?? "Sin fecha"}</p><button className="button button-secondary" type="button" onClick={() => openEdit(selected)}>Editar tarea</button></section>
               <section><h3>Cambiar estado</h3><div className="field"><label htmlFor="task-transition-note">Nota de actividad</label><textarea id="task-transition-note" value={transitionNote} minLength={3} maxLength={300} onChange={(event) => setTransitionNote(event.target.value)} /></div><div className="task-actions">{taskStatuses.filter((status) => canTransitionTask(selected.status, status)).map((status) => <button className="button button-secondary" type="button" disabled={pending || transitionNote.trim().length < 3} key={status} onClick={() => changeStatus(status)}>{statusLabels[status]}</button>)}</div></section>
             </div>
             <div className="task-detail-grid">
