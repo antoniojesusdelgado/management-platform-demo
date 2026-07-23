@@ -21,7 +21,7 @@ export default function HomePage() {
               <IconArrowRight aria-hidden="true" size={19} />
             </Link>
             <Link className="button button-secondary" href="/login">
-              Acceso invitado
+              Continuar con Google
             </Link>
           </div>
         </div>
@@ -31,7 +31,7 @@ export default function HomePage() {
           <ul>
             <li>Sin datos personales ni información interna.</li>
             <li>Los cambios invitados viven solo en esta pestaña.</li>
-            <li>La aplicación autenticada requiere invitación.</li>
+            <li>Cada acceso con Google recibe un espacio sintético aislado.</li>
           </ul>
         </aside>
       </section>
