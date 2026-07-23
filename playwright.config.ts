@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3001";
+
 export default defineConfig({
   testDir: "./tests/e2e",
   testMatch: "**/*.e2e.ts",
@@ -12,7 +14,7 @@ export default defineConfig({
   },
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
-    baseURL: "http://127.0.0.1:3001",
+    baseURL,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
@@ -30,11 +32,13 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command:
-      "bun run build && bun run start -- --hostname 127.0.0.1 --port 3001",
-    url: "http://127.0.0.1:3001/demo/embed",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: process.env.PLAYWRIGHT_BASE_URL
+    ? undefined
+    : {
+        command:
+          "bun run build && bun run start -- --hostname 127.0.0.1 --port 3001",
+        url: `${baseURL}/demo/embed`,
+        reuseExistingServer: !process.env.CI,
+        timeout: 300_000,
+      },
 });

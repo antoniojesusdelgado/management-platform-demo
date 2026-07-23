@@ -43,3 +43,12 @@ export async function requirePermission(permissionCode: PermissionCode) {
 
   return access;
 }
+
+export async function hasWorkspacePermission(permissionCode: PermissionCode) {
+  try {
+    await requirePermission(permissionCode);
+    return true;
+  } catch {
+    return false;
+  }
+}

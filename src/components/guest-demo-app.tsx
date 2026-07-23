@@ -11,6 +11,13 @@ import {
   type GuestDemoState,
 } from "@/domain/guest-demo";
 import type { ModuleId } from "@/domain/modules";
+import { canTransitionChangelog, type ChangelogInput, type ChangelogStatus } from "@/domain/changelog";
+import type { PermissionCode } from "@/domain/permissions";
+import type { WorkspaceMembershipStatus } from "@/domain/settings";
+import { canTransitionIncident, type IncidentInput, type IncidentStatus } from "@/domain/incidents";
+import type { PersonInput } from "@/domain/people";
+import { canTransitionPayroll, type PayrollInput, type PayrollStatus } from "@/domain/payroll";
+import { canTransitionTreasury, type TreasuryInput, type TreasuryStatus } from "@/domain/treasury";
 import {
   canTransitionTask,
   createsTaskDependencyCycle,
@@ -42,6 +49,30 @@ const TasksWorkspace = dynamic(
     import("@/components/tasks-workspace").then(
       (module) => module.TasksWorkspace,
     ),
+  { loading: () => <WorkspaceLoading /> },
+);
+const IncidentsWorkspace = dynamic(
+  () => import("@/components/incidents-workspace").then((module) => module.IncidentsWorkspace),
+  { loading: () => <WorkspaceLoading /> },
+);
+const PeopleWorkspace = dynamic(
+  () => import("@/components/people-workspace").then((module) => module.PeopleWorkspace),
+  { loading: () => <WorkspaceLoading /> },
+);
+const ChangelogWorkspace = dynamic(
+  () => import("@/components/changelog-workspace").then((module) => module.ChangelogWorkspace),
+  { loading: () => <WorkspaceLoading /> },
+);
+const SettingsWorkspace = dynamic(
+  () => import("@/components/settings-workspace").then((module) => module.SettingsWorkspace),
+  { loading: () => <WorkspaceLoading /> },
+);
+const TreasuryWorkspace = dynamic(
+  () => import("@/components/treasury-workspace").then((module) => module.TreasuryWorkspace),
+  { loading: () => <WorkspaceLoading /> },
+);
+const PayrollWorkspace = dynamic(
+  () => import("@/components/payroll-workspace").then((module) => module.PayrollWorkspace),
   { loading: () => <WorkspaceLoading /> },
 );
 
@@ -213,6 +244,57 @@ export function GuestDemoApp() {
     return true;
   }
 
+  function createIncident(input: IncidentInput) {
+    if (!ready) return false;
+    dispatch({ type: "create-incident", input });
+    notify("Incidencia registrada en esta sesión");
+    return true;
+  }
+
+  function updateIncident(incidentId: string, input: IncidentInput) {
+    if (!ready || !state.incidents.some((item) => item.id === incidentId)) return false;
+    dispatch({ type: "update-incident", incidentId, input });
+    notify("Incidencia actualizada");
+    return true;
+  }
+
+  function transitionIncident(incidentId: string, status: IncidentStatus, note: string) {
+    const incident = state.incidents.find((item) => item.id === incidentId);
+    if (!ready || !incident || !canTransitionIncident(incident.status, status) || (status === "assigned" && !incident.assigneeName)) return false;
+    dispatch({ type: "transition-incident", incidentId, status, note });
+    notify("Estado de la incidencia actualizado");
+    return true;
+  }
+
+  function createPerson(input: PersonInput) {
+    if (!ready) return false;
+    dispatch({ type: "create-person", input });
+    notify("Perfil sintético añadido");
+    return true;
+  }
+
+  function updatePerson(personId: string, input: PersonInput) {
+    if (!ready || !state.people.some((person) => person.id === personId)) return false;
+    dispatch({ type: "update-person", personId, input });
+    notify("Perfil actualizado");
+    return true;
+  }
+
+  function createChangelog(input: ChangelogInput) { if (!ready || state.changelogEntries.some((entry) => entry.version === input.version)) return false; dispatch({ type: "create-changelog", input }); notify("Borrador creado"); return true; }
+  function updateChangelog(entryId: string, input: ChangelogInput) { if (!ready) return false; dispatch({ type: "update-changelog", entryId, input }); notify("Novedad actualizada"); return true; }
+  function transitionChangelog(entryId: string, status: ChangelogStatus, note: string) { const entry = state.changelogEntries.find((item) => item.id === entryId); if (!ready || !entry || !canTransitionChangelog(entry.status, status)) return false; dispatch({ type: "transition-changelog", entryId, status, note }); notify(status === "published" ? "Novedad publicada" : "Flujo editorial actualizado"); return true; }
+  function updateModuleSetting(moduleId: ModuleId, enabled: boolean, sortOrder: number) { if (!ready) return false; dispatch({ type: "update-module-setting", moduleId, enabled, sortOrder }); notify("Configuración del módulo actualizada"); return true; }
+  function updateRoleMetadata(roleId: string, name: string, color: string) { if (!ready) return false; dispatch({ type: "update-role-metadata", roleId, name, color }); notify("Metadatos del rol actualizados"); return true; }
+  function updateRolePermissions(roleId: string, permissionCodes: PermissionCode[]) { if (!ready) return false; dispatch({ type: "update-role-permissions", roleId, permissionCodes }); notify("Permisos del rol actualizados"); return true; }
+  function createInvitation(email: string, roleId: string) { if (!ready) return false; dispatch({ type: "create-invitation", email, roleId }); notify("Invitación sintética creada"); return true; }
+  function updateMembership(membershipId: string, roleId: string, status: WorkspaceMembershipStatus) { if (!ready) return false; dispatch({ type: "update-membership", membershipId, roleId, status }); notify("Acceso actualizado"); return true; }
+  function createTreasury(input: TreasuryInput) { if (!ready) return false; dispatch({ type: "create-treasury", input }); notify("Borrador sintético creado"); return true; }
+  function updateTreasury(entryId: string, input: TreasuryInput) { const entry = state.treasuryEntries.find((item) => item.id === entryId); if (!ready || !entry || entry.status !== "draft") return false; dispatch({ type: "update-treasury", entryId, input }); notify("Borrador actualizado"); return true; }
+  function transitionTreasury(entryId: string, status: TreasuryStatus, note: string) { const entry = state.treasuryEntries.find((item) => item.id === entryId); if (!ready || !entry || !canTransitionTreasury(entry.status, status) || note.trim().length < 3) return false; dispatch({ type: "transition-treasury", entryId, status, note }); notify("Control de Tesorería registrado"); return true; }
+  function createPayroll(input: PayrollInput) { if (!ready || state.payrollRuns.some((run) => run.periodStart === input.periodStart && run.periodEnd === input.periodEnd)) return false; dispatch({ type: "create-payroll", input }); notify("Ciclo sintético creado"); return true; }
+  function updatePayroll(runId: string, input: PayrollInput) { const run = state.payrollRuns.find((item) => item.id === runId); if (!ready || !run || run.status !== "collecting") return false; dispatch({ type: "update-payroll", runId, input }); notify("Recopilación agregada actualizada"); return true; }
+  function transitionPayroll(runId: string, status: PayrollStatus, note: string) { const run = state.payrollRuns.find((item) => item.id === runId); if (!ready || !run || !canTransitionPayroll(run.status, status) || note.trim().length < 3) return false; dispatch({ type: "transition-payroll", runId, status, note }); notify("Control de Nóminas registrado"); return true; }
+
   function content() {
     if (!ready) return <WorkspaceLoading />;
 
@@ -247,12 +329,36 @@ export function GuestDemoApp() {
       );
     }
 
+    if (state.activeModule === "incidencias") {
+      return <IncidentsWorkspace incidents={state.incidents} events={state.incidentEvents} assigneeOptions={state.people.filter((person) => person.status === "active").map((person) => person.displayName)} onCreate={createIncident} onUpdate={updateIncident} onTransition={transitionIncident} />;
+    }
+
+    if (state.activeModule === "personal") {
+      return <PeopleWorkspace people={state.people} events={state.peopleEvents} leaveRequests={state.leaveRequests} onCreate={createPerson} onUpdate={updatePerson} />;
+    }
+
+    if (state.activeModule === "novedades") {
+      return <ChangelogWorkspace entries={state.changelogEntries} events={state.changelogEvents} onCreate={createChangelog} onUpdate={updateChangelog} onTransition={transitionChangelog} />;
+    }
+
+    if (state.activeModule === "tesoreria") {
+      return <TreasuryWorkspace entries={state.treasuryEntries} events={state.treasuryEvents} onCreate={createTreasury} onUpdate={updateTreasury} onTransition={transitionTreasury} />;
+    }
+
+    if (state.activeModule === "nominas") {
+      return <PayrollWorkspace runs={state.payrollRuns} events={state.payrollEvents} onCreate={createPayroll} onUpdate={updatePayroll} onTransition={transitionPayroll} />;
+    }
+
+    if (state.activeModule === "configuracion") {
+      return <SettingsWorkspace organizationName={state.organizationName} moduleSettings={state.moduleSettings} roles={state.roles} memberships={state.memberships} invitations={state.invitations} auditEvents={state.adminAuditEvents} onRenameOrganization={(name) => { dispatch({ type: "rename-organization", name }); notify("Identidad actualizada"); return true; }} onUpdateModule={updateModuleSetting} onUpdateRoleMetadata={updateRoleMetadata} onUpdateRolePermissions={updateRolePermissions} onCreateInvitation={createInvitation} onUpdateMembership={updateMembership} />;
+    }
+
     return (
       <ModuleWorkspace
         moduleId={
           state.activeModule as Exclude<
             ModuleId,
-            "inicio" | "vacaciones" | "tareas"
+            "inicio" | "vacaciones" | "tareas" | "incidencias" | "personal" | "novedades" | "tesoreria" | "nominas" | "configuracion"
           >
         }
         organizationName={state.organizationName}

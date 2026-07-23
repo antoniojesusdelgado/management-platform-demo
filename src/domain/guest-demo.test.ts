@@ -5,11 +5,20 @@ import {
   parseGuestDemoState,
 } from "@/domain/guest-demo";
 import { modules } from "@/domain/modules";
+import { canTransitionChangelog, changelogInputSchema } from "@/domain/changelog";
+import {
+  calculateSyntheticSlaDueAt,
+  canTransitionIncident,
+  incidentInputSchema,
+} from "@/domain/incidents";
+import { getPersonAvailability } from "@/domain/people";
+import { canTransitionPayroll, payrollInputSchema } from "@/domain/payroll";
 import {
   canTransitionTask,
   createsTaskDependencyCycle,
   taskInputSchema,
 } from "@/domain/tasks";
+import { canTransitionTreasury, treasuryInputSchema } from "@/domain/treasury";
 import {
   calculateBusinessDays,
   canTransitionLeaveRequest,
@@ -70,9 +79,74 @@ describe("guest demo", () => {
     };
     const migrated = parseGuestDemoState(legacy);
 
-    expect(migrated?.version).toBe(2);
+    expect(migrated?.version).toBe(6);
     expect(migrated?.leaveRequests).toEqual(legacy.leaveRequests);
     expect(migrated?.tasks.length).toBeGreaterThan(0);
+    expect(migrated?.incidents.length).toBeGreaterThan(0);
+    expect(migrated?.people.length).toBeGreaterThan(0);
+    expect(migrated?.treasuryEntries.length).toBeGreaterThan(0);
+    expect(migrated?.payrollRuns.length).toBeGreaterThan(0);
+  });
+
+  test("migrates version 2 sessions without losing task data", () => {
+    const legacy = {
+      version: 2,
+      activeModule: initialGuestDemoState.activeModule,
+      organizationName: initialGuestDemoState.organizationName,
+      leaveRequests: initialGuestDemoState.leaveRequests,
+      leaveEvents: initialGuestDemoState.leaveEvents,
+      tasks: initialGuestDemoState.tasks,
+      taskDependencies: initialGuestDemoState.taskDependencies,
+      taskComments: initialGuestDemoState.taskComments,
+      taskEvents: initialGuestDemoState.taskEvents,
+    };
+    const migrated = parseGuestDemoState(legacy);
+    expect(migrated?.version).toBe(6);
+    expect(migrated?.tasks).toEqual(legacy.tasks);
+  });
+
+  test("migrates version 3 sessions without losing incidents or people", () => {
+    const legacy = {
+      version: 3,
+      activeModule: initialGuestDemoState.activeModule,
+      organizationName: initialGuestDemoState.organizationName,
+      leaveRequests: initialGuestDemoState.leaveRequests,
+      leaveEvents: initialGuestDemoState.leaveEvents,
+      tasks: initialGuestDemoState.tasks,
+      taskDependencies: initialGuestDemoState.taskDependencies,
+      taskComments: initialGuestDemoState.taskComments,
+      taskEvents: initialGuestDemoState.taskEvents,
+      incidents: initialGuestDemoState.incidents,
+      incidentEvents: initialGuestDemoState.incidentEvents,
+      people: initialGuestDemoState.people,
+      peopleEvents: initialGuestDemoState.peopleEvents,
+    };
+    const migrated = parseGuestDemoState(legacy);
+    expect(migrated?.version).toBe(6);
+    expect(migrated?.incidents).toEqual(legacy.incidents);
+    expect(migrated?.roles.length).toBeGreaterThan(0);
+  });
+
+  test("migrates version 4 sessions without losing settings", () => {
+    const { treasuryEntries, treasuryEvents, payrollRuns, payrollEvents, ...legacyState } = initialGuestDemoState;
+    void treasuryEntries;
+    void treasuryEvents;
+    void payrollRuns;
+    void payrollEvents;
+    const migrated = parseGuestDemoState({ ...legacyState, version: 4 });
+    expect(migrated?.version).toBe(6);
+    expect(migrated?.roles).toEqual(legacyState.roles);
+    expect(migrated?.treasuryEntries.length).toBeGreaterThan(0);
+  });
+
+  test("migrates version 5 sessions without losing Treasury data", () => {
+    const { payrollRuns, payrollEvents, ...legacyState } = initialGuestDemoState;
+    void payrollRuns;
+    void payrollEvents;
+    const migrated = parseGuestDemoState({ ...legacyState, version: 5 });
+    expect(migrated?.version).toBe(6);
+    expect(migrated?.treasuryEntries).toEqual(legacyState.treasuryEntries);
+    expect(migrated?.payrollRuns.length).toBeGreaterThan(0);
   });
 
   test("ignores invalid leave transitions without corrupting guest state", () => {
@@ -180,5 +254,133 @@ describe("task workflow", () => {
     expect(taskInputSchema.safeParse(task).success).toBe(true);
     expect(transitioned.tasks[0].status).toBe("in_progress");
     expect(transitioned.taskEvents[0].fromStatus).toBe("pending");
+  });
+});
+
+describe("incident workflow", () => {
+  test("allows only explicit transitions and calculates the synthetic SLA", () => {
+    expect(canTransitionIncident("registered", "triaged")).toBe(true);
+    expect(canTransitionIncident("registered", "resolved")).toBe(false);
+    expect(calculateSyntheticSlaDueAt("critical", "2026-07-22T08:00:00.000Z")).toBe("2026-07-22T12:00:00.000Z");
+  });
+
+  test("creates an incident and records immutable activity", () => {
+    const next = guestDemoReducer(initialGuestDemoState, {
+      type: "create-incident",
+      input: { title: "Caso sintético", description: "Descripción totalmente sintética.", priority: "high", category: "software", assigneeName: null },
+    });
+    expect(incidentInputSchema.safeParse(next.incidents[0]).success).toBe(true);
+    expect(next.incidents[0].status).toBe("registered");
+    expect(next.incidentEvents[0].kind).toBe("created");
+  });
+});
+
+describe("people directory", () => {
+  test("derives availability from approved leave without duplicating it", () => {
+    const person = { ...initialGuestDemoState.people[1], displayName: initialGuestDemoState.leaveRequests[1].employeeName };
+    expect(getPersonAvailability(person, initialGuestDemoState.leaveRequests, "2026-07-24")).toBe("on_leave");
+    expect(getPersonAvailability(person, initialGuestDemoState.leaveRequests, "2026-07-25")).toBe("available");
+  });
+});
+
+describe("changelog workflow", () => {
+  test("uses draft, review and publication as explicit transitions", () => {
+    expect(canTransitionChangelog("draft", "in_review")).toBe(true);
+    expect(canTransitionChangelog("in_review", "published")).toBe(true);
+    expect(canTransitionChangelog("published", "draft")).toBe(false);
+  });
+
+  test("creates and publishes a synthetic changelog entry with history", () => {
+    const created = guestDemoReducer(initialGuestDemoState, { type: "create-changelog", input: { version: "0.5.0", title: "Entrada sintética", summary: "Contenido demostrativo preparado para una revisión." } });
+    const entry = created.changelogEntries[0];
+    expect(changelogInputSchema.safeParse(entry).success).toBe(true);
+    const reviewed = guestDemoReducer(created, { type: "transition-changelog", entryId: entry.id, status: "in_review", note: "Enviada a revisión." });
+    const published = guestDemoReducer(reviewed, { type: "transition-changelog", entryId: entry.id, status: "published", note: "Contenido revisado." });
+    expect(published.changelogEntries[0].publishedAt).not.toBeNull();
+    expect(published.changelogEvents[0].toStatus).toBe("published");
+  });
+});
+
+describe("guest settings", () => {
+  test("keeps permissions unchanged when role metadata changes", () => {
+    const role = initialGuestDemoState.roles.find((item) => item.code === "manager")!;
+    const next = guestDemoReducer(initialGuestDemoState, { type: "update-role-metadata", roleId: role.id, name: "Coordinación", color: "#123456" });
+    const updated = next.roles.find((item) => item.id === role.id)!;
+    expect(updated.name).toBe("Coordinación");
+    expect(updated.permissionCodes).toEqual(role.permissionCodes);
+    expect(next.adminAuditEvents[0].eventType).toBe("role.metadata_updated");
+  });
+
+  test("does not allow disabling the home module", () => {
+    const next = guestDemoReducer(initialGuestDemoState, { type: "update-module-setting", moduleId: "inicio", enabled: false, sortOrder: 0 });
+    expect(next).toBe(initialGuestDemoState);
+  });
+});
+
+describe("treasury workflow", () => {
+  test("uses a strict monotonic control flow", () => {
+    expect(canTransitionTreasury("draft", "registered")).toBe(true);
+    expect(canTransitionTreasury("registered", "reconciled")).toBe(true);
+    expect(canTransitionTreasury("reconciled", "closed")).toBe(false);
+    expect(canTransitionTreasury("closed", "registered")).toBe(false);
+  });
+
+  test("creates and traces an aggregated synthetic movement", () => {
+    const input = {
+      entryDate: "2026-07-22",
+      concept: "Movimiento agregado de prueba",
+      amountCents: -25_000,
+      currency: "EUR" as const,
+    };
+    expect(treasuryInputSchema.safeParse(input).success).toBe(true);
+    const created = guestDemoReducer(initialGuestDemoState, { type: "create-treasury", input });
+    const entry = created.treasuryEntries[0];
+    expect(entry.status).toBe("draft");
+    expect(created.treasuryEvents[0].kind).toBe("created");
+
+    const registered = guestDemoReducer(created, {
+      type: "transition-treasury",
+      entryId: entry.id,
+      status: "registered",
+      note: "Registro sintético comprobado.",
+    });
+    expect(registered.treasuryEntries[0].status).toBe("registered");
+    expect(registered.treasuryEvents[0].fromStatus).toBe("draft");
+  });
+
+  test("rejects skipped Treasury controls", () => {
+    const entry = initialGuestDemoState.treasuryEntries.find((item) => item.status === "registered")!;
+    const next = guestDemoReducer(initialGuestDemoState, {
+      type: "transition-treasury",
+      entryId: entry.id,
+      status: "validated",
+      note: "Intento de salto de control.",
+    });
+    expect(next).toBe(initialGuestDemoState);
+  });
+});
+
+describe("payroll workflow", () => {
+  test("uses a strict monotonic aggregate control flow", () => {
+    expect(canTransitionPayroll("collecting", "validating")).toBe(true);
+    expect(canTransitionPayroll("validating", "reviewed")).toBe(false);
+    expect(canTransitionPayroll("closed", "collecting")).toBe(false);
+  });
+
+  test("creates a consistent aggregated synthetic cycle and traces it", () => {
+    const input = { periodStart: "2026-09-01", periodEnd: "2026-09-30", peopleCount: 20, grossTotalCents: 580_000, deductionTotalCents: 108_000, currency: "EUR" as const, notes: "Ciclo agregado de prueba." };
+    expect(payrollInputSchema.safeParse(input).success).toBe(true);
+    const created = guestDemoReducer(initialGuestDemoState, { type: "create-payroll", input });
+    expect(created.payrollRuns[0].netTotalCents).toBe(472_000);
+    expect(created.payrollRuns[0].status).toBe("collecting");
+    const validating = guestDemoReducer(created, { type: "transition-payroll", runId: created.payrollRuns[0].id, status: "validating", note: "Datos agregados comprobados." });
+    expect(validating.payrollRuns[0].status).toBe("validating");
+    expect(validating.payrollEvents[0].fromStatus).toBe("collecting");
+  });
+
+  test("rejects inconsistent totals and skipped controls", () => {
+    expect(payrollInputSchema.safeParse({ periodStart: "2026-09-01", periodEnd: "2026-09-30", peopleCount: 20, grossTotalCents: 100, deductionTotalCents: 101, currency: "EUR", notes: "" }).success).toBe(false);
+    const run = initialGuestDemoState.payrollRuns.find((item) => item.status === "collecting")!;
+    expect(guestDemoReducer(initialGuestDemoState, { type: "transition-payroll", runId: run.id, status: "calculated", note: "Intento de salto." })).toBe(initialGuestDemoState);
   });
 });

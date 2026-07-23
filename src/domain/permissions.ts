@@ -27,9 +27,13 @@ export const permissionCatalog = [
   "incidents.tickets.view",
   "incidents.tickets.manage",
   "treasury.entries.view",
+  "treasury.entries.manage",
   "payroll.runs.view",
+  "payroll.runs.manage",
   "people.profiles.view",
+  "people.profiles.manage",
   "changelog.entries.view",
+  "changelog.entries.manage",
   "settings.workspace.manage",
 ] as const satisfies readonly PermissionCode[];
 

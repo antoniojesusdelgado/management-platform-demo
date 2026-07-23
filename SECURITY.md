@@ -8,8 +8,12 @@ is stored in `sessionStorage` and can be reset from the interface.
 ## Authenticated application
 
 - Authentication uses Supabase Auth with Google OAuth, PKCE and secure cookies.
-- Registration is not presented publicly. Access requires an active
-  organization membership.
+- Google sign-in is public. The first sign-in provisions one isolated,
+  synthetic organization and a full-access demo role for that identity.
+- The application profile stores a generated alias. Google name, email and
+  avatar are not copied into public application tables.
+- Users never share a workspace by default, which limits cross-user vandalism
+  while retaining multi-organization RLS as the final authorization boundary.
 - Proxy session refresh is not an authorization boundary.
 - Server Actions and data access functions revalidate the user, membership,
   organization and stable permission code.
@@ -21,7 +25,9 @@ is stored in `sessionStorage` and can be reset from the interface.
 ## Secrets
 
 Only variables prefixed with `NEXT_PUBLIC_` may reach the browser. Do not expose
-`SUPABASE_SECRET_KEY`, `GOOGLE_CLIENT_SECRET` or database credentials.
+the Google client secret, Supabase secret keys or database credentials. Google
+credentials belong in the provider configuration, not in the application
+environment.
 
 Before a release:
 

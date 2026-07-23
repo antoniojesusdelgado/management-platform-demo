@@ -18,9 +18,18 @@ export async function GET(request: Request) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { error: exchangeError } =
+    await supabase.auth.exchangeCodeForSession(code);
+
+  if (exchangeError) {
+    return NextResponse.redirect(new URL("/login?error=oauth", url.origin));
+  }
+
+  const { error: provisioningError } = await supabase.rpc(
+    "ensure_public_demo_workspace",
+  );
 
   return NextResponse.redirect(
-    new URL(error ? "/login?error=oauth" : next, url.origin),
+    new URL(provisioningError ? "/login?error=workspace" : next, url.origin),
   );
 }

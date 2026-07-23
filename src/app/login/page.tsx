@@ -8,12 +8,12 @@ export default function LoginPage() {
       <section className="landing-card" aria-labelledby="login-title">
         <div>
           <p className="eyebrow" style={{ color: "#93c5fd" }}>
-            Acceso restringido
+            Demo pública
           </p>
           <h1 id="login-title">Entrar en la plataforma</h1>
           <p>
-            La aplicación completa usa Google OAuth y solo admite cuentas
-            invitadas por una organización. No existe registro público.
+            Google OAuth demuestra el acceso autenticado. Cada persona recibe
+            un workspace sintético independiente con todos los permisos.
           </p>
           <div className="landing-actions">
             <LoginButton />
@@ -25,10 +25,11 @@ export default function LoginPage() {
         </div>
         <aside className="demo-note">
           <IconLock aria-hidden="true" size={31} />
-          <h2 style={{ marginTop: "1rem" }}>Autenticación preparada</h2>
+          <h2 style={{ marginTop: "1rem" }}>Privacidad por diseño</h2>
           <p>
-            La conexión permanecerá desactivada hasta crear el proyecto
-            Supabase independiente y configurar Google OAuth.
+            La aplicación no copia tu nombre, correo ni avatar al perfil
+            operativo. Los cambios autenticados quedan aislados en tu propio
+            espacio de demostración.
           </p>
         </aside>
       </section>

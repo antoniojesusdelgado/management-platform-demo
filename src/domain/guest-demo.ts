@@ -1,5 +1,59 @@
 import { z } from "zod";
+import {
+  canTransitionChangelog,
+  changelogInputSchema,
+  changelogStatuses,
+  transitionChangelog,
+  type ChangelogEntry,
+  type ChangelogEvent,
+  type ChangelogInput,
+  type ChangelogStatus,
+} from "@/domain/changelog";
+import {
+  calculateSyntheticSlaDueAt,
+  canTransitionIncident,
+  incidentCategories,
+  incidentPriorities,
+  incidentStatuses,
+  transitionIncident,
+  type Incident,
+  type IncidentEvent,
+  type IncidentInput,
+  type IncidentStatus,
+} from "@/domain/incidents";
 import { moduleIds, type ModuleId } from "@/domain/modules";
+import {
+  canTransitionPayroll,
+  payrollCurrencies,
+  payrollInputSchema,
+  payrollStatuses,
+  transitionPayrollRun,
+  type PayrollEvent,
+  type PayrollInput,
+  type PayrollRun,
+  type PayrollStatus,
+} from "@/domain/payroll";
+import { permissionCatalog, type PermissionCode } from "@/domain/permissions";
+import {
+  personRoleCodes,
+  personStatuses,
+  type Person,
+  type PersonEvent,
+  type PersonInput,
+} from "@/domain/people";
+import {
+  createDefaultModuleSettings,
+  invitationInputSchema,
+  roleMetadataSchema,
+  rolePermissionsSchema,
+  workspaceMembershipStatuses,
+  type AdminAuditEvent,
+  type ConfigurableRole,
+  type ModuleSetting,
+  type WorkspaceInvitation,
+  type WorkspaceMembership,
+  type WorkspaceMembershipStatus,
+} from "@/domain/settings";
 import {
   canTransitionTask,
   createsTaskDependencyCycle,
@@ -14,6 +68,17 @@ import {
   type TaskStatus,
 } from "@/domain/tasks";
 import {
+  canTransitionTreasury,
+  transitionTreasuryEntry,
+  treasuryCurrencies,
+  treasuryInputSchema,
+  treasuryStatuses,
+  type TreasuryEntry,
+  type TreasuryEvent,
+  type TreasuryInput,
+  type TreasuryStatus,
+} from "@/domain/treasury";
+import {
   calculateBusinessDays,
   canTransitionLeaveRequest,
   leaveRequestStatuses,
@@ -25,7 +90,7 @@ import {
 } from "@/domain/vacations";
 
 export type GuestDemoState = {
-  version: 2;
+  version: 6;
   activeModule: ModuleId;
   organizationName: string;
   leaveRequests: LeaveRequest[];
@@ -34,6 +99,21 @@ export type GuestDemoState = {
   taskDependencies: TaskDependency[];
   taskComments: TaskComment[];
   taskEvents: TaskEvent[];
+  incidents: Incident[];
+  incidentEvents: IncidentEvent[];
+  people: Person[];
+  peopleEvents: PersonEvent[];
+  changelogEntries: ChangelogEntry[];
+  changelogEvents: ChangelogEvent[];
+  moduleSettings: ModuleSetting[];
+  roles: ConfigurableRole[];
+  memberships: WorkspaceMembership[];
+  invitations: WorkspaceInvitation[];
+  adminAuditEvents: AdminAuditEvent[];
+  treasuryEntries: TreasuryEntry[];
+  treasuryEvents: TreasuryEvent[];
+  payrollRuns: PayrollRun[];
+  payrollEvents: PayrollEvent[];
 };
 
 const leaveRequestSchema = z.object({
@@ -106,7 +186,7 @@ const taskEventSchema = z.object({
   createdAt: z.iso.datetime(),
 });
 
-export const guestDemoStateSchema = guestDemoStateV1Schema.extend({
+const guestDemoStateV2Schema = guestDemoStateV1Schema.extend({
   version: z.literal(2),
   tasks: z.array(taskSchema),
   taskDependencies: z.array(taskDependencySchema),
@@ -114,17 +194,136 @@ export const guestDemoStateSchema = guestDemoStateV1Schema.extend({
   taskEvents: z.array(taskEventSchema),
 });
 
+const incidentSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(3).max(160),
+  description: z.string().min(3).max(2_000),
+  status: z.enum(incidentStatuses),
+  priority: z.enum(incidentPriorities),
+  category: z.enum(incidentCategories),
+  requesterName: z.string().min(1),
+  assigneeName: z.string().min(2).max(100).nullable(),
+  slaDueAt: z.iso.datetime(),
+  resolution: z.string().max(2_000).nullable(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
+const incidentEventSchema = z.object({
+  id: z.string().min(1),
+  incidentId: z.string().min(1),
+  kind: z.enum(["created", "updated", "assigned", "status", "priority"]),
+  fromStatus: z.enum(incidentStatuses).nullable(),
+  toStatus: z.enum(incidentStatuses).nullable(),
+  note: z.string().min(1).max(2_000),
+  actorName: z.string().min(1),
+  createdAt: z.iso.datetime(),
+});
+
+const personSchema = z.object({
+  id: z.string().min(1),
+  displayName: z.string().min(2).max(100),
+  team: z.string().min(2).max(100),
+  positionTitle: z.string().min(2).max(120),
+  status: z.enum(personStatuses),
+  roleCode: z.enum(personRoleCodes),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
+const personEventSchema = z.object({
+  id: z.string().min(1),
+  personId: z.string().min(1),
+  kind: z.enum(["created", "updated", "status", "role"]),
+  note: z.string().min(1).max(1_000),
+  actorName: z.string().min(1),
+  createdAt: z.iso.datetime(),
+});
+
+const guestDemoStateV3Schema = guestDemoStateV2Schema.extend({
+  version: z.literal(3),
+  incidents: z.array(incidentSchema),
+  incidentEvents: z.array(incidentEventSchema),
+  people: z.array(personSchema),
+  peopleEvents: z.array(personEventSchema),
+});
+
+const changelogEntrySchema = z.object({
+  id: z.string().min(1), version: z.string().min(1).max(30), title: z.string().min(3).max(120),
+  summary: z.string().min(8).max(1_000), status: z.enum(changelogStatuses), createdBy: z.string().min(1),
+  publishedAt: z.iso.datetime().nullable(), createdAt: z.iso.datetime(), updatedAt: z.iso.datetime(),
+});
+const changelogEventSchema = z.object({
+  id: z.string().min(1), entryId: z.string().min(1), fromStatus: z.enum(changelogStatuses).nullable(),
+  toStatus: z.enum(changelogStatuses), note: z.string().min(3).max(1_000), actorName: z.string().min(1), createdAt: z.iso.datetime(),
+});
+const moduleSettingSchema = z.object({ moduleId: z.enum(moduleIds), enabled: z.boolean(), sortOrder: z.number().int().nonnegative() });
+const roleSchema = z.object({ id: z.string().min(1), code: z.string().min(1), name: z.string().min(2).max(60), color: z.string().regex(/^#[0-9a-fA-F]{6}$/), permissionCodes: z.array(z.enum(permissionCatalog)) });
+const membershipSchema = z.object({ id: z.string().min(1), personId: z.string().min(1), displayName: z.string().min(2), roleId: z.string().min(1), status: z.enum(workspaceMembershipStatuses) });
+const invitationSchema = z.object({ id: z.string().min(1), email: z.email(), roleId: z.string().min(1), status: z.enum(["pending", "accepted", "revoked", "expired"]), expiresAt: z.iso.datetime(), createdAt: z.iso.datetime() });
+const adminAuditEventSchema = z.object({ id: z.string().min(1), eventType: z.string().min(3), entityType: z.string().min(3), entityId: z.string().nullable(), actorName: z.string().min(1), summary: z.string().min(3), createdAt: z.iso.datetime() });
+
+const guestDemoStateV4Schema = guestDemoStateV3Schema.extend({
+  version: z.literal(4),
+  changelogEntries: z.array(changelogEntrySchema), changelogEvents: z.array(changelogEventSchema),
+  moduleSettings: z.array(moduleSettingSchema), roles: z.array(roleSchema), memberships: z.array(membershipSchema),
+  invitations: z.array(invitationSchema), adminAuditEvents: z.array(adminAuditEventSchema),
+});
+
+const treasuryEntrySchema = z.object({
+  id: z.string().min(1), entryDate: z.iso.date(), concept: z.string().min(3).max(160),
+  amountCents: z.number().int(), currency: z.enum(treasuryCurrencies), status: z.enum(treasuryStatuses),
+  createdBy: z.string().min(1), createdAt: z.iso.datetime(), updatedAt: z.iso.datetime(),
+});
+const treasuryEventSchema = z.object({
+  id: z.string().min(1), entryId: z.string().min(1), kind: z.enum(["created", "updated", "status"]),
+  fromStatus: z.enum(treasuryStatuses).nullable(), toStatus: z.enum(treasuryStatuses),
+  note: z.string().min(3).max(1_000), actorName: z.string().min(1), createdAt: z.iso.datetime(),
+});
+
+const guestDemoStateV5Schema = guestDemoStateV4Schema.extend({
+  version: z.literal(5),
+  treasuryEntries: z.array(treasuryEntrySchema),
+  treasuryEvents: z.array(treasuryEventSchema),
+});
+
+const payrollRunSchema = z.object({
+  id: z.string().min(1), periodStart: z.iso.date(), periodEnd: z.iso.date(), peopleCount: z.number().int().positive(),
+  grossTotalCents: z.number().int().positive(), deductionTotalCents: z.number().int().nonnegative(), netTotalCents: z.number().int().nonnegative(),
+  currency: z.enum(payrollCurrencies), notes: z.string().max(1_000), status: z.enum(payrollStatuses), createdBy: z.string().min(1),
+  createdAt: z.iso.datetime(), updatedAt: z.iso.datetime(),
+}).refine((run) => run.periodEnd >= run.periodStart && run.deductionTotalCents <= run.grossTotalCents && run.netTotalCents === run.grossTotalCents - run.deductionTotalCents);
+const payrollEventSchema = z.object({
+  id: z.string().min(1), runId: z.string().min(1), kind: z.enum(["created", "updated", "status"]),
+  fromStatus: z.enum(payrollStatuses).nullable(), toStatus: z.enum(payrollStatuses), note: z.string().min(3).max(1_000),
+  actorName: z.string().min(1), createdAt: z.iso.datetime(),
+});
+
+export const guestDemoStateSchema = guestDemoStateV5Schema.extend({
+  version: z.literal(6),
+  payrollRuns: z.array(payrollRunSchema),
+  payrollEvents: z.array(payrollEventSchema),
+});
+
 export function parseGuestDemoState(value: unknown): GuestDemoState | null {
   const result = guestDemoStateSchema.safeParse(value);
   if (result.success) return result.data;
 
-  const legacy = guestDemoStateV1Schema.safeParse(value);
-  if (!legacy.success) return null;
-  return {
-    ...legacy.data,
-    version: 2,
-    ...createInitialTaskState(),
-  };
+  const version5 = guestDemoStateV5Schema.safeParse(value);
+  if (version5.success) return migrateVersion5(version5.data);
+
+  const version4 = guestDemoStateV4Schema.safeParse(value);
+  if (version4.success) return migrateVersion5(migrateVersion4(version4.data));
+
+  const version3 = guestDemoStateV3Schema.safeParse(value);
+  if (version3.success) return migrateVersion5(migrateVersion4(migrateVersion3(version3.data)));
+
+  const version2 = guestDemoStateV2Schema.safeParse(value);
+  if (version2.success) return migrateVersion5(migrateVersion4(migrateVersion3(migrateVersion2(version2.data))));
+
+  const version1 = guestDemoStateV1Schema.safeParse(value);
+  if (!version1.success) return null;
+  return migrateVersion5(migrateVersion4(migrateVersion3(migrateVersion2({ ...version1.data, version: 2, ...createInitialTaskState() }))));
 }
 
 export type GuestDemoAction =
@@ -142,6 +341,25 @@ export type GuestDemoAction =
   | { type: "transition-task"; taskId: string; status: TaskStatus; note: string }
   | { type: "add-task-comment"; taskId: string; body: string }
   | { type: "add-task-dependency"; taskId: string; dependsOnTaskId: string }
+  | { type: "create-incident"; input: IncidentInput }
+  | { type: "update-incident"; incidentId: string; input: IncidentInput }
+  | { type: "transition-incident"; incidentId: string; status: IncidentStatus; note: string }
+  | { type: "create-person"; input: PersonInput }
+  | { type: "update-person"; personId: string; input: PersonInput }
+  | { type: "create-changelog"; input: ChangelogInput }
+  | { type: "update-changelog"; entryId: string; input: ChangelogInput }
+  | { type: "transition-changelog"; entryId: string; status: ChangelogStatus; note: string }
+  | { type: "create-treasury"; input: TreasuryInput }
+  | { type: "update-treasury"; entryId: string; input: TreasuryInput }
+  | { type: "transition-treasury"; entryId: string; status: TreasuryStatus; note: string }
+  | { type: "create-payroll"; input: PayrollInput }
+  | { type: "update-payroll"; runId: string; input: PayrollInput }
+  | { type: "transition-payroll"; runId: string; status: PayrollStatus; note: string }
+  | { type: "update-module-setting"; moduleId: ModuleId; enabled: boolean; sortOrder: number }
+  | { type: "update-role-metadata"; roleId: string; name: string; color: string }
+  | { type: "update-role-permissions"; roleId: string; permissionCodes: PermissionCode[] }
+  | { type: "create-invitation"; email: string; roleId: string }
+  | { type: "update-membership"; membershipId: string; roleId: string; status: WorkspaceMembershipStatus }
   | { type: "rename-organization"; name: string }
   | { type: "reset" };
 
@@ -232,8 +450,188 @@ function createInitialTaskState(): Pick<
   };
 }
 
+function createInitialIncidentPeopleState(): Pick<
+  GuestDemoState,
+  "incidents" | "incidentEvents" | "people" | "peopleEvents"
+> {
+  return {
+    incidents: [
+      {
+        id: "incident-001",
+        title: "Acceso bloqueado al entorno de pruebas",
+        description: "Una cuenta sintética no puede acceder al espacio de demostración.",
+        status: "investigating",
+        priority: "high",
+        category: "access",
+        requesterName: "Marta Soler",
+        assigneeName: "Elena Martín",
+        slaDueAt: "2026-07-23T08:30:00.000Z",
+        resolution: null,
+        createdAt: "2026-07-22T08:30:00.000Z",
+        updatedAt: "2026-07-22T10:00:00.000Z",
+      },
+      {
+        id: "incident-002",
+        title: "Error en un informe demostrativo",
+        description: "El filtro de fechas devuelve un resultado sintético incompleto.",
+        status: "registered",
+        priority: "medium",
+        category: "software",
+        requesterName: "Diego Santos",
+        assigneeName: null,
+        slaDueAt: "2026-07-25T09:00:00.000Z",
+        resolution: null,
+        createdAt: "2026-07-22T09:00:00.000Z",
+        updatedAt: "2026-07-22T09:00:00.000Z",
+      },
+    ],
+    incidentEvents: [
+      {
+        id: "incident-event-001",
+        incidentId: "incident-001",
+        kind: "status",
+        fromStatus: "assigned",
+        toStatus: "investigating",
+        note: "Diagnóstico iniciado con datos sintéticos.",
+        actorName: "Elena Martín",
+        createdAt: "2026-07-22T10:00:00.000Z",
+      },
+    ],
+    people: [
+      {
+        id: "person-001",
+        displayName: "Elena Martín",
+        team: "Operaciones",
+        positionTitle: "Responsable de operaciones",
+        status: "active",
+        roleCode: "manager",
+        createdAt: "2026-07-01T08:00:00.000Z",
+        updatedAt: "2026-07-01T08:00:00.000Z",
+      },
+      {
+        id: "person-002",
+        displayName: "Diego Santos",
+        team: "Producto",
+        positionTitle: "Especialista de producto",
+        status: "active",
+        roleCode: "collaborator",
+        createdAt: "2026-07-02T08:00:00.000Z",
+        updatedAt: "2026-07-02T08:00:00.000Z",
+      },
+      {
+        id: "person-003",
+        displayName: "Marta Soler",
+        team: "Tecnología",
+        positionTitle: "Desarrolladora",
+        status: "invited",
+        roleCode: "collaborator",
+        createdAt: "2026-07-20T08:00:00.000Z",
+        updatedAt: "2026-07-20T08:00:00.000Z",
+      },
+    ],
+    peopleEvents: [],
+  };
+}
+
+function migrateVersion2(state: z.infer<typeof guestDemoStateV2Schema>): z.infer<typeof guestDemoStateV3Schema> {
+  return { ...state, version: 3, ...createInitialIncidentPeopleState() };
+}
+
+function createInitialChangelogSettingsState(): Pick<
+  GuestDemoState,
+  "changelogEntries" | "changelogEvents" | "moduleSettings" | "roles" | "memberships" | "invitations" | "adminAuditEvents"
+> {
+  return {
+    changelogEntries: [
+      {
+        id: "changelog-001", version: "0.3.0", title: "Incidencias y directorio seguro",
+        summary: "Añade flujos sintéticos de incidencias y perfiles separados de la autorización.", status: "published",
+        createdBy: "Responsable demo", publishedAt: "2026-07-22T15:00:00.000Z", createdAt: "2026-07-22T11:00:00.000Z", updatedAt: "2026-07-22T15:00:00.000Z",
+      },
+      {
+        id: "changelog-002", version: "0.4.0", title: "Configuración verificable",
+        summary: "Prepara la matriz de permisos, el orden de módulos y la auditoría administrativa.", status: "in_review",
+        createdBy: "Usuario invitado", publishedAt: null, createdAt: "2026-07-22T16:00:00.000Z", updatedAt: "2026-07-22T16:00:00.000Z",
+      },
+    ],
+    changelogEvents: [
+      { id: "changelog-event-001", entryId: "changelog-001", fromStatus: "in_review", toStatus: "published", note: "Contenido sintético revisado y publicado.", actorName: "Responsable demo", createdAt: "2026-07-22T15:00:00.000Z" },
+    ],
+    moduleSettings: createDefaultModuleSettings(),
+    roles: [
+      { id: "role-admin", code: "admin", name: "Administración", color: "#2563eb", permissionCodes: [...permissionCatalog] },
+      { id: "role-manager", code: "manager", name: "Responsable", color: "#0891b2", permissionCodes: ["vacations.requests.view", "vacations.requests.approve", "tasks.items.view", "tasks.items.manage", "incidents.tickets.view", "incidents.tickets.manage", "treasury.entries.view", "people.profiles.view", "changelog.entries.view", "changelog.entries.manage"] },
+      { id: "role-collaborator", code: "collaborator", name: "Colaboración", color: "#64748b", permissionCodes: ["vacations.requests.view", "vacations.requests.create", "tasks.items.view", "incidents.tickets.view", "people.profiles.view", "changelog.entries.view"] },
+    ],
+    memberships: [
+      { id: "membership-001", personId: "person-001", displayName: "Elena Martín", roleId: "role-manager", status: "active" },
+      { id: "membership-002", personId: "person-002", displayName: "Diego Santos", roleId: "role-collaborator", status: "active" },
+      { id: "membership-003", personId: "person-003", displayName: "Marta Soler", roleId: "role-collaborator", status: "invited" },
+    ],
+    invitations: [
+      { id: "invitation-001", email: "invitacion@example.test", roleId: "role-collaborator", status: "pending", expiresAt: "2026-08-05T12:00:00.000Z", createdAt: "2026-07-22T12:00:00.000Z" },
+    ],
+    adminAuditEvents: [],
+  };
+}
+
+function migrateVersion3(state: z.infer<typeof guestDemoStateV3Schema>): z.infer<typeof guestDemoStateV4Schema> {
+  return guestDemoStateV4Schema.parse({ ...state, version: 4, ...createInitialChangelogSettingsState() });
+}
+
+function createInitialTreasuryState(): Pick<GuestDemoState, "treasuryEntries" | "treasuryEvents"> {
+  return {
+    treasuryEntries: [
+      {
+        id: "treasury-001", entryDate: "2026-07-01", concept: "Entradas operativas agregadas · demo",
+        amountCents: 1_250_000, currency: "EUR", status: "closed", createdBy: "Responsable demo",
+        createdAt: "2026-07-02T08:30:00.000Z", updatedAt: "2026-07-08T12:00:00.000Z",
+      },
+      {
+        id: "treasury-002", entryDate: "2026-07-15", concept: "Servicios digitales agregados · demo",
+        amountCents: -184_500, currency: "EUR", status: "validated", createdBy: "Responsable demo",
+        createdAt: "2026-07-16T09:00:00.000Z", updatedAt: "2026-07-21T11:20:00.000Z",
+      },
+      {
+        id: "treasury-003", entryDate: "2026-07-21", concept: "Operaciones internas agregadas · demo",
+        amountCents: -72_000, currency: "EUR", status: "registered", createdBy: "Usuario invitado",
+        createdAt: "2026-07-21T14:00:00.000Z", updatedAt: "2026-07-21T14:00:00.000Z",
+      },
+    ],
+    treasuryEvents: [
+      { id: "treasury-event-001", entryId: "treasury-001", kind: "status", fromStatus: "validated", toStatus: "closed", note: "Periodo sintético cerrado.", actorName: "Responsable demo", createdAt: "2026-07-08T12:00:00.000Z" },
+      { id: "treasury-event-002", entryId: "treasury-002", kind: "status", fromStatus: "reconciled", toStatus: "validated", note: "Importe agregado validado.", actorName: "Responsable demo", createdAt: "2026-07-21T11:20:00.000Z" },
+      { id: "treasury-event-003", entryId: "treasury-003", kind: "created", fromStatus: null, toStatus: "draft", note: "Movimiento sintético creado.", actorName: "Usuario invitado", createdAt: "2026-07-21T13:45:00.000Z" },
+      { id: "treasury-event-004", entryId: "treasury-003", kind: "status", fromStatus: "draft", toStatus: "registered", note: "Movimiento sintético registrado.", actorName: "Usuario invitado", createdAt: "2026-07-21T14:00:00.000Z" },
+    ],
+  };
+}
+
+function migrateVersion4(state: z.infer<typeof guestDemoStateV4Schema>): z.infer<typeof guestDemoStateV5Schema> {
+  return { ...state, version: 5, ...createInitialTreasuryState() };
+}
+
+function createInitialPayrollState(): Pick<GuestDemoState, "payrollRuns" | "payrollEvents"> {
+  return {
+    payrollRuns: [
+      { id: "payroll-001", periodStart: "2026-06-01", periodEnd: "2026-06-30", peopleCount: 18, grossTotalCents: 512_000, deductionTotalCents: 94_000, netTotalCents: 418_000, currency: "EUR", notes: "Ciclo agregado cerrado · datos ficticios.", status: "closed", createdBy: "Responsable demo", createdAt: "2026-06-20T09:00:00.000Z", updatedAt: "2026-06-28T12:00:00.000Z" },
+      { id: "payroll-002", periodStart: "2026-07-01", periodEnd: "2026-07-31", peopleCount: 19, grossTotalCents: 546_000, deductionTotalCents: 101_000, netTotalCents: 445_000, currency: "EUR", notes: "Revisión agregada de demostración.", status: "reviewed", createdBy: "Responsable demo", createdAt: "2026-07-18T09:00:00.000Z", updatedAt: "2026-07-22T12:00:00.000Z" },
+      { id: "payroll-003", periodStart: "2026-08-01", periodEnd: "2026-08-31", peopleCount: 19, grossTotalCents: 548_500, deductionTotalCents: 102_500, netTotalCents: 446_000, currency: "EUR", notes: "Estimación agregada sintética en recopilación.", status: "collecting", createdBy: "Usuario invitado", createdAt: "2026-07-22T14:00:00.000Z", updatedAt: "2026-07-22T14:00:00.000Z" },
+    ],
+    payrollEvents: [
+      { id: "payroll-event-001", runId: "payroll-001", kind: "status", fromStatus: "reviewed", toStatus: "closed", note: "Ciclo agregado sintético cerrado.", actorName: "Responsable demo", createdAt: "2026-06-28T12:00:00.000Z" },
+      { id: "payroll-event-002", runId: "payroll-002", kind: "status", fromStatus: "calculated", toStatus: "reviewed", note: "Totales agregados sintéticos revisados.", actorName: "Responsable demo", createdAt: "2026-07-22T12:00:00.000Z" },
+      { id: "payroll-event-003", runId: "payroll-003", kind: "created", fromStatus: null, toStatus: "collecting", note: "Ciclo agregado sintético creado.", actorName: "Usuario invitado", createdAt: "2026-07-22T14:00:00.000Z" },
+    ],
+  };
+}
+
+function migrateVersion5(state: z.infer<typeof guestDemoStateV5Schema>): GuestDemoState {
+  return { ...state, version: 6, ...createInitialPayrollState() };
+}
+
 export const initialGuestDemoState: GuestDemoState = {
-  version: 2,
+  version: 6,
   activeModule: "inicio",
   organizationName: "Organización demo",
   leaveRequests: [
@@ -295,6 +693,10 @@ export const initialGuestDemoState: GuestDemoState = {
     },
   ],
   ...createInitialTaskState(),
+  ...createInitialIncidentPeopleState(),
+  ...createInitialChangelogSettingsState(),
+  ...createInitialTreasuryState(),
+  ...createInitialPayrollState(),
 };
 
 function stableId(prefix: string, state: GuestDemoState) {
@@ -305,6 +707,17 @@ function stableId(prefix: string, state: GuestDemoState) {
       state.taskDependencies.length +
       state.taskComments.length +
       state.taskEvents.length +
+      state.incidents.length +
+      state.incidentEvents.length +
+      state.people.length +
+      state.peopleEvents.length +
+      state.changelogEntries.length +
+      state.changelogEvents.length +
+      state.treasuryEntries.length +
+      state.treasuryEvents.length +
+      state.payrollRuns.length +
+      state.payrollEvents.length +
+      state.adminAuditEvents.length +
       1,
   ).padStart(3, "0")}`;
 }
@@ -315,7 +728,7 @@ export function guestDemoReducer(
 ): GuestDemoState {
   switch (action.type) {
     case "hydrate":
-      return action.state.version === 2 ? action.state : state;
+      return action.state.version === 6 ? action.state : state;
     case "navigate":
       return { ...state, activeModule: action.module };
     case "create-leave": {
@@ -552,10 +965,305 @@ export function guestDemoReducer(
         ],
       };
     }
+    case "create-incident": {
+      const createdAt = new Date().toISOString();
+      const id = stableId("incident", state);
+      const incident: Incident = {
+        id,
+        ...action.input,
+        status: "registered",
+        requesterName: "Usuario invitado",
+        slaDueAt: calculateSyntheticSlaDueAt(action.input.priority, createdAt),
+        resolution: null,
+        createdAt,
+        updatedAt: createdAt,
+      };
+      return {
+        ...state,
+        incidents: [incident, ...state.incidents],
+        incidentEvents: [
+          {
+            id: stableId("incident-event", state),
+            incidentId: id,
+            kind: "created",
+            fromStatus: null,
+            toStatus: "registered",
+            note: "Incidencia registrada en modo invitado.",
+            actorName: "Usuario invitado",
+            createdAt,
+          },
+          ...state.incidentEvents,
+        ],
+      };
+    }
+    case "update-incident": {
+      const current = state.incidents.find((incident) => incident.id === action.incidentId);
+      if (!current) return state;
+      const createdAt = new Date().toISOString();
+      const assignmentChanged = current.assigneeName !== action.input.assigneeName;
+      const priorityChanged = current.priority !== action.input.priority;
+      const kind: IncidentEvent["kind"] = assignmentChanged
+        ? "assigned"
+        : priorityChanged
+          ? "priority"
+          : "updated";
+      return {
+        ...state,
+        incidents: state.incidents.map((incident) =>
+          incident.id === action.incidentId
+            ? {
+                ...incident,
+                ...action.input,
+                slaDueAt: priorityChanged
+                  ? calculateSyntheticSlaDueAt(action.input.priority, incident.createdAt)
+                  : incident.slaDueAt,
+                updatedAt: createdAt,
+              }
+            : incident,
+        ),
+        incidentEvents: [
+          {
+            id: stableId("incident-event", state),
+            incidentId: action.incidentId,
+            kind,
+            fromStatus: current.status,
+            toStatus: current.status,
+            note: assignmentChanged
+              ? `Responsable actualizado a ${action.input.assigneeName ?? "Sin asignar"}.`
+              : priorityChanged
+                ? `Prioridad actualizada a ${action.input.priority}.`
+                : "Datos de la incidencia actualizados.",
+            actorName: "Usuario invitado",
+            createdAt,
+          },
+          ...state.incidentEvents,
+        ],
+      };
+    }
+    case "transition-incident": {
+      const current = state.incidents.find((incident) => incident.id === action.incidentId);
+      if (
+        !current ||
+        !canTransitionIncident(current.status, action.status) ||
+        (action.status === "assigned" && !current.assigneeName)
+      ) return state;
+      const createdAt = new Date().toISOString();
+      const updated = transitionIncident(current, action.status, createdAt, action.note);
+      return {
+        ...state,
+        incidents: state.incidents.map((incident) =>
+          incident.id === action.incidentId ? updated : incident,
+        ),
+        incidentEvents: [
+          {
+            id: stableId("incident-event", state),
+            incidentId: action.incidentId,
+            kind: "status",
+            fromStatus: current.status,
+            toStatus: action.status,
+            note: action.note.trim(),
+            actorName: "Usuario invitado",
+            createdAt,
+          },
+          ...state.incidentEvents,
+        ],
+      };
+    }
+    case "create-person": {
+      const createdAt = new Date().toISOString();
+      const id = stableId("person", state);
+      return {
+        ...state,
+        people: [{ id, ...action.input, createdAt, updatedAt: createdAt }, ...state.people],
+        peopleEvents: [
+          {
+            id: stableId("people-event", state),
+            personId: id,
+            kind: "created",
+            note: "Perfil sintético añadido al directorio.",
+            actorName: "Usuario invitado",
+            createdAt,
+          },
+          ...state.peopleEvents,
+        ],
+      };
+    }
+    case "update-person": {
+      const current = state.people.find((person) => person.id === action.personId);
+      if (!current) return state;
+      const createdAt = new Date().toISOString();
+      const kind: PersonEvent["kind"] =
+        current.status !== action.input.status
+          ? "status"
+          : current.roleCode !== action.input.roleCode
+            ? "role"
+            : "updated";
+      return {
+        ...state,
+        people: state.people.map((person) =>
+          person.id === action.personId ? { ...person, ...action.input, updatedAt: createdAt } : person,
+        ),
+        peopleEvents: [
+          {
+            id: stableId("people-event", state),
+            personId: action.personId,
+            kind,
+            note: "Perfil sintético actualizado.",
+            actorName: "Usuario invitado",
+            createdAt,
+          },
+          ...state.peopleEvents,
+        ],
+      };
+    }
+    case "create-changelog": {
+      const parsed = changelogInputSchema.safeParse(action.input);
+      if (!parsed.success || state.changelogEntries.some((entry) => entry.version === parsed.data.version)) return state;
+      const createdAt = new Date().toISOString();
+      const id = stableId("changelog", state);
+      return {
+        ...state,
+        changelogEntries: [{ id, ...parsed.data, status: "draft", createdBy: "Usuario invitado", publishedAt: null, createdAt, updatedAt: createdAt }, ...state.changelogEntries],
+        changelogEvents: [{ id: stableId("changelog-event", state), entryId: id, fromStatus: null, toStatus: "draft", note: "Borrador creado en modo invitado.", actorName: "Usuario invitado", createdAt }, ...state.changelogEvents],
+      };
+    }
+    case "update-changelog": {
+      const parsed = changelogInputSchema.safeParse(action.input);
+      const current = state.changelogEntries.find((entry) => entry.id === action.entryId);
+      if (!parsed.success || !current || current.status === "published" || state.changelogEntries.some((entry) => entry.id !== action.entryId && entry.version === parsed.data.version)) return state;
+      return { ...state, changelogEntries: state.changelogEntries.map((entry) => entry.id === action.entryId ? { ...entry, ...parsed.data, updatedAt: new Date().toISOString() } : entry) };
+    }
+    case "transition-changelog": {
+      const current = state.changelogEntries.find((entry) => entry.id === action.entryId);
+      if (!current || !canTransitionChangelog(current.status, action.status) || action.note.trim().length < 3) return state;
+      const createdAt = new Date().toISOString();
+      const updated = transitionChangelog(current, action.status, createdAt);
+      return {
+        ...state,
+        changelogEntries: state.changelogEntries.map((entry) => entry.id === action.entryId ? updated : entry),
+        changelogEvents: [{ id: stableId("changelog-event", state), entryId: action.entryId, fromStatus: current.status, toStatus: action.status, note: action.note.trim(), actorName: "Usuario invitado", createdAt }, ...state.changelogEvents],
+      };
+    }
+    case "create-treasury": {
+      const parsed = treasuryInputSchema.safeParse(action.input);
+      if (!parsed.success) return state;
+      const createdAt = new Date().toISOString();
+      const id = stableId("treasury", state);
+      const entry: TreasuryEntry = {
+        id,
+        ...parsed.data,
+        status: "draft",
+        createdBy: "Usuario invitado",
+        createdAt,
+        updatedAt: createdAt,
+      };
+      return {
+        ...state,
+        treasuryEntries: [entry, ...state.treasuryEntries],
+        treasuryEvents: [{
+          id: stableId("treasury-event", state), entryId: id, kind: "created", fromStatus: null,
+          toStatus: "draft", note: "Movimiento sintético creado.", actorName: "Usuario invitado", createdAt,
+        }, ...state.treasuryEvents],
+      };
+    }
+    case "update-treasury": {
+      const parsed = treasuryInputSchema.safeParse(action.input);
+      const current = state.treasuryEntries.find((entry) => entry.id === action.entryId);
+      if (!parsed.success || !current || current.status !== "draft") return state;
+      const createdAt = new Date().toISOString();
+      return {
+        ...state,
+        treasuryEntries: state.treasuryEntries.map((entry) => entry.id === current.id ? { ...entry, ...parsed.data, updatedAt: createdAt } : entry),
+        treasuryEvents: [{
+          id: stableId("treasury-event", state), entryId: current.id, kind: "updated", fromStatus: "draft",
+          toStatus: "draft", note: "Borrador sintético actualizado.", actorName: "Usuario invitado", createdAt,
+        }, ...state.treasuryEvents],
+      };
+    }
+    case "transition-treasury": {
+      const current = state.treasuryEntries.find((entry) => entry.id === action.entryId);
+      if (!current || !canTransitionTreasury(current.status, action.status) || action.note.trim().length < 3) return state;
+      const createdAt = new Date().toISOString();
+      const entry = transitionTreasuryEntry(current, action.status, createdAt);
+      return {
+        ...state,
+        treasuryEntries: state.treasuryEntries.map((item) => item.id === entry.id ? entry : item),
+        treasuryEvents: [{
+          id: stableId("treasury-event", state), entryId: entry.id, kind: "status", fromStatus: current.status,
+          toStatus: action.status, note: action.note.trim(), actorName: "Usuario invitado", createdAt,
+        }, ...state.treasuryEvents],
+      };
+    }
+    case "create-payroll": {
+      const parsed = payrollInputSchema.safeParse(action.input);
+      if (!parsed.success || state.payrollRuns.some((run) => run.periodStart === parsed.data.periodStart && run.periodEnd === parsed.data.periodEnd)) return state;
+      const createdAt = new Date().toISOString();
+      const id = stableId("payroll", state);
+      const run: PayrollRun = { id, ...parsed.data, netTotalCents: parsed.data.grossTotalCents - parsed.data.deductionTotalCents, status: "collecting", createdBy: "Usuario invitado", createdAt, updatedAt: createdAt };
+      return { ...state, payrollRuns: [run, ...state.payrollRuns], payrollEvents: [{ id: stableId("payroll-event", state), runId: id, kind: "created", fromStatus: null, toStatus: "collecting", note: "Ciclo agregado sintético creado.", actorName: "Usuario invitado", createdAt }, ...state.payrollEvents] };
+    }
+    case "update-payroll": {
+      const parsed = payrollInputSchema.safeParse(action.input);
+      const current = state.payrollRuns.find((run) => run.id === action.runId);
+      if (!parsed.success || !current || current.status !== "collecting" || state.payrollRuns.some((run) => run.id !== current.id && run.periodStart === parsed.data.periodStart && run.periodEnd === parsed.data.periodEnd)) return state;
+      const createdAt = new Date().toISOString();
+      const updated = { ...current, ...parsed.data, netTotalCents: parsed.data.grossTotalCents - parsed.data.deductionTotalCents, updatedAt: createdAt };
+      return { ...state, payrollRuns: state.payrollRuns.map((run) => run.id === current.id ? updated : run), payrollEvents: [{ id: stableId("payroll-event", state), runId: current.id, kind: "updated", fromStatus: "collecting", toStatus: "collecting", note: "Recopilación agregada actualizada.", actorName: "Usuario invitado", createdAt }, ...state.payrollEvents] };
+    }
+    case "transition-payroll": {
+      const current = state.payrollRuns.find((run) => run.id === action.runId);
+      if (!current || !canTransitionPayroll(current.status, action.status) || action.note.trim().length < 3) return state;
+      const createdAt = new Date().toISOString();
+      const updated = transitionPayrollRun(current, action.status, createdAt);
+      return { ...state, payrollRuns: state.payrollRuns.map((run) => run.id === current.id ? updated : run), payrollEvents: [{ id: stableId("payroll-event", state), runId: current.id, kind: "status", fromStatus: current.status, toStatus: action.status, note: action.note.trim(), actorName: "Usuario invitado", createdAt }, ...state.payrollEvents] };
+    }
+    case "update-module-setting": {
+      const current = state.moduleSettings.find((setting) => setting.moduleId === action.moduleId);
+      if (!current || action.sortOrder < 0 || action.sortOrder >= state.moduleSettings.length || action.moduleId === "inicio" && !action.enabled) return state;
+      const reordered = [...state.moduleSettings].sort((a, b) => a.sortOrder - b.sortOrder);
+      const fromIndex = reordered.findIndex((setting) => setting.moduleId === action.moduleId);
+      const [moved] = reordered.splice(fromIndex, 1);
+      reordered.splice(action.sortOrder, 0, { ...moved, enabled: action.enabled });
+      const createdAt = new Date().toISOString();
+      return {
+        ...state,
+        moduleSettings: reordered.map((setting, sortOrder) => ({ ...setting, sortOrder })),
+        adminAuditEvents: [{ id: stableId("admin-audit", state), eventType: "module.updated", entityType: "module", entityId: action.moduleId, actorName: "Usuario invitado", summary: `Módulo ${action.moduleId} actualizado.`, createdAt }, ...state.adminAuditEvents],
+      };
+    }
+    case "update-role-metadata": {
+      const parsed = roleMetadataSchema.safeParse({ name: action.name, color: action.color });
+      if (!parsed.success || !state.roles.some((role) => role.id === action.roleId)) return state;
+      const createdAt = new Date().toISOString();
+      return { ...state, roles: state.roles.map((role) => role.id === action.roleId ? { ...role, ...parsed.data } : role), adminAuditEvents: [{ id: stableId("admin-audit", state), eventType: "role.metadata_updated", entityType: "role", entityId: action.roleId, actorName: "Usuario invitado", summary: "Nombre o color del rol actualizado sin alterar permisos.", createdAt }, ...state.adminAuditEvents] };
+    }
+    case "update-role-permissions": {
+      const parsed = rolePermissionsSchema.safeParse(action.permissionCodes);
+      const role = state.roles.find((item) => item.id === action.roleId);
+      if (!parsed.success || !role || role.code === "admin") return state;
+      const createdAt = new Date().toISOString();
+      return { ...state, roles: state.roles.map((item) => item.id === action.roleId ? { ...item, permissionCodes: [...new Set(parsed.data)] } : item), adminAuditEvents: [{ id: stableId("admin-audit", state), eventType: "role.permissions_updated", entityType: "role", entityId: action.roleId, actorName: "Usuario invitado", summary: "Matriz de permisos del rol actualizada.", createdAt }, ...state.adminAuditEvents] };
+    }
+    case "create-invitation": {
+      const parsed = invitationInputSchema.safeParse({ email: action.email, roleId: action.roleId });
+      if (!parsed.success || !state.roles.some((role) => role.id === parsed.data.roleId)) return state;
+      const createdAt = new Date().toISOString();
+      const id = stableId("invitation", state);
+      return { ...state, invitations: [{ id, ...parsed.data, status: "pending", expiresAt: new Date(new Date(createdAt).getTime() + 14 * 86_400_000).toISOString(), createdAt }, ...state.invitations], adminAuditEvents: [{ id: stableId("admin-audit", state), eventType: "invitation.created", entityType: "invitation", entityId: id, actorName: "Usuario invitado", summary: "Invitación sintética creada.", createdAt }, ...state.adminAuditEvents] };
+    }
+    case "update-membership": {
+      const membership = state.memberships.find((item) => item.id === action.membershipId);
+      if (!membership || !state.roles.some((role) => role.id === action.roleId)) return state;
+      const createdAt = new Date().toISOString();
+      return { ...state, memberships: state.memberships.map((item) => item.id === action.membershipId ? { ...item, roleId: action.roleId, status: action.status } : item), adminAuditEvents: [{ id: stableId("admin-audit", state), eventType: "membership.updated", entityType: "membership", entityId: action.membershipId, actorName: "Usuario invitado", summary: "Rol o estado de acceso actualizado.", createdAt }, ...state.adminAuditEvents] };
+    }
     case "rename-organization":
       return {
         ...state,
         organizationName: action.name.trim() || state.organizationName,
+        adminAuditEvents: action.name.trim()
+          ? [{ id: stableId("admin-audit", state), eventType: "organization.renamed", entityType: "organization", entityId: null, actorName: "Usuario invitado", summary: "Identidad de la organización actualizada.", createdAt: new Date().toISOString() }, ...state.adminAuditEvents]
+          : state.adminAuditEvents,
       };
     case "reset":
       return structuredClone(initialGuestDemoState);

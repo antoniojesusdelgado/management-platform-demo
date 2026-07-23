@@ -7,16 +7,17 @@ import { isSupabaseConfigured, publicEnv } from "@/lib/env";
 
 export function LoginButton() {
   const [loading, setLoading] = useState(false);
-  const configured = isSupabaseConfigured() && Boolean(publicEnv.appUrl);
+  const configured = isSupabaseConfigured();
 
   async function signIn() {
-    if (!configured || !publicEnv.appUrl) return;
+    if (!configured) return;
     setLoading(true);
     const supabase = createClient();
+    const appOrigin = publicEnv.appUrl ?? window.location.origin;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${publicEnv.appUrl}/auth/callback?next=/app/inicio`,
+        redirectTo: `${appOrigin}/auth/callback?next=/app/inicio`,
       },
     });
 

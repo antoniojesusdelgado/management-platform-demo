@@ -19,22 +19,29 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-  Backlog --> Assign --> Active --> Validate --> Completed
-  Active --> Blocked --> Active
+  Pending --> InProgress["In progress"] --> InReview["In review"] --> Completed
+  Pending --> Blocked --> InProgress
+  InProgress --> Blocked
 ```
 
 ## Incidents
 
 ```mermaid
 flowchart LR
-  Register --> Prioritize --> Assign --> Investigate --> Resolve --> Close
+  Registered --> Triaged --> Assigned --> Investigating --> Resolved --> Closed
+  Resolved -->|Reopen| Investigating
 ```
 
 ## Treasury
 
 ```mermaid
 flowchart LR
-  Forecast --> Register --> Reconcile --> Validate --> Close
+  Draft --> Registered --> Reconciled --> Validated --> Closed
+  Draft --> History["Immutable synthetic event history"]
+  Registered --> History
+  Reconciled --> History
+  Validated --> History
+  Closed --> History
 ```
 
 ## Payroll
@@ -44,11 +51,17 @@ flowchart LR
   Collect["Collect changes"] --> Validate --> Calculate --> Review --> Close
 ```
 
+Only collection-stage cycles can be edited. Every transition requires a
+decision note and appends an immutable event. Values are synthetic aggregates;
+individual payroll records remain outside the demo boundary.
+
 ## People
 
 ```mermaid
 flowchart LR
-  Invite --> Activate --> AssignRole["Assign role"] --> Maintain --> Deactivate
+  Invited --> Active --> AssignRole["Assign role"] --> Maintain
+  Active --> Suspended --> Active
+  Active --> Inactive
 ```
 
 ## Changelog

@@ -1,6 +1,6 @@
 # Management Platform Demo
 
-Private, full-stack SaaS demonstration for documenting modular operations,
+Public, full-stack SaaS demonstration for documenting modular operations,
 permissions and process automation with synthetic data.
 
 The repository is an independent technical reconstruction. Fundación
@@ -12,10 +12,12 @@ workflows or infrastructure.
 
 - Nine modules: Home, Leave, Tasks, Incidents, Treasury, Payroll, People,
   Changelog and Settings.
-- A complete first vertical slice for Leave requests.
+- Complete verticals for Leave, Tasks, Incidents, People, Changelog, Settings,
+  Treasury and Payroll.
 - A public guest demo at `/demo/embed`, isolated from Supabase and persisted
   only in `sessionStorage`.
-- An invite-only authenticated application under `/app`.
+- A public Google OAuth entry point under `/app`. Each authenticated user gets
+  an isolated synthetic workspace with full demo permissions.
 - PostgreSQL schema, RLS policies, permission checks and pgTAP tests prepared
   for an independent Supabase project.
 - Route-specific framing policy: only `/demo/embed` can be embedded, and only
@@ -34,7 +36,7 @@ bun run dev
 Open:
 
 - `http://localhost:3000/demo/embed` for the guest demo.
-- `http://localhost:3000/login` for the inactive OAuth entry point.
+- `http://localhost:3000/login` for Google OAuth when Supabase is configured.
 
 ## Validation
 
@@ -50,37 +52,39 @@ git diff --check
 Local Supabase validation additionally requires Docker:
 
 ```powershell
-bunx supabase start
-bunx supabase db reset
-bunx supabase test db
+bunx supabase db start
+bunx supabase db reset --local
+bunx supabase test db --local
+bunx supabase db lint --local --level warning --fail-on error
 ```
 
 Docker is not required for the guest demo.
 
 ## Environment
 
-Copy `.env.example` to `.env.local` only after the independent Supabase project
-is approved and provisioned. Never commit `.env.local`.
+Copy `.env.example` to `.env.local` after provisioning the independent
+Supabase project. Never commit `.env.local`.
 
 | Variable | Exposure | Purpose |
 | --- | --- | --- |
 | `NEXT_PUBLIC_APP_URL` | Browser | Exact application origin |
+| `NEXT_PUBLIC_VERCEL_URL` | Browser | Preview origin supplied by Vercel |
 | `NEXT_PUBLIC_SUPABASE_URL` | Browser | Independent project URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Browser | Publishable project key |
-| `SUPABASE_SECRET_KEY` | Server only | Provisioning or controlled admin tasks |
 | `PORTFOLIO_ORIGIN` | Server/build | Only allowed iframe ancestor |
-| `NEXT_PUBLIC_DEMO_MODE` | Browser | Explicit guest-demo flag |
-| `GOOGLE_CLIENT_ID` | Provider config | Google OAuth client |
-| `GOOGLE_CLIENT_SECRET` | Provider/server | Google OAuth secret |
 
 No OpenAI key is required at runtime. AI tools are part of the documented
 development workflow, not a product dependency.
 
 ## External services
 
-No Supabase or Vercel resource is created by this repository. Provisioning and
-the first Preview require explicit approval after reviewing cost and
-configuration.
+Google OAuth credentials are configured directly in Supabase Auth and never as
+Vercel application variables. Supabase Auth necessarily retains the provider
+account identifier; the application does not copy the Google name, email or
+avatar into its operational profile.
+
+See [Deployment](docs/DEPLOYMENT.md) for the exact Preview, OAuth and production
+checklist.
 
 See:
 
@@ -88,4 +92,5 @@ See:
 - [Roadmap](docs/ROADMAP.md)
 - [Permissions](docs/PERMISSIONS.md)
 - [Process maps](docs/PROCESS-MAPS.md)
+- [Deployment](docs/DEPLOYMENT.md)
 - [Security policy](SECURITY.md)

@@ -89,8 +89,10 @@ export type Database = {
           id: string
           organization_id: string
           published_at: string | null
+          status: Database["public"]["Enums"]["changelog_status"]
           summary: string
           title: string
+          updated_at: string
           version: string
         }
         Insert: {
@@ -99,8 +101,10 @@ export type Database = {
           id?: string
           organization_id: string
           published_at?: string | null
+          status?: Database["public"]["Enums"]["changelog_status"]
           summary: string
           title: string
+          updated_at?: string
           version: string
         }
         Update: {
@@ -109,8 +113,10 @@ export type Database = {
           id?: string
           organization_id?: string
           published_at?: string | null
+          status?: Database["public"]["Enums"]["changelog_status"]
           summary?: string
           title?: string
+          updated_at?: string
           version?: string
         }
         Relationships: [
@@ -130,9 +136,123 @@ export type Database = {
           },
         ]
       }
+      changelog_events: {
+        Row: {
+          actor_profile_id: string | null
+          created_at: string
+          entry_id: string
+          from_status: Database["public"]["Enums"]["changelog_status"] | null
+          id: string
+          note: string
+          organization_id: string
+          to_status: Database["public"]["Enums"]["changelog_status"]
+        }
+        Insert: {
+          actor_profile_id?: string | null
+          created_at?: string
+          entry_id: string
+          from_status?: Database["public"]["Enums"]["changelog_status"] | null
+          id?: string
+          note: string
+          organization_id: string
+          to_status: Database["public"]["Enums"]["changelog_status"]
+        }
+        Update: {
+          actor_profile_id?: string | null
+          created_at?: string
+          entry_id?: string
+          from_status?: Database["public"]["Enums"]["changelog_status"] | null
+          id?: string
+          note?: string
+          organization_id?: string
+          to_status?: Database["public"]["Enums"]["changelog_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "changelog_events_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "changelog_events_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "changelog_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "changelog_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incident_events: {
+        Row: {
+          actor_profile_id: string | null
+          created_at: string
+          from_status: Database["public"]["Enums"]["incident_status"] | null
+          id: string
+          incident_id: string
+          kind: Database["public"]["Enums"]["incident_event_kind"]
+          note: string
+          organization_id: string
+          to_status: Database["public"]["Enums"]["incident_status"] | null
+        }
+        Insert: {
+          actor_profile_id?: string | null
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["incident_status"] | null
+          id?: string
+          incident_id: string
+          kind: Database["public"]["Enums"]["incident_event_kind"]
+          note: string
+          organization_id: string
+          to_status?: Database["public"]["Enums"]["incident_status"] | null
+        }
+        Update: {
+          actor_profile_id?: string | null
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["incident_status"] | null
+          id?: string
+          incident_id?: string
+          kind?: Database["public"]["Enums"]["incident_event_kind"]
+          note?: string
+          organization_id?: string
+          to_status?: Database["public"]["Enums"]["incident_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_events_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_events_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incidents: {
         Row: {
           assignee_profile_id: string | null
+          category: Database["public"]["Enums"]["incident_category"]
           created_at: string
           description: string
           id: string
@@ -140,12 +260,15 @@ export type Database = {
           priority: Database["public"]["Enums"]["incident_priority"]
           reference: string
           requester_profile_id: string
-          status: Database["public"]["Enums"]["work_item_status"]
+          resolution: string | null
+          sla_due_at: string
+          status: Database["public"]["Enums"]["incident_status"]
           title: string
           updated_at: string
         }
         Insert: {
           assignee_profile_id?: string | null
+          category?: Database["public"]["Enums"]["incident_category"]
           created_at?: string
           description: string
           id?: string
@@ -153,12 +276,15 @@ export type Database = {
           priority?: Database["public"]["Enums"]["incident_priority"]
           reference: string
           requester_profile_id: string
-          status?: Database["public"]["Enums"]["work_item_status"]
+          resolution?: string | null
+          sla_due_at?: string
+          status?: Database["public"]["Enums"]["incident_status"]
           title: string
           updated_at?: string
         }
         Update: {
           assignee_profile_id?: string | null
+          category?: Database["public"]["Enums"]["incident_category"]
           created_at?: string
           description?: string
           id?: string
@@ -166,7 +292,9 @@ export type Database = {
           priority?: Database["public"]["Enums"]["incident_priority"]
           reference?: string
           requester_profile_id?: string
-          status?: Database["public"]["Enums"]["work_item_status"]
+          resolution?: string | null
+          sla_due_at?: string
+          status?: Database["public"]["Enums"]["incident_status"]
           title?: string
           updated_at?: string
         }
@@ -560,38 +688,93 @@ export type Database = {
         }
         Relationships: []
       }
+      payroll_events: {
+        Row: {
+          actor_profile_id: string
+          created_at: string
+          from_status: Database["public"]["Enums"]["payroll_run_status"] | null
+          id: number
+          kind: string
+          note: string
+          organization_id: string
+          run_id: string
+          to_status: Database["public"]["Enums"]["payroll_run_status"]
+        }
+        Insert: {
+          actor_profile_id: string
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["payroll_run_status"] | null
+          id?: never
+          kind: string
+          note: string
+          organization_id: string
+          run_id: string
+          to_status: Database["public"]["Enums"]["payroll_run_status"]
+        }
+        Update: {
+          actor_profile_id?: string
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["payroll_run_status"] | null
+          id?: never
+          kind?: string
+          note?: string
+          organization_id?: string
+          run_id?: string
+          to_status?: Database["public"]["Enums"]["payroll_run_status"]
+        }
+        Relationships: [
+          { foreignKeyName: "payroll_events_actor_profile_id_fkey"; columns: ["actor_profile_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+          { foreignKeyName: "payroll_events_organization_id_fkey"; columns: ["organization_id"]; isOneToOne: false; referencedRelation: "organizations"; referencedColumns: ["id"] },
+          { foreignKeyName: "payroll_events_run_id_fkey"; columns: ["run_id"]; isOneToOne: false; referencedRelation: "payroll_runs"; referencedColumns: ["id"] },
+        ]
+      }
       payroll_runs: {
         Row: {
           created_at: string
           created_by: string
+          currency: string
+          deduction_total_cents: number
+          gross_total_cents: number
           id: string
+          net_total_cents: number
           notes: string
           organization_id: string
+          people_count: number
           period_end: string
           period_start: string
-          status: Database["public"]["Enums"]["work_item_status"]
+          status: Database["public"]["Enums"]["payroll_run_status"]
           updated_at: string
         }
         Insert: {
           created_at?: string
           created_by: string
+          currency?: string
+          deduction_total_cents?: number
+          gross_total_cents?: number
           id?: string
+          net_total_cents?: never
           notes?: string
           organization_id: string
+          people_count?: number
           period_end: string
           period_start: string
-          status?: Database["public"]["Enums"]["work_item_status"]
+          status?: Database["public"]["Enums"]["payroll_run_status"]
           updated_at?: string
         }
         Update: {
           created_at?: string
           created_by?: string
+          currency?: string
+          deduction_total_cents?: number
+          gross_total_cents?: number
           id?: string
+          net_total_cents?: never
           notes?: string
           organization_id?: string
+          people_count?: number
           period_end?: string
           period_start?: string
-          status?: Database["public"]["Enums"]["work_item_status"]
+          status?: Database["public"]["Enums"]["payroll_run_status"]
           updated_at?: string
         }
         Relationships: [
@@ -613,35 +796,38 @@ export type Database = {
       }
       people: {
         Row: {
-          active: boolean
           created_at: string
           display_name: string
           id: string
           organization_id: string
           position_title: string
           profile_id: string | null
+          role_code: Database["public"]["Enums"]["person_role_code"]
+          status: Database["public"]["Enums"]["person_status"]
           team: string
           updated_at: string
         }
         Insert: {
-          active?: boolean
           created_at?: string
           display_name: string
           id?: string
           organization_id: string
           position_title?: string
           profile_id?: string | null
+          role_code?: Database["public"]["Enums"]["person_role_code"]
+          status?: Database["public"]["Enums"]["person_status"]
           team?: string
           updated_at?: string
         }
         Update: {
-          active?: boolean
           created_at?: string
           display_name?: string
           id?: string
           organization_id?: string
           position_title?: string
           profile_id?: string | null
+          role_code?: Database["public"]["Enums"]["person_role_code"]
+          status?: Database["public"]["Enums"]["person_status"]
           team?: string
           updated_at?: string
         }
@@ -658,6 +844,58 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people_events: {
+        Row: {
+          actor_profile_id: string | null
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["people_event_kind"]
+          note: string
+          organization_id: string
+          person_id: string
+        }
+        Insert: {
+          actor_profile_id?: string | null
+          created_at?: string
+          id?: string
+          kind: Database["public"]["Enums"]["people_event_kind"]
+          note: string
+          organization_id: string
+          person_id: string
+        }
+        Update: {
+          actor_profile_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["people_event_kind"]
+          note?: string
+          organization_id?: string
+          person_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_events_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_events_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
             referencedColumns: ["id"]
           },
         ]
@@ -1018,7 +1256,7 @@ export type Database = {
           entry_date: string
           id: string
           organization_id: string
-          status: Database["public"]["Enums"]["work_item_status"]
+          status: Database["public"]["Enums"]["treasury_entry_status"]
           updated_at: string
         }
         Insert: {
@@ -1030,7 +1268,7 @@ export type Database = {
           entry_date: string
           id?: string
           organization_id: string
-          status?: Database["public"]["Enums"]["work_item_status"]
+          status?: Database["public"]["Enums"]["treasury_entry_status"]
           updated_at?: string
         }
         Update: {
@@ -1042,7 +1280,7 @@ export type Database = {
           entry_date?: string
           id?: string
           organization_id?: string
-          status?: Database["public"]["Enums"]["work_item_status"]
+          status?: Database["public"]["Enums"]["treasury_entry_status"]
           updated_at?: string
         }
         Relationships: [
@@ -1062,11 +1300,111 @@ export type Database = {
           },
         ]
       }
+      treasury_events: {
+        Row: {
+          actor_profile_id: string
+          created_at: string
+          entry_id: string
+          from_status:
+            | Database["public"]["Enums"]["treasury_entry_status"]
+            | null
+          id: number
+          kind: string
+          note: string
+          organization_id: string
+          to_status: Database["public"]["Enums"]["treasury_entry_status"]
+        }
+        Insert: {
+          actor_profile_id: string
+          created_at?: string
+          entry_id: string
+          from_status?:
+            | Database["public"]["Enums"]["treasury_entry_status"]
+            | null
+          id?: never
+          kind: string
+          note: string
+          organization_id: string
+          to_status: Database["public"]["Enums"]["treasury_entry_status"]
+        }
+        Update: {
+          actor_profile_id?: string
+          created_at?: string
+          entry_id?: string
+          from_status?:
+            | Database["public"]["Enums"]["treasury_entry_status"]
+            | null
+          id?: never
+          kind?: string
+          note?: string
+          organization_id?: string
+          to_status?: Database["public"]["Enums"]["treasury_entry_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treasury_events_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treasury_events_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "treasury_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treasury_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      ensure_public_demo_workspace: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      create_payroll_run: {
+        Args: { expected_organization_id: string; target_currency: string; target_deduction_total_cents: number; target_gross_total_cents: number; target_notes: string; target_people_count: number; target_period_end: string; target_period_start: string }
+        Returns: string
+      }
+      create_treasury_entry: {
+        Args: {
+          expected_organization_id: string
+          target_amount_cents: number
+          target_concept: string
+          target_currency: string
+          target_entry_date: string
+        }
+        Returns: string
+      }
+      transition_changelog_entry: {
+        Args: {
+          expected_organization_id: string
+          target_entry_id: string
+          target_status: Database["public"]["Enums"]["changelog_status"]
+          transition_note: string
+        }
+        Returns: undefined
+      }
+      transition_incident: {
+        Args: {
+          expected_organization_id: string
+          target_incident_id: string
+          target_status: Database["public"]["Enums"]["incident_status"]
+          transition_note: string
+        }
+        Returns: undefined
+      }
       transition_leave_request: {
         Args: {
           expected_organization_id: string
@@ -1074,6 +1412,10 @@ export type Database = {
           target_status: Database["public"]["Enums"]["leave_request_status"]
           transition_note: string
         }
+        Returns: undefined
+      }
+      transition_payroll_run: {
+        Args: { expected_organization_id: string; target_run_id: string; target_status: Database["public"]["Enums"]["payroll_run_status"]; transition_note: string }
         Returns: undefined
       }
       transition_task: {
@@ -1085,9 +1427,74 @@ export type Database = {
         }
         Returns: undefined
       }
+      transition_treasury_entry: {
+        Args: {
+          expected_organization_id: string
+          target_entry_id: string
+          target_status: Database["public"]["Enums"]["treasury_entry_status"]
+          transition_note: string
+        }
+        Returns: undefined
+      }
+      update_membership_access: {
+        Args: {
+          expected_organization_id: string
+          target_membership_id: string
+          target_role_id: string
+          target_status: Database["public"]["Enums"]["membership_status"]
+        }
+        Returns: undefined
+      }
+      update_payroll_collecting_run: {
+        Args: { expected_organization_id: string; target_currency: string; target_deduction_total_cents: number; target_gross_total_cents: number; target_notes: string; target_people_count: number; target_period_end: string; target_period_start: string; target_run_id: string }
+        Returns: undefined
+      }
+      update_module_setting: {
+        Args: {
+          expected_organization_id: string
+          target_enabled: boolean
+          target_module_id: string
+          target_sort_order: number
+        }
+        Returns: undefined
+      }
+      update_role_permissions: {
+        Args: {
+          expected_organization_id: string
+          target_permission_codes: string[]
+          target_role_id: string
+        }
+        Returns: undefined
+      }
+      update_treasury_draft: {
+        Args: {
+          expected_organization_id: string
+          target_amount_cents: number
+          target_concept: string
+          target_currency: string
+          target_entry_date: string
+          target_entry_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
+      changelog_status: "draft" | "in_review" | "published"
+      incident_category: "access" | "data" | "hardware" | "software" | "other"
+      incident_event_kind:
+        | "created"
+        | "updated"
+        | "assigned"
+        | "status"
+        | "priority"
       incident_priority: "low" | "medium" | "high" | "critical"
+      incident_status:
+        | "registered"
+        | "triaged"
+        | "assigned"
+        | "investigating"
+        | "resolved"
+        | "closed"
       leave_request_status:
         | "draft"
         | "submitted"
@@ -1096,6 +1503,10 @@ export type Database = {
         | "cancelled"
       leave_type: "vacation" | "personal"
       membership_status: "invited" | "active" | "suspended"
+      payroll_run_status: "collecting" | "validating" | "calculated" | "reviewed" | "closed"
+      people_event_kind: "created" | "updated" | "status" | "role"
+      person_role_code: "admin" | "manager" | "collaborator" | "viewer"
+      person_status: "invited" | "active" | "suspended" | "inactive"
       task_event_kind:
         | "created"
         | "updated"
@@ -1110,6 +1521,12 @@ export type Database = {
         | "blocked"
         | "in_review"
         | "completed"
+      treasury_entry_status:
+        | "draft"
+        | "registered"
+        | "reconciled"
+        | "validated"
+        | "closed"
       work_item_status:
         | "backlog"
         | "active"
@@ -1246,7 +1663,24 @@ export const Constants = {
   },
   public: {
     Enums: {
+      changelog_status: ["draft", "in_review", "published"],
+      incident_category: ["access", "data", "hardware", "software", "other"],
+      incident_event_kind: [
+        "created",
+        "updated",
+        "assigned",
+        "status",
+        "priority",
+      ],
       incident_priority: ["low", "medium", "high", "critical"],
+      incident_status: [
+        "registered",
+        "triaged",
+        "assigned",
+        "investigating",
+        "resolved",
+        "closed",
+      ],
       leave_request_status: [
         "draft",
         "submitted",
@@ -1256,6 +1690,10 @@ export const Constants = {
       ],
       leave_type: ["vacation", "personal"],
       membership_status: ["invited", "active", "suspended"],
+      payroll_run_status: ["collecting", "validating", "calculated", "reviewed", "closed"],
+      people_event_kind: ["created", "updated", "status", "role"],
+      person_role_code: ["admin", "manager", "collaborator", "viewer"],
+      person_status: ["invited", "active", "suspended", "inactive"],
       task_event_kind: [
         "created",
         "updated",
@@ -1271,6 +1709,13 @@ export const Constants = {
         "blocked",
         "in_review",
         "completed",
+      ],
+      treasury_entry_status: [
+        "draft",
+        "registered",
+        "reconciled",
+        "validated",
+        "closed",
       ],
       work_item_status: [
         "backlog",
