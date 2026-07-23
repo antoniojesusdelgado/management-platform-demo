@@ -4,14 +4,18 @@ import * as Dialog from "@radix-ui/react-dialog";
 import {
   IconChevronDown,
   IconGridDots,
+  IconLogout,
   IconMenu2,
   IconRefresh,
   IconUserCircle,
   IconX,
 } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
+import { toast } from "sonner";
 import { ModuleIcon } from "@/components/module-icon";
 import { modules, type ModuleId } from "@/domain/modules";
+import { createClient } from "@/lib/supabase/client";
 
 type AppShellProps = {
   activeModule: ModuleId;
@@ -68,6 +72,22 @@ export function AppShell({
   children,
 }: AppShellProps) {
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const router = useRouter();
+
+  async function signOut() {
+    setSigningOut(true);
+    const { error } = await createClient().auth.signOut({ scope: "local" });
+
+    if (error) {
+      setSigningOut(false);
+      toast.error("No se pudo cerrar la sesión. Inténtalo de nuevo.");
+      return;
+    }
+
+    router.replace("/login");
+    router.refresh();
+  }
 
   return (
     <div className="app-frame">
@@ -139,6 +159,17 @@ export function AppShell({
             <span className="badge">
               {mode === "guest" ? "Datos de demostración" : organizationName}
             </span>
+            {mode === "authenticated" ? (
+              <button
+                type="button"
+                className="button button-quiet"
+                disabled={signingOut}
+                onClick={signOut}
+              >
+                <IconLogout aria-hidden="true" size={18} />
+                <span>{signingOut ? "Cerrando sesión…" : "Cerrar sesión"}</span>
+              </button>
+            ) : null}
             <span
               className="profile-indicator"
               role="img"
