@@ -35,6 +35,10 @@ Before a release:
 2. Verify Preview and Production have separate variables.
 3. Rotate any secret that may have appeared in logs or local screenshots.
 4. Review dependency advisories and Supabase Security Advisor results.
+5. Run `bun run security:public-data` against runtime files and fixtures.
+
+The rationale and testable invariants for intentionally exposed privileged
+RPCs are maintained in [docs/SECURITY-ADVISOR.md](docs/SECURITY-ADVISOR.md).
 
 ## Reporting
 

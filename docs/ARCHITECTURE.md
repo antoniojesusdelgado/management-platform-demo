@@ -56,8 +56,10 @@ tax identifiers, receipts and documents. Collection edits and monotonic status
 changes run through privileged RPCs and append immutable events; authenticated
 roles receive no direct table writes.
 
-The guest state is currently version 6. Zod validates restored sessions and
-incremental migrations preserve versions 1 through 5 before rendering.
+The guest state is currently version 9. Zod validates restored sessions and
+incremental migrations preserve every prior version before rendering. V7 adds
+Projects and `people` references, V8 adds neutral integration runs, and V9 adds
+preferences, role simulation and saved analytical views.
 
 The server checks authorization close to the write and RLS repeats the boundary
 inside PostgreSQL. The organization identifier sent by the client is never

@@ -20,7 +20,7 @@
 - [x] Monthly coverage calendar and overlap indicators
 - [x] Validated session persistence with in-memory fallback
 - [x] Validate pgTAP against local Supabase
-- [ ] Validate Google OAuth and isolated provisioning with two test accounts
+- [ ] Complete the manual Google OAuth acceptance run with two test accounts
 
 ## Local security validation
 
@@ -114,8 +114,8 @@
 
 - Production: <https://management-platform-demo.vercel.app>
 - Stable Preview:
-  <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Released revision: `f0a0712`
+  <https://management-platform-demo-gdypdqqc8.vercel.app>
+- Released revision: `e6a9c13`
 - Google OAuth login, logout and protected-route redirects validated in
   Preview and Production.
 - Public guest flows validated in desktop and mobile with Playwright and Axe.
@@ -142,7 +142,13 @@
 - [x] Guest state migrations through V9 with session-only persistence
 - [x] Remote Supabase migrations and validated Vercel Preview
 - [x] Production promotion from the validated Preview artifact
+- [x] RLS init-plan optimization and explicit mutation policies
+- [x] Supporting indexes for every public foreign key
+- [x] Privileged RPC allowlist and structural pgTAP coverage
+- [x] CI detector for real identifiers, contacts, providers and secret keys
 
-The only remaining manual acceptance check is live OAuth isolation with a
-second Google identity. It does not block the public guest demo and is covered
-at the database boundary by multi-organization pgTAP tests.
+All implementation work is complete. The only remaining acceptance activity is
+live OAuth isolation with a second Google identity. It cannot be automated
+without external test-account credentials, does not block the public guest
+demo, and is covered at the database boundary by multi-organization pgTAP
+tests.

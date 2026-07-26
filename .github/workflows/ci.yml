@@ -44,6 +44,9 @@ jobs:
       - name: Lint database schemas
         run: bunx supabase db lint --level warning --fail-on error
 
+      - name: Review database security and performance advisors
+        run: bunx supabase db advisors --local --type all --level warn --fail-on error
+
       - name: Verify generated database types
         run: |
           bunx supabase gen types --lang typescript --local > /tmp/database.types.ts
@@ -81,6 +84,9 @@ jobs:
 
       - name: Unit tests
         run: bun run test
+
+      - name: Check public demo data boundaries
+        run: bun run security:public-data
 
       - name: Build
         run: bun run build

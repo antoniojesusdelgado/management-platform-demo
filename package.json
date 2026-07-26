@@ -14,7 +14,8 @@
     "demo:data:generate": "bun run scripts/demo-data.ts generate",
     "demo:data:validate": "bun run scripts/demo-data.ts validate",
     "demo:data:seed": "bun run scripts/demo-data.ts seed --local",
-    "demo:data:report": "bun run scripts/demo-data.ts report"
+    "demo:data:report": "bun run scripts/demo-data.ts report",
+    "security:public-data": "bun run scripts/validate-public-data.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

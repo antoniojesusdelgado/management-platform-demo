@@ -18,10 +18,12 @@ bunx supabase start
 bunx supabase db reset
 bunx supabase test db
 bunx supabase db lint --level warning --fail-on error
+bunx supabase db advisors --local --type all --level warn --fail-on error
 bunx supabase gen types --lang typescript --local
 bun run lint
 bun run typecheck
 bun run test
+bun run security:public-data
 bun run build
 bun run e2e
 git diff --check
@@ -49,6 +51,10 @@ Remove-Item Env:PLAYWRIGHT_BASE_URL
 
 Email and anonymous sign-ups remain disabled. Google is the only public
 application provider.
+
+Authenticated `SECURITY DEFINER` RPCs are reviewed exceptions, not ignored
+advisor findings. Their required invariants and pgTAP coverage are documented
+in [SECURITY-ADVISOR.md](./SECURITY-ADVISOR.md).
 
 ## 3. Google OAuth
 
@@ -120,8 +126,10 @@ environment values. After promotion:
 - The final local build and Preview passed the Playwright suite:
   43 tests passed and one desktop-only duplicate scenario was intentionally
   skipped.
-- The remote database contains all 17 ordered migrations, RLS policies,
+- The deployed remote database contains 17 ordered migrations, RLS policies,
   deterministic scenario provisioning and the neutral nightly integration
   schedule at 02:15 UTC.
+- The release-hardening migration is implemented locally and must pass Preview
+  QA before it is applied to the remote database.
 - Live isolation with a second Google identity remains a manual acceptance
   check. Multi-organization access isolation is covered by pgTAP.
