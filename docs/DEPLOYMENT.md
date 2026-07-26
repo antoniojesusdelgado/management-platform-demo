@@ -116,20 +116,21 @@ environment values. After promotion:
 ## Current release
 
 - Production: <https://management-platform-demo.vercel.app>
-- Validated Preview:
-  <https://management-platform-demo-gdypdqqc8.vercel.app>
-- Preview deployment: `dpl_EHDvDs6CinyJ2hzUNiz9584WNsRU`
-- Production promotion: `dpl_4oUGGMp5nVBbHehz1NhV3tLTacQP`
+- Stable branch Preview:
+  <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
+- Release target: `v1.0.0`
 - Supabase region and plan: `eu-central-1`, Free
 - Production and Preview use environment-specific application and portfolio
   origins.
 - The final local build and Preview passed the Playwright suite:
   43 tests passed and one desktop-only duplicate scenario was intentionally
   skipped.
-- The deployed remote database contains 17 ordered migrations, RLS policies,
-  deterministic scenario provisioning and the neutral nightly integration
-  schedule at 02:15 UTC.
-- The release-hardening migration is implemented locally and must pass Preview
-  QA before it is applied to the remote database.
+- The deployed remote database contains 18 ordered migrations. The latest is
+  `20260726142334_harden_rls_and_query_performance.sql`.
+- The remote schema includes RLS policies, deterministic scenario provisioning
+  and the neutral nightly integration schedule at 02:15 UTC.
+- Release hardening removed all missing foreign-key indexes, unoptimized
+  authentication policies and duplicate permissive read policies reported by
+  the database advisors.
 - Live isolation with a second Google identity remains a manual acceptance
   check. Multi-organization access isolation is covered by pgTAP.

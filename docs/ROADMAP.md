@@ -113,9 +113,11 @@
 ## Release status
 
 - Production: <https://management-platform-demo.vercel.app>
-- Stable Preview:
-  <https://management-platform-demo-gdypdqqc8.vercel.app>
-- Released revision: `e6a9c13`
+- Stable branch Preview:
+  <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
+- Release target: `v1.0.0`
+- Remote database: 18 ordered migrations, including the release-hardening
+  migration `20260726142334_harden_rls_and_query_performance.sql`.
 - Google OAuth login, logout and protected-route redirects validated in
   Preview and Production.
 - Public guest flows validated in desktop and mobile with Playwright and Axe.
