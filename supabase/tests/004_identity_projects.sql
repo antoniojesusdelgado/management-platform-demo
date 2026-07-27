@@ -99,7 +99,7 @@ select lives_ok(
     'comfortable',
     false,
     false,
-    'control-center',
+    'analytics',
     '{"in_app":true,"assignments":true,"reviews":true}'::jsonb,
     'viewer'
   )$$,
@@ -146,7 +146,7 @@ select lives_ok(
     'comfortable',
     false,
     false,
-    'control-center',
+    'analytics',
     '{"in_app":true,"assignments":true,"reviews":true}'::jsonb,
     null
   )$$,
@@ -176,7 +176,7 @@ where membership.profile_id = auth.uid();
 
 select is(
   (select count(*) from public.projects),
-  9::bigint,
+  13::bigint,
   'an authorized user can add an own-workspace project to the scenario'
 );
 select is(

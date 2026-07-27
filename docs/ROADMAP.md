@@ -131,17 +131,17 @@
 - [x] Safe role simulation that cannot elevate real permissions
 - [x] Projects portfolio with health, ownership, members and activity
 - [x] Project references in Tasks and Incidents
-- [x] Deterministic synthetic scenario with 24 people, 8 projects, 180 tasks,
-  96 leave requests, 120 incidents and 540 Treasury entries
+- [x] Deterministic V2 scenario with 32 people, 12 projects, 320 tasks,
+  144 leave requests, 240 incidents and 720 Treasury entries
 - [x] Offline aggregate adapters and documented data provenance
 - [x] SaaS OAuth screen, original visual assets and self-service profile
 - [x] Accessible Kanban, keyboard/list alternative, swimlanes, WIP and
   pagination
 - [x] Neutral Financial, Payroll and People integration simulations
 - [x] Scheduled nightly integration worker with idempotent run sequences
-- [x] Global Control Center, per-module analytics and saved analytical views
+- [x] Centralized Analítica workspace with five business perspectives and saved views
 - [x] Editorial Changelog presentation and configurable workspace policies
-- [x] Guest state migrations through V9 with session-only persistence
+- [x] Guest state migrations through V10 with session-only persistence
 - [x] Remote Supabase migrations and validated Vercel Preview
 - [x] Production promotion from the validated Preview artifact
 - [x] RLS init-plan optimization and explicit mutation policies

@@ -23,6 +23,11 @@ import {
 } from "@/domain/incidents";
 import { moduleIds, type ModuleId } from "@/domain/modules";
 import {
+  defaultWorkspaceConfiguration,
+  workspaceConfigurationSchema,
+  type WorkspaceConfiguration,
+} from "@/domain/workspace-configuration";
+import {
   createDefaultIntegrationConnectors,
   dataQualityIssueSchema,
   guestPreferencesSchema,
@@ -113,8 +118,8 @@ import {
 import { generateDemoScenario } from "@/demo-data/scenario";
 
 export type GuestDemoState = {
-  version: 9;
-  scenarioVersion: 1;
+  version: 10;
+  scenarioVersion: 2;
   activeModule: ModuleId;
   organizationName: string;
   leaveRequests: LeaveRequest[];
@@ -145,6 +150,7 @@ export type GuestDemoState = {
   dataQualityIssues: DataQualityIssue[];
   preferences: GuestPreferences;
   savedAnalyticsViews: SavedAnalyticsView[];
+  workspaceConfiguration: WorkspaceConfiguration;
 };
 
 const leaveRequestSchema = z.object({
@@ -235,6 +241,12 @@ const incidentSchema = z.object({
   status: z.enum(incidentStatuses),
   priority: z.enum(incidentPriorities),
   category: z.enum(incidentCategories),
+  affectedService: z.string().min(2).max(120).optional(),
+  impactScope: z.enum(["individual", "team", "workspace"]).optional(),
+  detectionChannel: z.enum(["monitoring", "support", "team", "automation"]).optional(),
+  rootCause: z.string().max(2_000).nullable().optional(),
+  firstResponseAt: z.iso.datetime().nullable().optional(),
+  correctiveTaskId: z.string().nullable().optional(),
   projectId: z.string().nullable().optional(),
   projectName: z.string().nullable().optional(),
   requesterPersonId: z.string().optional(),
@@ -310,6 +322,7 @@ const guestDemoStateV4Schema = guestDemoStateV3Schema.extend({
 
 const treasuryEntrySchema = z.object({
   id: z.string().min(1), entryDate: z.iso.date(), concept: z.string().min(3).max(160),
+  category: z.string().min(2).max(80).optional(), source: z.enum(["Financial Source A", "Financial Source B", "Manual"]).optional(),
   amountCents: z.number().int(), currency: z.enum(treasuryCurrencies), status: z.enum(treasuryStatuses),
   createdBy: z.string().min(1), createdAt: z.iso.datetime(), updatedAt: z.iso.datetime(),
 });
@@ -328,6 +341,7 @@ const guestDemoStateV5Schema = guestDemoStateV4Schema.extend({
 const payrollRunSchema = z.object({
   id: z.string().min(1), periodStart: z.iso.date(), periodEnd: z.iso.date(), peopleCount: z.number().int().positive(),
   grossTotalCents: z.number().int().positive(), deductionTotalCents: z.number().int().nonnegative(), netTotalCents: z.number().int().nonnegative(),
+  employerCostTotalCents: z.number().int().positive().optional(),
   currency: z.enum(payrollCurrencies), notes: z.string().max(1_000), status: z.enum(payrollStatuses), createdBy: z.string().min(1),
   createdAt: z.iso.datetime(), updatedAt: z.iso.datetime(),
 }).refine((run) => run.periodEnd >= run.periodStart && run.deductionTotalCents <= run.grossTotalCents && run.netTotalCents === run.grossTotalCents - run.deductionTotalCents);
@@ -383,38 +397,95 @@ const guestDemoStateV8Schema = guestDemoStateV7Schema.extend({
   dataQualityIssues: z.array(dataQualityIssueSchema),
 });
 
-export const guestDemoStateSchema = guestDemoStateV8Schema.extend({
+const guestDemoStateV9Schema = guestDemoStateV8Schema.extend({
   version: z.literal(9),
   preferences: guestPreferencesSchema,
   savedAnalyticsViews: z.array(savedAnalyticsViewSchema),
 });
 
+export const guestDemoStateSchema = guestDemoStateV9Schema.extend({
+  version: z.literal(10),
+  scenarioVersion: z.literal(2),
+  workspaceConfiguration: workspaceConfigurationSchema,
+});
+
+function normalizeLegacyAnalyticsModule(value: unknown): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+
+  const state = structuredClone(value) as Record<string, unknown>;
+  if (state.activeModule === "centro-control") state.activeModule = "analitica";
+
+  if (Array.isArray(state.moduleSettings)) {
+    state.moduleSettings = state.moduleSettings.map((setting) => {
+      if (!setting || typeof setting !== "object" || Array.isArray(setting)) {
+        return setting;
+      }
+      const normalized = { ...(setting as Record<string, unknown>) };
+      if (normalized.moduleId === "centro-control") {
+        normalized.moduleId = "analitica";
+      }
+      return normalized;
+    });
+  }
+
+  if (Array.isArray(state.savedAnalyticsViews)) {
+    state.savedAnalyticsViews = state.savedAnalyticsViews.map((view) => {
+      if (!view || typeof view !== "object" || Array.isArray(view)) return view;
+      const normalized = { ...(view as Record<string, unknown>) };
+      if (normalized.moduleId === "centro-control") {
+        normalized.moduleId = "analitica";
+      }
+      return normalized;
+    });
+  }
+
+  if (
+    state.preferences &&
+    typeof state.preferences === "object" &&
+    !Array.isArray(state.preferences)
+  ) {
+    const preferences = {
+      ...(state.preferences as Record<string, unknown>),
+    };
+    if (preferences.defaultDashboard === "control-center") {
+      preferences.defaultDashboard = "analytics";
+    }
+    state.preferences = preferences;
+  }
+
+  return state;
+}
+
 export function parseGuestDemoState(value: unknown): GuestDemoState | null {
-  const result = guestDemoStateSchema.safeParse(value);
+  const normalized = normalizeLegacyAnalyticsModule(value);
+  const result = guestDemoStateSchema.safeParse(normalized);
   if (result.success) return result.data;
 
-  const version8 = guestDemoStateV8Schema.safeParse(value);
+  const version9 = guestDemoStateV9Schema.safeParse(normalized);
+  if (version9.success) return migrateVersion9(version9.data);
+
+  const version8 = guestDemoStateV8Schema.safeParse(normalized);
   if (version8.success) return migrateVersion8(version8.data);
 
-  const version7 = guestDemoStateV7Schema.safeParse(value);
+  const version7 = guestDemoStateV7Schema.safeParse(normalized);
   if (version7.success) return migrateVersion8(migrateVersion7(version7.data));
 
-  const version6 = guestDemoStateV6Schema.safeParse(value);
+  const version6 = guestDemoStateV6Schema.safeParse(normalized);
   if (version6.success) return migrateVersion8(migrateVersion7(migrateVersion6(version6.data)));
 
-  const version5 = guestDemoStateV5Schema.safeParse(value);
+  const version5 = guestDemoStateV5Schema.safeParse(normalized);
   if (version5.success) return migrateVersion8(migrateVersion7(migrateVersion6(migrateVersion5(version5.data))));
 
-  const version4 = guestDemoStateV4Schema.safeParse(value);
+  const version4 = guestDemoStateV4Schema.safeParse(normalized);
   if (version4.success) return migrateVersion8(migrateVersion7(migrateVersion6(migrateVersion5(migrateVersion4(version4.data)))));
 
-  const version3 = guestDemoStateV3Schema.safeParse(value);
+  const version3 = guestDemoStateV3Schema.safeParse(normalized);
   if (version3.success) return migrateVersion8(migrateVersion7(migrateVersion6(migrateVersion5(migrateVersion4(migrateVersion3(version3.data))))));
 
-  const version2 = guestDemoStateV2Schema.safeParse(value);
+  const version2 = guestDemoStateV2Schema.safeParse(normalized);
   if (version2.success) return migrateVersion8(migrateVersion7(migrateVersion6(migrateVersion5(migrateVersion4(migrateVersion3(migrateVersion2(version2.data)))))));
 
-  const version1 = guestDemoStateV1Schema.safeParse(value);
+  const version1 = guestDemoStateV1Schema.safeParse(normalized);
   if (!version1.success) return null;
   return migrateVersion8(migrateVersion7(migrateVersion6(migrateVersion5(migrateVersion4(migrateVersion3(migrateVersion2({ ...version1.data, version: 2, ...createInitialTaskState() })))))));
 }
@@ -459,6 +530,10 @@ export type GuestDemoAction =
   | { type: "simulate-integration"; connectorId: string }
   | { type: "update-preferences"; preferences: GuestPreferences }
   | { type: "save-analytics-view"; view: SavedAnalyticsView }
+  | {
+      type: "update-workspace-configuration";
+      configuration: WorkspaceConfiguration;
+    }
   | { type: "reset" };
 
 function createInitialTaskState(): Pick<
@@ -470,7 +545,7 @@ function createInitialTaskState(): Pick<
       {
         id: "task-001",
         title: "Preparar el informe semanal",
-        description: "Consolidar los avances sintéticos del equipo y preparar la revisión.",
+        description: "Consolidar los avances del equipo y preparar la revisión.",
         status: "in_progress",
         priority: "high",
         projectId: "project-001",
@@ -478,14 +553,14 @@ function createInitialTaskState(): Pick<
         assigneePersonId: null,
         assigneeName: "Usuario invitado",
         dueDate: "2026-07-24",
-        createdBy: "Responsable demo",
+        createdBy: "Lucía Martín",
         createdAt: "2026-07-18T08:30:00.000Z",
         updatedAt: "2026-07-21T10:15:00.000Z",
       },
       {
         id: "task-002",
         title: "Validar la documentación técnica",
-        description: "Comprobar estructura, enlaces y ejemplos completamente sintéticos.",
+        description: "Comprobar la estructura, los enlaces y los ejemplos antes de publicar.",
         status: "pending",
         priority: "medium",
         projectId: "project-001",
@@ -493,14 +568,14 @@ function createInitialTaskState(): Pick<
         assigneePersonId: "person-001",
         assigneeName: "Elena Martín",
         dueDate: "2026-07-29",
-        createdBy: "Responsable demo",
+        createdBy: "Lucía Martín",
         createdAt: "2026-07-19T09:00:00.000Z",
         updatedAt: "2026-07-19T09:00:00.000Z",
       },
       {
         id: "task-003",
         title: "Revisar el flujo de permisos",
-        description: "Verificar la matriz demostrativa antes de pasar el cambio a revisión.",
+        description: "Verificar la matriz de permisos antes de pasar el cambio a revisión.",
         status: "blocked",
         priority: "urgent",
         projectId: "project-002",
@@ -508,7 +583,7 @@ function createInitialTaskState(): Pick<
         assigneePersonId: null,
         assigneeName: "Usuario invitado",
         dueDate: "2026-07-23",
-        createdBy: "Responsable demo",
+        createdBy: "Lucía Martín",
         createdAt: "2026-07-17T12:00:00.000Z",
         updatedAt: "2026-07-21T16:40:00.000Z",
       },
@@ -523,7 +598,7 @@ function createInitialTaskState(): Pick<
         assigneePersonId: null,
         assigneeName: null,
         dueDate: null,
-        createdBy: "Responsable demo",
+        createdBy: "Lucía Martín",
         createdAt: "2026-07-20T10:00:00.000Z",
         updatedAt: "2026-07-22T08:10:00.000Z",
       },
@@ -541,7 +616,7 @@ function createInitialTaskState(): Pick<
         id: "comment-001",
         taskId: "task-003",
         authorName: "Usuario invitado",
-        body: "Pendiente de confirmar el alcance de permisos demostrativos.",
+        body: "Pendiente de confirmar el alcance de los permisos.",
         createdAt: "2026-07-21T16:40:00.000Z",
       },
     ],
@@ -552,7 +627,7 @@ function createInitialTaskState(): Pick<
         kind: "status",
         fromStatus: "in_progress",
         toStatus: "blocked",
-        note: "Bloqueada hasta validar el alcance sintético.",
+        note: "Bloqueada hasta validar el alcance.",
         actorName: "Usuario invitado",
         createdAt: "2026-07-21T16:40:00.000Z",
       },
@@ -569,7 +644,7 @@ function createInitialIncidentPeopleState(): Pick<
       {
         id: "incident-001",
         title: "Acceso bloqueado al entorno de pruebas",
-        description: "Una cuenta sintética no puede acceder al espacio de demostración.",
+        description: "Una cuenta con acceso suspendido no puede entrar en la aplicación.",
         status: "investigating",
         priority: "high",
         category: "access",
@@ -586,8 +661,8 @@ function createInitialIncidentPeopleState(): Pick<
       },
       {
         id: "incident-002",
-        title: "Error en un informe demostrativo",
-        description: "El filtro de fechas devuelve un resultado sintético incompleto.",
+        title: "Error al aplicar el filtro de fechas",
+        description: "El filtro de fechas devuelve un resultado incompleto.",
         status: "registered",
         priority: "medium",
         category: "software",
@@ -610,7 +685,7 @@ function createInitialIncidentPeopleState(): Pick<
         kind: "status",
         fromStatus: "assigned",
         toStatus: "investigating",
-        note: "Diagnóstico iniciado con datos sintéticos.",
+        note: "Diagnóstico iniciado con una revisión de los filtros.",
         actorName: "Elena Martín",
         createdAt: "2026-07-22T10:00:00.000Z",
       },
@@ -663,8 +738,8 @@ function createInitialChangelogSettingsState(): Pick<
     changelogEntries: [
       {
         id: "changelog-001", version: "0.3.0", title: "Incidencias y directorio seguro",
-        summary: "Añade flujos sintéticos de incidencias y perfiles separados de la autorización.", status: "published",
-        createdBy: "Responsable demo", publishedAt: "2026-07-22T15:00:00.000Z", createdAt: "2026-07-22T11:00:00.000Z", updatedAt: "2026-07-22T15:00:00.000Z",
+        summary: "Añade flujos de incidencias y perfiles separados de la autorización.", status: "published",
+        createdBy: "Lucía Martín", publishedAt: "2026-07-22T15:00:00.000Z", createdAt: "2026-07-22T11:00:00.000Z", updatedAt: "2026-07-22T15:00:00.000Z",
       },
       {
         id: "changelog-002", version: "0.4.0", title: "Configuración verificable",
@@ -673,7 +748,7 @@ function createInitialChangelogSettingsState(): Pick<
       },
     ],
     changelogEvents: [
-      { id: "changelog-event-001", entryId: "changelog-001", fromStatus: "in_review", toStatus: "published", note: "Contenido sintético revisado y publicado.", actorName: "Responsable demo", createdAt: "2026-07-22T15:00:00.000Z" },
+      { id: "changelog-event-001", entryId: "changelog-001", fromStatus: "in_review", toStatus: "published", note: "Contenido revisado y publicado.", actorName: "Lucía Martín", createdAt: "2026-07-22T15:00:00.000Z" },
     ],
     moduleSettings: createDefaultModuleSettings(),
     roles: [
@@ -701,26 +776,26 @@ function createInitialTreasuryState(): Pick<GuestDemoState, "treasuryEntries" | 
   return {
     treasuryEntries: [
       {
-        id: "treasury-001", entryDate: "2026-07-01", concept: "Entradas operativas agregadas · demo",
-        amountCents: 1_250_000, currency: "EUR", status: "closed", createdBy: "Responsable demo",
+        id: "treasury-001", entryDate: "2026-07-01", concept: "Ingresos por servicios",
+        amountCents: 1_250_000, currency: "EUR", status: "closed", createdBy: "Lucía Martín",
         createdAt: "2026-07-02T08:30:00.000Z", updatedAt: "2026-07-08T12:00:00.000Z",
       },
       {
-        id: "treasury-002", entryDate: "2026-07-15", concept: "Servicios digitales agregados · demo",
-        amountCents: -184_500, currency: "EUR", status: "validated", createdBy: "Responsable demo",
+        id: "treasury-002", entryDate: "2026-07-15", concept: "Servicios digitales",
+        amountCents: -184_500, currency: "EUR", status: "validated", createdBy: "Lucía Martín",
         createdAt: "2026-07-16T09:00:00.000Z", updatedAt: "2026-07-21T11:20:00.000Z",
       },
       {
-        id: "treasury-003", entryDate: "2026-07-21", concept: "Operaciones internas agregadas · demo",
+        id: "treasury-003", entryDate: "2026-07-21", concept: "Operaciones internas",
         amountCents: -72_000, currency: "EUR", status: "registered", createdBy: "Usuario invitado",
         createdAt: "2026-07-21T14:00:00.000Z", updatedAt: "2026-07-21T14:00:00.000Z",
       },
     ],
     treasuryEvents: [
-      { id: "treasury-event-001", entryId: "treasury-001", kind: "status", fromStatus: "validated", toStatus: "closed", note: "Periodo sintético cerrado.", actorName: "Responsable demo", createdAt: "2026-07-08T12:00:00.000Z" },
-      { id: "treasury-event-002", entryId: "treasury-002", kind: "status", fromStatus: "reconciled", toStatus: "validated", note: "Importe agregado validado.", actorName: "Responsable demo", createdAt: "2026-07-21T11:20:00.000Z" },
-      { id: "treasury-event-003", entryId: "treasury-003", kind: "created", fromStatus: null, toStatus: "draft", note: "Movimiento sintético creado.", actorName: "Usuario invitado", createdAt: "2026-07-21T13:45:00.000Z" },
-      { id: "treasury-event-004", entryId: "treasury-003", kind: "status", fromStatus: "draft", toStatus: "registered", note: "Movimiento sintético registrado.", actorName: "Usuario invitado", createdAt: "2026-07-21T14:00:00.000Z" },
+      { id: "treasury-event-001", entryId: "treasury-001", kind: "status", fromStatus: "validated", toStatus: "closed", note: "Periodo cerrado.", actorName: "Daniel Ortega", createdAt: "2026-07-08T12:00:00.000Z" },
+      { id: "treasury-event-002", entryId: "treasury-002", kind: "status", fromStatus: "reconciled", toStatus: "validated", note: "Importe agregado validado.", actorName: "Daniel Ortega", createdAt: "2026-07-21T11:20:00.000Z" },
+      { id: "treasury-event-003", entryId: "treasury-003", kind: "created", fromStatus: null, toStatus: "draft", note: "Movimiento creado.", actorName: "Usuario invitado", createdAt: "2026-07-21T13:45:00.000Z" },
+      { id: "treasury-event-004", entryId: "treasury-003", kind: "status", fromStatus: "draft", toStatus: "registered", note: "Movimiento registrado.", actorName: "Usuario invitado", createdAt: "2026-07-21T14:00:00.000Z" },
     ],
   };
 }
@@ -732,14 +807,14 @@ function migrateVersion4(state: z.infer<typeof guestDemoStateV4Schema>): z.infer
 function createInitialPayrollState(): Pick<GuestDemoState, "payrollRuns" | "payrollEvents"> {
   return {
     payrollRuns: [
-      { id: "payroll-001", periodStart: "2026-06-01", periodEnd: "2026-06-30", peopleCount: 18, grossTotalCents: 512_000, deductionTotalCents: 94_000, netTotalCents: 418_000, currency: "EUR", notes: "Ciclo agregado cerrado · datos ficticios.", status: "closed", createdBy: "Responsable demo", createdAt: "2026-06-20T09:00:00.000Z", updatedAt: "2026-06-28T12:00:00.000Z" },
-      { id: "payroll-002", periodStart: "2026-07-01", periodEnd: "2026-07-31", peopleCount: 19, grossTotalCents: 546_000, deductionTotalCents: 101_000, netTotalCents: 445_000, currency: "EUR", notes: "Revisión agregada de demostración.", status: "reviewed", createdBy: "Responsable demo", createdAt: "2026-07-18T09:00:00.000Z", updatedAt: "2026-07-22T12:00:00.000Z" },
-      { id: "payroll-003", periodStart: "2026-08-01", periodEnd: "2026-08-31", peopleCount: 19, grossTotalCents: 548_500, deductionTotalCents: 102_500, netTotalCents: 446_000, currency: "EUR", notes: "Estimación agregada sintética en recopilación.", status: "collecting", createdBy: "Usuario invitado", createdAt: "2026-07-22T14:00:00.000Z", updatedAt: "2026-07-22T14:00:00.000Z" },
+      { id: "payroll-001", periodStart: "2026-06-01", periodEnd: "2026-06-30", peopleCount: 18, grossTotalCents: 512_000, deductionTotalCents: 94_000, netTotalCents: 418_000, currency: "EUR", notes: "Ciclo agregado cerrado.", status: "closed", createdBy: "Bruno Molina", createdAt: "2026-06-20T09:00:00.000Z", updatedAt: "2026-06-28T12:00:00.000Z" },
+      { id: "payroll-002", periodStart: "2026-07-01", periodEnd: "2026-07-31", peopleCount: 19, grossTotalCents: 546_000, deductionTotalCents: 101_000, netTotalCents: 445_000, currency: "EUR", notes: "Revisión agregada del periodo.", status: "reviewed", createdBy: "Bruno Molina", createdAt: "2026-07-18T09:00:00.000Z", updatedAt: "2026-07-22T12:00:00.000Z" },
+      { id: "payroll-003", periodStart: "2026-08-01", periodEnd: "2026-08-31", peopleCount: 19, grossTotalCents: 548_500, deductionTotalCents: 102_500, netTotalCents: 446_000, currency: "EUR", notes: "Estimación agregada en recopilación.", status: "collecting", createdBy: "Usuario invitado", createdAt: "2026-07-22T14:00:00.000Z", updatedAt: "2026-07-22T14:00:00.000Z" },
     ],
     payrollEvents: [
-      { id: "payroll-event-001", runId: "payroll-001", kind: "status", fromStatus: "reviewed", toStatus: "closed", note: "Ciclo agregado sintético cerrado.", actorName: "Responsable demo", createdAt: "2026-06-28T12:00:00.000Z" },
-      { id: "payroll-event-002", runId: "payroll-002", kind: "status", fromStatus: "calculated", toStatus: "reviewed", note: "Totales agregados sintéticos revisados.", actorName: "Responsable demo", createdAt: "2026-07-22T12:00:00.000Z" },
-      { id: "payroll-event-003", runId: "payroll-003", kind: "created", fromStatus: null, toStatus: "collecting", note: "Ciclo agregado sintético creado.", actorName: "Usuario invitado", createdAt: "2026-07-22T14:00:00.000Z" },
+      { id: "payroll-event-001", runId: "payroll-001", kind: "status", fromStatus: "reviewed", toStatus: "closed", note: "Ciclo agregado cerrado.", actorName: "Bruno Molina", createdAt: "2026-06-28T12:00:00.000Z" },
+      { id: "payroll-event-002", runId: "payroll-002", kind: "status", fromStatus: "calculated", toStatus: "reviewed", note: "Totales agregados revisados.", actorName: "Bruno Molina", createdAt: "2026-07-22T12:00:00.000Z" },
+      { id: "payroll-event-003", runId: "payroll-003", kind: "created", fromStatus: null, toStatus: "collecting", note: "Ciclo agregado creado.", actorName: "Usuario invitado", createdAt: "2026-07-22T14:00:00.000Z" },
     ],
   };
 }
@@ -778,7 +853,7 @@ function createInitialProjectState(): Pick<
         code: "DATA-02",
         name: "Calidad del dato",
         summary:
-          "Controles sintéticos de integridad y trazabilidad para los módulos.",
+          "Controles de integridad y trazabilidad para los módulos.",
         status: "active",
         health: "at_risk",
         ownerPersonId: "person-002",
@@ -795,7 +870,7 @@ function createInitialProjectState(): Pick<
         code: "EXP-03",
         name: "Experiencia de usuario",
         summary:
-          "Evolución accesible y responsive de la experiencia de gestión.",
+          "Evolución accesible y adaptable de la experiencia de gestión.",
         status: "planned",
         health: "on_track",
         ownerPersonId: "person-003",
@@ -900,34 +975,52 @@ function migrateVersion7(
 function migrateVersion8(
   state: z.infer<typeof guestDemoStateV8Schema>,
 ): GuestDemoState {
-  return guestDemoStateSchema.parse({
+  return migrateVersion9(guestDemoStateV9Schema.parse({
     ...state,
     version: 9,
     preferences: {
       simulatedRole: null,
-      defaultDashboard: "control-center",
+      defaultDashboard: "analytics",
       theme: "system",
       density: "comfortable",
     },
     savedAnalyticsViews: [],
+  }));
+}
+
+function migrateVersion9(
+  state: z.infer<typeof guestDemoStateV9Schema>,
+): GuestDemoState {
+  const rebuilt = addStandardScenario({
+    ...initialGuestDemoStateBase,
+    organizationName: state.organizationName,
+    activeModule: state.activeModule,
+    preferences: state.preferences,
+    savedAnalyticsViews: state.savedAnalyticsViews.map((view) => ({
+      ...view,
+      moduleId:
+        view.moduleId === "centro-control" ? "analitica" : view.moduleId,
+    })),
   });
+  return guestDemoStateSchema.parse(rebuilt);
 }
 
 const initialGuestDemoStateBase: GuestDemoState = {
-  version: 9,
-  scenarioVersion: 1,
+  version: 10,
+  scenarioVersion: 2,
   activeModule: "inicio",
-  organizationName: "Organización demo",
+  organizationName: "Organización Aurora",
   integrationConnectors: createDefaultIntegrationConnectors(),
   integrationRuns: [],
   dataQualityIssues: [],
   preferences: {
     simulatedRole: null,
-    defaultDashboard: "control-center",
+    defaultDashboard: "analytics",
     theme: "system",
     density: "comfortable",
   },
   savedAnalyticsViews: [],
+  workspaceConfiguration: structuredClone(defaultWorkspaceConfiguration),
   leaveRequests: [
     {
       id: "leave-001",
@@ -972,7 +1065,7 @@ const initialGuestDemoStateBase: GuestDemoState = {
       requestId: "leave-001",
       from: null,
       to: "submitted",
-      note: "Solicitud registrada en la demo.",
+      note: "Solicitud registrada.",
       actorName: "Elena Martín",
       createdAt: "2026-07-18T09:20:00.000Z",
     },
@@ -982,7 +1075,7 @@ const initialGuestDemoStateBase: GuestDemoState = {
       from: "submitted",
       to: "approved",
       note: "Cobertura del equipo validada.",
-      actorName: "Responsable demo",
+      actorName: "Lucía Martín",
       createdAt: "2026-07-12T10:15:00.000Z",
     },
   ],
@@ -1008,8 +1101,8 @@ function addStandardScenario(base: GuestDemoState): GuestDemoState {
     kind: "created",
     fromStatus: null,
     toStatus: task.status,
-    note: "Tarea incorporada por el generador sintético.",
-    actorName: "Generador de escenario",
+    note: "Tarea incorporada a los datos iniciales.",
+    actorName: "Sistema",
     createdAt: task.createdAt,
   }));
   const incidentEvents: IncidentEvent[] = scenario.incidents.map(
@@ -1019,8 +1112,8 @@ function addStandardScenario(base: GuestDemoState): GuestDemoState {
       kind: "created",
       fromStatus: null,
       toStatus: incident.status,
-      note: "Incidencia incorporada por el generador sintético.",
-      actorName: "Generador de escenario",
+      note: "Incidencia incorporada a los datos iniciales.",
+      actorName: "Sistema",
       createdAt: incident.createdAt,
     }),
   );
@@ -1028,7 +1121,6 @@ function addStandardScenario(base: GuestDemoState): GuestDemoState {
   return {
     ...base,
     people: [
-      ...base.people,
       ...scenario.people.map((person) => ({
         ...person,
         createdAt: scenario.generatedAt,
@@ -1036,18 +1128,16 @@ function addStandardScenario(base: GuestDemoState): GuestDemoState {
       })),
     ],
     peopleEvents: [
-      ...base.peopleEvents,
       ...scenario.people.map((person) => ({
         id: `event-${person.id}`,
         personId: person.id,
         kind: "created" as const,
-        note: "Perfil creado por el generador sintético.",
-        actorName: "Generador de escenario",
+        note: "Perfil incorporado a los datos iniciales.",
+        actorName: "Sistema",
         createdAt: scenario.generatedAt,
       })),
     ],
     projects: [
-      ...base.projects,
       ...scenario.projects.map((project) => ({
         ...project,
         ownerName:
@@ -1057,54 +1147,49 @@ function addStandardScenario(base: GuestDemoState): GuestDemoState {
       })),
     ],
     projectEvents: [
-      ...base.projectEvents,
       ...scenario.projects.map((project) => ({
         id: `event-${project.id}`,
         projectId: project.id,
         kind: "created" as const,
-        note: "Proyecto creado por el generador sintético.",
-        actorName: "Generador de escenario",
+        note: "Proyecto incorporado a los datos iniciales.",
+        actorName: "Sistema",
         createdAt: scenario.generatedAt,
       })),
     ],
     tasks: [
-      ...base.tasks,
       ...scenario.tasks.map((task) => ({
         ...task,
         projectName: projectsById.get(task.projectId)?.name ?? null,
-        assigneeName: task.assigneePersonId
-          ? peopleById.get(task.assigneePersonId)?.displayName ?? null
-          : null,
-        createdBy: "Generador de escenario",
+      assigneeName: task.assigneePersonId
+        ? peopleById.get(task.assigneePersonId)?.displayName ?? null
+        : null,
+        createdBy: "Sistema",
       })),
     ],
     taskDependencies: [
-      ...base.taskDependencies,
       ...scenario.taskDependencies.map((dependency) => ({
         ...dependency,
         createdAt: scenario.generatedAt,
       })),
     ],
     taskComments: [
-      ...base.taskComments,
       ...scenario.taskComments.map((comment) => ({
         id: comment.id,
         taskId: comment.taskId,
         authorName:
           peopleById.get(comment.authorPersonId)?.displayName ??
-          "Persona sintética",
+          "Persona sin asignar",
         body: comment.body,
         createdAt: comment.createdAt,
       })),
     ],
-    taskEvents: [...base.taskEvents, ...taskEvents],
+    taskEvents,
     leaveRequests: [
-      ...base.leaveRequests,
       ...scenario.leaveRequests.map((request) => ({
         id: request.id,
         employeeName:
           peopleById.get(request.personId)?.displayName ??
-          "Persona sintética",
+          "Persona sin asignar",
         startDate: request.startDate,
         endDate: request.endDate,
         businessDays: calculateBusinessDays(
@@ -1119,38 +1204,37 @@ function addStandardScenario(base: GuestDemoState): GuestDemoState {
       })),
     ],
     leaveEvents: [
-      ...base.leaveEvents,
       ...scenario.leaveRequests.map((request) => ({
         id: `event-${request.id}`,
         requestId: request.id,
         from: null,
         to: request.status,
-        note: "Solicitud incorporada por el generador sintético.",
-        actorName: "Generador de escenario",
+        note: "Solicitud incorporada a los datos iniciales.",
+        actorName: "Sistema",
         createdAt: scenario.generatedAt,
       })),
     ],
     incidents: [
-      ...base.incidents,
       ...scenario.incidents.map((incident) => ({
         ...incident,
         projectName:
           projectsById.get(incident.projectId)?.name ?? null,
         requesterName:
           peopleById.get(incident.requesterPersonId)?.displayName ??
-          "Persona sintética",
+          "Persona sin asignar",
         assigneeName: incident.assigneePersonId
           ? peopleById.get(incident.assigneePersonId)?.displayName ?? null
           : null,
       })),
     ],
-    incidentEvents: [...base.incidentEvents, ...incidentEvents],
+    incidentEvents,
     treasuryEntries: [
-      ...base.treasuryEntries,
       ...scenario.treasuryEntries.map((entry) => ({
         id: entry.id,
         entryDate: entry.entryDate,
         concept: entry.concept,
+        category: entry.category,
+        source: entry.source,
         amountCents: entry.amountCents,
         currency: entry.currency,
         status: entry.status,
@@ -1160,31 +1244,28 @@ function addStandardScenario(base: GuestDemoState): GuestDemoState {
       })),
     ],
     treasuryEvents: [
-      ...base.treasuryEvents,
       ...scenario.treasuryEntries.map((entry) => ({
         id: `event-${entry.id}`,
         entryId: entry.id,
         kind: "created" as const,
         fromStatus: null,
         toStatus: entry.status,
-        note: `Importación sintética desde ${entry.source}.`,
-        actorName: "Integración demo",
+        note: `Importación completada desde ${entry.source}.`,
+        actorName: "Integración programada",
         createdAt: scenario.generatedAt,
       })),
     ],
     payrollRuns: [
-      ...base.payrollRuns,
       ...scenario.payrollRuns.map((run) => ({
         ...run,
         notes:
-          "Ciclo agregado completamente sintético; no contiene retribuciones individuales.",
+          "Ciclo agregado sin retribuciones individuales.",
         createdBy: "Payroll Master",
         createdAt: scenario.generatedAt,
         updatedAt: scenario.generatedAt,
       })),
     ],
     payrollEvents: [
-      ...base.payrollEvents,
       ...scenario.payrollRuns.map((run) => ({
         id: `event-${run.id}`,
         runId: run.id,
@@ -1192,28 +1273,26 @@ function addStandardScenario(base: GuestDemoState): GuestDemoState {
         fromStatus: null,
         toStatus: run.status,
         note: "Ciclo agregado incorporado por Payroll Master.",
-        actorName: "Integración demo",
+        actorName: "Integración programada",
         createdAt: scenario.generatedAt,
       })),
     ],
     changelogEntries: [
-      ...base.changelogEntries,
       ...scenario.changelogEntries.map((entry) => ({
         ...entry,
-        createdBy: "Equipo demo",
+        createdBy: "Equipo de producto",
         createdAt: scenario.generatedAt,
         updatedAt: entry.publishedAt ?? scenario.generatedAt,
       })),
     ],
     changelogEvents: [
-      ...base.changelogEvents,
       ...scenario.changelogEntries.map((entry) => ({
         id: `event-${entry.id}`,
         entryId: entry.id,
         fromStatus: null,
         toStatus: entry.status,
-        note: "Entrada editorial incorporada por el generador sintético.",
-        actorName: "Generador de escenario",
+        note: "Entrada editorial incorporada a los datos iniciales.",
+        actorName: "Sistema",
         createdAt: entry.publishedAt ?? scenario.generatedAt,
       })),
     ],
@@ -1257,7 +1336,7 @@ export function guestDemoReducer(
 ): GuestDemoState {
   switch (action.type) {
     case "hydrate":
-      return action.state.version === 9 ? action.state : state;
+      return action.state.version === 10 ? action.state : state;
     case "navigate":
       return { ...state, activeModule: action.module };
     case "create-leave": {
@@ -1320,7 +1399,7 @@ export function guestDemoReducer(
             from: current.status,
             to: updated.status,
             note: action.note,
-            actorName: "Responsable demo",
+            actorName: "Lucía Martín",
             createdAt,
           },
           ...state.leaveEvents,
@@ -1748,7 +1827,7 @@ export function guestDemoReducer(
             id: stableId("people-event", state),
             personId: id,
             kind: "created",
-            note: "Perfil sintético añadido al directorio.",
+            note: "Perfil añadido al directorio.",
             actorName: "Usuario invitado",
             createdAt,
           },
@@ -1776,7 +1855,7 @@ export function guestDemoReducer(
             id: stableId("people-event", state),
             personId: action.personId,
             kind,
-            note: "Perfil sintético actualizado.",
+            note: "Perfil actualizado.",
             actorName: "Usuario invitado",
             createdAt,
           },
@@ -1830,7 +1909,7 @@ export function guestDemoReducer(
         treasuryEntries: [entry, ...state.treasuryEntries],
         treasuryEvents: [{
           id: stableId("treasury-event", state), entryId: id, kind: "created", fromStatus: null,
-          toStatus: "draft", note: "Movimiento sintético creado.", actorName: "Usuario invitado", createdAt,
+          toStatus: "draft", note: "Movimiento creado.", actorName: "Usuario invitado", createdAt,
         }, ...state.treasuryEvents],
       };
     }
@@ -1844,7 +1923,7 @@ export function guestDemoReducer(
         treasuryEntries: state.treasuryEntries.map((entry) => entry.id === current.id ? { ...entry, ...parsed.data, updatedAt: createdAt } : entry),
         treasuryEvents: [{
           id: stableId("treasury-event", state), entryId: current.id, kind: "updated", fromStatus: "draft",
-          toStatus: "draft", note: "Borrador sintético actualizado.", actorName: "Usuario invitado", createdAt,
+          toStatus: "draft", note: "Borrador actualizado.", actorName: "Usuario invitado", createdAt,
         }, ...state.treasuryEvents],
       };
     }
@@ -1868,7 +1947,7 @@ export function guestDemoReducer(
       const createdAt = new Date().toISOString();
       const id = stableId("payroll", state);
       const run: PayrollRun = { id, ...parsed.data, netTotalCents: parsed.data.grossTotalCents - parsed.data.deductionTotalCents, status: "collecting", createdBy: "Usuario invitado", createdAt, updatedAt: createdAt };
-      return { ...state, payrollRuns: [run, ...state.payrollRuns], payrollEvents: [{ id: stableId("payroll-event", state), runId: id, kind: "created", fromStatus: null, toStatus: "collecting", note: "Ciclo agregado sintético creado.", actorName: "Usuario invitado", createdAt }, ...state.payrollEvents] };
+      return { ...state, payrollRuns: [run, ...state.payrollRuns], payrollEvents: [{ id: stableId("payroll-event", state), runId: id, kind: "created", fromStatus: null, toStatus: "collecting", note: "Ciclo agregado creado.", actorName: "Usuario invitado", createdAt }, ...state.payrollEvents] };
     }
     case "update-payroll": {
       const parsed = payrollInputSchema.safeParse(action.input);
@@ -1917,7 +1996,7 @@ export function guestDemoReducer(
       if (!parsed.success || !state.roles.some((role) => role.id === parsed.data.roleId)) return state;
       const createdAt = new Date().toISOString();
       const id = stableId("invitation", state);
-      return { ...state, invitations: [{ id, ...parsed.data, status: "pending", expiresAt: new Date(new Date(createdAt).getTime() + 14 * 86_400_000).toISOString(), createdAt }, ...state.invitations], adminAuditEvents: [{ id: stableId("admin-audit", state), eventType: "invitation.created", entityType: "invitation", entityId: id, actorName: "Usuario invitado", summary: "Invitación sintética creada.", createdAt }, ...state.adminAuditEvents] };
+      return { ...state, invitations: [{ id, ...parsed.data, status: "pending", expiresAt: new Date(new Date(createdAt).getTime() + 14 * 86_400_000).toISOString(), createdAt }, ...state.invitations], adminAuditEvents: [{ id: stableId("admin-audit", state), eventType: "invitation.created", entityType: "invitation", entityId: id, actorName: "Usuario invitado", summary: "Invitación creada.", createdAt }, ...state.adminAuditEvents] };
     }
     case "update-membership": {
       const membership = state.memberships.find((item) => item.id === action.membershipId);
@@ -1967,6 +2046,28 @@ export function guestDemoReducer(
           ),
         ],
       };
+    case "update-workspace-configuration": {
+      const parsed = workspaceConfigurationSchema.safeParse(
+        action.configuration,
+      );
+      if (!parsed.success) return state;
+      return {
+        ...state,
+        workspaceConfiguration: parsed.data,
+        adminAuditEvents: [
+          {
+            id: stableId("audit", state),
+            eventType: "settings.configuration.updated",
+            entityType: "workspace_configuration",
+            entityId: null,
+            actorName: "Usuario invitado",
+            summary: "Políticas operativas actualizadas",
+            createdAt: new Date().toISOString(),
+          },
+          ...state.adminAuditEvents,
+        ],
+      };
+    }
     case "reset":
       return structuredClone(initialGuestDemoState);
     default:

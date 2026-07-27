@@ -1,6 +1,6 @@
 export const moduleIds = [
   "inicio",
-  "centro-control",
+  "analitica",
   "vacaciones",
   "proyectos",
   "tareas",
@@ -35,15 +35,15 @@ export const modules: readonly ModuleDefinition[] = [
     route: "/app/vacaciones",
   },
   {
-    id: "centro-control",
-    label: "Centro de control",
-    description: "Indicadores, tendencias y riesgos de toda la operación.",
-    route: "/app/centro-control",
+    id: "analitica",
+    label: "Analítica",
+    description: "Indicadores, tendencias, riesgos y capacidad de toda la operación.",
+    route: "/app/analitica",
   },
   {
     id: "proyectos",
     label: "Proyectos",
-    description: "Portfolio, responsables, salud y evolución del trabajo.",
+    description: "Proyectos, responsables, salud y evolución del trabajo.",
     route: "/app/proyectos",
   },
   {

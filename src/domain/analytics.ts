@@ -1,10 +1,44 @@
 export type AnalyticsFilter = {
-  period: "30d" | "90d" | "12m";
+  period: "30d" | "90d" | "6m" | "12m";
   comparison: "previous_period" | "none";
   projectId: string | null;
   team: string | null;
-  owner: string | null;
+  ownerId: string | null;
   status: string | null;
+  service: string | null;
+};
+
+export type AnalyticsKpi = {
+  code: string;
+  label: string;
+  value: number;
+  unit: "count" | "percentage" | "days" | "currency";
+  variation: number | null;
+  target: number | null;
+  sparkline: number[];
+};
+
+export type AnalyticsSeries = {
+  code: string;
+  label: string;
+  unit: AnalyticsKpi["unit"];
+  points: Array<{ period: string; value: number }>;
+};
+
+export type AnalyticsAlert = {
+  id: string;
+  severity: "info" | "warning" | "critical";
+  title: string;
+  description: string;
+  targetModule: string;
+};
+
+export type AnalyticsSnapshot = {
+  generatedAt: string;
+  filters: AnalyticsFilter;
+  kpis: AnalyticsKpi[];
+  series: AnalyticsSeries[];
+  alerts: AnalyticsAlert[];
 };
 
 export type MetricDefinition = {
@@ -26,7 +60,7 @@ export const controlCenterMetrics: MetricDefinition[] = [
     unit: "count",
     source: "projects",
     grain: "workspace",
-    freshness: "Tiempo de consulta",
+    freshness: "Actualización inmediata",
     permission: "analytics.dashboards.view",
   },
   {
@@ -36,7 +70,7 @@ export const controlCenterMetrics: MetricDefinition[] = [
     unit: "count",
     source: "tasks",
     grain: "workspace",
-    freshness: "Tiempo de consulta",
+    freshness: "Actualización inmediata",
     permission: "analytics.dashboards.view",
   },
   {
@@ -46,7 +80,7 @@ export const controlCenterMetrics: MetricDefinition[] = [
     unit: "percentage",
     source: "incidents",
     grain: "workspace",
-    freshness: "Tiempo de consulta",
+    freshness: "Actualización inmediata",
     permission: "analytics.dashboards.view",
   },
   {
@@ -56,7 +90,7 @@ export const controlCenterMetrics: MetricDefinition[] = [
     unit: "count",
     source: "people + leave_requests",
     grain: "workspace",
-    freshness: "Tiempo de consulta",
+    freshness: "Actualización inmediata",
     permission: "analytics.dashboards.view",
   },
 ];

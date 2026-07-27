@@ -17,6 +17,8 @@ export type TreasuryEntry = {
   id: string;
   entryDate: string;
   concept: string;
+  category?: string;
+  source?: "Financial Source A" | "Financial Source B" | "Manual";
   amountCents: number;
   currency: TreasuryCurrency;
   status: TreasuryStatus;
@@ -39,6 +41,7 @@ export type TreasuryEvent = {
 export const treasuryInputSchema = z.object({
   entryDate: z.iso.date(),
   concept: z.string().trim().min(3).max(160),
+  category: z.string().trim().min(2).max(80).optional(),
   amountCents: z
     .number()
     .int()

@@ -11,7 +11,7 @@ export const profileTimezones = [
 export const profileThemes = ["light", "dark", "system"] as const;
 export const profileDensities = ["comfortable", "compact"] as const;
 export const profileDashboards = [
-  "control-center",
+  "analytics",
   "projects",
   "tasks",
   "vacations",
@@ -33,6 +33,8 @@ export type UserProfile = {
     reviews: boolean;
   };
   simulatedRole: PersonRoleCode | null;
+  avatarPath: string | null;
+  avatarUrl: string | null;
 };
 
 export type ManagedProfileFields = {

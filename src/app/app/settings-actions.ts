@@ -8,6 +8,10 @@ import { permissionCatalog, type PermissionCode } from "@/domain/permissions";
 import { invitationInputSchema, roleMetadataSchema, workspaceMembershipStatuses, type WorkspaceMembershipStatus } from "@/domain/settings";
 import { requirePermission } from "@/lib/authorization";
 import { createClient } from "@/lib/supabase/server";
+import {
+  workspaceConfigurationSchema,
+  type WorkspaceConfiguration,
+} from "@/domain/workspace-configuration";
 
 const idSchema = z.uuid();
 const moduleSchema = z.object({ moduleId: z.enum(moduleIds), enabled: z.boolean(), sortOrder: z.number().int().nonnegative().max(moduleIds.length - 1) });
@@ -83,4 +87,65 @@ export async function updateMembershipAction(membershipId: string, roleId: strin
     if (error) return actionFailure("conflict", "No se pudo actualizar el acceso. No puedes modificar tu propia membresía.");
     revalidatePath("/app/configuracion"); return actionSuccess();
   } catch (error) { return failure(error); }
+}
+
+export async function updateWorkspaceConfigurationAction(
+  configuration: WorkspaceConfiguration,
+): Promise<ActionResult> {
+  try {
+    const payload = workspaceConfigurationSchema.parse(configuration);
+    const access = await requirePermission("settings.workspace.manage");
+    const supabase = await createClient();
+    const { error } = await supabase.rpc("update_workspace_configuration", {
+      expected_organization_id: access.organizationId,
+      configuration_payload: payload,
+    });
+    if (error)
+      return actionFailure(
+        "conflict",
+        "No se pudieron actualizar las políticas de la organización.",
+      );
+    revalidatePath("/app/configuracion");
+    return actionSuccess();
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+const scenarioV2Checksum =
+  "c42a65f8372a1614b1a18e50bc8b8b5953093aa0a75c3b2f8f2131176bb63d34";
+
+export async function restoreDemoScenarioV2Action(): Promise<ActionResult> {
+  try {
+    const access = await requirePermission("settings.workspace.manage");
+    const supabase = await createClient();
+    const { error: restoreError } = await supabase.rpc(
+      "restore_demo_scenario",
+      {
+        expected_organization_id: access.organizationId,
+        target_module: "all",
+      },
+    );
+    if (restoreError)
+      return actionFailure(
+        "conflict",
+        "No se pudieron restablecer los datos.",
+      );
+    const { error: markerError } = await supabase.rpc(
+      "mark_demo_scenario_v2_restored",
+      {
+        target_organization_id: access.organizationId,
+        target_checksum: scenarioV2Checksum,
+      },
+    );
+    if (markerError)
+      return actionFailure(
+        "conflict",
+        "El escenario se restauró, pero no se pudo registrar su versión.",
+      );
+    revalidatePath("/app", "layout");
+    return actionSuccess();
+  } catch (error) {
+    return failure(error);
+  }
 }

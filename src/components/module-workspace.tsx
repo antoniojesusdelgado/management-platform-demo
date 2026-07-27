@@ -14,7 +14,7 @@ import { modules, type ModuleId } from "@/domain/modules";
 type ModuleWorkspaceProps = {
   moduleId: Exclude<
     ModuleId,
-    "inicio" | "centro-control" | "vacaciones" | "proyectos"
+    "inicio" | "analitica" | "vacaciones" | "proyectos"
   >;
   organizationName: string;
   onRenameOrganization: (name: string) => void;
@@ -48,14 +48,14 @@ const content = {
   personal: {
     eyebrow: "Directorio del equipo",
     metric: "12",
-    metricLabel: "perfiles sintéticos",
+    metricLabel: "perfiles",
     items: ["Altas recientes", "Documentación pendiente", "Revisión de roles"],
   },
   novedades: {
     eyebrow: "Evolución del producto",
     metric: "0.2.0",
-    metricLabel: "versión de demostración",
-    items: ["Nuevo flujo de vacaciones", "Navegación responsive", "Historial de decisiones"],
+    metricLabel: "versión disponible",
+    items: ["Nuevo flujo de vacaciones", "Navegación adaptable", "Historial de decisiones"],
   },
   configuracion: {
     eyebrow: "Administración",
@@ -177,7 +177,7 @@ export function ModuleWorkspace({
                       <strong>{item}</strong>
                       <br />
                       <span className="muted">
-                        Registro sintético preparado para la siguiente iteración.
+                        Registro preparado para la siguiente iteración.
                       </span>
                     </span>
                     <IconArrowUpRight aria-hidden="true" size={18} />
@@ -190,13 +190,13 @@ export function ModuleWorkspace({
               <h2>Alcance de esta fase</h2>
               <p className="muted">
                 El módulo ya dispone de navegación, jerarquía y estados de
-                demostración. Su flujo profundo se desarrollará de forma
+                aplicación. Su flujo se desarrollará de forma
                 incremental.
               </p>
               <div className="empty-state" style={{ minHeight: "160px" }}>
                 <IconDatabase aria-hidden="true" size={30} />
                 <span>
-                  La demo invitada no consulta ni escribe en la base de datos.
+                  La sesión sin cuenta no consulta ni escribe en la base de datos.
                 </span>
               </div>
             </aside>

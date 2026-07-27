@@ -13,7 +13,7 @@ export default async function ProfilePage() {
     supabase
       .from("profiles")
       .select(
-        "display_name,alias,locale,timezone,theme,density,reduced_motion,high_contrast,default_dashboard,notification_preferences,simulated_role",
+        "display_name,alias,avatar_path,locale,timezone,theme,density,reduced_motion,high_contrast,default_dashboard,notification_preferences,simulated_role",
       )
       .eq("id", access.userId)
       .single(),
@@ -35,8 +35,15 @@ export default async function ProfilePage() {
     assignments?: boolean;
     reviews?: boolean;
   };
+  const signedAvatar = profileResult.data.avatar_path
+    ? await supabase.storage
+        .from("profile-avatars")
+        .createSignedUrl(profileResult.data.avatar_path, 3600)
+    : null;
   const profile: UserProfile = {
     displayName: profileResult.data.display_name,
+    avatarPath: profileResult.data.avatar_path,
+    avatarUrl: signedAvatar?.data?.signedUrl ?? null,
     alias: profileResult.data.alias,
     locale: profileResult.data.locale as UserProfile["locale"],
     timezone: profileResult.data.timezone as UserProfile["timezone"],

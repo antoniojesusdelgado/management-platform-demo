@@ -17,7 +17,7 @@ import type { ModuleId } from "@/domain/modules";
 
 const icons: Record<ModuleId, ComponentType<IconProps>> = {
   inicio: IconHome,
-  "centro-control": IconChartHistogram,
+  analitica: IconChartHistogram,
   vacaciones: IconCalendarEvent,
   proyectos: IconFolders,
   tareas: IconChecklist,

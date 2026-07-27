@@ -7,15 +7,15 @@ export default function PrivacyPage() {
         <p className="eyebrow">Transparencia</p>
         <h1>Privacidad de la demostración</h1>
         <p>
-          Google OAuth se utiliza para verificar la sesión y crear un workspace
-          técnico aislado. El correo permanece en Supabase Auth y no se publica
+          Google OAuth se utiliza para verificar la sesión y crear un espacio
+          personal aislado. El correo permanece en Supabase Auth y no se publica
           en el directorio operativo. El perfil de aplicación usa un alias
-          sintético y no copia el nombre ni el avatar del proveedor.
+          propio y no copia el nombre ni el avatar del proveedor.
         </p>
         <p>
           La demo no solicita ni modela NIF, NAF, IBAN, teléfono, dirección,
           salario individual o documentación personal. Los registros
-          operativos son sintéticos y pueden restaurarse.
+          operativos son ficticios y pueden restaurarse.
         </p>
         <p>
           La demo invitada funciona únicamente en memoria y `sessionStorage`;

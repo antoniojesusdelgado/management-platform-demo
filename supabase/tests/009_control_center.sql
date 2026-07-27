@@ -30,7 +30,7 @@ select is(
       from public.memberships
       where profile_id = auth.uid()
     )
-      and module_id = 'centro-control'
+      and module_id = 'analitica'
       and enabled
   ),
   1::bigint,

@@ -4,7 +4,7 @@ export default function DataProvenancePage() {
   return (
     <main className="legal-page">
       <article className="legal-card">
-        <p className="eyebrow">Escenario sintético</p>
+        <p className="eyebrow">Procedencia</p>
         <h1>Procedencia de los datos</h1>
         <p>
           La plataforma genera un grafo determinista de personas, proyectos,
@@ -18,10 +18,10 @@ export default function DataProvenancePage() {
           adaptadores offline que no aceptan microdatos.
         </p>
         <p>
-          El escenario estándar se identifica como versión 1 y puede
-          reproducirse con una semilla estable. Los conectores se denominan
-          Financial Source A, Financial Source B, Payroll Master y People
-          Master.
+          El conjunto de datos se identifica mediante una versión y puede
+          reproducirse con una semilla estable. Los conectores visibles se
+          denominan Fuente financiera A, Fuente financiera B, Maestro de
+          nóminas y Maestro de personal.
         </p>
         <Link className="button button-secondary" href="/login">
           Volver al acceso

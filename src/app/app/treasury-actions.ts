@@ -38,7 +38,7 @@ export async function createTreasuryAction(input: TreasuryInput): Promise<Action
       target_amount_cents: payload.amountCents,
       target_currency: payload.currency,
     });
-    if (error) return actionFailure("conflict", "No se pudo crear el movimiento sintético.");
+    if (error) return actionFailure("conflict", "No se pudo crear el movimiento.");
     revalidatePath("/app/tesoreria");
     return actionSuccess();
   } catch (error) {

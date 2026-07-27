@@ -22,6 +22,11 @@ import type {
 import { getWorkspaceAccess } from "@/lib/auth";
 import { hasWorkspacePermission } from "@/lib/authorization";
 import { createClient } from "@/lib/supabase/server";
+import {
+  defaultWorkspaceConfiguration,
+  parseWorkspaceConfiguration,
+  type WorkspaceConfiguration,
+} from "@/domain/workspace-configuration";
 
 export default async function AppModulePage({
   params,
@@ -48,7 +53,7 @@ export default async function AppModulePage({
               del proyecto independiente y se configuren las variables.
             </p>
             <Link className="button button-primary" href="/demo/embed">
-              Abrir demo invitada
+              Entrar sin cuenta
             </Link>
           </div>
           <aside className="demo-note">
@@ -69,9 +74,9 @@ export default async function AppModulePage({
         <section className="landing-card">
           <div>
             <p className="eyebrow" style={{ color: "#93c5fd" }}>
-              Workspace no disponible
+              Espacio personal no disponible
             </p>
-            <h1>No se pudo preparar tu espacio de demostración</h1>
+            <h1>No se pudo preparar tu espacio personal</h1>
             <p>
               La identidad se ha verificado, pero el aprovisionamiento
               automático no se completó. Cierra sesión y vuelve a intentarlo.
@@ -85,6 +90,18 @@ export default async function AppModulePage({
       </main>
     );
   }
+
+  const profileClient = await createClient();
+  const { data: currentProfile } = await profileClient
+    .from("profiles")
+    .select("display_name,alias,avatar_path")
+    .eq("id", access.userId)
+    .single();
+  const signedAvatar = currentProfile?.avatar_path
+    ? await profileClient.storage
+        .from("profile-avatars")
+        .createSignedUrl(currentProfile.avatar_path, 3600)
+    : null;
 
   let leaveRequests: LeaveRequest[] = [];
   let leaveEvents: LeaveRequestEvent[] = [];
@@ -131,11 +148,13 @@ export default async function AppModulePage({
   let adminAuditEvents: AdminAuditEvent[] = [];
   let settingsLoadError: string | undefined;
   let canManageSettings = false;
+  let workspaceConfiguration: WorkspaceConfiguration =
+    defaultWorkspaceConfiguration;
 
   if (
     module === "vacaciones" ||
     module === "personal" ||
-    module === "centro-control"
+    module === "analitica"
   ) {
     const supabase = await createClient();
     const [requestsResult, eventsResult] = await Promise.all([
@@ -191,14 +210,14 @@ export default async function AppModulePage({
     })) as LeaveRequestEvent[];
   }
 
-  if (module === "centro-control") {
+  if (module === "analitica") {
     const supabase = await createClient();
     const { data } = await supabase
       .from("saved_analytics_views")
       .select("id,name,module_id,filters")
       .eq("organization_id", access.organizationId)
       .eq("profile_id", access.userId)
-      .eq("module_id", "centro-control")
+      .eq("module_id", "analitica")
       .order("updated_at", { ascending: false });
     savedAnalyticsViews = (data ?? []).map((view) => ({
       id: view.id,
@@ -211,16 +230,16 @@ export default async function AppModulePage({
   if (
     module === "incidencias" ||
     module === "proyectos" ||
-    module === "centro-control"
+    module === "analitica"
   ) {
     const supabase = await createClient();
     const [incidentsResult, eventsResult, membersResult] = await Promise.all([
-      supabase.from("incidents").select("id,title,description,status,priority,category,project_id,requester_person_id,assignee_person_id,sla_due_at,resolution,created_at,updated_at,project:projects(name),requester:people!incidents_requester_person_id_fkey(display_name),assignee:people!incidents_assignee_person_id_fkey(display_name)").eq("organization_id", access.organizationId).order("updated_at", { ascending: false }),
+      supabase.from("incidents").select("id,title,description,status,priority,category,affected_service,impact_scope,detection_channel,root_cause,first_response_at,corrective_task_id,project_id,requester_person_id,assignee_person_id,sla_due_at,resolution,created_at,updated_at,project:projects(name),requester:people!incidents_requester_person_id_fkey(display_name),assignee:people!incidents_assignee_person_id_fkey(display_name)").eq("organization_id", access.organizationId).order("updated_at", { ascending: false }),
       supabase.from("incident_events").select("id,incident_id,kind,from_status,to_status,note,created_at,actor:profiles!incident_events_actor_profile_id_fkey(display_name)").eq("organization_id", access.organizationId).order("created_at", { ascending: false }).limit(100),
       supabase.from("people").select("id,display_name").eq("organization_id", access.organizationId).eq("status", "active"),
     ]);
     if (incidentsResult.error || eventsResult.error || membersResult.error) incidentLoadError = "Vuelve a intentarlo. Si el problema continúa, revisa la conexión local.";
-    incidents = (incidentsResult.data ?? []).map((item) => ({ id: item.id, title: item.title, description: item.description, status: item.status, priority: item.priority, category: item.category, projectId: item.project_id, projectName: (item.project as unknown as { name: string } | null)?.name ?? null, requesterPersonId: item.requester_person_id, requesterName: (item.requester as unknown as { display_name: string }).display_name, assigneePersonId: item.assignee_person_id, assigneeName: (item.assignee as unknown as { display_name: string } | null)?.display_name ?? null, slaDueAt: item.sla_due_at, resolution: item.resolution, createdAt: item.created_at, updatedAt: item.updated_at }));
+    incidents = (incidentsResult.data ?? []).map((item) => ({ id: item.id, title: item.title, description: item.description, status: item.status, priority: item.priority, category: item.category, affectedService: item.affected_service, impactScope: item.impact_scope as Incident["impactScope"], detectionChannel: item.detection_channel as Incident["detectionChannel"], rootCause: item.root_cause, firstResponseAt: item.first_response_at, correctiveTaskId: item.corrective_task_id, projectId: item.project_id, projectName: (item.project as unknown as { name: string } | null)?.name ?? null, requesterPersonId: item.requester_person_id, requesterName: (item.requester as unknown as { display_name: string }).display_name, assigneePersonId: item.assignee_person_id, assigneeName: (item.assignee as unknown as { display_name: string } | null)?.display_name ?? null, slaDueAt: item.sla_due_at, resolution: item.resolution, createdAt: item.created_at, updatedAt: item.updated_at }));
     incidentEvents = (eventsResult.data ?? []).map((event) => ({ id: event.id, incidentId: event.incident_id, kind: event.kind, fromStatus: event.from_status, toStatus: event.to_status, note: event.note, actorName: (event.actor as unknown as { display_name: string } | null)?.display_name ?? "Sistema", createdAt: event.created_at }));
     incidentAssignees = (membersResult.data ?? []).map((person) => person.display_name);
   }
@@ -228,7 +247,7 @@ export default async function AppModulePage({
   if (
     module === "personal" ||
     module === "proyectos" ||
-    module === "centro-control"
+    module === "analitica"
   ) {
     const supabase = await createClient();
     const [peopleResult, eventsResult] = await Promise.all([
@@ -236,7 +255,16 @@ export default async function AppModulePage({
       supabase.from("people_events").select("id,person_id,kind,note,created_at,actor:profiles!people_events_actor_profile_id_fkey(display_name)").eq("organization_id", access.organizationId).order("created_at", { ascending: false }).limit(100),
     ]);
     if (peopleResult.error || eventsResult.error) peopleLoadError = "Vuelve a intentarlo. Si el problema continúa, revisa la conexión local.";
-    people = (peopleResult.data ?? []).map((person) => ({ id: person.id, displayName: person.display_name, team: person.team, positionTitle: person.position_title, status: person.status, roleCode: person.role_code, createdAt: person.created_at, updatedAt: person.updated_at }));
+    people = (peopleResult.data ?? []).map((person) => ({
+      id: person.id,
+      displayName: person.display_name,
+      team: person.team,
+      positionTitle: person.position_title,
+      status: person.status,
+      roleCode: person.role_code,
+      createdAt: person.created_at,
+      updatedAt: person.updated_at,
+    }));
     peopleEvents = (eventsResult.data ?? []).map((event) => ({ id: event.id, personId: event.person_id, kind: event.kind, note: event.note, actorName: (event.actor as unknown as { display_name: string } | null)?.display_name ?? "Sistema", createdAt: event.created_at }));
   }
 
@@ -255,14 +283,15 @@ export default async function AppModulePage({
   if (module === "configuracion") {
     canManageSettings = await hasWorkspacePermission("settings.workspace.manage");
     const supabase = await createClient();
-    const [modulesResult, rolesResult, membershipsResult, invitationsResult, auditResult] = await Promise.all([
+    const [modulesResult, rolesResult, membershipsResult, invitationsResult, auditResult, configurationResult] = await Promise.all([
       supabase.from("module_settings").select("module_id,enabled,sort_order").eq("organization_id", access.organizationId).order("sort_order"),
       supabase.from("roles").select("id,code,name,color,role_permissions(permissions(code))").eq("organization_id", access.organizationId).order("name"),
       supabase.from("memberships").select("id,profile_id,role_id,status,profiles!inner(display_name)").eq("organization_id", access.organizationId).order("created_at"),
       supabase.from("invitations").select("id,email,role_id,expires_at,accepted_at,revoked_at,created_at").eq("organization_id", access.organizationId).order("created_at", { ascending: false }),
       supabase.from("audit_events").select("id,event_type,entity_type,entity_id,metadata,created_at,actor:profiles!audit_events_actor_profile_id_fkey(display_name)").eq("organization_id", access.organizationId).order("created_at", { ascending: false }).limit(100),
+      supabase.from("workspace_configuration").select("configuration").eq("organization_id", access.organizationId).maybeSingle(),
     ]);
-    if (modulesResult.error || rolesResult.error || membershipsResult.error || invitationsResult.error || auditResult.error) settingsLoadError = "Vuelve a intentarlo. Si el problema continúa, revisa la conexión local.";
+    if (modulesResult.error || rolesResult.error || membershipsResult.error || invitationsResult.error || auditResult.error || configurationResult.error) settingsLoadError = "Vuelve a intentarlo. Si el problema continúa, revisa la conexión local.";
     const storedModules = new Map((modulesResult.data ?? []).map((setting) => [setting.module_id, setting]));
     moduleSettings = createDefaultModuleSettings().map((fallback) => { const stored = storedModules.get(fallback.moduleId); return stored ? { moduleId: fallback.moduleId, enabled: stored.enabled, sortOrder: stored.sort_order } : fallback; }).sort((a, b) => a.sortOrder - b.sortOrder);
     roles = (rolesResult.data ?? []).map((role) => ({ id: role.id, code: role.code, name: role.name, color: role.color, permissionCodes: role.role_permissions.flatMap((assignment) => { const value = assignment.permissions as unknown as { code: string } | Array<{ code: string }>; return (Array.isArray(value) ? value : [value]).map((permission) => permission.code as PermissionCode); }) }));
@@ -270,15 +299,18 @@ export default async function AppModulePage({
     const now = new Date().toISOString();
     invitations = (invitationsResult.data ?? []).map((invitation) => ({ id: invitation.id, email: invitation.email, roleId: invitation.role_id, status: invitation.revoked_at ? "revoked" : invitation.accepted_at ? "accepted" : invitation.expires_at < now ? "expired" : "pending", expiresAt: invitation.expires_at, createdAt: invitation.created_at }));
     adminAuditEvents = (auditResult.data ?? []).map((event) => ({ id: String(event.id), eventType: event.event_type, entityType: event.entity_type, entityId: event.entity_id, actorName: (event.actor as unknown as { display_name: string } | null)?.display_name ?? "Sistema", summary: event.event_type.replaceAll("_", " ").replaceAll(".", " · "), createdAt: event.created_at }));
+    workspaceConfiguration = parseWorkspaceConfiguration(
+      configurationResult.data?.configuration,
+    );
   }
 
-  if (module === "tesoreria" || module === "centro-control") {
+  if (module === "tesoreria" || module === "analitica") {
     canManageTreasury = await hasWorkspacePermission("treasury.entries.manage");
     const supabase = await createClient();
     const [entriesResult, eventsResult] = await Promise.all([
       supabase
         .from("treasury_entries")
-        .select("id,entry_date,concept,amount_cents,currency,status,created_at,updated_at,creator:profiles!treasury_entries_created_by_fkey(display_name)")
+        .select("id,entry_date,concept,category,source,amount_cents,currency,status,created_at,updated_at,creator:profiles!treasury_entries_created_by_fkey(display_name)")
         .eq("organization_id", access.organizationId)
         .order("entry_date", { ascending: false }),
       supabase
@@ -295,6 +327,8 @@ export default async function AppModulePage({
       id: entry.id,
       entryDate: entry.entry_date,
       concept: entry.concept,
+      category: entry.category,
+      source: entry.source as TreasuryEntry["source"],
       amountCents: entry.amount_cents,
       currency: entry.currency as TreasuryCurrency,
       status: entry.status,
@@ -318,11 +352,11 @@ export default async function AppModulePage({
     canManagePayroll = await hasWorkspacePermission("payroll.runs.manage");
     const supabase = await createClient();
     const [runsResult, eventsResult] = await Promise.all([
-      supabase.from("payroll_runs").select("id,period_start,period_end,people_count,gross_total_cents,deduction_total_cents,net_total_cents,currency,notes,status,created_at,updated_at,creator:profiles!payroll_runs_created_by_fkey(display_name)").eq("organization_id", access.organizationId).order("period_start", { ascending: false }),
+      supabase.from("payroll_runs").select("id,period_start,period_end,people_count,gross_total_cents,deduction_total_cents,net_total_cents,employer_cost_total_cents,currency,notes,status,created_at,updated_at,creator:profiles!payroll_runs_created_by_fkey(display_name)").eq("organization_id", access.organizationId).order("period_start", { ascending: false }),
       supabase.from("payroll_events").select("id,run_id,kind,from_status,to_status,note,created_at,actor:profiles!payroll_events_actor_profile_id_fkey(display_name)").eq("organization_id", access.organizationId).order("created_at", { ascending: false }).limit(150),
     ]);
     if (runsResult.error || eventsResult.error) payrollLoadError = "Vuelve a intentarlo. Si el problema continúa, revisa tus permisos o la conexión local.";
-    payrollRuns = (runsResult.data ?? []).map((run) => ({ id: run.id, periodStart: run.period_start, periodEnd: run.period_end, peopleCount: run.people_count, grossTotalCents: run.gross_total_cents, deductionTotalCents: run.deduction_total_cents, netTotalCents: run.net_total_cents ?? run.gross_total_cents - run.deduction_total_cents, currency: run.currency as PayrollCurrency, notes: run.notes, status: run.status, createdBy: (run.creator as unknown as { display_name: string }).display_name, createdAt: run.created_at, updatedAt: run.updated_at }));
+    payrollRuns = (runsResult.data ?? []).map((run) => ({ id: run.id, periodStart: run.period_start, periodEnd: run.period_end, peopleCount: run.people_count, grossTotalCents: run.gross_total_cents, deductionTotalCents: run.deduction_total_cents, netTotalCents: run.net_total_cents ?? run.gross_total_cents - run.deduction_total_cents, employerCostTotalCents: run.employer_cost_total_cents ?? undefined, currency: run.currency as PayrollCurrency, notes: run.notes, status: run.status, createdBy: (run.creator as unknown as { display_name: string }).display_name, createdAt: run.created_at, updatedAt: run.updated_at }));
     payrollEvents = (eventsResult.data ?? []).map((event) => ({ id: String(event.id), runId: event.run_id, kind: event.kind as PayrollEvent["kind"], fromStatus: event.from_status, toStatus: event.to_status, note: event.note, actorName: (event.actor as unknown as { display_name: string } | null)?.display_name ?? "Sistema", createdAt: event.created_at }));
   }
 
@@ -330,7 +364,7 @@ export default async function AppModulePage({
     module === "tesoreria" ||
     module === "nominas" ||
     module === "personal" ||
-    module === "centro-control"
+    module === "analitica"
   ) {
     canManageIntegrations = await hasWorkspacePermission("integrations.runs.manage");
     const supabase = await createClient();
@@ -393,7 +427,7 @@ export default async function AppModulePage({
     module === "proyectos" ||
     module === "tareas" ||
     module === "incidencias" ||
-    module === "centro-control"
+    module === "analitica"
   ) {
     canManageProjects = await hasWorkspacePermission("projects.items.manage");
     const supabase = await createClient();
@@ -459,7 +493,7 @@ export default async function AppModulePage({
   if (
     module === "tareas" ||
     module === "proyectos" ||
-    module === "centro-control"
+    module === "analitica"
   ) {
     const supabase = await createClient();
     const [
@@ -568,6 +602,8 @@ export default async function AppModulePage({
     <AuthenticatedApp
       activeModule={module}
       organizationName={access.organizationName}
+      avatarUrl={signedAvatar?.data?.signedUrl ?? null}
+      displayName={currentProfile?.alias ?? currentProfile?.display_name}
       leaveRequests={leaveRequests}
       leaveEvents={leaveEvents}
       leaveLoadError={leaveLoadError}
@@ -613,6 +649,7 @@ export default async function AppModulePage({
       adminAuditEvents={adminAuditEvents}
       settingsLoadError={settingsLoadError}
       canManageSettings={canManageSettings}
+      workspaceConfiguration={workspaceConfiguration}
     />
   );
 }

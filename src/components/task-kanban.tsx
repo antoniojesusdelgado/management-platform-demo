@@ -18,6 +18,7 @@ import {
   IconMessage,
 } from "@tabler/icons-react";
 import type { CSSProperties } from "react";
+import { InitialsAvatar } from "@/components/initials-avatar";
 import {
   canTransitionTask,
   isTaskOverdue,
@@ -103,7 +104,15 @@ function KanbanCard({
       >
         <strong>{task.title}</strong>
         <span>{task.projectName ?? "Sin proyecto"}</span>
-        <small>{task.assigneeName ?? "Sin asignar"}</small>
+        <small className="kanban-assignee">
+          {task.assigneeName ? (
+            <InitialsAvatar
+              displayName={task.assigneeName}
+              size="small"
+            />
+          ) : null}
+          {task.assigneeName ?? "Sin asignar"}
+        </small>
       </button>
       <div className="kanban-card-meta">
         {task.status === "blocked" ? (

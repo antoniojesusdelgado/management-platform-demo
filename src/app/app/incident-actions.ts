@@ -55,6 +55,9 @@ export async function createIncidentAction(input: IncidentInput): Promise<Action
       priority: payload.priority, category: payload.category, requester_profile_id: access.userId,
       requester_person_id: requesterPersonId, assignee_person_id: assigneeId,
       project_id: payload.projectId ?? null, sla_due_at: calculateSyntheticSlaDueAt(payload.priority),
+      affected_service: payload.affectedService ?? "Plataforma operativa",
+      impact_scope: payload.impactScope ?? "team",
+      detection_channel: payload.detectionChannel ?? "support",
     });
     if (error) return actionFailure("conflict", "No se pudo registrar la incidencia.");
     revalidatePath("/app/incidencias");
@@ -69,7 +72,7 @@ export async function updateIncidentAction(id: string, input: IncidentInput): Pr
     const access = await requirePermission("incidents.tickets.manage");
     const assigneeId = await resolveAssigneeId(access.organizationId, payload.assigneeName);
     const supabase = await createClient();
-    const { error } = await supabase.from("incidents").update({ title: payload.title, description: payload.description, priority: payload.priority, category: payload.category, project_id: payload.projectId ?? null, assignee_person_id: assigneeId, updated_at: new Date().toISOString() }).eq("id", incidentId).eq("organization_id", access.organizationId);
+    const { error } = await supabase.from("incidents").update({ title: payload.title, description: payload.description, priority: payload.priority, category: payload.category, project_id: payload.projectId ?? null, assignee_person_id: assigneeId, affected_service: payload.affectedService ?? "Plataforma operativa", impact_scope: payload.impactScope ?? "team", detection_channel: payload.detectionChannel ?? "support", updated_at: new Date().toISOString() }).eq("id", incidentId).eq("organization_id", access.organizationId);
     if (error) return actionFailure("conflict", "No se pudo actualizar la incidencia.");
     revalidatePath("/app/incidencias");
     return actionSuccess();

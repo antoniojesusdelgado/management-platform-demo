@@ -127,8 +127,8 @@ export function VacationsWorkspace({
           <p className="eyebrow">Personas · disponibilidad</p>
           <h1>Vacaciones</h1>
           <p className="lede">
-            Solicitudes, decisiones e historial trazable en un único flujo.
-            Todos los nombres y registros de esta vista son sintéticos.
+            Consulta las solicitudes, las decisiones, el calendario y la
+            disponibilidad del equipo.
           </p>
         </div>
         <Dialog.Root open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -258,7 +258,7 @@ export function VacationsWorkspace({
           <strong className="metric-value">{pendingCount}</strong>
         </article>
         <article className="card">
-          <span className="muted">Días aprobados en la demo</span>
+          <span className="muted">Días aprobados</span>
           <strong className="metric-value">{approvedDays}</strong>
         </article>
         <article className="card">
@@ -307,7 +307,7 @@ export function VacationsWorkspace({
         <div className="data-table-wrap">
           <table className="data-table">
             <caption className="sr-only">
-              Solicitudes de vacaciones de demostración
+              Solicitudes de vacaciones
             </caption>
             <thead>
               <tr>
@@ -355,7 +355,7 @@ export function VacationsWorkspace({
                             onTransition(
                               request.id,
                               "approved",
-                              "Cobertura validada en la demo.",
+                              "Cobertura del equipo validada.",
                             )
                           }
                           aria-label={`Aprobar solicitud de ${request.employeeName}`}
@@ -490,7 +490,7 @@ export function VacationsWorkspace({
                       onTransition(
                         selectedRequest.id,
                         "submitted",
-                        "Borrador enviado a revisión en la demo.",
+                        "Borrador enviado a revisión.",
                       )
                     }
                   >
@@ -508,7 +508,7 @@ export function VacationsWorkspace({
                         onTransition(
                           selectedRequest.id,
                           "approved",
-                          "Cobertura validada en la demo.",
+                          "Cobertura del equipo validada.",
                         )
                       }
                     >

@@ -5,7 +5,6 @@ import {
   IconAlertTriangle,
   IconCalendar,
   IconCircleCheck,
-  IconFolder,
   IconPlus,
   IconUsers,
   IconX,
@@ -24,6 +23,7 @@ import {
   type ProjectInput,
   type ProjectStatus,
 } from "@/domain/projects";
+import { EmptyState } from "@/components/empty-state";
 import type { TaskItem } from "@/domain/tasks";
 
 type ProjectsWorkspaceProps = {
@@ -156,11 +156,11 @@ export function ProjectsWorkspace({
     <main className="workspace" id="main-content">
       <div className="page-heading">
         <div>
-          <p className="eyebrow">Portfolio · ejecución</p>
+          <p className="eyebrow">Seguimiento</p>
           <h1>Proyectos</h1>
           <p className="lede">
-            Una vista común de alcance, salud, responsables y trabajo
-            relacionado, construida exclusivamente con datos sintéticos.
+            Revisa el alcance, la salud, las personas responsables y el trabajo
+            relacionado de cada proyecto.
           </p>
         </div>
         {canManage ? (
@@ -177,7 +177,7 @@ export function ProjectsWorkspace({
 
       {loadError ? (
         <div className="inline-alert" role="alert">
-          <strong>No se pudo cargar el portfolio.</strong>
+          <strong>No se pudieron cargar los proyectos.</strong>
           <span>{loadError}</span>
         </div>
       ) : null}
@@ -202,8 +202,8 @@ export function ProjectsWorkspace({
       <section className="section-block" aria-labelledby="portfolio-title">
         <div className="section-header">
           <div>
-            <p className="eyebrow">Portfolio</p>
-            <h2 id="portfolio-title">Iniciativas del workspace</h2>
+            <p className="eyebrow">Proyectos</p>
+            <h2 id="portfolio-title">Proyectos de la organización</h2>
           </div>
           <div className="task-filters">
             <label>
@@ -297,10 +297,11 @@ export function ProjectsWorkspace({
             })}
           </div>
         ) : (
-          <div className="empty-state">
-            <IconFolder aria-hidden="true" size={32} />
-            <p>No hay proyectos para estos filtros.</p>
-          </div>
+          <EmptyState
+            kind="projects"
+            title="No hay proyectos para estos filtros"
+            description="Cambia la salud o el estado para ampliar la lista."
+          />
         )}
       </section>
 
@@ -310,7 +311,7 @@ export function ProjectsWorkspace({
           <Dialog.Content className="dialog-content dialog-content-wide">
             <div className="dialog-header">
               <div>
-                <p className="eyebrow">Portfolio</p>
+                <p className="eyebrow">Proyectos</p>
                 <Dialog.Title>
                   {editingId ? "Editar proyecto" : "Nuevo proyecto"}
                 </Dialog.Title>

@@ -33,7 +33,7 @@ export async function saveAnalyticsViewAction(
           organization_id: access.organizationId,
           profile_id: access.userId,
           name: parsed.data.name,
-          module_id: "centro-control",
+          module_id: "analitica",
           filters: { projectId: parsed.data.projectId },
           updated_at: new Date().toISOString(),
         },
@@ -46,7 +46,7 @@ export async function saveAnalyticsViewAction(
       return actionFailure("conflict", "No se pudo guardar la vista.");
     }
 
-    revalidatePath("/app/centro-control");
+    revalidatePath("/app/analitica");
     return actionSuccess({ id: data.id });
   } catch {
     return actionFailure(

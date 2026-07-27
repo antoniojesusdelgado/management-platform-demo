@@ -22,6 +22,7 @@ import {
   type IncidentPriority,
   type IncidentStatus,
 } from "@/domain/incidents";
+import { EmptyState } from "@/components/empty-state";
 
 type Props = {
   incidents: Incident[];
@@ -68,6 +69,9 @@ const emptyInput = (): IncidentInput => ({
   category: "software",
   projectId: null,
   assigneeName: null,
+  affectedService: "Plataforma operativa",
+  impactScope: "team",
+  detectionChannel: "monitoring",
 });
 
 export function IncidentsWorkspace({
@@ -84,6 +88,7 @@ export function IncidentsWorkspace({
   const [status, setStatus] = useState<"all" | IncidentStatus>("all");
   const [priority, setPriority] = useState<"all" | IncidentPriority>("all");
   const [category, setCategory] = useState<"all" | IncidentCategory>("all");
+  const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -101,6 +106,13 @@ export function IncidentsWorkspace({
           (category === "all" || item.category === category),
       ),
     [category, incidents, priority, status],
+  );
+  const pageSize = 30;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pagedIncidents = filtered.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
   );
   const overdue = incidents.filter((item) => isIncidentOverdue(item)).length;
 
@@ -120,6 +132,9 @@ export function IncidentsWorkspace({
       category: item.category,
       projectId: item.projectId ?? null,
       assigneeName: item.assigneeName,
+      affectedService: item.affectedService ?? "Plataforma operativa",
+      impactScope: item.impactScope ?? "team",
+      detectionChannel: item.detectionChannel ?? "support",
     });
     setSelectedId(null);
     setError("");
@@ -151,8 +166,8 @@ export function IncidentsWorkspace({
           <p className="eyebrow">Soporte · seguimiento</p>
           <h1>Incidencias</h1>
           <p className="lede">
-            Registro, priorización y resolución trazable con SLA y datos
-            exclusivamente sintéticos.
+            Registra, prioriza y resuelve incidencias con seguimiento de
+            tiempos, responsables y acciones correctivas.
           </p>
         </div>
         <button
@@ -182,7 +197,7 @@ export function IncidentsWorkspace({
           </strong>
         </article>
         <article className="card">
-          <span className="muted">SLA sintético vencido</span>
+          <span className="muted">SLA vencido</span>
           <strong className="metric-value">{overdue}</strong>
         </article>
         <article className="card">
@@ -201,9 +216,10 @@ export function IncidentsWorkspace({
             Estado
             <select
               value={status}
-              onChange={(event) =>
+              onChange={(event) => {
                 setStatus(event.target.value as typeof status)
-              }
+                setPage(1);
+              }}
             >
               <option value="all">Todos</option>
               {incidentStatuses.map((value) => (
@@ -217,9 +233,10 @@ export function IncidentsWorkspace({
             Prioridad
             <select
               value={priority}
-              onChange={(event) =>
+              onChange={(event) => {
                 setPriority(event.target.value as typeof priority)
-              }
+                setPage(1);
+              }}
             >
               <option value="all">Todas</option>
               {incidentPriorities.map((value) => (
@@ -233,9 +250,10 @@ export function IncidentsWorkspace({
             Categoría
             <select
               value={category}
-              onChange={(event) =>
+              onChange={(event) => {
                 setCategory(event.target.value as typeof category)
-              }
+                setPage(1);
+              }}
             >
               <option value="all">Todas</option>
               {incidentCategories.map((value) => (
@@ -248,7 +266,7 @@ export function IncidentsWorkspace({
         </div>
         <div className="task-list">
           {filtered.length ? (
-            filtered.map((item) => (
+            pagedIncidents.map((item) => (
               <button
                 className="task-row"
                 type="button"
@@ -267,7 +285,7 @@ export function IncidentsWorkspace({
                   <span className="muted">
                     {item.projectName ?? "Sin proyecto"} ·{" "}
                     {categoryLabels[item.category]} ·{" "}
-                    {item.assigneeName ?? "Sin asignar"} · SLA sintético{" "}
+                    {item.assigneeName ?? "Sin asignar"} · SLA{" "}
                     {new Date(item.slaDueAt).toLocaleString("es-ES", {
                       dateStyle: "short",
                       timeStyle: "short",
@@ -281,11 +299,36 @@ export function IncidentsWorkspace({
               </button>
             ))
           ) : (
-            <div className="empty-state">
-              <p>No hay incidencias para estos filtros.</p>
-            </div>
+            <EmptyState
+              kind="incidents"
+              title="No hay incidencias para estos filtros"
+              description="Ajusta los criterios o registra un nuevo caso operativo."
+            />
           )}
         </div>
+        {filtered.length > pageSize ? (
+          <nav className="pagination" aria-label="Paginación de incidencias">
+            <button
+              className="button button-secondary"
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => setPage(currentPage - 1)}
+            >
+              Anterior
+            </button>
+            <span>
+              Página {currentPage} de {totalPages} · {filtered.length} incidencias
+            </span>
+            <button
+              className="button button-secondary"
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() => setPage(currentPage + 1)}
+            >
+              Siguiente
+            </button>
+          </nav>
+        ) : null}
       </section>
 
       <Dialog.Root open={formOpen} onOpenChange={setFormOpen}>
@@ -298,7 +341,7 @@ export function IncidentsWorkspace({
                   {editingId ? "Editar incidencia" : "Nueva incidencia"}
                 </Dialog.Title>
                 <Dialog.Description className="muted">
-                  Los datos de esta demostración son sintéticos.
+                  Describe el problema, su alcance y el servicio afectado.
                 </Dialog.Description>
               </div>
               <Dialog.Close className="icon-button" aria-label="Cerrar">
@@ -400,6 +443,58 @@ export function IncidentsWorkspace({
                     ))}
                   </select>
                 </label>
+                <label className="field">
+                  Servicio afectado
+                  <input
+                    value={input.affectedService ?? ""}
+                    onChange={(event) =>
+                      setInput({
+                        ...input,
+                        affectedService: event.target.value,
+                      })
+                    }
+                  />
+                </label>
+                <label className="field">
+                  Alcance
+                  <select
+                    value={input.impactScope ?? "team"}
+                    onChange={(event) =>
+                      setInput({
+                        ...input,
+                        impactScope: event.target.value as
+                          | "individual"
+                          | "team"
+                          | "workspace",
+                      })
+                    }
+                  >
+                    <option value="individual">Individual</option>
+                    <option value="team">Equipo</option>
+                    <option value="workspace">Toda la aplicación</option>
+                  </select>
+                </label>
+                <label className="field">
+                  Canal de detección
+                  <select
+                    value={input.detectionChannel ?? "support"}
+                    onChange={(event) =>
+                      setInput({
+                        ...input,
+                        detectionChannel: event.target.value as
+                          | "monitoring"
+                          | "support"
+                          | "team"
+                          | "automation",
+                      })
+                    }
+                  >
+                    <option value="monitoring">Monitorización</option>
+                    <option value="support">Soporte</option>
+                    <option value="team">Equipo</option>
+                    <option value="automation">Automatización</option>
+                  </select>
+                </label>
               </div>
               {error ? (
                 <p className="field-error" role="alert">
@@ -455,12 +550,44 @@ export function IncidentsWorkspace({
                     Responsable: {selected.assigneeName ?? "Sin asignar"}
                   </p>
                   <p className="muted">
-                    SLA sintético:{" "}
+                    Servicio: {selected.affectedService ?? "Operación"}
+                  </p>
+                  <p className="muted">
+                    Alcance:{" "}
+                    {selected.impactScope === "workspace"
+                      ? "Toda la aplicación"
+                      : selected.impactScope === "individual"
+                        ? "Individual"
+                        : "Equipo"}{" "}
+                    · detección{" "}
+                    {selected.detectionChannel ?? "soporte"}
+                  </p>
+                  {selected.firstResponseAt ? (
+                    <p className="muted">
+                      Primera respuesta:{" "}
+                      {new Date(selected.firstResponseAt).toLocaleString(
+                        "es-ES",
+                      )}
+                    </p>
+                  ) : null}
+                  <p className="muted">
+                    SLA:{" "}
                     {new Date(selected.slaDueAt).toLocaleString("es-ES")}
                   </p>
                   {selected.resolution ? (
                     <p>
                       <strong>Resolución:</strong> {selected.resolution}
+                    </p>
+                  ) : null}
+                  {selected.rootCause ? (
+                    <p>
+                      <strong>Causa raíz:</strong> {selected.rootCause}
+                    </p>
+                  ) : null}
+                  {selected.correctiveTaskId ? (
+                    <p className="muted">
+                      Tarea correctiva vinculada:{" "}
+                      {selected.correctiveTaskId.slice(0, 8)}
                     </p>
                   ) : null}
                   <button

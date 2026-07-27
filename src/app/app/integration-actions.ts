@@ -33,7 +33,7 @@ export async function simulateIntegrationAction(
     revalidatePath("/app/tesoreria");
     revalidatePath("/app/nominas");
     revalidatePath("/app/personal");
-    revalidatePath("/app/centro-control");
+    revalidatePath("/app/analitica");
     return actionSuccess({ runId: data });
   } catch {
     return actionFailure(

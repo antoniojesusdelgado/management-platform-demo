@@ -4,7 +4,7 @@ import { GuestDemoApp } from "@/components/guest-demo-app";
 export const metadata: Metadata = {
   title: "Demo interactiva",
   description:
-    "Entorno invitado de la Plataforma de gestión con datos sintéticos.",
+    "Acceso sin cuenta a la Plataforma de gestión con datos ficticios.",
 };
 
 export default function GuestDemoPage() {
