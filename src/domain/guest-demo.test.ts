@@ -79,7 +79,7 @@ describe("guest demo", () => {
     };
     const migrated = parseGuestDemoState(legacy);
 
-    expect(migrated?.version).toBe(10);
+    expect(migrated?.version).toBe(11);
     expect(migrated?.leaveRequests).toEqual(legacy.leaveRequests);
     expect(migrated?.tasks.length).toBeGreaterThan(0);
     expect(migrated?.incidents.length).toBeGreaterThan(0);
@@ -102,7 +102,7 @@ describe("guest demo", () => {
       taskEvents: initialGuestDemoState.taskEvents,
     };
     const migrated = parseGuestDemoState(legacy);
-    expect(migrated?.version).toBe(10);
+    expect(migrated?.version).toBe(11);
     expect(migrated?.tasks).toEqual(legacy.tasks);
   });
 
@@ -123,7 +123,7 @@ describe("guest demo", () => {
       peopleEvents: initialGuestDemoState.peopleEvents,
     };
     const migrated = parseGuestDemoState(legacy);
-    expect(migrated?.version).toBe(10);
+    expect(migrated?.version).toBe(11);
     expect(migrated?.incidents).toEqual(legacy.incidents);
     expect(migrated?.roles.length).toBeGreaterThan(0);
   });
@@ -135,7 +135,7 @@ describe("guest demo", () => {
     void payrollRuns;
     void payrollEvents;
     const migrated = parseGuestDemoState({ ...legacyState, version: 4 });
-    expect(migrated?.version).toBe(10);
+    expect(migrated?.version).toBe(11);
     expect(migrated?.roles).toEqual(legacyState.roles);
     expect(migrated?.treasuryEntries.length).toBeGreaterThan(0);
   });
@@ -145,7 +145,7 @@ describe("guest demo", () => {
     void payrollRuns;
     void payrollEvents;
     const migrated = parseGuestDemoState({ ...legacyState, version: 5 });
-    expect(migrated?.version).toBe(10);
+    expect(migrated?.version).toBe(11);
     expect(migrated?.treasuryEntries).toEqual(legacyState.treasuryEntries);
     expect(migrated?.payrollRuns.length).toBeGreaterThan(0);
   });
@@ -171,7 +171,7 @@ describe("guest demo", () => {
       scenarioVersion: 1,
     });
 
-    expect(migrated?.version).toBe(10);
+    expect(migrated?.version).toBe(11);
     expect(migrated?.integrationConnectors).toHaveLength(4);
     expect(migrated?.integrationRuns).toEqual([]);
   });
@@ -188,9 +188,24 @@ describe("guest demo", () => {
       scenarioVersion: 1,
     });
 
-    expect(migrated?.version).toBe(10);
+    expect(migrated?.version).toBe(11);
     expect(migrated?.preferences.simulatedRole).toBeNull();
     expect(migrated?.savedAnalyticsViews).toEqual([]);
+  });
+
+  test("restores version 10 sessions once with the balanced V3 scenario", () => {
+    const migrated = parseGuestDemoState({
+      ...initialGuestDemoState,
+      version: 10,
+      scenarioVersion: 2,
+    });
+
+    expect(migrated?.version).toBe(11);
+    expect(migrated?.scenarioVersion).toBe(3);
+    expect(migrated?.projects).toHaveLength(10);
+    expect(migrated?.tasks).toHaveLength(120);
+    expect(migrated?.incidents).toHaveLength(60);
+    expect(migrated?.treasuryEntries).toHaveLength(240);
   });
 
   test("simulates an idempotent neutral integration inside the session", () => {
@@ -462,7 +477,7 @@ describe("payroll workflow", () => {
 
   test("rejects inconsistent totals and skipped controls", () => {
     expect(payrollInputSchema.safeParse({ periodStart: "2026-09-01", periodEnd: "2026-09-30", peopleCount: 20, grossTotalCents: 100, deductionTotalCents: 101, currency: "EUR", notes: "" }).success).toBe(false);
-    const run = initialGuestDemoState.payrollRuns.find((item) => item.status === "collecting")!;
-    expect(guestDemoReducer(initialGuestDemoState, { type: "transition-payroll", runId: run.id, status: "calculated", note: "Intento de salto." })).toBe(initialGuestDemoState);
+    const run = initialGuestDemoState.payrollRuns.find((item) => item.status === "validating")!;
+    expect(guestDemoReducer(initialGuestDemoState, { type: "transition-payroll", runId: run.id, status: "closed", note: "Intento de salto." })).toBe(initialGuestDemoState);
   });
 });

@@ -2,7 +2,7 @@ import { mkdir } from "node:fs/promises";
 import { chromium } from "@playwright/test";
 
 const baseUrl = process.env.PRODUCT_CAPTURE_ORIGIN ?? "http://127.0.0.1:3210";
-const outputDirectory = ".artifacts/release-v1.1";
+const outputDirectory = ".artifacts/release-v1.2";
 const modules = [
   ["Vacaciones", "vacaciones"],
   ["Analítica", "analitica"],
@@ -58,7 +58,9 @@ try {
         .click();
       await page.locator("h1", { hasText: label }).waitFor();
       await page.waitForTimeout(500);
-      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.locator(".app-main").evaluate((element) => {
+        element.scrollTop = 0;
+      });
       if (viewport.name === "desktop") {
         await page.locator(".sidebar").evaluate((element) => {
           element.scrollTop = 0;
@@ -68,6 +70,38 @@ try {
         path: `${outputDirectory}/${slug}-${viewport.name}.png`,
         animations: "disabled",
       });
+
+      if (slug === "vacaciones") {
+        await page.getByRole("button", { name: /Ver detalle/ }).first().click();
+        await page.locator('[role="dialog"]:visible').waitFor();
+        await page.screenshot({
+          path: `${outputDirectory}/vacaciones-dialogo-${viewport.name}.png`,
+          animations: "disabled",
+        });
+        await page.keyboard.press("Escape");
+      }
+
+      if (slug === "analitica") {
+        await page
+          .getByRole("combobox", { name: "Periodo", exact: true })
+          .selectOption("30d");
+        await page.getByLabel("Proyecto").selectOption({ index: 1 });
+        await page.waitForTimeout(250);
+        await page.screenshot({
+          path: `${outputDirectory}/analitica-filtrada-${viewport.name}.png`,
+          animations: "disabled",
+        });
+      }
+
+      if (slug === "personal") {
+        await page.locator(".people-card").first().click();
+        await page.locator('[role="dialog"]:visible').waitFor();
+        await page.screenshot({
+          path: `${outputDirectory}/personal-dialogo-${viewport.name}.png`,
+          animations: "disabled",
+        });
+        await page.keyboard.press("Escape");
+      }
     }
 
     await page.close();

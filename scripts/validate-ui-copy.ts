@@ -9,6 +9,7 @@ const OPERATIONAL_CONTENT_FILES = [
   "src/demo-data/catalog.ts",
   "src/demo-data/scenario.ts",
   "supabase/migrations/20260727090946_release_v1_1_scenario_v2.sql",
+  "supabase/migrations/20260727160338_release_v1_2_scenario_v3.sql",
 ];
 
 const disallowedPhrases = [
@@ -27,6 +28,8 @@ const disallowedPhrases = [
   "Backlog",
   "vs. anterior",
 ] as const;
+
+const corruptedTextSignatures = ["Ã", "Â", "â", "�"] as const;
 
 type CopyViolation = {
   file: string;
@@ -58,6 +61,18 @@ export function findUiCopyViolations(content: string, file: string) {
     while (offset >= 0) {
       violations.push({ file, line: lineAt(content, offset), value: phrase });
       offset = content.indexOf(phrase, offset + phrase.length);
+    }
+  }
+
+  for (const signature of corruptedTextSignatures) {
+    let offset = content.indexOf(signature);
+    while (offset >= 0) {
+      violations.push({
+        file,
+        line: lineAt(content, offset),
+        value: `texto con codificación dañada (${signature})`,
+      });
+      offset = content.indexOf(signature, offset + signature.length);
     }
   }
 
@@ -97,7 +112,7 @@ async function main() {
   if (violations.length) {
     for (const violation of violations) {
       console.error(
-        `${violation.file}:${violation.line} [ui-copy] Replace “${violation.value}” with natural product language.`,
+        `${violation.file}:${violation.line} [ui-copy] Revisa "${violation.value}" y usa un texto legible y natural.`,
       );
     }
     process.exitCode = 1;

@@ -36,4 +36,10 @@ describe("UI copy validation", () => {
       ),
     ).toHaveLength(0);
   });
+
+  test("rejects common UTF-8 corruption signatures", () => {
+    expect(findUiCopyViolations("GestiÃ³n", "src/components/example.tsx")).not.toEqual([]);
+    expect(findUiCopyViolations("Importe Â€", "src/components/example.tsx")).not.toEqual([]);
+    expect(findUiCopyViolations("texto �", "src/components/example.tsx")).not.toEqual([]);
+  });
 });

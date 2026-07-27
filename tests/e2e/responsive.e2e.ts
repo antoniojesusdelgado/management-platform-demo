@@ -94,8 +94,8 @@ test("access and every module avoid global horizontal overflow at release sizes"
   for (const viewport of viewports) {
     await page.setViewportSize(viewport);
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: "Accede a la plataforma" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Entrar sin cuenta" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Gestión diaria en un solo lugar" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Probar sin iniciar sesión" })).toBeVisible();
     await expectNoGlobalHorizontalOverflow(page);
 
     await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
@@ -107,6 +107,30 @@ test("access and every module avoid global horizontal overflow at release sizes"
       await expectNoGlobalHorizontalOverflow(page);
     }
   }
+});
+
+test("desktop sidebar keeps its geometry while a scrolled detail dialog is open", async (
+  { page },
+  testInfo,
+) => {
+  test.skip(testInfo.project.name !== "chromium");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
+  await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+  await openModule(page, "Vacaciones");
+
+  const sidebar = page.locator(".sidebar");
+  const appMain = page.locator(".app-main");
+  const before = await sidebar.boundingBox();
+  await appMain.evaluate((element) => {
+    element.scrollTop = 600;
+  });
+  await page.getByRole("button", { name: /Ver detalle/ }).first().click();
+  await expect(page.locator('[role="dialog"]:visible')).toBeVisible();
+  const during = await sidebar.boundingBox();
+
+  expect(during).toEqual(before);
+  await expect(sidebar).toHaveCSS("height", "900px");
 });
 
 test("mobile filters, tables, Kanban and dialogs stay inside their panels", async (

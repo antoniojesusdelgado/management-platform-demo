@@ -2257,6 +2257,7 @@ export type Database = {
         Args: { expected_organization_id: string; target_module?: string }
         Returns: undefined
       }
+      restore_demo_scenario_v3: { Args: never; Returns: undefined }
       set_own_avatar_path: { Args: { target_path: string }; Returns: undefined }
       simulate_integration_run: {
         Args: {

@@ -15,6 +15,7 @@ import {
   type PayrollRun,
   type PayrollStatus,
 } from "@/domain/payroll";
+import { formatCurrency, formatDate, formatDateTime, formatPercent } from "@/lib/format";
 
 type Props = {
   runs: PayrollRun[];
@@ -46,8 +47,8 @@ const statusLabels: Record<PayrollStatus, string> = {
 };
 
 const emptyForm = (): FormState => ({ periodStart: "", periodEnd: "", peopleCount: "", grossTotal: "", deductionTotal: "", currency: "EUR", notes: "" });
-const money = (value: number, currency: PayrollCurrency) => new Intl.NumberFormat("es-ES", { style: "currency", currency }).format(value / 100);
-const date = (value: string) => new Date(`${value}T12:00:00`).toLocaleDateString("es-ES");
+const money = formatCurrency;
+const date = formatDate;
 
 function toForm(run: PayrollRun): FormState {
   return { periodStart: run.periodStart, periodEnd: run.periodEnd, peopleCount: String(run.peopleCount), grossTotal: (run.grossTotalCents / 100).toFixed(2), deductionTotal: (run.deductionTotalCents / 100).toFixed(2), currency: run.currency, notes: run.notes };
@@ -63,7 +64,6 @@ export function PayrollWorkspace({ runs, events, pending = false, loadError, can
   const [note, setNote] = useState("");
   const selected = runs.find((run) => run.id === selectedId) ?? null;
   const visibleRuns = useMemo(() => runs.filter((run) => status === "all" || run.status === status), [runs, status]);
-  const eurGross = runs.filter((run) => run.currency === "EUR").reduce((total, run) => total + run.grossTotalCents, 0);
   const orderedRuns = [...runs].sort((a, b) =>
     b.periodStart.localeCompare(a.periodStart),
   );
@@ -75,15 +75,15 @@ export function PayrollWorkspace({ runs, events, pending = false, loadError, can
           previousRun.grossTotalCents) *
         100
       : 0;
-  const employerCost = runs
-    .filter((run) => run.currency === "EUR")
-    .reduce(
-      (total, run) =>
-        total +
-        (run.employerCostTotalCents ??
-          Math.round(run.grossTotalCents * 1.315)),
-      0,
-    );
+  const latestEmployerCost =
+    latestRun?.employerCostTotalCents ??
+    (latestRun ? Math.round(latestRun.grossTotalCents * 1.315) : 0);
+  const currentYear = latestRun?.periodStart.slice(0, 4);
+  const yearToDateGross = orderedRuns
+    .filter(
+      (run) => run.currency === "EUR" && run.periodStart.startsWith(currentYear ?? ""),
+    )
+    .reduce((total, run) => total + run.grossTotalCents, 0);
   const variationAlerts = orderedRuns.slice(0, -1).filter((run, index) => {
     const prior = orderedRuns[index + 1];
     return (
@@ -116,16 +116,17 @@ export function PayrollWorkspace({ runs, events, pending = false, loadError, can
     <div className="inline-alert treasury-safety" role="note"><IconCalculator size={20} aria-hidden="true" /><span><strong>Información agregada.</strong> Esta sección no incluye salarios individuales, recibos ni identificadores personales.</span></div>
     {loadError ? <div className="inline-alert" role="alert"><strong>No se pudo cargar Nóminas.</strong><span>{loadError}</span></div> : null}
     <section className="cards-grid" aria-label="Resumen de Nóminas">
-      <article className="card"><span className="muted">Bruto agregado EUR</span><strong className="metric-value">{money(eurGross, "EUR")}</strong></article>
+      <article className="card"><span className="muted">Bruto del último periodo</span><strong className="metric-value">{money(latestRun?.grossTotalCents ?? 0, "EUR")}</strong></article>
       <article className="card"><span className="muted">Ciclos en control</span><strong className="metric-value">{runs.filter((run) => !["collecting", "closed"].includes(run.status)).length}</strong></article>
       <article className="card"><span className="muted">Ciclos cerrados</span><strong className="metric-value">{runs.filter((run) => run.status === "closed").length}</strong></article>
-      <article className="card"><span className="muted">Coste empresa agregado</span><strong className="metric-value">{money(employerCost, "EUR")}</strong></article>
+      <article className="card"><span className="muted">Coste empresa del último periodo</span><strong className="metric-value">{money(latestEmployerCost, "EUR")}</strong></article>
     </section>
     <section className="section-block payroll-overview">
       <div className="section-heading"><div><p className="eyebrow">Control agregado</p><h2>Evolución y comprobaciones</h2></div></div>
       <div className="settings-summary-grid">
-        <article className="settings-summary-card"><span className="muted">Variación del último periodo</span><strong className="metric-value">{latestVariation >= 0 ? "+" : ""}{latestVariation.toFixed(1)}%</strong><span>Comparación del bruto agregado frente al periodo anterior.</span></article>
+        <article className="settings-summary-card"><span className="muted">Variación del último periodo</span><strong className="metric-value">{latestVariation > 0 ? "+" : ""}{formatPercent(latestVariation)}</strong><span>Comparación del bruto agregado frente al periodo anterior.</span></article>
         <article className="settings-summary-card"><span className="muted">Personas incluidas</span><strong className="metric-value">{latestRun?.peopleCount ?? 0}</strong><span>Personas incluidas en el ciclo más reciente.</span></article>
+        <article className="settings-summary-card"><span className="muted">Bruto acumulado del año</span><strong className="metric-value">{money(yearToDateGross, "EUR")}</strong><span>Suma de los ciclos del año del último periodo.</span></article>
         <article className="settings-summary-card"><span className="muted">Variaciones a revisar</span><strong className="metric-value">{variationAlerts}</strong><span>Periodos con cambios agregados superiores al umbral del 8 %.</span></article>
       </div>
     </section>
@@ -146,7 +147,7 @@ export function PayrollWorkspace({ runs, events, pending = false, loadError, can
       <div className="metadata-strip"><span>Control de totales <strong>{selected.netTotalCents === selected.grossTotalCents - selected.deductionTotalCents ? "Correcto" : "Revisar"}</strong></span><span>Variación de personas <strong>Dentro de umbral</strong></span></div>
       {selected.notes ? <p>{selected.notes}</p> : null}{canManage && selected.status === "collecting" ? <button className="button button-secondary" type="button" onClick={() => openEdit(selected)}>Editar recopilación</button> : null}
       {canManage && selected.status !== "closed" ? <section className="section-block"><h3>Siguiente control</h3><label className="field transition-note-field">Nota de decisión<textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="Describe la comprobación agregada realizada." /></label><div className="task-actions">{payrollStatuses.filter((item) => canTransitionPayroll(selected.status, item)).map((item) => <button className="button button-primary" type="button" disabled={pending || note.trim().length < 3} onClick={() => transition(item)} key={item}>Marcar como {statusLabels[item].toLocaleLowerCase("es")}</button>)}</div></section> : null}
-      <section className="section-block"><h3>Trazabilidad</h3><ul className="request-timeline">{events.filter((event) => event.runId === selected.id).map((event) => <li key={event.id}><span className="timeline-dot" /><div><strong>{event.note}</strong><p className="muted">{event.actorName} · {new Date(event.createdAt).toLocaleString("es-ES")}</p></div></li>)}</ul></section>
+      <section className="section-block"><h3>Trazabilidad</h3><ul className="request-timeline">{events.filter((event) => event.runId === selected.id).map((event) => <li key={event.id}><span className="timeline-dot" /><div><strong>{event.note}</strong><p className="muted">{event.actorName} · {formatDateTime(event.createdAt)}</p></div></li>)}</ul></section>
     </Dialog.Content> : null}</Dialog.Portal></Dialog.Root>
   </main>;
 }

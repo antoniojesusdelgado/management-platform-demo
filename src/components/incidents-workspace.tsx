@@ -23,6 +23,7 @@ import {
   type IncidentStatus,
 } from "@/domain/incidents";
 import { EmptyState } from "@/components/empty-state";
+import { formatDateTime } from "@/lib/format";
 
 type Props = {
   incidents: Incident[];
@@ -286,10 +287,7 @@ export function IncidentsWorkspace({
                     {item.projectName ?? "Sin proyecto"} ·{" "}
                     {categoryLabels[item.category]} ·{" "}
                     {item.assigneeName ?? "Sin asignar"} · SLA{" "}
-                    {new Date(item.slaDueAt).toLocaleString("es-ES", {
-                      dateStyle: "short",
-                      timeStyle: "short",
-                    })}
+                    {formatDateTime(item.slaDueAt)}
                   </span>
                 </span>
                 <span className={`status task-status-${item.status}`}>
@@ -565,14 +563,12 @@ export function IncidentsWorkspace({
                   {selected.firstResponseAt ? (
                     <p className="muted">
                       Primera respuesta:{" "}
-                      {new Date(selected.firstResponseAt).toLocaleString(
-                        "es-ES",
-                      )}
+                      {formatDateTime(selected.firstResponseAt)}
                     </p>
                   ) : null}
                   <p className="muted">
                     SLA:{" "}
-                    {new Date(selected.slaDueAt).toLocaleString("es-ES")}
+                    {formatDateTime(selected.slaDueAt)}
                   </p>
                   {selected.resolution ? (
                     <p>
@@ -650,9 +646,7 @@ export function IncidentsWorkspace({
                           <strong>{event.note}</strong>
                           <p className="muted">
                             {event.actorName} ·{" "}
-                            {new Date(event.createdAt).toLocaleString(
-                              "es-ES",
-                            )}
+                            {formatDateTime(event.createdAt)}
                           </p>
                         </div>
                       </li>

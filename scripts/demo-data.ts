@@ -6,13 +6,13 @@ import {
 } from "../src/demo-data/scenario";
 
 const outputDirectory = ".demo-data";
-const scenarioPath = `${outputDirectory}/scenario-v2.json`;
-const reportPath = `${outputDirectory}/scenario-v2-report.json`;
+const scenarioPath = `${outputDirectory}/scenario-v3.json`;
+const reportPath = `${outputDirectory}/scenario-v3-report.json`;
 const command = process.argv[2] ?? "validate";
-const seed = process.env.DEMO_SCENARIO_SEED ?? "management-platform-standard-v2";
-const anchorDate = process.env.DEMO_SCENARIO_ANCHOR ?? "2026-07-01";
+const seed = process.env.DEMO_SCENARIO_SEED ?? "management-platform-standard-v3";
+const anchorDate = process.env.DEMO_SCENARIO_ANCHOR ?? "2026-07-27";
 const sqlMigrationPath =
-  "supabase/migrations/20260727090946_release_v1_1_scenario_v2.sql";
+  "supabase/migrations/20260727170000_release_v1_2_scenario_v3.sql";
 
 async function prepareScenario() {
   const scenario = validateDemoScenario(generateDemoScenario(seed, anchorDate));
@@ -37,25 +37,25 @@ if (command === "generate") {
   const sqlMigration = await Bun.file(sqlMigrationPath).text();
   if (!sqlMigration.includes(`scenario-checksum: ${first.checksum}`)) {
     throw new Error(
-      "The Scenario V2 SQL migration checksum differs from the TypeScript catalog",
+      "The Scenario V3 SQL migration checksum differs from the TypeScript catalog",
     );
   }
   const expectedSeries = [
-    ["people", 32, "generate_series(2, 32)"],
-    ["projects", 12, "generate_series(1, 12)"],
-    ["tasks", 320, "generate_series(1, 320)"],
-    ["leaveRequests", 144, "generate_series(1, 144)"],
-    ["incidents", 240, "generate_series(1, 240)"],
-    ["treasuryEntries", 720, "generate_series(1, 720)"],
-    ["payrollRuns", 24, "generate_series(1, 24)"],
-    ["changelogEntries", 36, "generate_series(1, 36)"],
+    ["people", 32, "target_people_count := 32"],
+    ["projects", 10, "target_project_count := 10"],
+    ["tasks", 120, "target_task_count := 120"],
+    ["leaveRequests", 72, "target_leave_count := 72"],
+    ["incidents", 60, "target_incident_count := 60"],
+    ["treasuryEntries", 240, "target_treasury_count := 240"],
+    ["payrollRuns", 18, "target_payroll_count := 18"],
+    ["changelogEntries", 9, "target_changelog_count := 9"],
   ] as const;
   for (const [key, expectedCount, sqlMarker] of expectedSeries) {
     if (
       first.report.counts[key] !== expectedCount ||
       !sqlMigration.includes(sqlMarker)
     ) {
-      throw new Error(`Scenario V2 count mismatch for ${key}`);
+      throw new Error(`Scenario V3 count mismatch for ${key}`);
     }
   }
   console.log("Scenario is valid and deterministic");

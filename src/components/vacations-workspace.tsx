@@ -12,8 +12,7 @@ import {
   IconSend,
   IconX,
 } from "@tabler/icons-react";
-import { format, isAfter, parseISO } from "date-fns";
-import { es } from "date-fns/locale";
+import { isAfter, parseISO } from "date-fns";
 import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { LeaveCalendar } from "@/components/leave-calendar";
@@ -26,6 +25,7 @@ import {
   type LeaveRequestInput,
   type LeaveRequestStatus,
 } from "@/domain/vacations";
+import { formatDate, formatDateTime } from "@/lib/format";
 
 type VacationsWorkspaceProps = {
   requests: LeaveRequest[];
@@ -53,10 +53,6 @@ const statusLabels: Record<LeaveRequestStatus, string> = {
   rejected: "Rechazada",
   cancelled: "Cancelada",
 };
-
-function formatDate(value: string) {
-  return format(parseISO(value), "d MMM yyyy", { locale: es });
-}
 
 export function VacationsWorkspace({
   requests,
@@ -305,7 +301,7 @@ export function VacationsWorkspace({
         </div>
 
         <div className="data-table-wrap">
-          <table className="data-table">
+          <table className="data-table vacations-table">
             <caption className="sr-only">
               Solicitudes de vacaciones
             </caption>
@@ -467,9 +463,7 @@ export function VacationsWorkspace({
                           <p>{event.note}</p>
                           <span className="muted">
                             {event.actorName} ·{" "}
-                            {format(parseISO(event.createdAt), "d MMM yyyy, HH:mm", {
-                              locale: es,
-                            })}
+                            {formatDateTime(event.createdAt)}
                           </span>
                         </div>
                       </li>

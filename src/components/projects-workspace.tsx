@@ -23,6 +23,7 @@ import {
   type ProjectInput,
   type ProjectStatus,
 } from "@/domain/projects";
+import { formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/components/empty-state";
 import type { TaskItem } from "@/domain/tasks";
 
@@ -588,7 +589,7 @@ export function ProjectsWorkspace({
                           <strong>{event.note}</strong>
                           <p className="muted">
                             {event.actorName} ·{" "}
-                            {new Date(event.createdAt).toLocaleString("es-ES")}
+                            {formatDateTime(event.createdAt)}
                           </p>
                         </div>
                       </li>
