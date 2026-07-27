@@ -1,62 +1,43 @@
-# Design QA
+# Design QA — v1.2.0
 
-## Release v1.1.0 — SaaS empresarial
+## Visual truth and implementation
 
-### Alcance revisado
+- Previous access screen: `.artifacts/access-desktop.png` and `.artifacts/access-mobile.png`.
+- v1.2.0 implementation: `.artifacts/release-v1.2/acceso-desktop.png` and `.artifacts/release-v1.2/acceso-mobile.png`.
+- Combined comparison evidence: `.artifacts/release-v1.2/qa-access-desktop.png` and `.artifacts/release-v1.2/qa-access-mobile.png`.
+- Desktop viewport: 1440 × 900.
+- Mobile viewport: 390 × 844.
+- State: public access page, light color scheme, reduced motion enabled.
+- Focused evidence: Vacation and People dialogs, filtered Analytics, Payroll, Tasks and Changelog captures in `.artifacts/release-v1.2`.
 
-- Acceso compartido en `/` y `/login`.
-- Inicio, Vacaciones, Analítica, Proyectos, Tareas, Incidencias, Tesorería,
-  Nóminas, Personal, Novedades, Configuración y Perfil.
-- Vista invitada con datos ficticios y vista OAuth con almacenamiento privado
-  del avatar del usuario.
-- Anchuras comprobadas: 320, 360, 390, 768, 1024 y 1440 px.
+## Intended differences
 
-### Decisiones visuales
+- The product screenshot was removed from the access page.
+- The access page now uses the selected sober composition: navy header, concise introduction and a separate sign-in card.
+- Google is the primary action and uses the official multicolor G asset.
+- Guest access is labelled `Probar sin iniciar sesión`.
+- Decorative imagery, gradients and promotional copy were intentionally removed.
 
-- Superficies blancas y grises, navegación navy, acento índigo moderado,
-  sombras ligeras y radios de 8–12 px.
-- Movimiento limitado a transiciones funcionales de 120–180 ms y desactivado
-  cuando el navegador solicita movimiento reducido.
-- Las personas ficticias se representan con iniciales y colores deterministas.
-- Los estados vacíos usan iconos de Tabler. No se utilizan retratos, fotografías
-  de stock ni ilustraciones generadas.
-- La única imagen destacada es
-  `public/images/product-overview.webp`, una captura optimizada de la propia
-  aplicación.
+## QA history
 
-### Contenido
+### Pass 1
 
-- La interfaz usa lenguaje directo en español. Analítica concentra los
-  indicadores y elimina las secciones repetidas dentro de cada módulo.
-- El aviso sobre datos ficticios aparece en el acceso y como indicador global
-  discreto; no se repite en títulos ni registros operativos.
-- `docs/CONTENT-GUIDE.md` recoge las reglas editoriales y
-  `bun run content:validate` las aplica en CI.
+- P1 responsiveness: the mobile legal copy extended beyond the 844 px viewport.
+  - Fix: reduced mobile vertical spacing and card padding while preserving readable tap targets.
+- P1 layout behavior: the document owned the scroll and the sticky sidebar was clipped when a dialog opened.
+  - Fix: moved scrolling to `app-main`, fixed the sidebar to `100dvh` and kept the dialog overlay viewport-bound.
+- P2 task board behavior: pagination ran before Kanban grouping and hid the `En revisión` column contents.
+  - Fix: the Kanban now receives all 50 open tasks plus a small recent completed sample; list pagination remains independent.
 
-### Responsive y accesibilidad
+### Pass 2
 
-- No hay overflow horizontal global en las seis anchuras revisadas.
-- Las tablas mantienen cabeceras visibles dentro de un contenedor desplazable.
-- Kanban desplaza horizontalmente solo dentro de su panel.
-- Filtros e indicadores pasan a una columna en móvil.
-- Los diálogos respetan la altura disponible y la navegación principal funciona
-  con teclado.
-- Axe no detecta infracciones WCAG A/AA en los 18 recorridos de escritorio y
-  móvil incluidos.
+- Desktop access hierarchy, spacing, typography, colors, icons and controls match the selected direction.
+- Mobile access fits within 390 × 844 without horizontal overflow or clipped actions.
+- Dialog headers, close controls and actions remain visible at page scroll depth.
+- Vacation table alignment follows the shared convention for text, quantities, states and actions.
+- Analytics filters visibly change the KPI and series content.
+- No generated illustrations, stock portraits, CSS drawings or placeholder imagery remain in the access experience.
 
-### Evidencia local
+## Final result
 
-Las capturas se generan con `bun run visual:review` en
-`.artifacts/release-v1.1/`. Incluyen Acceso, Inicio y los diez módulos en
-1440 × 900 y 390 × 844. El asset público se regenera con
-`bun run visual:capture`.
-
-### Resultado
-
-- `bun run e2e`: 45 pruebas superadas y 3 omisiones intencionales por proyecto.
-- `bun run e2e:a11y`: 18 pruebas superadas.
-- `bun run build`: compilación de producción correcta.
-- La comprobación de Supabase local queda pendiente porque el motor de Docker
-  Desktop no está disponible en esta sesión.
-
-No quedan hallazgos visuales P0, P1 o P2 en la revisión local.
+passed

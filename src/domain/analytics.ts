@@ -16,6 +16,13 @@ export type AnalyticsKpi = {
   variation: number | null;
   target: number | null;
   sparkline: number[];
+  favorableDirection: "increase" | "decrease" | "neutral";
+  context: string;
+};
+
+export type AnalyticsWindow = {
+  current: { from: string; to: string };
+  previous: { from: string; to: string };
 };
 
 export type AnalyticsSeries = {
@@ -36,6 +43,7 @@ export type AnalyticsAlert = {
 export type AnalyticsSnapshot = {
   generatedAt: string;
   filters: AnalyticsFilter;
+  window: AnalyticsWindow;
   kpis: AnalyticsKpi[];
   series: AnalyticsSeries[];
   alerts: AnalyticsAlert[];

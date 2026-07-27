@@ -76,6 +76,30 @@ test("opens a generated request and shows its trace", async ({
   await expect(dialog).toContainText("Sistema");
 });
 
+test("recalculates Analytics when period, project and section change", async ({
+  page,
+}, testInfo) => {
+  await navigateToModule(page, "Analítica", testInfo.project.name === "mobile");
+  const indicators = page.getByRole("region", { name: "Indicadores" });
+  const initialText = await indicators.innerText();
+
+  await page
+    .getByRole("combobox", { name: "Periodo", exact: true })
+    .selectOption("30d");
+  await expect(indicators).not.toHaveText(initialText);
+  const periodText = await indicators.innerText();
+
+  const projectSelect = page.getByLabel("Proyecto");
+  await projectSelect.selectOption({ index: 1 });
+  await expect(indicators).not.toHaveText(periodText);
+
+  await page
+    .getByRole("button", { name: "Incidencias y tiempos", exact: true })
+    .click();
+  await expect(indicators).toContainText("Incidencias pendientes");
+  await expect(page.getByLabel("Servicio")).toBeVisible();
+});
+
 test("requires a decision note before rejecting a request", async ({
   page,
 }, testInfo) => {
@@ -267,11 +291,11 @@ test("creates, closes and restores an aggregated Payroll cycle", async ({ page }
   await createDialog.getByLabel("Notas").fill("Ciclo mensual preparado para revisión.");
   await createDialog.getByRole("button", { name: "Guardar ciclo" }).click();
 
-  const run = payroll.getByRole("button").filter({ hasText: "1/9/2026" }).first();
+  const run = payroll.locator(".treasury-row").filter({ hasText: "20 personas" }).first();
   await expect(run).toContainText("Recopilación");
-  await expect(run).toContainText("4720,00 € neto");
+  await expect(run).toContainText(/4720,00\s€ neto/);
   await run.click();
-  const detail = page.getByRole("dialog", { name: /1\/9\/2026/ });
+  const detail = page.getByRole("dialog", { name: /sept 2026/ });
   for (const transition of [
     { button: "Marcar como validación", note: "Datos agregados comprobados.", status: "Validación" },
     { button: "Marcar como calculado", note: "Totales agregados calculados.", status: "Calculado" },
@@ -285,7 +309,9 @@ test("creates, closes and restores an aggregated Payroll cycle", async ({ page }
   await page.keyboard.press("Escape");
   await page.reload({ waitUntil: "domcontentloaded" });
   await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
-  await expect(page.getByRole("button").filter({ hasText: "1/9/2026" }).first()).toContainText("Cerrado");
+  await expect(
+    page.locator(".treasury-row").filter({ hasText: "20 personas" }).first(),
+  ).toContainText("Cerrado");
 });
 
 test("configures modules and audits role metadata independently", async ({ page }, testInfo) => {

@@ -109,15 +109,15 @@ button {
 }
 
 .app-frame {
-  min-height: 100dvh;
+  height: 100dvh;
   display: grid;
   grid-template-columns: 224px minmax(0, 1fr);
+  overflow: hidden;
   background: var(--surface);
 }
 
 .sidebar {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 30;
   height: 100dvh;
   display: flex;
@@ -194,9 +194,12 @@ button {
 }
 
 .app-main {
+  height: 100dvh;
   min-width: 0;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--surface);
 }
 
@@ -672,6 +675,9 @@ h3 {
 }
 
 .data-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   color: var(--ink-500);
   background: #f8fafd;
   font-size: 0.7rem;
@@ -682,6 +688,23 @@ h3 {
 
 .data-table tr:last-child td {
   border-bottom: 0;
+}
+
+.vacations-table th:nth-child(3),
+.vacations-table td:nth-child(3),
+.vacations-table th:nth-child(4),
+.vacations-table td:nth-child(4),
+.vacations-table th:nth-child(5),
+.vacations-table td:nth-child(5) {
+  text-align: center;
+}
+
+.vacations-table td:nth-child(3) {
+  font-variant-numeric: tabular-nums;
+}
+
+.vacations-table .table-actions {
+  justify-content: center;
 }
 
 .project-grid {
@@ -1186,19 +1209,31 @@ h3 {
 .oauth-page {
   min-height: 100dvh;
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(420px, 0.95fr);
+  grid-template:
+    "header header" auto
+    "showcase panel" minmax(0, 1fr) /
+    minmax(0, 1fr) minmax(420px, 0.92fr);
   color: var(--ink-950);
-  background: #eef2f7;
+  background: #f7f8fa;
+}
+
+.oauth-header {
+  grid-area: header;
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  padding: 0 clamp(1.25rem, 4vw, 3.5rem);
+  color: #fff;
+  background: var(--navy-950);
 }
 
 .oauth-showcase {
-  position: relative;
-  min-height: 100dvh;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) minmax(170px, 0.7fr);
-  overflow: hidden;
+  grid-area: showcase;
+  min-height: 0;
+  display: flex;
+  align-items: center;
   padding: clamp(1.5rem, 3.5vw, 3.5rem);
-  background: var(--surface);
+  background: #fff;
 }
 
 .oauth-showcase::before {
@@ -1206,12 +1241,10 @@ h3 {
 }
 
 .oauth-brand {
-  position: relative;
-  z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: 0.8rem;
-  color: var(--ink-950);
+  color: #fff;
   text-decoration: none;
   animation: ui-enter 160ms ease-out both;
 }
@@ -1222,31 +1255,28 @@ h3 {
 }
 
 .oauth-brand small {
-  color: var(--ink-500);
+  color: #a9bdd5;
   font-size: 0.7rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .oauth-showcase-copy {
-  position: relative;
-  z-index: 1;
-  max-width: 720px;
-  align-self: center;
-  padding-block: clamp(1.5rem, 4vh, 3.5rem) 1rem;
+  max-width: 620px;
+  padding-block: 2rem;
   animation: ui-enter 160ms 40ms ease-out both;
 }
 
 .oauth-showcase-copy h1 {
-  max-width: 670px;
-  margin: 0.6rem 0 1.1rem;
-  font-size: clamp(2.2rem, 4.5vw, 4rem);
-  line-height: 1.04;
+  max-width: 600px;
+  margin: 0 0 1.25rem;
+  font-size: clamp(2.4rem, 4.4vw, 4.2rem);
+  line-height: 1.06;
   letter-spacing: -0.045em;
 }
 
 .oauth-showcase-copy > p:not(.eyebrow) {
-  max-width: 620px;
+  max-width: 560px;
   color: var(--ink-700);
   font-size: clamp(1rem, 1.6vw, 1.2rem);
   line-height: 1.65;
@@ -1261,23 +1291,8 @@ h3 {
   font-size: 0.86rem;
 }
 
-.oauth-illustration {
-  position: relative;
-  z-index: 1;
-  align-self: end;
-  width: min(100%, 820px);
-  height: 100%;
-  max-height: 300px;
-  margin: 0 auto -1rem;
-  border: 1px solid var(--line);
-  border-radius: 10px 10px 0 0;
-  object-fit: cover;
-  object-position: 50% 57%;
-  box-shadow: 0 18px 45px rgb(7 26 53 / 14%);
-  animation: ui-enter 160ms 80ms ease-out both;
-}
-
 .oauth-panel {
+  grid-area: panel;
   display: grid;
   place-items: center;
   padding: clamp(1.5rem, 5vw, 5rem);
@@ -1293,12 +1308,12 @@ h3 {
   border-radius: 12px;
   padding: clamp(1.5rem, 4vw, 2.5rem);
   background: var(--surface);
-  box-shadow: 0 16px 45px rgb(7 26 53 / 12%);
+  box-shadow: 0 12px 34px rgb(7 26 53 / 10%);
   animation: ui-enter 160ms 40ms ease-out both;
 }
 
 .oauth-card h2 {
-  margin: 0.35rem 0 0.55rem;
+  margin: 0 0 0.55rem;
   font-size: clamp(1.55rem, 3vw, 2.15rem);
   line-height: 1.12;
   letter-spacing: -0.035em;
@@ -1369,11 +1384,9 @@ h3 {
 
 @keyframes ui-enter {
   from {
-    opacity: 0;
     transform: translateY(4px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }
@@ -1413,13 +1426,15 @@ h3 {
 
 @media (max-width: 980px) {
   .oauth-page {
-    grid-template-columns: 1fr;
+    grid-template:
+      "header" auto
+      "showcase" auto
+      "panel" auto /
+      1fr;
   }
 
   .oauth-showcase {
-    min-height: auto;
-    grid-template-rows: auto auto minmax(220px, 34vw);
-    padding-bottom: 0;
+    padding-bottom: 1rem;
   }
 
   .oauth-showcase-copy {
@@ -1430,10 +1445,6 @@ h3 {
     padding-block: 3rem;
   }
 
-  .oauth-illustration {
-    width: min(100%, 760px);
-    max-height: none;
-  }
 }
 
 @media (max-width: 720px) {
@@ -1454,28 +1465,53 @@ h3 {
   }
 
   .oauth-showcase-copy h1 {
-    font-size: clamp(2.2rem, 12vw, 3.2rem);
-  }
-
-  .oauth-benefits li {
-    align-items: flex-start;
-  }
-
-  .oauth-panel {
-    padding: 1rem;
-  }
-
-  .oauth-card {
-    border-radius: 12px;
-    padding: 1.35rem;
-  }
-
-  .oauth-illustration {
-    display: none;
+    margin-bottom: 0.8rem;
+    font-size: clamp(2.15rem, 11vw, 2.8rem);
   }
 
   .oauth-showcase {
-    grid-template-rows: auto auto;
+    padding: 1.5rem;
+  }
+
+  .oauth-showcase-copy {
+    padding-block: 1.4rem 0.8rem;
+  }
+
+  .oauth-showcase-copy > p:not(.eyebrow) {
+    margin-block: 0.45rem;
+    font-size: 0.96rem;
+    line-height: 1.55;
+  }
+
+  .oauth-data-notice {
+    margin-top: 1rem;
+  }
+
+  .oauth-panel {
+    padding: 0.85rem;
+  }
+
+  .oauth-card {
+    gap: 0.85rem;
+    border-radius: 12px;
+    padding: 1.15rem;
+  }
+
+  .oauth-card h2 {
+    font-size: 1.55rem;
+  }
+
+  .google-oauth-button,
+  .oauth-secondary {
+    min-height: 46px;
+  }
+
+  .oauth-session-note,
+  .oauth-legal {
+    font-size: 0.7rem;
+  }
+
+  .oauth-showcase {
     padding-bottom: 1.5rem;
   }
 }

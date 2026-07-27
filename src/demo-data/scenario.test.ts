@@ -82,6 +82,56 @@ describe("synthetic demo scenario", () => {
     }
     expect([...monthly.values()].every((balance) => balance > 0)).toBe(true);
   });
+
+  test("matches the balanced V3 operating distributions", () => {
+    const scenario = validateDemoScenario(generateDemoScenario());
+    const countBy = <T extends string>(values: T[]) =>
+      Object.fromEntries(
+        [...new Set(values)].map((value) => [
+          value,
+          values.filter((item) => item === value).length,
+        ]),
+      );
+
+    expect(scenario.scenarioVersion).toBe(3);
+    expect(countBy(scenario.projects.map((project) => project.status))).toEqual({
+      active: 5,
+      on_hold: 1,
+      completed: 3,
+      planned: 1,
+    });
+    expect(countBy(scenario.tasks.map((task) => task.status))).toEqual({
+      pending: 20,
+      in_progress: 15,
+      blocked: 5,
+      in_review: 10,
+      completed: 70,
+    });
+    expect(countBy(scenario.tasks.map((task) => task.priority))).toEqual({
+      urgent: 5,
+      high: 25,
+      medium: 60,
+      low: 30,
+    });
+    expect(countBy(scenario.incidents.map((incident) => incident.status))).toEqual({
+      registered: 2,
+      triaged: 2,
+      assigned: 3,
+      investigating: 5,
+      resolved: 18,
+      closed: 30,
+    });
+    expect(countBy(scenario.incidents.map((incident) => incident.priority))).toEqual({
+      critical: 2,
+      high: 10,
+      medium: 30,
+      low: 18,
+    });
+    expect(scenario.payrollRuns.filter((run) => run.status === "closed")).toHaveLength(16);
+    expect(
+      scenario.changelogEntries.every((entry) => entry.status === "published"),
+    ).toBe(true);
+  });
 });
 
 describe("offline aggregate adapters", () => {

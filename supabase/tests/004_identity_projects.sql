@@ -176,7 +176,7 @@ where membership.profile_id = auth.uid();
 
 select is(
   (select count(*) from public.projects),
-  13::bigint,
+  11::bigint,
   'an authorized user can add an own-workspace project to the scenario'
 );
 select is(

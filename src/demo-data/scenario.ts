@@ -1,7 +1,6 @@
 import { z } from "zod";
 import {
   syntheticIncidentCatalog,
-  syntheticNewsCatalog,
   syntheticPeopleCatalog,
   syntheticProjectCatalog,
   syntheticTaskActions,
@@ -11,17 +10,17 @@ import {
 export const STANDARD_SCENARIO_COUNTS = {
   people: 32,
   teams: 6,
-  projects: 12,
-  tasks: 320,
-  leaveRequests: 144,
-  incidents: 240,
-  treasuryEntries: 720,
-  payrollRuns: 24,
-  changelogEntries: 36,
+  projects: 10,
+  tasks: 120,
+  leaveRequests: 72,
+  incidents: 60,
+  treasuryEntries: 240,
+  payrollRuns: 18,
+  changelogEntries: 9,
 } as const;
 
 export type DemoScenarioDefinition = {
-  scenarioVersion: 2;
+  scenarioVersion: 3;
   seed: string;
   anchorDate: string;
   generatedAt: string;
@@ -151,7 +150,7 @@ export type DemoScenarioDefinition = {
 
 const isoDateSchema = z.iso.date();
 const scenarioSchema = z.object({
-  scenarioVersion: z.literal(2),
+  scenarioVersion: z.literal(3),
   seed: z.string().min(1),
   anchorDate: isoDateSchema,
   generatedAt: z.iso.datetime(),
@@ -268,8 +267,8 @@ function pick<T>(items: readonly T[], index: number) {
 }
 
 export function generateDemoScenario(
-  seed = "management-platform-standard-v2",
-  anchorDate = "2026-07-01",
+  seed = "management-platform-standard-v3",
+  anchorDate = "2026-07-27",
 ): DemoScenarioDefinition {
   const random = createRandom(seed);
   const people: DemoScenarioDefinition["people"] = Array.from(
@@ -294,8 +293,8 @@ export function generateDemoScenario(
       };
     },
   );
-  const projectStatuses = ["active", "active", "active", "active", "on_hold", "active", "completed", "active", "planned", "active", "active", "completed"] as const;
-  const projectHealth = ["on_track", "at_risk", "on_track", "off_track", "at_risk", "on_track", "on_track", "at_risk", "on_track", "off_track", "on_track", "on_track"] as const;
+  const projectStatuses = ["active", "active", "active", "active", "active", "on_hold", "completed", "completed", "completed", "planned"] as const;
+  const projectHealth = ["on_track", "on_track", "on_track", "on_track", "at_risk", "off_track", "on_track", "on_track", "on_track", "on_track"] as const;
   const colors = ["#4f46e5", "#0d9488", "#d97706", "#2563eb", "#7c3aed", "#0891b2", "#16a34a", "#dc2626", "#0f766e", "#9333ea", "#0369a1", "#c2410c"];
   const projects: DemoScenarioDefinition["projects"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.projects }, (_, index) => {
     const startDate = addMonths(anchorDate, index - 5);
@@ -314,24 +313,48 @@ export function generateDemoScenario(
       color: colors[index]!,
     };
   });
-  const taskStatuses = ["pending", "in_progress", "blocked", "in_review", "completed"] as const;
-  const priorities = ["low", "medium", "high", "urgent"] as const;
+  const taskStatuses = [
+    ...Array<"pending">(20).fill("pending"),
+    ...Array<"in_progress">(15).fill("in_progress"),
+    ...Array<"blocked">(5).fill("blocked"),
+    ...Array<"in_review">(10).fill("in_review"),
+    ...Array<"completed">(70).fill("completed"),
+  ];
+  const priorities = [
+    ...Array<"urgent">(5).fill("urgent"),
+    ...Array<"high">(25).fill("high"),
+    ...Array<"medium">(60).fill("medium"),
+    ...Array<"low">(30).fill("low"),
+  ];
+  const taskProjectIndexes = [16, 15, 14, 13, 12, 11, 10, 9, 8, 12]
+    .flatMap((count, projectIndex) => Array<number>(count).fill(projectIndex));
   const tasks: DemoScenarioDefinition["tasks"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.tasks }, (_, index) => {
-    const createdDate = addDays(anchorDate, -150 + Math.floor(index * 1.6));
-    const status = pick(taskStatuses, index * 7 + Math.floor(random() * 3));
-    const project = projects[index % projects.length]!;
+    const createdDate = addDays(anchorDate, -330 + Math.floor(index * 2.45));
+    const status = taskStatuses[index]!;
+    const project = projects[taskProjectIndexes[index]!]!;
     const action = pick(syntheticTaskActions, index * 5 + Math.floor(random() * 3));
+    const dueDate =
+      status === "completed"
+        ? addDays(createdDate, 12 + (index % 35))
+        : index < 6
+          ? addDays(anchorDate, -(2 + index * 3))
+          : addDays(anchorDate, 7 + (index % 75));
     return {
       id: deterministicUuid(seed, "task", index),
       projectId: project.id,
       title: `${action} · ${project.name}`,
       description: `Coordinar esta actividad con el equipo de ${project.name} y dejar documentadas las decisiones antes de la revisión.`,
       status,
-      priority: pick(priorities, index * 5 + Math.floor(random() * 2)),
-      assigneePersonId: index % 11 === 0 ? null : people[index % 30]!.id,
-      dueDate: index % 13 === 0 ? null : addDays(createdDate, 7 + (index % 28)),
+      priority: priorities[(index * 37) % priorities.length]!,
+      assigneePersonId: index % 12 === 0 ? null : people[(index * 7) % 30]!.id,
+      dueDate: index % 17 === 0 ? null : dueDate,
       createdAt: isoAt(createdDate, 8 + (index % 8)),
-      updatedAt: isoAt(addDays(createdDate, Math.min(20, index % 24)), 10),
+      updatedAt: isoAt(
+        status === "completed"
+          ? addDays(createdDate, 15 + (index % 40))
+          : addDays(anchorDate, -(index % 18)),
+        10,
+      ),
     };
   });
   const taskDependencies = tasks
@@ -353,9 +376,15 @@ export function generateDemoScenario(
       createdAt: task.updatedAt,
     })),
   );
-  const leaveStatuses = ["draft", "submitted", "approved", "approved", "rejected", "cancelled"] as const;
+  const leaveStatuses = [
+    ...Array<"approved">(45).fill("approved"),
+    ...Array<"submitted">(8).fill("submitted"),
+    ...Array<"draft">(5).fill("draft"),
+    ...Array<"rejected">(6).fill("rejected"),
+    ...Array<"cancelled">(8).fill("cancelled"),
+  ];
   const leaveRequests: DemoScenarioDefinition["leaveRequests"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.leaveRequests }, (_, index) => {
-    const startDate = addDays(addMonths(anchorDate, -9), Math.floor(index * 3.7));
+    const startDate = addDays(addMonths(anchorDate, -9), Math.floor(index * 7.4));
     return {
       id: deterministicUuid(seed, "leave", index),
       personId: people[index % 30]!.id,
@@ -363,41 +392,35 @@ export function generateDemoScenario(
       endDate: addDays(startDate, 1 + (index % 8)),
       type: index % 5 === 0 ? "personal" : "vacation",
       reason: index % 5 === 0 ? "Gestión personal." : "Descanso anual planificado.",
-      status: pick(leaveStatuses, index),
+      status: leaveStatuses[(index * 29) % leaveStatuses.length]!,
     };
   });
   const incidentStatuses = [
-    "registered",
-    "triaged",
-    "assigned",
-    "investigating",
-    "resolved",
-    "closed",
-    "closed",
-    "resolved",
-  ] as const;
+    ...Array<"registered">(2).fill("registered"),
+    ...Array<"triaged">(2).fill("triaged"),
+    ...Array<"assigned">(3).fill("assigned"),
+    ...Array<"investigating">(5).fill("investigating"),
+    ...Array<"resolved">(18).fill("resolved"),
+    ...Array<"closed">(30).fill("closed"),
+  ];
   const incidentPriorities = [
-    "low",
-    "medium",
-    "medium",
-    "high",
-    "medium",
-    "low",
-    "high",
-    "critical",
-    "medium",
-    "high",
-  ] as const;
+    ...Array<"critical">(2).fill("critical"),
+    ...Array<"high">(10).fill("high"),
+    ...Array<"medium">(30).fill("medium"),
+    ...Array<"low">(18).fill("low"),
+  ];
+  const incidentProjectIndexes = [10, 9, 8, 7, 6, 5, 4, 4, 3, 4]
+    .flatMap((count, projectIndex) => Array<number>(count).fill(projectIndex));
   const categories = ["access", "data", "hardware", "software", "other"] as const;
   const services = ["Importaciones", "Permisos", "Analítica", "Tesorería", "Directorio", "Notificaciones"] as const;
   const impactScopes = ["individual", "team", "workspace"] as const;
   const detectionChannels = ["monitoring", "support", "team", "automation"] as const;
   const incidents: DemoScenarioDefinition["incidents"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.incidents }, (_, index) => {
-    const createdDate = addDays(anchorDate, -180 + Math.floor(index * 1.4));
-    const status = pick(incidentStatuses, index * 5);
-    const priority = pick(incidentPriorities, index * 3);
+    const createdDate = addDays(anchorDate, -360 + Math.floor(index * 5.7));
+    const status = incidentStatuses[index]!;
+    const priority = incidentPriorities[(index * 17) % incidentPriorities.length]!;
     const resolved = status === "resolved" || status === "closed";
-    const project = projects[index % projects.length]!;
+    const project = projects[incidentProjectIndexes[index]!]!;
     const [title, description] = pick(syntheticIncidentCatalog, index * 5);
     return {
       id: deterministicUuid(seed, "incident", index),
@@ -426,68 +449,88 @@ export function generateDemoScenario(
             ),
             12,
           )
-        : isoAt(addDays(anchorDate, 14 + (index % 45)), 12),
+        : isoAt(index < 2 ? addDays(anchorDate, -(2 + index)) : addDays(anchorDate, 5 + (index % 30)), 12),
       resolution: resolved ? "Se ajustó la regla y se comprobó el servicio afectado." : null,
       createdAt: isoAt(createdDate, 9),
       updatedAt: isoAt(addDays(createdDate, resolved ? 3 + (index % 9) : index % 3), 15),
     };
   });
-  const treasuryStatuses = ["draft", "registered", "reconciled", "validated", "closed"] as const;
+  const treasuryStatuses = [
+    ...Array<"draft">(4).fill("draft"),
+    ...Array<"registered">(4).fill("registered"),
+    ...Array<"reconciled">(8).fill("reconciled"),
+    ...Array<"validated">(104).fill("validated"),
+    ...Array<"closed">(120).fill("closed"),
+  ];
   const treasuryEntries: DemoScenarioDefinition["treasuryEntries"] = Array.from(
     { length: STANDARD_SCENARIO_COUNTS.treasuryEntries },
     (_, index) => {
-      const monthIndex = Math.floor(index / 30);
+      const monthIndex = Math.floor((index * 18) / STANDARD_SCENARIO_COUNTS.treasuryEntries);
+      const monthStart = Math.ceil((monthIndex * STANDARD_SCENARIO_COUNTS.treasuryEntries) / 18);
+      const monthEnd = Math.ceil(((monthIndex + 1) * STANDARD_SCENARIO_COUNTS.treasuryEntries) / 18);
+      const monthCount = monthEnd - monthStart;
+      const monthPosition = index - monthStart;
       const [concept, category] = pick(syntheticTreasuryConcepts, index * 7);
-      const isIncome = (index % 30) % 4 === 0;
+      const isIncome = monthPosition < 2;
+      const incomeAmount = 2_700_000 + monthIndex * 18_000;
+      const targetMargin = 0.11 + (monthIndex % 7) * 0.01;
+      const expenseAmount = Math.round(
+        (incomeAmount * 2 * (1 - targetMargin)) / (monthCount - 2),
+      );
       return {
         id: deterministicUuid(seed, "treasury", index),
         source:
           index % 2 === 0 ? "Financial Source A" : "Financial Source B",
         sourceSequence: index + 1,
-        entryDate: addDays(addMonths(anchorDate, monthIndex - 23), index % 24),
+        entryDate: addDays(addMonths(anchorDate, monthIndex - 17), monthPosition * 2),
         concept,
         category,
-        amountCents: isIncome
-          ? Math.round(660_000 + random() * 60_000)
-          : -Math.round(195_000 + random() * 25_000),
+        amountCents: isIncome ? incomeAmount : -expenseAmount,
         currency: "EUR",
-        status: pick(treasuryStatuses, index * 3),
+        status: treasuryStatuses[(index * 101) % treasuryStatuses.length]!,
       };
     },
   );
-  const payrollStatuses = ["collecting", "validating", "calculated", "reviewed", "closed"] as const;
   const payrollRuns: DemoScenarioDefinition["payrollRuns"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.payrollRuns }, (_, index) => {
-    const periodStart = addMonths(anchorDate, index - 23);
-    const gross = 8_650_000 + index * 97_000 + (index % 5) * 21_000;
+    const periodStart = addMonths(anchorDate, index - 17);
+    const gross = 9_200_000 + index * 120_000 + (index % 4) * 45_000;
     const deductions = Math.round(gross * (0.195 + (index % 4) * 0.006));
     return {
       id: deterministicUuid(seed, "payroll", index),
       periodStart,
       periodEnd: addDays(addMonths(periodStart, 1), -1),
-      peopleCount: 27 + Math.min(5, Math.floor(index / 5)),
+      peopleCount: 30 + Math.min(2, Math.floor(index / 7)),
       grossTotalCents: gross,
       deductionTotalCents: deductions,
       netTotalCents: gross - deductions,
-      employerCostTotalCents: Math.round(gross * 1.315),
+      employerCostTotalCents: Math.round(gross * (1.3 + (index % 4) * 0.01)),
       currency: "EUR",
-      status: index < 14 ? "closed" : pick(payrollStatuses, index),
+      status: index < 16 ? "closed" : index === 16 ? "reviewed" : "validating",
     };
   });
-  const changelogEntries: DemoScenarioDefinition["changelogEntries"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.changelogEntries }, (_, index) => {
-    const status = index < 28 ? "published" : index < 32 ? "in_review" : "draft";
-    const publishedDate = addDays(addMonths(anchorDate, -17), index * 15);
-    const title = pick(syntheticNewsCatalog, index * 5);
-    return {
+  const changelogTimeline = [
+    ["0.1.0", "Base de la plataforma", "Estructura inicial, navegación por módulos y permisos de acceso.", "2026-02-02"],
+    ["0.2.0", "Gestión de vacaciones", "Solicitudes, aprobaciones, calendario de ausencias y trazabilidad.", "2026-02-16"],
+    ["0.3.0", "Proyectos y tareas", "Seguimiento de proyectos, responsables, dependencias y tablero Kanban.", "2026-03-02"],
+    ["0.4.0", "Incidencias y personal", "Ciclo de atención, tiempos de resolución y directorio del equipo.", "2026-03-16"],
+    ["0.5.0", "Tesorería y nóminas", "Movimientos conciliados y ciclos de nómina con información agregada.", "2026-03-30"],
+    ["0.6.0", "Integraciones y automatización", "Ejecuciones programadas, control de importaciones y calidad del dato.", "2026-04-20"],
+    ["1.0.0", "Primera versión estable", "Acceso con Google, aislamiento por organización y revisión de seguridad.", "2026-05-24"],
+    ["1.1.0", "Analítica y experiencia de uso", "Indicadores, filtros, perfiles y mejoras generales de accesibilidad.", "2026-06-23"],
+    ["1.2.0", "Datos equilibrados y análisis dinámico", "Escenario operativo revisado, filtros comparables y presentación más consistente.", "2026-07-27"],
+  ] as const;
+  const changelogEntries: DemoScenarioDefinition["changelogEntries"] = changelogTimeline.map(
+    ([version, title, summary, publishedDate], index) => ({
       id: deterministicUuid(seed, "changelog", index),
-      version: `0.${Math.floor(index / 4) + 1}.${index % 4}`,
+      version,
       title,
-      summary: `Compartimos los cambios relacionados con ${title.toLowerCase()} y las recomendaciones para aplicarlos en el trabajo diario.`,
-      status,
-      publishedAt: status === "published" ? isoAt(publishedDate, 11) : null,
-    };
-  });
+      summary,
+      status: "published",
+      publishedAt: isoAt(publishedDate, 11),
+    }),
+  );
   return {
-    scenarioVersion: 2,
+    scenarioVersion: 3,
     seed,
     anchorDate,
     generatedAt: isoAt(anchorDate, 0),
@@ -546,6 +589,55 @@ export function validateDemoScenario(value: unknown) {
   }
   for (const run of scenario.payrollRuns) {
     if (run.netTotalCents !== run.grossTotalCents - run.deductionTotalCents) throw new Error("Invalid payroll totals");
+    const costRatio = run.employerCostTotalCents / run.grossTotalCents;
+    if (
+      run.grossTotalCents < 9_200_000 ||
+      run.grossTotalCents > 11_800_000 ||
+      costRatio < 1.28 ||
+      costRatio > 1.34
+    ) {
+      throw new Error("Payroll totals fall outside the aggregate scenario limits");
+    }
+  }
+
+  const openTasks = scenario.tasks.filter((task) => task.status !== "completed");
+  const overdueOpenTasks = openTasks.filter(
+    (task) => Boolean(task.dueDate && task.dueDate < scenario.anchorDate),
+  );
+  if (openTasks.length !== 50 || overdueOpenTasks.length > 6) {
+    throw new Error("Task workload is outside the balanced scenario limits");
+  }
+  if (scenario.tasks.filter((task) => task.status === "blocked").length !== 5) {
+    throw new Error("The scenario must contain exactly five blocked tasks");
+  }
+
+  const openIncidents = scenario.incidents.filter(
+    (incident) => !["resolved", "closed"].includes(incident.status),
+  );
+  const overdueIncidents = openIncidents.filter(
+    (incident) => incident.slaDueAt.slice(0, 10) < scenario.anchorDate,
+  );
+  if (
+    openIncidents.length !== 12 ||
+    overdueIncidents.length > 2 ||
+    scenario.incidents.filter((incident) => incident.priority === "critical").length !== 2
+  ) {
+    throw new Error("Incident workload is outside the balanced scenario limits");
+  }
+
+  const pendingTreasury = scenario.treasuryEntries.filter((entry) =>
+    ["registered", "reconciled"].includes(entry.status),
+  );
+  if (pendingTreasury.length / scenario.treasuryEntries.length > 0.05) {
+    throw new Error("Too many Treasury entries are pending validation");
+  }
+
+  if (
+    scenario.changelogEntries.some(
+      (entry) => entry.status !== "published" || !entry.publishedAt,
+    )
+  ) {
+    throw new Error("Every release note must be published");
   }
 
   const numberedLabels = [
@@ -578,9 +670,9 @@ export function validateDemoScenario(value: unknown) {
       totals.income > 0
         ? (totals.income - totals.expense) / totals.income
         : Number.NEGATIVE_INFINITY;
-    if (margin < 0.08 || margin > 0.22) {
+    if (margin < 0.1 || margin > 0.18) {
       throw new Error(
-        `Treasury margin outside the 8-22% target for ${month}: ${margin}`,
+        `Treasury margin outside the 10-18% target for ${month}: ${margin}`,
       );
     }
   }

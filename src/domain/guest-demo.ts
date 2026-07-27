@@ -118,8 +118,8 @@ import {
 import { generateDemoScenario } from "@/demo-data/scenario";
 
 export type GuestDemoState = {
-  version: 10;
-  scenarioVersion: 2;
+  version: 11;
+  scenarioVersion: 3;
   activeModule: ModuleId;
   organizationName: string;
   leaveRequests: LeaveRequest[];
@@ -403,10 +403,15 @@ const guestDemoStateV9Schema = guestDemoStateV8Schema.extend({
   savedAnalyticsViews: z.array(savedAnalyticsViewSchema),
 });
 
-export const guestDemoStateSchema = guestDemoStateV9Schema.extend({
+const guestDemoStateV10Schema = guestDemoStateV9Schema.extend({
   version: z.literal(10),
   scenarioVersion: z.literal(2),
   workspaceConfiguration: workspaceConfigurationSchema,
+});
+
+export const guestDemoStateSchema = guestDemoStateV10Schema.extend({
+  version: z.literal(11),
+  scenarioVersion: z.literal(3),
 });
 
 function normalizeLegacyAnalyticsModule(value: unknown): unknown {
@@ -460,6 +465,9 @@ export function parseGuestDemoState(value: unknown): GuestDemoState | null {
   const normalized = normalizeLegacyAnalyticsModule(value);
   const result = guestDemoStateSchema.safeParse(normalized);
   if (result.success) return result.data;
+
+  const version10 = guestDemoStateV10Schema.safeParse(normalized);
+  if (version10.success) return migrateVersion10(version10.data);
 
   const version9 = guestDemoStateV9Schema.safeParse(normalized);
   if (version9.success) return migrateVersion9(version9.data);
@@ -1005,9 +1013,24 @@ function migrateVersion9(
   return guestDemoStateSchema.parse(rebuilt);
 }
 
+function migrateVersion10(
+  state: z.infer<typeof guestDemoStateV10Schema>,
+): GuestDemoState {
+  return guestDemoStateSchema.parse(
+    addStandardScenario({
+      ...initialGuestDemoStateBase,
+      organizationName: state.organizationName,
+      activeModule: state.activeModule,
+      preferences: state.preferences,
+      savedAnalyticsViews: state.savedAnalyticsViews,
+      workspaceConfiguration: state.workspaceConfiguration,
+    }),
+  );
+}
+
 const initialGuestDemoStateBase: GuestDemoState = {
-  version: 10,
-  scenarioVersion: 2,
+  version: 11,
+  scenarioVersion: 3,
   activeModule: "inicio",
   organizationName: "Organización Aurora",
   integrationConnectors: createDefaultIntegrationConnectors(),
@@ -1336,7 +1359,7 @@ export function guestDemoReducer(
 ): GuestDemoState {
   switch (action.type) {
     case "hydrate":
-      return action.state.version === 10 ? action.state : state;
+      return action.state.version === 11 ? action.state : state;
     case "navigate":
       return { ...state, activeModule: action.module };
     case "create-leave": {

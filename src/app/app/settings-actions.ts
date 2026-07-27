@@ -112,10 +112,7 @@ export async function updateWorkspaceConfigurationAction(
   }
 }
 
-const scenarioV2Checksum =
-  "c42a65f8372a1614b1a18e50bc8b8b5953093aa0a75c3b2f8f2131176bb63d34";
-
-export async function restoreDemoScenarioV2Action(): Promise<ActionResult> {
+export async function restoreDemoScenarioV3Action(): Promise<ActionResult> {
   try {
     const access = await requirePermission("settings.workspace.manage");
     const supabase = await createClient();
@@ -130,18 +127,6 @@ export async function restoreDemoScenarioV2Action(): Promise<ActionResult> {
       return actionFailure(
         "conflict",
         "No se pudieron restablecer los datos.",
-      );
-    const { error: markerError } = await supabase.rpc(
-      "mark_demo_scenario_v2_restored",
-      {
-        target_organization_id: access.organizationId,
-        target_checksum: scenarioV2Checksum,
-      },
-    );
-    if (markerError)
-      return actionFailure(
-        "conflict",
-        "El escenario se restauró, pero no se pudo registrar su versión.",
       );
     revalidatePath("/app", "layout");
     return actionSuccess();

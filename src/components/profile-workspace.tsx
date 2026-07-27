@@ -22,6 +22,7 @@ import {
 } from "@/domain/profile";
 import { personRoleCodes, type PersonRoleCode } from "@/domain/people";
 import { AvatarUploader } from "@/components/avatar-uploader";
+import { formatDateTime } from "@/lib/format";
 
 type WorkspaceStatus = {
   scenarioVersion: number | null;
@@ -365,9 +366,7 @@ export function ProfileWorkspace({
                 <div>
                   <dt>Última actividad</dt>
                   <dd>
-                    {new Date(workspaceStatus.lastActiveAt).toLocaleString(
-                      "es-ES",
-                    )}
+                    {formatDateTime(workspaceStatus.lastActiveAt)}
                   </dd>
                 </div>
                 <div>

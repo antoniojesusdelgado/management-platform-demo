@@ -25,6 +25,7 @@ import {
   type TaskPriority,
   type TaskStatus,
 } from "@/domain/tasks";
+import { formatDateTime } from "@/lib/format";
 import { TaskKanban } from "@/components/task-kanban";
 import { InitialsAvatar } from "@/components/initials-avatar";
 import { EmptyState } from "@/components/empty-state";
@@ -163,6 +164,13 @@ export function TasksWorkspace({
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
   );
+  const boardTasks =
+    viewMode === "kanban"
+      ? [
+          ...visibleTasks.filter((task) => task.status !== "completed"),
+          ...visibleTasks.filter((task) => task.status === "completed").slice(0, 5),
+        ]
+      : pagedTasks;
 
   const selected = tasks.find((task) => task.id === selectedId) ?? null;
   const selectedDependencies = dependencies.filter(
@@ -323,9 +331,9 @@ export function TasksWorkspace({
           <p className="inline-alert compact" role="status">{boardMessage}</p>
         ) : null}
 
-        {pagedTasks.length && viewMode === "kanban" ? (
+        {boardTasks.length && viewMode === "kanban" ? (
           <TaskKanban
-            tasks={pagedTasks}
+            tasks={boardTasks}
             today={today}
             pending={pending}
             swimlane={swimlane}
@@ -357,7 +365,7 @@ export function TasksWorkspace({
           <EmptyState kind="work" title="No hay tareas para estos filtros" description="Prueba otra combinación o crea una nueva tarea." />
         )}
 
-        {visibleTasks.length > pageSize ? (
+        {viewMode !== "kanban" && visibleTasks.length > pageSize ? (
           <nav className="pagination" aria-label="Paginación de tareas">
             <button
               className="button button-secondary"
@@ -411,7 +419,7 @@ export function TasksWorkspace({
               <section><h3><IconRoute aria-hidden="true" size={19} /> Dependencias</h3><ul className="compact-list">{selectedDependencies.map((dependency) => <li key={dependency.id}>{tasks.find((task) => task.id === dependency.dependsOnTaskId)?.title ?? "Tarea no disponible"}</li>)}</ul><form onSubmit={addDependency} className="inline-form"><label className="sr-only" htmlFor="task-dependency">Nueva dependencia</label><select id="task-dependency" value={dependencyId} onChange={(event) => setDependencyId(event.target.value)}><option value="">Seleccionar tarea</option>{tasks.filter((task) => task.id !== selected.id).map((task) => <option value={task.id} key={task.id}>{task.title}</option>)}</select><button className="button button-secondary" type="submit" disabled={!dependencyId || pending}>Añadir</button></form></section>
               <section><h3><IconMessage aria-hidden="true" size={19} /> Comentarios</h3><ul className="compact-list">{selectedComments.map((comment) => <li key={comment.id}><strong>{comment.authorName}</strong><br />{comment.body}</li>)}</ul><form onSubmit={addComment} className="inline-form"><label className="sr-only" htmlFor="task-comment">Nuevo comentario</label><input id="task-comment" value={commentBody} placeholder="Añadir comentario" maxLength={1000} onChange={(event) => setCommentBody(event.target.value)} /><button className="button button-secondary" type="submit" disabled={commentBody.trim().length < 2 || pending}>Comentar</button></form></section>
             </div>
-            <section><h3>Actividad</h3><ul className="activity-list">{selectedEvents.map((event) => <li className="activity-item" key={event.id}><span className="attention-icon"><IconArrowRight aria-hidden="true" size={18} /></span><span><strong>{event.note}</strong><br /><span className="muted">{event.actorName} · {new Date(event.createdAt).toLocaleString("es-ES")}</span></span></li>)}</ul></section>
+            <section><h3>Actividad</h3><ul className="activity-list">{selectedEvents.map((event) => <li className="activity-item" key={event.id}><span className="attention-icon"><IconArrowRight aria-hidden="true" size={18} /></span><span><strong>{event.note}</strong><br /><span className="muted">{event.actorName} · {formatDateTime(event.createdAt)}</span></span></li>)}</ul></section>
           </> : null}
         </Dialog.Content></Dialog.Portal>
       </Dialog.Root>

@@ -17,6 +17,7 @@ import {
 } from "@tabler/icons-react";
 import { useState } from "react";
 import { modules, type ModuleId } from "@/domain/modules";
+import { formatDate, formatDateTime } from "@/lib/format";
 import { permissionCatalog, type PermissionCode } from "@/domain/permissions";
 import {
   invitationInputSchema,
@@ -765,9 +766,7 @@ export function SettingsWorkspace({
                       <strong>{invitation.email}</strong>
                       <span className="muted settings-list-copy">
                         {invitation.status} · vence{" "}
-                        {new Date(invitation.expiresAt).toLocaleDateString(
-                          "es-ES",
-                        )}
+                        {formatDate(invitation.expiresAt)}
                       </span>
                     </span>
                   </li>
@@ -784,7 +783,7 @@ export function SettingsWorkspace({
                   <IconRefresh size={22} />
                   <strong>Datos de la aplicación</strong>
                   <span>
-                    32 personas, 12 proyectos y más de 3.000 registros
+                    32 personas, 10 proyectos y más de 1.200 registros
                     relacionados.
                   </span>
                 </article>
@@ -873,7 +872,7 @@ export function SettingsWorkspace({
                         <strong>{event.summary}</strong>
                         <p className="muted">
                           {event.eventType} · {event.actorName} ·{" "}
-                          {new Date(event.createdAt).toLocaleString("es-ES")}
+                          {formatDateTime(event.createdAt)}
                         </p>
                       </div>
                     </li>

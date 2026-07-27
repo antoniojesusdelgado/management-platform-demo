@@ -1,5 +1,5 @@
 begin;
-select plan(15);
+select plan(22);
 
 insert into auth.users (
   id,
@@ -30,7 +30,7 @@ select is(
       on membership.organization_id = organization.id
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
   ),
-  2,
+  3,
   'the provisioned workspace records its scenario version'
 );
 
@@ -64,8 +64,8 @@ select is(
       on membership.organization_id = project.organization_id
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
   ),
-  12::bigint,
-  'the scenario contains twelve projects'
+  10::bigint,
+  'the scenario contains ten projects'
 );
 select is(
   (
@@ -75,8 +75,8 @@ select is(
       on membership.organization_id = task.organization_id
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
   ),
-  320::bigint,
-  'the scenario contains 320 tasks'
+  120::bigint,
+  'the scenario contains 120 tasks'
 );
 select is(
   (
@@ -86,8 +86,8 @@ select is(
       on membership.organization_id = request.organization_id
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
   ),
-  144::bigint,
-  'the scenario contains 144 leave requests'
+  72::bigint,
+  'the scenario contains 72 leave requests'
 );
 select is(
   (
@@ -97,8 +97,8 @@ select is(
       on membership.organization_id = incident.organization_id
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
   ),
-  240::bigint,
-  'the scenario contains 240 incidents'
+  60::bigint,
+  'the scenario contains 60 incidents'
 );
 select is(
   (
@@ -108,8 +108,8 @@ select is(
       on membership.organization_id = entry.organization_id
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
   ),
-  720::bigint,
-  'the scenario contains 720 synthetic treasury entries'
+  240::bigint,
+  'the scenario contains 240 synthetic treasury entries'
 );
 select is(
   (
@@ -119,8 +119,8 @@ select is(
       on membership.organization_id = run.organization_id
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
   ),
-  24::bigint,
-  'the scenario contains 24 aggregate payroll cycles'
+  18::bigint,
+  'the scenario contains 18 aggregate payroll cycles'
 );
 select is(
   (
@@ -130,8 +130,8 @@ select is(
       on membership.organization_id = entry.organization_id
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
   ),
-  36::bigint,
-  'the scenario contains 36 changelog entries'
+  9::bigint,
+  'the scenario contains nine changelog entries'
 );
 select is(
   (
@@ -170,10 +170,10 @@ select is(
     select count(*)
     from monthly_cash
     where balance <= 0
-      or balance::numeric / income not between 0.08 and 0.22
+      or balance::numeric / income not between 0.10 and 0.18
   ),
   0::bigint,
-  'every synthetic treasury month remains positive with an 8 to 22 percent margin'
+  'every synthetic treasury month remains positive with a 10 to 18 percent margin'
 );
 
 select is(
@@ -204,6 +204,96 @@ select lives_ok(
     'c0000000-0000-4000-8000-000000000001'
   ),
   'repeating the scenario seed is idempotent'
+);
+
+select is(
+  (
+    select jsonb_object_agg(status, amount)
+    from (
+      select project.status, count(*) as amount
+      from public.projects project
+      join public.memberships membership
+        on membership.organization_id = project.organization_id
+      where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
+      group by project.status
+    ) distribution
+  ),
+  '{"active": 5, "completed": 3, "on_hold": 1, "planned": 1}'::jsonb,
+  'projects have the balanced V3 status distribution'
+);
+select is(
+  (
+    select jsonb_object_agg(status, amount)
+    from (
+      select task.status, count(*) as amount
+      from public.tasks task
+      join public.memberships membership
+        on membership.organization_id = task.organization_id
+      where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
+      group by task.status
+    ) distribution
+  ),
+  '{"blocked": 5, "completed": 70, "in_progress": 15, "in_review": 10, "pending": 20}'::jsonb,
+  'tasks have the balanced V3 status distribution'
+);
+select is(
+  (
+    select count(*)
+    from public.incidents incident
+    join public.memberships membership
+      on membership.organization_id = incident.organization_id
+    where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
+      and incident.status not in ('resolved', 'closed')
+  ),
+  12::bigint,
+  'the scenario has twelve open incidents'
+);
+select is(
+  (
+    select count(*)
+    from public.incidents incident
+    join public.memberships membership
+      on membership.organization_id = incident.organization_id
+    where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
+      and incident.priority = 'critical'
+  ),
+  2::bigint,
+  'the complete incident history contains two critical cases'
+);
+select ok(
+  (
+    select count(*) <= 12
+    from public.treasury_entries entry
+    join public.memberships membership
+      on membership.organization_id = entry.organization_id
+    where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
+      and entry.status in ('draft', 'registered')
+  ),
+  'at most five percent of Treasury entries are pending validation'
+);
+select is(
+  (
+    select count(*)
+    from public.payroll_runs run
+    join public.memberships membership
+      on membership.organization_id = run.organization_id
+    where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
+      and run.status = 'closed'
+  ),
+  16::bigint,
+  'sixteen payroll cycles are closed'
+);
+select is(
+  (
+    select count(*)
+    from public.changelog_entries entry
+    join public.memberships membership
+      on membership.organization_id = entry.organization_id
+    where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
+      and entry.status = 'published'
+  ),
+  9::bigint,
+  'all nine changelog entries are published'
 );
 
 select * from finish();

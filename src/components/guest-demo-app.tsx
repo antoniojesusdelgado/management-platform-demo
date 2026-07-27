@@ -371,6 +371,7 @@ export function GuestDemoApp() {
     if (state.activeModule === "analitica") {
       return (
         <ControlCenter
+          onNavigate={navigate}
           projects={state.projects}
           tasks={state.tasks}
           incidents={state.incidents}

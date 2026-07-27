@@ -1,4 +1,4 @@
-import { IconArrowRight, IconLock } from "@tabler/icons-react";
+import { IconLock } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 import { LoginButton } from "@/app/login/login-button";
@@ -24,8 +24,8 @@ export async function AuthLanding({ errorCode }: AuthLandingProps) {
 
   return (
     <main className="oauth-page">
-      <section className="oauth-showcase" aria-labelledby="login-title">
-        <Link className="oauth-brand" href="/">
+      <header className="oauth-header">
+        <Link className="oauth-brand" href="/" aria-label="Plataforma de gestión">
           <Image
             src="/brand-symbol.svg"
             alt=""
@@ -38,34 +38,29 @@ export async function AuthLanding({ errorCode }: AuthLandingProps) {
             <small>Aplicación de demostración</small>
           </span>
         </Link>
+      </header>
 
+      <section className="oauth-showcase" aria-labelledby="login-title">
         <div className="oauth-showcase-copy">
-          <h1 id="login-title">Accede a la plataforma</h1>
+          <h1 id="login-title">Gestión diaria en un solo lugar</h1>
           <p>
-            Inicia sesión con Google para guardar tus cambios en un espacio
-            personal, o entra en la demo sin cuenta.
+            Gestiona proyectos, tareas, vacaciones e incidencias desde una
+            plataforma centralizada.
+          </p>
+          <p>
+            Mantén la actividad organizada y consulta la información necesaria
+            para tomar decisiones.
           </p>
           <p className="oauth-data-notice">
             Esta demostración utiliza únicamente datos ficticios.
           </p>
         </div>
-
-        <Image
-          className="oauth-illustration"
-          src="/images/product-overview.webp"
-          alt="Vista de inicio de la Plataforma de gestión"
-          width={1600}
-          height={900}
-          sizes="(max-width: 980px) 100vw, 58vw"
-          priority
-        />
       </section>
 
       <section className="oauth-panel" aria-label="Acceso a la plataforma">
         <div className="oauth-card">
           <div className="oauth-card-heading">
-            <p className="eyebrow">Acceso</p>
-            <h2>Elige cómo entrar</h2>
+            <h2>Accede a la plataforma</h2>
             <p className="muted">
               Google se utiliza para verificar la sesión. También puedes
               recorrer la aplicación sin crear una cuenta.
@@ -81,11 +76,11 @@ export async function AuthLanding({ errorCode }: AuthLandingProps) {
 
           {access.status === "active" ? (
             <Link
-              className="button button-primary oauth-primary"
+              className="button google-oauth-button"
               href="/app/inicio"
             >
-              Entrar en la aplicación
-              <IconArrowRight aria-hidden="true" size={19} />
+              <Image src="/google-g.svg" alt="" width={20} height={20} />
+              Continuar con Google
             </Link>
           ) : (
             <LoginButton />
@@ -99,7 +94,7 @@ export async function AuthLanding({ errorCode }: AuthLandingProps) {
             className="button button-secondary oauth-secondary"
             href="/demo/embed"
           >
-            Entrar sin cuenta
+            Probar sin iniciar sesión
           </Link>
 
           <p className="oauth-session-note">

@@ -22,6 +22,7 @@ import {
   type TreasuryStatus,
 } from "@/domain/treasury";
 import { EmptyState } from "@/components/empty-state";
+import { formatCurrency, formatDate, formatDateTime, formatPercent } from "@/lib/format";
 
 type Props = {
   entries: TreasuryEntry[];
@@ -55,14 +56,6 @@ const initialForm = (): FormState => ({
   amount: "",
   currency: "EUR",
 });
-
-function formatAmount(amountCents: number, currency: TreasuryCurrency) {
-  return new Intl.NumberFormat("es-ES", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 2,
-  }).format(amountCents / 100);
-}
 
 function toInput(entry: TreasuryEntry): FormState {
   return {
@@ -192,10 +185,10 @@ export function TreasuryWorkspace({
       {loadError ? <div className="inline-alert" role="alert"><strong>No se pudo cargar Tesorería.</strong><span>{loadError}</span></div> : null}
 
       <section className="cards-grid" aria-label="Resumen de Tesorería">
-        <article className="card"><span className="muted">Saldo agregado EUR</span><strong className="metric-value">{formatAmount(eurBalance, "EUR")}</strong></article>
+        <article className="card"><span className="muted">Saldo agregado EUR</span><strong className="metric-value">{formatCurrency(eurBalance, "EUR")}</strong></article>
         <article className="card"><span className="muted">Pendientes de validar</span><strong className="metric-value">{entries.filter((entry) => ["registered", "reconciled"].includes(entry.status)).length}</strong></article>
         <article className="card"><span className="muted">Movimientos cerrados</span><strong className="metric-value">{entries.filter((entry) => entry.status === "closed").length}</strong></article>
-        <article className="card"><span className="muted">Margen operativo</span><strong className="metric-value">{operatingMargin}%</strong></article>
+        <article className="card"><span className="muted">Margen operativo</span><strong className="metric-value">{formatPercent(operatingMargin)}</strong></article>
       </section>
 
       <section className="section-block">
@@ -209,8 +202,8 @@ export function TreasuryWorkspace({
         {visibleEntries.length ? <div className="treasury-list">{pagedEntries.map((entry) => (
           <button className="card treasury-row" type="button" key={entry.id} onClick={() => setSelectedId(entry.id)}>
             <span className={`treasury-direction ${entry.amountCents >= 0 ? "positive" : "negative"}`} aria-hidden="true">{entry.amountCents >= 0 ? <IconTrendingUp size={20} /> : <IconTrendingDown size={20} />}</span>
-            <span className="treasury-row-copy"><strong>{entry.concept}</strong><span className="muted">{new Date(`${entry.entryDate}T12:00:00`).toLocaleDateString("es-ES")} · {entry.category ?? "Operación"} · {sourceLabel(entry.source)} · {statusLabels[entry.status]}</span></span>
-            <strong className={entry.amountCents >= 0 ? "amount-positive" : "amount-negative"}>{formatAmount(entry.amountCents, entry.currency)}</strong>
+            <span className="treasury-row-copy"><strong>{entry.concept}</strong><span className="muted">{formatDate(entry.entryDate)} · {entry.category ?? "Operación"} · {sourceLabel(entry.source)} · {statusLabels[entry.status]}</span></span>
+            <strong className={entry.amountCents >= 0 ? "amount-positive" : "amount-negative"}>{formatCurrency(entry.amountCents, entry.currency)}</strong>
             <IconArrowRight size={19} aria-hidden="true" />
           </button>
         ))}</div> : <EmptyState kind="finance" title="No hay movimientos para estos filtros" description="Amplía el periodo o revisa la categoría seleccionada." />}
@@ -235,11 +228,11 @@ export function TreasuryWorkspace({
 
       <Dialog.Root open={Boolean(selected)} onOpenChange={(open) => !open && setSelectedId(null)}>
         <Dialog.Portal><Dialog.Overlay className="dialog-overlay" />{selected ? <Dialog.Content className="dialog-content task-detail-dialog">
-          <div className="dialog-header"><div><p className="eyebrow">{statusLabels[selected.status]} · {selected.currency}</p><Dialog.Title>{selected.concept}</Dialog.Title><Dialog.Description className="muted">{formatAmount(selected.amountCents, selected.currency)} · {new Date(`${selected.entryDate}T12:00:00`).toLocaleDateString("es-ES")}</Dialog.Description></div><Dialog.Close className="icon-button" aria-label="Cerrar detalle"><IconX size={19} /></Dialog.Close></div>
+          <div className="dialog-header"><div><p className="eyebrow">{statusLabels[selected.status]} · {selected.currency}</p><Dialog.Title>{selected.concept}</Dialog.Title><Dialog.Description className="muted">{formatCurrency(selected.amountCents, selected.currency)} · {formatDate(selected.entryDate)}</Dialog.Description></div><Dialog.Close className="icon-button" aria-label="Cerrar detalle"><IconX size={19} /></Dialog.Close></div>
           <div className="metadata-strip"><span>Categoría <strong>{selected.category ?? "Operación"}</strong></span><span>Origen <strong>{sourceLabel(selected.source)}</strong></span></div>
           {canManage && selected.status === "draft" ? <button className="button button-secondary" type="button" onClick={() => openEdit(selected)}>Editar borrador</button> : null}
           {canManage && selected.status !== "closed" ? <section className="section-block"><h3>Siguiente control</h3><label className="field transition-note-field">Nota de decisión<textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="Describe la comprobación realizada." /></label><div className="task-actions">{treasuryStatuses.filter((item) => canTransitionTreasury(selected.status, item)).map((item) => <button className="button button-primary" type="button" disabled={pending || note.trim().length < 3} onClick={() => transition(item)} key={item}>Marcar como {statusLabels[item].toLocaleLowerCase("es")}</button>)}</div></section> : null}
-          <section className="section-block"><h3>Trazabilidad</h3><ul className="request-timeline">{events.filter((event) => event.entryId === selected.id).map((event) => <li key={event.id}><span className="timeline-dot" /><div><strong>{event.note}</strong><p className="muted">{event.actorName} · {new Date(event.createdAt).toLocaleString("es-ES")}</p></div></li>)}</ul></section>
+          <section className="section-block"><h3>Trazabilidad</h3><ul className="request-timeline">{events.filter((event) => event.entryId === selected.id).map((event) => <li key={event.id}><span className="timeline-dot" /><div><strong>{event.note}</strong><p className="muted">{event.actorName} · {formatDateTime(event.createdAt)}</p></div></li>)}</ul></section>
         </Dialog.Content> : null}</Dialog.Portal>
       </Dialog.Root>
     </main>

@@ -135,9 +135,13 @@ environment values. After promotion:
 - Live isolation with a second Google identity remains a manual acceptance
   check. Multi-organization access isolation is covered by pgTAP.
 
-## Next release gate
+## Release v1.2.0
 
-Release `v1.1.0` is developed on `codex/management-platform-v1-1`. Its four
-new migrations, Scenario V2 restoration, Preview, production promotion, tag
-and GitHub Release remain gated until the local validation report and remote
-diff have been reviewed explicitly.
+Release `v1.2.0` is developed on `codex/management-platform-v1-2`. It adds one
+idempotent migration for Scenario V3, restores existing V2 demo organizations
+once, and preserves the private avatar bucket and OAuth configuration.
+
+The release sequence is: local database reset and pgTAP, application checks,
+Preview deployment, V3 restoration in a test organization, OAuth and responsive
+smoke tests, production promotion of the same artifact, idempotent workspace
+restoration, production smoke test, tag and GitHub Release.
