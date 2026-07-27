@@ -43,7 +43,7 @@ export function PeopleWorkspace({ people, events, leaveRequests, pending = false
   const [editingId, setEditingId] = useState<string | null>(null);
   const [input, setInput] = useState<PersonInput>(emptyInput());
   const [error, setError] = useState("");
-  const today = new Date().toISOString().slice(0, 10);
+  const today = "2026-06-23";
   const teams = [...new Set(people.map((person) => person.team))].sort();
   const filtered = useMemo(() => people.filter((person) =>
     (status === "all" || person.status === status) &&

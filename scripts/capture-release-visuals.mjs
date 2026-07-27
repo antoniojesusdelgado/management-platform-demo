@@ -2,7 +2,7 @@ import { mkdir } from "node:fs/promises";
 import { chromium } from "@playwright/test";
 
 const baseUrl = process.env.PRODUCT_CAPTURE_ORIGIN ?? "http://127.0.0.1:3210";
-const outputDirectory = ".artifacts/release-v1.2";
+const outputDirectory = ".artifacts/release-v1.2.1";
 const modules = [
   ["Vacaciones", "vacaciones"],
   ["Analítica", "analitica"],
@@ -98,6 +98,22 @@ try {
         await page.locator('[role="dialog"]:visible').waitFor();
         await page.screenshot({
           path: `${outputDirectory}/personal-dialogo-${viewport.name}.png`,
+          animations: "disabled",
+        });
+        await page.keyboard.press("Escape");
+      }
+
+      if (slug === "tareas") {
+        if (viewport.name === "mobile") {
+          await page.getByRole("button", { name: "Lista", exact: true }).click();
+        }
+        await page
+          .getByRole("button", { name: /Validar el flujo con el equipo/ })
+          .first()
+          .click();
+        await page.locator('[role="dialog"]:visible').waitFor();
+        await page.screenshot({
+          path: `${outputDirectory}/tareas-dialogo-${viewport.name}.png`,
           animations: "disabled",
         });
         await page.keyboard.press("Escape");

@@ -265,8 +265,8 @@ export function ProjectsWorkspace({
                       <span className="eyebrow">{project.code}</span>
                       <strong>{project.name}</strong>
                     </span>
-                    <span className={`status project-health-${project.health}`}>
-                      {healthLabels[project.health]}
+                    <span className={`status project-status-${project.status}`}>
+                      {statusLabels[project.status]}
                     </span>
                   </span>
                   <span className="muted project-summary">

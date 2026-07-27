@@ -100,6 +100,47 @@ test("recalculates Analytics when period, project and section change", async ({
   await expect(page.getByLabel("Servicio")).toBeVisible();
 });
 
+test("renders complete monthly and categorical Analytics series", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name === "mobile", "La comprobación de ejes se cubre en escritorio.");
+  await navigateToModule(page, "Analítica", false);
+
+  const timelineChart = page.locator(".chart-frame-timeline").first();
+  await expect(timelineChart).toBeVisible();
+  await expect(
+    timelineChart.locator(".recharts-xAxis .recharts-cartesian-axis-tick"),
+  ).toHaveCount(6);
+
+  await page
+    .getByRole("button", { name: "Proyectos y tareas", exact: true })
+    .click();
+  const projectChart = page
+    .locator(".analytics-chart-card")
+    .filter({ hasText: "Tareas por proyecto" })
+    .locator(".chart-frame-categories");
+  await expect(projectChart).toBeVisible();
+  await expect(
+    projectChart.locator(".recharts-yAxis .recharts-cartesian-axis-tick"),
+  ).toHaveCount(10);
+
+  await page.getByLabel("Proyecto").selectOption({ index: 1 });
+  await expect(
+    projectChart.locator(".recharts-yAxis .recharts-cartesian-axis-tick"),
+  ).toHaveCount(1);
+
+  await page
+    .getByRole("button", { name: "Equipo y disponibilidad", exact: true })
+    .click();
+  const teamChart = page
+    .locator(".analytics-chart-card")
+    .filter({ hasText: "Personas activas por equipo" })
+    .locator(".chart-frame-categories");
+  await expect(
+    teamChart.locator(".recharts-yAxis .recharts-cartesian-axis-tick"),
+  ).toHaveCount(6);
+});
+
 test("requires a decision note before rejecting a request", async ({
   page,
 }, testInfo) => {

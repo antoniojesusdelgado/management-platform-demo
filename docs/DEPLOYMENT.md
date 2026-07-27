@@ -145,3 +145,14 @@ The release sequence is: local database reset and pgTAP, application checks,
 Preview deployment, V3 restoration in a test organization, OAuth and responsive
 smoke tests, production promotion of the same artifact, idempotent workspace
 restoration, production smoke test, tag and GitHub Release.
+
+## Release v1.2.1
+
+Release `v1.2.1` is developed on
+`codex/management-platform-v1-2-1`. Its Scenario V4 migration preserves the
+existing schema, replaces the six-month fictional operating scenario once for
+organizations on V3, and records `demo.scenario.v4_restored` in the audit log.
+
+The delivery sequence is unchanged: local reset and pgTAP, application checks,
+Preview QA, remote migration dry run, compatible migration, promotion of the
+validated Preview artifact, production smoke test, tag and GitHub Release.

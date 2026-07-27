@@ -6,13 +6,13 @@ import {
 } from "../src/demo-data/scenario";
 
 const outputDirectory = ".demo-data";
-const scenarioPath = `${outputDirectory}/scenario-v3.json`;
-const reportPath = `${outputDirectory}/scenario-v3-report.json`;
+const scenarioPath = `${outputDirectory}/scenario-v4.json`;
+const reportPath = `${outputDirectory}/scenario-v4-report.json`;
 const command = process.argv[2] ?? "validate";
-const seed = process.env.DEMO_SCENARIO_SEED ?? "management-platform-standard-v3";
-const anchorDate = process.env.DEMO_SCENARIO_ANCHOR ?? "2026-07-27";
+const seed = process.env.DEMO_SCENARIO_SEED ?? "management-platform-standard-v4";
+const anchorDate = process.env.DEMO_SCENARIO_ANCHOR ?? "2026-06-23";
 const sqlMigrationPath =
-  "supabase/migrations/20260727170000_release_v1_2_scenario_v3.sql";
+  "supabase/migrations/20260727202826_release_v1_2_1_scenario_v4.sql";
 
 async function prepareScenario() {
   const scenario = validateDemoScenario(generateDemoScenario(seed, anchorDate));
@@ -37,7 +37,7 @@ if (command === "generate") {
   const sqlMigration = await Bun.file(sqlMigrationPath).text();
   if (!sqlMigration.includes(`scenario-checksum: ${first.checksum}`)) {
     throw new Error(
-      "The Scenario V3 SQL migration checksum differs from the TypeScript catalog",
+      "The Scenario V4 SQL migration checksum differs from the TypeScript catalog",
     );
   }
   const expectedSeries = [
@@ -47,15 +47,15 @@ if (command === "generate") {
     ["leaveRequests", 72, "target_leave_count := 72"],
     ["incidents", 60, "target_incident_count := 60"],
     ["treasuryEntries", 240, "target_treasury_count := 240"],
-    ["payrollRuns", 18, "target_payroll_count := 18"],
-    ["changelogEntries", 9, "target_changelog_count := 9"],
+    ["payrollRuns", 6, "target_payroll_count := 6"],
+    ["changelogEntries", 10, "target_changelog_count := 10"],
   ] as const;
   for (const [key, expectedCount, sqlMarker] of expectedSeries) {
     if (
       first.report.counts[key] !== expectedCount ||
       !sqlMigration.includes(sqlMarker)
     ) {
-      throw new Error(`Scenario V3 count mismatch for ${key}`);
+      throw new Error(`Scenario V4 count mismatch for ${key}`);
     }
   }
   console.log("Scenario is valid and deterministic");

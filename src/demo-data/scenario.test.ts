@@ -83,7 +83,7 @@ describe("synthetic demo scenario", () => {
     expect([...monthly.values()].every((balance) => balance > 0)).toBe(true);
   });
 
-  test("matches the balanced V3 operating distributions", () => {
+  test("matches the balanced V4 operating distributions", () => {
     const scenario = validateDemoScenario(generateDemoScenario());
     const countBy = <T extends string>(values: T[]) =>
       Object.fromEntries(
@@ -93,7 +93,7 @@ describe("synthetic demo scenario", () => {
         ]),
       );
 
-    expect(scenario.scenarioVersion).toBe(3);
+    expect(scenario.scenarioVersion).toBe(4);
     expect(countBy(scenario.projects.map((project) => project.status))).toEqual({
       active: 5,
       on_hold: 1,
@@ -127,10 +127,34 @@ describe("synthetic demo scenario", () => {
       medium: 30,
       low: 18,
     });
-    expect(scenario.payrollRuns.filter((run) => run.status === "closed")).toHaveLength(16);
+    expect(scenario.payrollRuns.filter((run) => run.status === "closed")).toHaveLength(4);
+    expect(scenario.payrollRuns).toHaveLength(6);
     expect(
       scenario.changelogEntries.every((entry) => entry.status === "published"),
     ).toBe(true);
+  });
+
+  test("keeps every operational date inside the public timeline", () => {
+    const scenario = validateDemoScenario(generateDemoScenario());
+    expect(scenario.anchorDate).toBe("2026-06-23");
+    expect(scenario.payrollRuns.map((run) => run.periodStart)).toEqual([
+      "2026-01-01",
+      "2026-02-01",
+      "2026-03-01",
+      "2026-04-01",
+      "2026-05-01",
+      "2026-06-01",
+    ]);
+    expect(
+      scenario.changelogEntries.map((entry) => [
+        entry.version,
+        entry.publishedAt?.slice(0, 10),
+      ]).slice(-3),
+    ).toEqual([
+      ["1.1.0", "2026-06-01"],
+      ["1.2.0", "2026-06-15"],
+      ["1.2.1", "2026-06-23"],
+    ]);
   });
 });
 

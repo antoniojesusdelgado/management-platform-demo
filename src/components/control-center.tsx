@@ -4,6 +4,8 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -38,6 +40,7 @@ type Props = {
   savedViews?: SavedAnalyticsView[];
   onSaveView?: (view: SavedAnalyticsView) => boolean | Promise<boolean>;
   onNavigate?: (module: ModuleId) => void;
+  referenceDate?: Date;
 };
 
 const views: Array<[AnalyticsView, string]> = [
@@ -64,6 +67,23 @@ function deltaState(kpi: AnalyticsKpi) {
   return favorable ? "positive" : "negative";
 }
 
+const monthFormatter = new Intl.DateTimeFormat("es-ES", {
+  month: "short",
+  timeZone: "UTC",
+});
+
+function isMonthlySeries(points: Array<{ period: string; value: number }>) {
+  return points.every((point) => /^\d{4}-\d{2}$/.test(point.period));
+}
+
+function formatPeriodLabel(period: string) {
+  if (!/^\d{4}-\d{2}$/.test(period)) return period;
+  const [year, month] = period.split("-").map(Number);
+  return monthFormatter
+    .format(new Date(Date.UTC(year!, month! - 1, 1)))
+    .replace(".", "");
+}
+
 export function ControlCenter({
   projects,
   tasks,
@@ -76,6 +96,7 @@ export function ControlCenter({
   savedViews = [],
   onSaveView,
   onNavigate,
+  referenceDate = new Date("2026-06-23T12:00:00.000Z"),
 }: Props) {
   const [activeView, setActiveView] = useState<AnalyticsView>("executive");
   const [filters, setFilters] = useState<AnalyticsFilter>({
@@ -111,8 +132,8 @@ export function ControlCenter({
     ],
   );
   const snapshot = useMemo(
-    () => buildAnalyticsSnapshot(data, filters, activeView),
-    [activeView, data, filters],
+    () => buildAnalyticsSnapshot(data, filters, activeView, referenceDate),
+    [activeView, data, filters, referenceDate],
   );
   const teams = [...new Set(people.map((person) => person.team))].sort();
   const services = [
@@ -361,32 +382,92 @@ export function ControlCenter({
               <p className="eyebrow">Evolución del periodo</p>
               <h2>{series.label}</h2>
             </div>
-            <div className="chart-frame" aria-hidden="true">
+            <div
+              className={`chart-frame ${
+                isMonthlySeries(series.points)
+                  ? "chart-frame-timeline"
+                  : "chart-frame-categories"
+              }`}
+              style={
+                isMonthlySeries(series.points)
+                  ? undefined
+                  : { height: `${Math.max(288, series.points.length * 46)}px` }
+              }
+              aria-hidden="true"
+            >
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={series.points}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="period" />
-                  <YAxis
-                    allowDecimals={series.unit !== "count"}
-                    tickFormatter={(value) =>
-                      series.unit === "currency"
-                        ? formatNumber(Number(value) / 100)
-                        : formatNumber(Number(value))
-                    }
-                  />
-                  <Tooltip
-                    formatter={(value) =>
-                      series.unit === "currency"
-                        ? formatCurrency(Number(value))
-                        : formatNumber(Number(value))
-                    }
-                  />
-                  <Bar
-                    dataKey="value"
-                    fill={index === 0 ? "#2563eb" : "#0f766e"}
-                    radius={[6, 6, 0, 0]}
-                  />
-                </BarChart>
+                {isMonthlySeries(series.points) ? (
+                  <LineChart
+                    data={series.points}
+                    margin={{ top: 12, right: 18, bottom: 8, left: 8 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                      dataKey="period"
+                      interval={0}
+                      tickFormatter={formatPeriodLabel}
+                    />
+                    <YAxis
+                      allowDecimals={series.unit !== "count"}
+                      tickFormatter={(value) =>
+                        series.unit === "currency"
+                          ? formatNumber(Number(value) / 100)
+                          : formatNumber(Number(value))
+                      }
+                    />
+                    <Tooltip
+                      labelFormatter={(value) => formatPeriodLabel(String(value))}
+                      formatter={(value) =>
+                        series.unit === "currency"
+                          ? formatCurrency(Number(value))
+                          : formatNumber(Number(value))
+                      }
+                    />
+                    <Line
+                      dataKey="value"
+                      type="monotone"
+                      stroke={index === 0 ? "#2563eb" : "#0f766e"}
+                      strokeWidth={3}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                ) : (
+                  <BarChart
+                    data={series.points}
+                    layout="vertical"
+                    margin={{ top: 8, right: 20, bottom: 8, left: 8 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis
+                      type="number"
+                      allowDecimals={series.unit !== "count"}
+                      tickFormatter={(value) =>
+                        series.unit === "currency"
+                          ? formatNumber(Number(value) / 100)
+                          : formatNumber(Number(value))
+                      }
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="period"
+                      width={190}
+                      tick={{ fontSize: 11 }}
+                    />
+                    <Tooltip
+                      formatter={(value) =>
+                        series.unit === "currency"
+                          ? formatCurrency(Number(value))
+                          : formatNumber(Number(value))
+                      }
+                    />
+                    <Bar
+                      dataKey="value"
+                      fill={index === 0 ? "#2563eb" : "#0f766e"}
+                      radius={[0, 6, 6, 0]}
+                    />
+                  </BarChart>
+                )}
               </ResponsiveContainer>
             </div>
             <table className="analytics-table">
@@ -395,7 +476,7 @@ export function ControlCenter({
               <tbody>
                 {series.points.map((point) => (
                   <tr key={point.period}>
-                    <td>{point.period}</td>
+                    <td>{formatPeriodLabel(point.period)}</td>
                     <td>
                       {series.unit === "currency"
                         ? formatCurrency(point.value)

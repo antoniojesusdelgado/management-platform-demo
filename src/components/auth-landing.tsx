@@ -1,4 +1,4 @@
-import { IconLock } from "@tabler/icons-react";
+import { IconInfoCircle, IconLock } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 import { LoginButton } from "@/app/login/login-button";
@@ -24,34 +24,30 @@ export async function AuthLanding({ errorCode }: AuthLandingProps) {
 
   return (
     <main className="oauth-page">
-      <header className="oauth-header">
-        <Link className="oauth-brand" href="/" aria-label="Plataforma de gestión">
-          <Image
-            src="/brand-symbol.svg"
-            alt=""
-            width={42}
-            height={42}
-            priority
-          />
-          <span>
-            <strong>Plataforma de gestión</strong>
-            <small>Aplicación de demostración</small>
-          </span>
-        </Link>
-      </header>
-
       <section className="oauth-showcase" aria-labelledby="login-title">
-        <div className="oauth-showcase-copy">
-          <h1 id="login-title">Gestión diaria en un solo lugar</h1>
-          <p>
-            Gestiona proyectos, tareas, vacaciones e incidencias desde una
-            plataforma centralizada.
-          </p>
-          <p>
-            Mantén la actividad organizada y consulta la información necesaria
-            para tomar decisiones.
-          </p>
+        <div className="oauth-showcase-inner">
+          <Link className="oauth-brand" href="/" aria-label="Plataforma de gestión">
+            <Image
+              src="/brand-symbol.svg"
+              alt=""
+              width={62}
+              height={62}
+              priority
+            />
+            <span>
+              <strong>Plataforma de gestión</strong>
+              <small>Aplicación de demostración</small>
+            </span>
+          </Link>
+          <div className="oauth-showcase-copy">
+            <h1 id="login-title">Accede a la plataforma</h1>
+            <p>
+              Inicia sesión con Google para guardar tus cambios en un espacio
+              personal, o explora la demo.
+            </p>
+          </div>
           <p className="oauth-data-notice">
+            <IconInfoCircle aria-hidden="true" size={20} />
             Esta demostración utiliza únicamente datos ficticios.
           </p>
         </div>
