@@ -69,7 +69,7 @@ select lives_ok(
     (select organization_id from public.memberships where profile_id = auth.uid()),
     auth.uid(),
     'Portfolio activo',
-    'centro-control',
+    'analitica',
     '{"projectId":"all"}'
   ),
   'a user can save an owned analytics view'
@@ -87,7 +87,7 @@ select throws_ok(
     (select organization_id from public.memberships where profile_id = auth.uid()),
     'a2000000-0000-4000-8000-000000000099',
     'Vista ajena',
-    'centro-control',
+    'analitica',
     '{}'
   ),
   '42501',

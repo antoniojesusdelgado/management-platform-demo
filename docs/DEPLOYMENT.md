@@ -134,3 +134,10 @@ environment values. After promotion:
   the database advisors.
 - Live isolation with a second Google identity remains a manual acceptance
   check. Multi-organization access isolation is covered by pgTAP.
+
+## Next release gate
+
+Release `v1.1.0` is developed on `codex/management-platform-v1-1`. Its four
+new migrations, Scenario V2 restoration, Preview, production promotion, tag
+and GitHub Release remain gated until the local validation report and remote
+diff have been reviewed explicitly.

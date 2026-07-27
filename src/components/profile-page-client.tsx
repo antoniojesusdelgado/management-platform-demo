@@ -28,6 +28,8 @@ export function ProfilePageClient(props: Props) {
       organizationName={props.organizationName}
       mode="authenticated"
       onNavigate={(module) => router.push(`/app/${module}`)}
+      avatarUrl={props.profile.avatarUrl}
+      displayName={props.profile.alias ?? props.profile.displayName}
     >
       <ProfileWorkspace
         profile={props.profile}

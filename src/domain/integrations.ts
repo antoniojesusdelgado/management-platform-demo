@@ -58,7 +58,7 @@ export type SavedAnalyticsView = {
 
 export type GuestPreferences = {
   simulatedRole: "admin" | "manager" | "collaborator" | "viewer" | null;
-  defaultDashboard: "control-center" | "projects" | "tasks" | "vacations";
+  defaultDashboard: "analytics" | "projects" | "tasks" | "vacations";
   theme: "light" | "dark" | "system";
   density: "comfortable" | "compact";
 };
@@ -111,7 +111,7 @@ export const guestPreferencesSchema = z.object({
     .enum(["admin", "manager", "collaborator", "viewer"])
     .nullable(),
   defaultDashboard: z.enum([
-    "control-center",
+    "analytics",
     "projects",
     "tasks",
     "vacations",
@@ -167,10 +167,10 @@ export function simulateGuestIntegrationRun(
     errorCount: errors,
     safeSummary:
       connector.kind === "financial"
-        ? "Movimientos sintéticos mapeados y conciliados."
+        ? "Movimientos mapeados y conciliados."
         : connector.kind === "payroll"
-          ? "Ciclo agregado sintético validado."
-          : "Cambios sintéticos del maestro de personal sincronizados.",
+          ? "Ciclo agregado validado."
+          : "Cambios del maestro de personal sincronizados.",
     startedAt: iso,
     finishedAt: iso,
   };
@@ -181,7 +181,7 @@ export function simulateGuestIntegrationRun(
         severity: "warning",
         code: "aggregate_variation",
         safeMessage:
-          "La variación agregada supera el umbral sintético de revisión.",
+          "La variación agregada supera el umbral de revisión.",
         resolvedAt: null,
         createdAt: iso,
       }

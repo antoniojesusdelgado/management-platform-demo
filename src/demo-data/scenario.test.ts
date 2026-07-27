@@ -60,6 +60,28 @@ describe("synthetic demo scenario", () => {
     }
     expect(payload).not.toMatch(/a3 (nóminas|personal)/);
   });
+
+  test("uses natural labels and keeps every monthly cash flow positive", () => {
+    const scenario = validateDemoScenario(generateDemoScenario());
+    const labels = [
+      ...scenario.people.map((person) => person.displayName),
+      ...scenario.projects.map((project) => project.name),
+      ...scenario.tasks.map((task) => task.title),
+      ...scenario.incidents.map((incident) => incident.title),
+    ];
+    expect(
+      labels.some((label) =>
+        /^(persona|tarea sintética|incidencia|proyecto)\s+\d+/i.test(label),
+      ),
+    ).toBe(false);
+
+    const monthly = new Map<string, number>();
+    for (const entry of scenario.treasuryEntries) {
+      const month = entry.entryDate.slice(0, 7);
+      monthly.set(month, (monthly.get(month) ?? 0) + entry.amountCents);
+    }
+    expect([...monthly.values()].every((balance) => balance > 0)).toBe(true);
+  });
 });
 
 describe("offline aggregate adapters", () => {

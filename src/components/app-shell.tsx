@@ -13,9 +13,11 @@ import {
   IconUserCircle,
   IconX,
 } from "@tabler/icons-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
+import { InitialsAvatar } from "@/components/initials-avatar";
 import { ModuleIcon } from "@/components/module-icon";
 import { modules, type ModuleId } from "@/domain/modules";
 import { createClient } from "@/lib/supabase/client";
@@ -26,6 +28,8 @@ type AppShellProps = {
   mode: "guest" | "authenticated";
   onNavigate: (module: ModuleId) => void;
   onReset?: () => void;
+  avatarUrl?: string | null;
+  displayName?: string;
   children: ReactNode;
 };
 
@@ -72,6 +76,8 @@ export function AppShell({
   mode,
   onNavigate,
   onReset,
+  avatarUrl,
+  displayName,
   children,
 }: AppShellProps) {
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
@@ -105,7 +111,7 @@ export function AppShell({
         <div className="sidebar-footer">
           <strong>Plataforma de gestión</strong>
           <br />
-          {mode === "guest" ? "Datos sintéticos · sesión local" : organizationName}
+          {mode === "guest" ? "Sesión local" : organizationName}
         </div>
       </aside>
 
@@ -158,15 +164,15 @@ export function AppShell({
               <button
                 type="button"
                 className="button button-quiet"
-                aria-label="Restaurar demo"
+                aria-label="Restaurar datos"
                 onClick={onReset}
               >
                 <IconRefresh aria-hidden="true" size={18} />
-                <span>Restaurar demo</span>
+                <span>Restaurar datos</span>
               </button>
             ) : null}
             <span className="badge">
-              {mode === "guest" ? "Datos de demostración" : organizationName}
+              {mode === "guest" ? "Datos ficticios" : organizationName}
             </span>
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
@@ -175,7 +181,25 @@ export function AppShell({
                   type="button"
                   aria-label="Abrir menú de usuario"
                 >
-                  <IconUserCircle aria-hidden="true" size={27} />
+                  {avatarUrl ? (
+                    <Image
+                      className="profile-indicator-image"
+                      src={avatarUrl}
+                      alt=""
+                      width={36}
+                      height={36}
+                      unoptimized
+                    />
+                  ) : (
+                    <InitialsAvatar
+                      displayName={
+                        mode === "guest"
+                          ? "Usuario invitado"
+                          : displayName ?? "Mi cuenta"
+                      }
+                      size="small"
+                    />
+                  )}
                   <IconChevronDown aria-hidden="true" size={14} />
                 </button>
               </DropdownMenu.Trigger>
@@ -187,7 +211,9 @@ export function AppShell({
                 >
                   <div className="user-menu-header">
                     <strong>
-                      {mode === "guest" ? "Usuario invitado" : "Mi cuenta"}
+                      {mode === "guest"
+                        ? "Usuario invitado"
+                        : displayName ?? "Mi cuenta"}
                     </strong>
                     <span>
                       {mode === "guest" ? "Sesión local" : organizationName}
@@ -201,7 +227,7 @@ export function AppShell({
                     <IconUserCircle aria-hidden="true" size={18} />
                     {mode === "authenticated"
                       ? "Mi perfil"
-                      : "Preferencias de la demo"}
+                      : "Preferencias"}
                   </DropdownMenu.Item>
                   {mode === "authenticated" ? (
                     <>
@@ -217,7 +243,7 @@ export function AppShell({
                         onSelect={() => router.push("/app/perfil#workspace")}
                       >
                         <IconDatabase aria-hidden="true" size={18} />
-                        Estado del workspace
+                        Estado del espacio personal
                       </DropdownMenu.Item>
                     </>
                   ) : onReset ? (
@@ -226,7 +252,7 @@ export function AppShell({
                       onSelect={onReset}
                     >
                       <IconRefresh aria-hidden="true" size={18} />
-                      Restaurar demo
+                      Restaurar datos
                     </DropdownMenu.Item>
                   ) : null}
                   {mode === "authenticated" ? (

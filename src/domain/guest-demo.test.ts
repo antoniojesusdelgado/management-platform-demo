@@ -79,7 +79,7 @@ describe("guest demo", () => {
     };
     const migrated = parseGuestDemoState(legacy);
 
-    expect(migrated?.version).toBe(9);
+    expect(migrated?.version).toBe(10);
     expect(migrated?.leaveRequests).toEqual(legacy.leaveRequests);
     expect(migrated?.tasks.length).toBeGreaterThan(0);
     expect(migrated?.incidents.length).toBeGreaterThan(0);
@@ -102,7 +102,7 @@ describe("guest demo", () => {
       taskEvents: initialGuestDemoState.taskEvents,
     };
     const migrated = parseGuestDemoState(legacy);
-    expect(migrated?.version).toBe(9);
+    expect(migrated?.version).toBe(10);
     expect(migrated?.tasks).toEqual(legacy.tasks);
   });
 
@@ -123,7 +123,7 @@ describe("guest demo", () => {
       peopleEvents: initialGuestDemoState.peopleEvents,
     };
     const migrated = parseGuestDemoState(legacy);
-    expect(migrated?.version).toBe(9);
+    expect(migrated?.version).toBe(10);
     expect(migrated?.incidents).toEqual(legacy.incidents);
     expect(migrated?.roles.length).toBeGreaterThan(0);
   });
@@ -135,7 +135,7 @@ describe("guest demo", () => {
     void payrollRuns;
     void payrollEvents;
     const migrated = parseGuestDemoState({ ...legacyState, version: 4 });
-    expect(migrated?.version).toBe(9);
+    expect(migrated?.version).toBe(10);
     expect(migrated?.roles).toEqual(legacyState.roles);
     expect(migrated?.treasuryEntries.length).toBeGreaterThan(0);
   });
@@ -145,7 +145,7 @@ describe("guest demo", () => {
     void payrollRuns;
     void payrollEvents;
     const migrated = parseGuestDemoState({ ...legacyState, version: 5 });
-    expect(migrated?.version).toBe(9);
+    expect(migrated?.version).toBe(10);
     expect(migrated?.treasuryEntries).toEqual(legacyState.treasuryEntries);
     expect(migrated?.payrollRuns.length).toBeGreaterThan(0);
   });
@@ -165,9 +165,13 @@ describe("guest demo", () => {
     void preferences;
     void savedAnalyticsViews;
 
-    const migrated = parseGuestDemoState({ ...version7State, version: 7 });
+    const migrated = parseGuestDemoState({
+      ...version7State,
+      version: 7,
+      scenarioVersion: 1,
+    });
 
-    expect(migrated?.version).toBe(9);
+    expect(migrated?.version).toBe(10);
     expect(migrated?.integrationConnectors).toHaveLength(4);
     expect(migrated?.integrationRuns).toEqual([]);
   });
@@ -178,9 +182,13 @@ describe("guest demo", () => {
     void preferences;
     void savedAnalyticsViews;
 
-    const migrated = parseGuestDemoState({ ...version8State, version: 8 });
+    const migrated = parseGuestDemoState({
+      ...version8State,
+      version: 8,
+      scenarioVersion: 1,
+    });
 
-    expect(migrated?.version).toBe(9);
+    expect(migrated?.version).toBe(10);
     expect(migrated?.preferences.simulatedRole).toBeNull();
     expect(migrated?.savedAnalyticsViews).toEqual([]);
   });
@@ -237,7 +245,12 @@ describe("leave validation", () => {
   test("detects active leave overlaps for the calendar", () => {
     const overlapping = getActiveLeaveRequestsForDate(
       [
-        initialGuestDemoState.leaveRequests[0],
+        {
+          ...initialGuestDemoState.leaveRequests[0],
+          startDate: "2026-08-03",
+          endDate: "2026-08-07",
+          status: "submitted",
+        },
         {
           ...initialGuestDemoState.leaveRequests[1],
           startDate: "2026-08-05",
@@ -328,9 +341,27 @@ describe("incident workflow", () => {
 
 describe("people directory", () => {
   test("derives availability from approved leave without duplicating it", () => {
-    const person = { ...initialGuestDemoState.people[1], displayName: initialGuestDemoState.leaveRequests[1].employeeName };
-    expect(getPersonAvailability(person, initialGuestDemoState.leaveRequests, "2026-07-24")).toBe("on_leave");
-    expect(getPersonAvailability(person, initialGuestDemoState.leaveRequests, "2026-07-25")).toBe("available");
+    const approved = initialGuestDemoState.leaveRequests.find(
+      (request) => request.status === "approved",
+    )!;
+    const person = {
+      ...initialGuestDemoState.people[1],
+      displayName: approved.employeeName,
+    };
+    expect(
+      getPersonAvailability(
+        person,
+        initialGuestDemoState.leaveRequests,
+        approved.startDate,
+      ),
+    ).toBe("on_leave");
+    expect(
+      getPersonAvailability(
+        person,
+        initialGuestDemoState.leaveRequests,
+        "2030-01-01",
+      ),
+    ).toBe("available");
   });
 });
 

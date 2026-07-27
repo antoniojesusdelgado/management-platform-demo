@@ -6,11 +6,13 @@ import {
 } from "../src/demo-data/scenario";
 
 const outputDirectory = ".demo-data";
-const scenarioPath = `${outputDirectory}/scenario-v1.json`;
-const reportPath = `${outputDirectory}/scenario-v1-report.json`;
+const scenarioPath = `${outputDirectory}/scenario-v2.json`;
+const reportPath = `${outputDirectory}/scenario-v2-report.json`;
 const command = process.argv[2] ?? "validate";
-const seed = process.env.DEMO_SCENARIO_SEED ?? "management-platform-standard-v1";
+const seed = process.env.DEMO_SCENARIO_SEED ?? "management-platform-standard-v2";
 const anchorDate = process.env.DEMO_SCENARIO_ANCHOR ?? "2026-07-01";
+const sqlMigrationPath =
+  "supabase/migrations/20260726155945_release_v1_1_scenario_v2.sql";
 
 async function prepareScenario() {
   const scenario = validateDemoScenario(generateDemoScenario(seed, anchorDate));
@@ -32,7 +34,32 @@ if (command === "generate") {
   if (first.checksum !== second.checksum) {
     throw new Error("The generator is not deterministic");
   }
+  const sqlMigration = await Bun.file(sqlMigrationPath).text();
+  if (!sqlMigration.includes(`scenario-checksum: ${first.checksum}`)) {
+    throw new Error(
+      "The Scenario V2 SQL migration checksum differs from the TypeScript catalog",
+    );
+  }
+  const expectedSeries = [
+    ["people", 32, "generate_series(2, 32)"],
+    ["projects", 12, "generate_series(1, 12)"],
+    ["tasks", 320, "generate_series(1, 320)"],
+    ["leaveRequests", 144, "generate_series(1, 144)"],
+    ["incidents", 240, "generate_series(1, 240)"],
+    ["treasuryEntries", 720, "generate_series(1, 720)"],
+    ["payrollRuns", 24, "generate_series(1, 24)"],
+    ["changelogEntries", 36, "generate_series(1, 36)"],
+  ] as const;
+  for (const [key, expectedCount, sqlMarker] of expectedSeries) {
+    if (
+      first.report.counts[key] !== expectedCount ||
+      !sqlMigration.includes(sqlMarker)
+    ) {
+      throw new Error(`Scenario V2 count mismatch for ${key}`);
+    }
+  }
   console.log("Scenario is valid and deterministic");
+  console.log("The SQL payload checksum and counts match the catalog");
   console.log(`SHA-256 ${first.checksum}`);
   console.log(JSON.stringify(first.report.counts, null, 2));
 } else if (command === "report") {

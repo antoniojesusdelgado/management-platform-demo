@@ -1,0 +1,78 @@
+import { mkdir } from "node:fs/promises";
+import { chromium } from "@playwright/test";
+
+const baseUrl = process.env.PRODUCT_CAPTURE_ORIGIN ?? "http://127.0.0.1:3210";
+const outputDirectory = ".artifacts/release-v1.1";
+const modules = [
+  ["Vacaciones", "vacaciones"],
+  ["Analítica", "analitica"],
+  ["Proyectos", "proyectos"],
+  ["Tareas", "tareas"],
+  ["Personal", "personal"],
+  ["Incidencias", "incidencias"],
+  ["Tesorería", "tesoreria"],
+  ["Nóminas", "nominas"],
+  ["Novedades", "novedades"],
+  ["Configuración", "configuracion"],
+];
+
+await mkdir(outputDirectory, { recursive: true });
+
+const browser = await chromium.launch({ headless: true });
+try {
+  for (const viewport of [
+    { name: "desktop", width: 1440, height: 900 },
+    { name: "mobile", width: 390, height: 844 },
+  ]) {
+    const page = await browser.newPage({
+      viewport: { width: viewport.width, height: viewport.height },
+      colorScheme: "light",
+      reducedMotion: "reduce",
+    });
+
+    await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+    await page.screenshot({
+      path: `${outputDirectory}/acceso-${viewport.name}.png`,
+      animations: "disabled",
+    });
+
+    await page.goto(`${baseUrl}/demo/embed`, {
+      waitUntil: "domcontentloaded",
+    });
+    await page.locator("[data-demo-ready='true']").waitFor();
+    await page.locator("h1", { hasText: "Inicio" }).waitFor();
+    await page.screenshot({
+      path: `${outputDirectory}/inicio-${viewport.name}.png`,
+      animations: "disabled",
+    });
+
+    for (const [label, slug] of modules) {
+      if (viewport.name === "mobile") {
+        await page
+          .getByRole("button", { name: "Abrir menú de módulos" })
+          .click();
+      }
+      await page
+        .getByRole("button", { name: label, exact: true })
+        .first()
+        .click();
+      await page.locator("h1", { hasText: label }).waitFor();
+      await page.waitForTimeout(500);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      if (viewport.name === "desktop") {
+        await page.locator(".sidebar").evaluate((element) => {
+          element.scrollTop = 0;
+        });
+      }
+      await page.screenshot({
+        path: `${outputDirectory}/${slug}-${viewport.name}.png`,
+        animations: "disabled",
+      });
+    }
+
+    await page.close();
+  }
+  console.log(`Captured release visuals in ${outputDirectory}`);
+} finally {
+  await browser.close();
+}

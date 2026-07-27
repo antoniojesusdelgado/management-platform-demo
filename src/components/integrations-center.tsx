@@ -13,6 +13,7 @@ import type {
   IntegrationKind,
   IntegrationRun,
 } from "@/domain/integrations";
+import { EmptyState } from "@/components/empty-state";
 
 type Props = {
   connectors: IntegrationConnector[];
@@ -28,6 +29,13 @@ const kindLabels: Record<IntegrationKind, string> = {
   financial: "Tesorería",
   payroll: "Nóminas agregadas",
   people: "Maestro de personal",
+};
+
+const connectorLabels: Record<string, string> = {
+  financial_source_a: "Fuente financiera A",
+  financial_source_b: "Fuente financiera B",
+  payroll_master: "Maestro de nóminas",
+  people_master: "Maestro de personal",
 };
 
 export function IntegrationsCenter({
@@ -68,8 +76,8 @@ export function IntegrationsCenter({
             {kind ? `Sincronización de ${kindLabels[kind]}` : "Integraciones"}
           </h2>
           <p className="muted">
-            Reconstrucción técnica con fuentes y resultados completamente
-            sintéticos. No conecta con proveedores reales.
+            Consulta el estado de las sincronizaciones, los registros procesados
+            y las incidencias que requieren revisión.
           </p>
         </div>
         <span className="status-chip">
@@ -110,7 +118,7 @@ export function IntegrationsCenter({
                 <IconArrowsExchange aria-hidden="true" size={20} />
               </span>
               <div>
-                <strong>{connector.name}</strong>
+                <strong>{connectorLabels[connector.code] ?? connector.name}</strong>
                 <p className="muted">
                   {kindLabels[connector.kind]} · {connector.scheduleCron}
                 </p>
@@ -144,6 +152,13 @@ export function IntegrationsCenter({
           );
         })}
       </div>
+      {!visibleConnectors.length ? (
+        <EmptyState
+          kind="integrations"
+          title="No hay conectores configurados"
+          description="Activa una fuente desde Configuración para probar la sincronización."
+        />
+      ) : null}
 
       {openIssues.length ? (
         <div className="inline-alert" role="status">

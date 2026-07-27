@@ -1,19 +1,22 @@
-import Image from "next/image";
 import {
   IconArrowRight,
   IconCalendarEvent,
   IconChecklist,
-  IconCircleCheck,
   IconFlag3,
   IconInbox,
-  IconPlayerPlay,
-  IconSearch,
   IconAlertCircle,
+  IconFolder,
 } from "@tabler/icons-react";
 import type { ModuleId } from "@/domain/modules";
 
 type DashboardProps = {
   onNavigate: (module: ModuleId) => void;
+  summary?: {
+    pendingLeaveRequests: number;
+    upcomingTasks: number;
+    priorityIncidents: number;
+    projectsAtRisk: number;
+  };
 };
 
 const attentionItems = [
@@ -41,17 +44,39 @@ const attentionItems = [
     icon: IconAlertCircle,
     tone: "orange",
   },
+  {
+    title: "Proyectos en seguimiento",
+    description: "Consulta el avance, los riesgos y las fechas previstas.",
+    link: "Ver proyectos",
+    module: "proyectos",
+    icon: IconFolder,
+    tone: "cyan",
+  },
 ] as const;
 
-const weekSteps = [
-  { day: "LUN", label: "Planificación", icon: IconChecklist },
-  { day: "MAR", label: "Ejecución", icon: IconPlayerPlay },
-  { day: "MIÉ", label: "Seguimiento", icon: IconSearch },
-  { day: "JUE", label: "Validación", icon: IconCircleCheck },
-  { day: "VIE", label: "Cierre", icon: IconFlag3 },
-] as const;
-
-export function Dashboard({ onNavigate }: DashboardProps) {
+export function Dashboard({ onNavigate, summary }: DashboardProps) {
+  const todaySummary = [
+    {
+      label: "Solicitudes por revisar",
+      value: summary?.pendingLeaveRequests ?? 0,
+      icon: IconCalendarEvent,
+    },
+    {
+      label: "Tareas próximas",
+      value: summary?.upcomingTasks ?? 0,
+      icon: IconChecklist,
+    },
+    {
+      label: "Incidencias prioritarias",
+      value: summary?.priorityIncidents ?? 0,
+      icon: IconAlertCircle,
+    },
+    {
+      label: "Proyectos con riesgo",
+      value: summary?.projectsAtRisk ?? 0,
+      icon: IconFlag3,
+    },
+  ] as const;
   return (
     <main className="workspace" id="main-content">
       <div className="page-heading">
@@ -63,15 +88,15 @@ export function Dashboard({ onNavigate }: DashboardProps) {
             procesos que requieren atención.
           </p>
         </div>
-        <span className="badge">Información sintética</span>
       </div>
 
       <section className="hero-panel" aria-labelledby="workday-title">
         <div>
-          <h2 id="workday-title">Estado de la jornada</h2>
+          <p className="eyebrow">Hoy</p>
+          <h2 id="workday-title">Resumen del día</h2>
           <p className="lede">
-            Revisa y avanza en los aspectos que requieren tu atención hoy.
-            Mantén la operativa al día.
+            Revisa las tareas próximas, las solicitudes pendientes y las
+            incidencias que requieren seguimiento.
           </p>
           <button
             type="button"
@@ -82,23 +107,27 @@ export function Dashboard({ onNavigate }: DashboardProps) {
             Abrir bandeja de trabajo
           </button>
         </div>
-        <Image
-          className="hero-illustration"
-          src="/images/workday-illustration.webp"
-          width={720}
-          height={405}
-          alt="Ilustración de una lista de tareas, material de oficina y una planta"
-          priority
-        />
+        <div className="dashboard-summary-grid" aria-label="Resumen del día">
+          {todaySummary.map((item) => {
+            const Icon = item.icon;
+            return (
+              <article className="dashboard-summary-item" key={item.label}>
+                <Icon aria-hidden="true" size={20} />
+                <strong>{item.value}</strong>
+                <span>{item.label}</span>
+              </article>
+            );
+          })}
+        </div>
       </section>
 
       <section className="section-block" aria-labelledby="attention-title">
         <div className="section-header">
           <div>
-            <p className="eyebrow">Bandeja priorizada</p>
-            <h2 id="attention-title">Pendientes destacados</h2>
+            <p className="eyebrow">Seguimiento</p>
+            <h2 id="attention-title">Asuntos pendientes</h2>
           </div>
-          <p className="muted">Tres procesos requieren revisión.</p>
+          <p className="muted">Accesos directos a las áreas con actividad.</p>
         </div>
         <div className="attention-list">
           {attentionItems.map((item) => {
@@ -126,34 +155,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         </div>
       </section>
 
-      <section className="section-block" aria-labelledby="process-title">
-        <div className="section-header">
-          <div>
-            <p className="eyebrow">Cadencia operativa</p>
-            <h2 id="process-title">Proceso de la semana</h2>
-          </div>
-          <p className="muted">
-            Secuencia demostrativa, no representa un proceso interno.
-          </p>
-        </div>
-        <ol className="week-process">
-          {weekSteps.map((step) => {
-            const Icon = step.icon;
-            return (
-              <li className="week-step" key={step.day}>
-                <span className="step-icon">
-                  <Icon aria-hidden="true" size={23} />
-                </span>
-                <span>
-                  <span className="step-day">{step.day}</span>
-                  <br />
-                  <span className="step-label">{step.label}</span>
-                </span>
-              </li>
-            );
-          })}
-        </ol>
-      </section>
     </main>
   );
 }

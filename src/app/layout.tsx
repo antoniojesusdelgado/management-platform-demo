@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     template: "%s · Plataforma de gestión",
   },
   description:
-    "Demo SaaS modular con datos sintéticos para documentar procesos, permisos y flujos operativos.",
+    "Aplicación de demostración para explorar procesos, permisos y flujos de gestión con datos ficticios.",
   robots: {
     index: false,
     follow: false,

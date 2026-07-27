@@ -4,7 +4,6 @@ import * as Dialog from "@radix-ui/react-dialog";
 import {
   IconAlertTriangle,
   IconArrowRight,
-  IconCheck,
   IconMessage,
   IconPlus,
   IconRoute,
@@ -27,6 +26,8 @@ import {
   type TaskStatus,
 } from "@/domain/tasks";
 import { TaskKanban } from "@/components/task-kanban";
+import { InitialsAvatar } from "@/components/initials-avatar";
+import { EmptyState } from "@/components/empty-state";
 
 type TasksWorkspaceProps = {
   tasks: TaskItem[];
@@ -258,7 +259,8 @@ export function TasksWorkspace({
           <p className="eyebrow">Trabajo · seguimiento</p>
           <h1>Tareas</h1>
           <p className="lede">
-            Bandeja personal, planificación y actividad trazable con datos completamente sintéticos.
+            Organiza el trabajo pendiente, las prioridades, las dependencias y
+            la actividad de cada proyecto.
           </p>
         </div>
         <button className="button button-primary" type="button" onClick={openCreate}>
@@ -297,7 +299,7 @@ export function TasksWorkspace({
                     ? "Kanban"
                     : mode === "list"
                       ? "Lista"
-                      : "Backlog"}
+                      : "Lista de pendientes"}
                 </button>
               ))}
             </div>
@@ -313,7 +315,7 @@ export function TasksWorkspace({
           <label>Proyecto<select value={projectFilter} onChange={(event) => setProjectFilter(event.target.value)}><option value="all">Todos los proyectos</option>{projectOptions.map((project) => <option value={project.id} key={project.id}>{project.name}</option>)}</select></label>
           <label>Vencimiento<select value={dueFilter} onChange={(event) => setDueFilter(event.target.value as typeof dueFilter)}><option value="all">Cualquier fecha</option><option value="overdue">Vencidas</option><option value="upcoming">Próximas</option><option value="none">Sin fecha</option></select></label>
           {viewMode === "kanban" ? (
-            <label>Agrupar<select value={swimlane} onChange={(event) => setSwimlane(event.target.value as typeof swimlane)}><option value="none">Sin swimlanes</option><option value="project">Por proyecto</option><option value="assignee">Por responsable</option></select></label>
+            <label>Agrupar<select value={swimlane} onChange={(event) => setSwimlane(event.target.value as typeof swimlane)}><option value="none">Sin agrupación</option><option value="project">Por proyecto</option><option value="assignee">Por responsable</option></select></label>
           ) : null}
         </div>
 
@@ -345,14 +347,14 @@ export function TasksWorkspace({
             {pagedTasks.map((task) => (
               <button className="task-row" type="button" key={task.id} onClick={() => setSelectedId(task.id)}>
                 <span className={`task-priority priority-${task.priority}`} aria-label={`Prioridad ${priorityLabels[task.priority]}`} />
-                <span className="task-row-main"><strong>{task.title}</strong><span className="muted">{task.projectName ?? "Sin proyecto"} · {task.assigneeName ?? "Sin asignar"} · {task.dueDate ?? "Sin vencimiento"}</span></span>
+                <span className="task-row-main"><strong>{task.title}</strong><span className="muted task-assignee-line">{task.assigneeName ? <InitialsAvatar displayName={task.assigneeName} size="small" /> : null}{task.projectName ?? "Sin proyecto"} · {task.assigneeName ?? "Sin asignar"} · {task.dueDate ?? "Sin vencimiento"}</span></span>
                 <span className={`status-chip task-status-${task.status}`}>{statusLabels[task.status]}</span>
                 {isTaskOverdue(task, today) ? <IconAlertTriangle aria-label="Vencida" size={19} /> : <IconArrowRight aria-hidden="true" size={19} />}
               </button>
             ))}
           </div>
         ) : (
-          <div className="empty-state"><IconCheck aria-hidden="true" size={30} /><strong>No hay tareas para estos filtros</strong><span>Prueba otra combinación o crea una nueva tarea.</span></div>
+          <EmptyState kind="work" title="No hay tareas para estos filtros" description="Prueba otra combinación o crea una nueva tarea." />
         )}
 
         {visibleTasks.length > pageSize ? (
@@ -382,7 +384,7 @@ export function TasksWorkspace({
 
       <Dialog.Root open={formOpen} onOpenChange={setFormOpen}>
         <Dialog.Portal><Dialog.Overlay className="dialog-overlay" /><Dialog.Content className="dialog-content">
-          <div className="dialog-header"><div><Dialog.Title asChild><h2>{editingId ? "Editar tarea" : "Nueva tarea"}</h2></Dialog.Title><Dialog.Description className="muted">Los datos de la demo son sintéticos y permanecen solo en esta sesión.</Dialog.Description></div><Dialog.Close asChild><button className="icon-button" type="button" aria-label="Cerrar formulario"><IconX aria-hidden="true" size={20} /></button></Dialog.Close></div>
+          <div className="dialog-header"><div><Dialog.Title asChild><h2>{editingId ? "Editar tarea" : "Nueva tarea"}</h2></Dialog.Title><Dialog.Description className="muted">Define el alcance, la prioridad, la persona responsable y la fecha prevista.</Dialog.Description></div><Dialog.Close asChild><button className="icon-button" type="button" aria-label="Cerrar formulario"><IconX aria-hidden="true" size={20} /></button></Dialog.Close></div>
           <form onSubmit={submitTask} noValidate>
             {formError ? <p className="field-error" role="alert">{formError}</p> : null}
             <div className="field-grid">

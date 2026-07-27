@@ -6,7 +6,6 @@ import { AppShell } from "@/components/app-shell";
 import { Dashboard } from "@/components/dashboard";
 import { ControlCenter } from "@/components/control-center";
 import { IntegrationsCenter } from "@/components/integrations-center";
-import { ModuleAnalytics } from "@/components/module-analytics";
 import {
   guestDemoReducer,
   initialGuestDemoState,
@@ -109,14 +108,14 @@ function readStoredState(): StoredStateResult {
     if (!parsed) {
       return {
         state: initialGuestDemoState,
-        warning: "La sesión guardada no era válida y se ha restaurado la demo.",
+        warning: "La sesión guardada no era válida y se han restaurado los datos iniciales.",
       };
     }
     return { state: parsed };
   } catch {
     return {
       state: initialGuestDemoState,
-      warning: "El almacenamiento de sesión no está disponible; la demo seguirá en memoria.",
+      warning: "El almacenamiento de sesión no está disponible; los cambios se mantendrán en memoria.",
     };
   }
 }
@@ -131,6 +130,7 @@ export function GuestDemoApp() {
   const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState("");
   const [storageAvailable, setStorageAvailable] = useState(true);
+  const [summaryAnchor] = useState(() => new Date());
 
   useEffect(() => {
     const stored = readStoredState();
@@ -176,6 +176,7 @@ export function GuestDemoApp() {
   function navigate(module: ModuleId) {
     if (!ready) return;
     dispatch({ type: "navigate", module });
+    window.scrollTo({ top: 0, behavior: "auto" });
   }
 
   function createLeave(input: LeaveRequestInput) {
@@ -274,7 +275,7 @@ export function GuestDemoApp() {
   function createPerson(input: PersonInput) {
     if (!ready) return false;
     dispatch({ type: "create-person", input });
-    notify("Perfil sintético añadido");
+    notify("Perfil añadido");
     return true;
   }
 
@@ -309,18 +310,18 @@ export function GuestDemoApp() {
   function updateModuleSetting(moduleId: ModuleId, enabled: boolean, sortOrder: number) { if (!ready) return false; dispatch({ type: "update-module-setting", moduleId, enabled, sortOrder }); notify("Configuración del módulo actualizada"); return true; }
   function updateRoleMetadata(roleId: string, name: string, color: string) { if (!ready) return false; dispatch({ type: "update-role-metadata", roleId, name, color }); notify("Metadatos del rol actualizados"); return true; }
   function updateRolePermissions(roleId: string, permissionCodes: PermissionCode[]) { if (!ready) return false; dispatch({ type: "update-role-permissions", roleId, permissionCodes }); notify("Permisos del rol actualizados"); return true; }
-  function createInvitation(email: string, roleId: string) { if (!ready) return false; dispatch({ type: "create-invitation", email, roleId }); notify("Invitación sintética creada"); return true; }
+  function createInvitation(email: string, roleId: string) { if (!ready) return false; dispatch({ type: "create-invitation", email, roleId }); notify("Invitación creada"); return true; }
   function updateMembership(membershipId: string, roleId: string, status: WorkspaceMembershipStatus) { if (!ready) return false; dispatch({ type: "update-membership", membershipId, roleId, status }); notify("Acceso actualizado"); return true; }
-  function createTreasury(input: TreasuryInput) { if (!ready) return false; dispatch({ type: "create-treasury", input }); notify("Borrador sintético creado"); return true; }
+  function createTreasury(input: TreasuryInput) { if (!ready) return false; dispatch({ type: "create-treasury", input }); notify("Borrador creado"); return true; }
   function updateTreasury(entryId: string, input: TreasuryInput) { const entry = state.treasuryEntries.find((item) => item.id === entryId); if (!ready || !entry || entry.status !== "draft") return false; dispatch({ type: "update-treasury", entryId, input }); notify("Borrador actualizado"); return true; }
   function transitionTreasury(entryId: string, status: TreasuryStatus, note: string) { const entry = state.treasuryEntries.find((item) => item.id === entryId); if (!ready || !entry || !canTransitionTreasury(entry.status, status) || note.trim().length < 3) return false; dispatch({ type: "transition-treasury", entryId, status, note }); notify("Control de Tesorería registrado"); return true; }
-  function createPayroll(input: PayrollInput) { if (!ready || state.payrollRuns.some((run) => run.periodStart === input.periodStart && run.periodEnd === input.periodEnd)) return false; dispatch({ type: "create-payroll", input }); notify("Ciclo sintético creado"); return true; }
+  function createPayroll(input: PayrollInput) { if (!ready || state.payrollRuns.some((run) => run.periodStart === input.periodStart && run.periodEnd === input.periodEnd)) return false; dispatch({ type: "create-payroll", input }); notify("Ciclo creado"); return true; }
   function updatePayroll(runId: string, input: PayrollInput) { const run = state.payrollRuns.find((item) => item.id === runId); if (!ready || !run || run.status !== "collecting") return false; dispatch({ type: "update-payroll", runId, input }); notify("Recopilación agregada actualizada"); return true; }
   function transitionPayroll(runId: string, status: PayrollStatus, note: string) { const run = state.payrollRuns.find((item) => item.id === runId); if (!ready || !run || !canTransitionPayroll(run.status, status) || note.trim().length < 3) return false; dispatch({ type: "transition-payroll", runId, status, note }); notify("Control de Nóminas registrado"); return true; }
   function simulateIntegration(connectorId: string) {
     if (!ready || !state.integrationConnectors.some(({ id }) => id === connectorId)) return false;
     dispatch({ type: "simulate-integration", connectorId });
-    notify("Ejecución sintética completada en esta sesión");
+    notify("Ejecución completada en esta sesión");
     return true;
   }
   function saveAnalyticsView(view: SavedAnalyticsView) {
@@ -334,10 +335,40 @@ export function GuestDemoApp() {
     if (!ready) return <WorkspaceLoading />;
 
     if (state.activeModule === "inicio") {
-      return <Dashboard onNavigate={navigate} />;
+      const today = summaryAnchor.toISOString().slice(0, 10);
+      const inThirtyDays = new Date(summaryAnchor.getTime() + 30 * 86_400_000)
+        .toISOString()
+        .slice(0, 10);
+      return (
+        <Dashboard
+          onNavigate={navigate}
+          summary={{
+            pendingLeaveRequests: state.leaveRequests.filter(
+              (request) => request.status === "submitted",
+            ).length,
+            upcomingTasks: state.tasks.filter(
+              (task) =>
+                task.status !== "completed" &&
+                task.dueDate !== null &&
+                task.dueDate >= today &&
+                task.dueDate <= inThirtyDays,
+            ).length,
+            priorityIncidents: state.incidents.filter(
+              (incident) =>
+                ["high", "critical"].includes(incident.priority) &&
+                !["resolved", "closed"].includes(incident.status),
+            ).length,
+            projectsAtRisk: state.projects.filter(
+              (project) =>
+                project.status === "active" &&
+                project.health !== "on_track",
+            ).length,
+          }}
+        />
+      );
     }
 
-    if (state.activeModule === "centro-control") {
+    if (state.activeModule === "analitica") {
       return (
         <ControlCenter
           projects={state.projects}
@@ -346,6 +377,8 @@ export function GuestDemoApp() {
           people={state.people}
           leaveRequests={state.leaveRequests}
           treasuryEntries={state.treasuryEntries}
+          payrollRuns={state.payrollRuns}
+          integrationRuns={state.integrationRuns}
           savedViews={state.savedAnalyticsViews}
           onSaveView={saveAnalyticsView}
         />
@@ -430,7 +463,7 @@ export function GuestDemoApp() {
     }
 
     if (state.activeModule === "configuracion") {
-      return <SettingsWorkspace organizationName={state.organizationName} moduleSettings={state.moduleSettings} roles={state.roles} memberships={state.memberships} invitations={state.invitations} auditEvents={state.adminAuditEvents} onRenameOrganization={(name) => { dispatch({ type: "rename-organization", name }); notify("Identidad actualizada"); return true; }} onUpdateModule={updateModuleSetting} onUpdateRoleMetadata={updateRoleMetadata} onUpdateRolePermissions={updateRolePermissions} onCreateInvitation={createInvitation} onUpdateMembership={updateMembership} />;
+      return <SettingsWorkspace organizationName={state.organizationName} configuration={state.workspaceConfiguration} moduleSettings={state.moduleSettings} roles={state.roles} memberships={state.memberships} invitations={state.invitations} auditEvents={state.adminAuditEvents} onRenameOrganization={(name) => { dispatch({ type: "rename-organization", name }); notify("Identidad actualizada"); return true; }} onUpdateConfiguration={(configuration) => { dispatch({ type: "update-workspace-configuration", configuration }); notify("Políticas actualizadas"); return true; }} onUpdateModule={updateModuleSetting} onUpdateRoleMetadata={updateRoleMetadata} onUpdateRolePermissions={updateRolePermissions} onCreateInvitation={createInvitation} onUpdateMembership={updateMembership} onRestoreDataset={() => { dispatch({ type: "reset" }); notify("Datos restablecidos"); return true; }} />;
     }
 
     return null;
@@ -455,23 +488,10 @@ export function GuestDemoApp() {
               setStorageAvailable(false);
             }
           }
-          notify("Datos de demostración restaurados");
+          notify("Datos iniciales restaurados");
         }}
       >
         {content()}
-        {ready ? (
-          <ModuleAnalytics
-            moduleId={state.activeModule}
-            projects={state.projects}
-            tasks={state.tasks}
-            incidents={state.incidents}
-            people={state.people}
-            leaveRequests={state.leaveRequests}
-            treasuryEntries={state.treasuryEntries}
-            payrollRuns={state.payrollRuns}
-            changelogEntries={state.changelogEntries}
-          />
-        ) : null}
       </AppShell>
       <div
         className="local-toast"

@@ -43,6 +43,8 @@ debug.log
 /test-results/
 /lighthouse-reports/
 /.demo-data/
+/.artifacts/
+/.codex-dev.*.log
 
 # typescript
 *.tsbuildinfo

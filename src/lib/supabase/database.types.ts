@@ -239,6 +239,45 @@ export type Database = {
           },
         ]
       }
+      demo_scenario_versions: {
+        Row: {
+          organization_id: string
+          restored_at: string
+          restored_by: string | null
+          scenario_checksum: string
+          scenario_version: number
+        }
+        Insert: {
+          organization_id: string
+          restored_at?: string
+          restored_by?: string | null
+          scenario_checksum: string
+          scenario_version: number
+        }
+        Update: {
+          organization_id?: string
+          restored_at?: string
+          restored_by?: string | null
+          scenario_checksum?: string
+          scenario_version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_scenario_versions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demo_scenario_versions_restored_by_fkey"
+            columns: ["restored_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incident_events: {
         Row: {
           actor_profile_id: string | null
@@ -299,12 +338,17 @@ export type Database = {
       }
       incidents: {
         Row: {
+          affected_service: string
           assignee_person_id: string | null
           assignee_profile_id: string | null
           category: Database["public"]["Enums"]["incident_category"]
+          corrective_task_id: string | null
           created_at: string
           description: string
+          detection_channel: string
+          first_response_at: string | null
           id: string
+          impact_scope: string
           organization_id: string
           priority: Database["public"]["Enums"]["incident_priority"]
           project_id: string | null
@@ -312,18 +356,24 @@ export type Database = {
           requester_person_id: string
           requester_profile_id: string
           resolution: string | null
+          root_cause: string | null
           sla_due_at: string
           status: Database["public"]["Enums"]["incident_status"]
           title: string
           updated_at: string
         }
         Insert: {
+          affected_service?: string
           assignee_person_id?: string | null
           assignee_profile_id?: string | null
           category?: Database["public"]["Enums"]["incident_category"]
+          corrective_task_id?: string | null
           created_at?: string
           description: string
+          detection_channel?: string
+          first_response_at?: string | null
           id?: string
+          impact_scope?: string
           organization_id: string
           priority?: Database["public"]["Enums"]["incident_priority"]
           project_id?: string | null
@@ -331,18 +381,24 @@ export type Database = {
           requester_person_id: string
           requester_profile_id: string
           resolution?: string | null
+          root_cause?: string | null
           sla_due_at?: string
           status?: Database["public"]["Enums"]["incident_status"]
           title: string
           updated_at?: string
         }
         Update: {
+          affected_service?: string
           assignee_person_id?: string | null
           assignee_profile_id?: string | null
           category?: Database["public"]["Enums"]["incident_category"]
+          corrective_task_id?: string | null
           created_at?: string
           description?: string
+          detection_channel?: string
+          first_response_at?: string | null
           id?: string
+          impact_scope?: string
           organization_id?: string
           priority?: Database["public"]["Enums"]["incident_priority"]
           project_id?: string | null
@@ -350,6 +406,7 @@ export type Database = {
           requester_person_id?: string
           requester_profile_id?: string
           resolution?: string | null
+          root_cause?: string | null
           sla_due_at?: string
           status?: Database["public"]["Enums"]["incident_status"]
           title?: string
@@ -368,6 +425,13 @@ export type Database = {
             columns: ["assignee_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_corrective_task_id_fkey"
+            columns: ["corrective_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
           {
@@ -1004,6 +1068,96 @@ export type Database = {
         }
         Relationships: []
       }
+      payroll_breakdowns: {
+        Row: {
+          employer_cost_total_cents: number
+          gross_total_cents: number
+          id: string
+          organization_id: string
+          people_count: number
+          run_id: string
+          team: string
+        }
+        Insert: {
+          employer_cost_total_cents: number
+          gross_total_cents: number
+          id?: string
+          organization_id: string
+          people_count: number
+          run_id: string
+          team: string
+        }
+        Update: {
+          employer_cost_total_cents?: number
+          gross_total_cents?: number
+          id?: string
+          organization_id?: string
+          people_count?: number
+          run_id?: string
+          team?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_breakdowns_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_breakdowns_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_checks: {
+        Row: {
+          code: string
+          id: string
+          organization_id: string
+          run_id: string
+          severity: string
+          status: string
+          summary: string
+        }
+        Insert: {
+          code: string
+          id?: string
+          organization_id: string
+          run_id: string
+          severity: string
+          status: string
+          summary: string
+        }
+        Update: {
+          code?: string
+          id?: string
+          organization_id?: string
+          run_id?: string
+          severity?: string
+          status?: string
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_checks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_checks_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payroll_events: {
         Row: {
           actor_profile_id: string
@@ -1068,6 +1222,7 @@ export type Database = {
           created_by: string
           currency: string
           deduction_total_cents: number
+          employer_cost_total_cents: number | null
           gross_total_cents: number
           id: string
           net_total_cents: number | null
@@ -1084,6 +1239,7 @@ export type Database = {
           created_by: string
           currency?: string
           deduction_total_cents?: number
+          employer_cost_total_cents?: number | null
           gross_total_cents?: number
           id?: string
           net_total_cents?: number | null
@@ -1100,6 +1256,7 @@ export type Database = {
           created_by?: string
           currency?: string
           deduction_total_cents?: number
+          employer_cost_total_cents?: number | null
           gross_total_cents?: number
           id?: string
           net_total_cents?: number | null
@@ -1255,6 +1412,7 @@ export type Database = {
       profiles: {
         Row: {
           alias: string | null
+          avatar_path: string | null
           avatar_url: string | null
           created_at: string
           default_dashboard: string
@@ -1273,6 +1431,7 @@ export type Database = {
         }
         Insert: {
           alias?: string | null
+          avatar_path?: string | null
           avatar_url?: string | null
           created_at?: string
           default_dashboard?: string
@@ -1293,6 +1452,7 @@ export type Database = {
         }
         Update: {
           alias?: string | null
+          avatar_path?: string | null
           avatar_url?: string | null
           created_at?: string
           default_dashboard?: string
@@ -1863,6 +2023,7 @@ export type Database = {
       treasury_entries: {
         Row: {
           amount_cents: number
+          category: string
           concept: string
           created_at: string
           created_by: string
@@ -1870,11 +2031,13 @@ export type Database = {
           entry_date: string
           id: string
           organization_id: string
+          source: string
           status: Database["public"]["Enums"]["treasury_entry_status"]
           updated_at: string
         }
         Insert: {
           amount_cents: number
+          category?: string
           concept: string
           created_at?: string
           created_by: string
@@ -1882,11 +2045,13 @@ export type Database = {
           entry_date: string
           id?: string
           organization_id: string
+          source?: string
           status?: Database["public"]["Enums"]["treasury_entry_status"]
           updated_at?: string
         }
         Update: {
           amount_cents?: number
+          category?: string
           concept?: string
           created_at?: string
           created_by?: string
@@ -1894,6 +2059,7 @@ export type Database = {
           entry_date?: string
           id?: string
           organization_id?: string
+          source?: string
           status?: Database["public"]["Enums"]["treasury_entry_status"]
           updated_at?: string
         }
@@ -1981,9 +2147,14 @@ export type Database = {
       workspace_configuration: {
         Row: {
           analytics_policy: Json
+          appearance_policy: Json
+          calendar_policy: Json
+          configuration: Json
           incident_policy: Json
           integration_policy: Json
+          module_policy: Json
           organization_id: string
+          payroll_policy: Json
           task_policy: Json
           treasury_policy: Json
           updated_at: string
@@ -1992,9 +2163,14 @@ export type Database = {
         }
         Insert: {
           analytics_policy?: Json
+          appearance_policy?: Json
+          calendar_policy?: Json
+          configuration?: Json
           incident_policy?: Json
           integration_policy?: Json
+          module_policy?: Json
           organization_id: string
+          payroll_policy?: Json
           task_policy?: Json
           treasury_policy?: Json
           updated_at?: string
@@ -2003,9 +2179,14 @@ export type Database = {
         }
         Update: {
           analytics_policy?: Json
+          appearance_policy?: Json
+          calendar_policy?: Json
+          configuration?: Json
           incident_policy?: Json
           integration_policy?: Json
+          module_policy?: Json
           organization_id?: string
+          payroll_policy?: Json
           task_policy?: Json
           treasury_policy?: Json
           updated_at?: string
@@ -2034,6 +2215,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      clear_own_avatar_path: { Args: never; Returns: undefined }
       create_payroll_run: {
         Args: {
           expected_organization_id: string
@@ -2067,10 +2249,15 @@ export type Database = {
           scenario_version: number
         }[]
       }
+      mark_demo_scenario_v2_restored: {
+        Args: { target_checksum: string; target_organization_id: string }
+        Returns: undefined
+      }
       restore_demo_scenario: {
         Args: { expected_organization_id: string; target_module?: string }
         Returns: undefined
       }
+      set_own_avatar_path: { Args: { target_path: string }; Returns: undefined }
       simulate_integration_run: {
         Args: {
           expected_connector_id: string
@@ -2200,6 +2387,10 @@ export type Database = {
           target_entry_date: string
           target_entry_id: string
         }
+        Returns: undefined
+      }
+      update_workspace_configuration: {
+        Args: { configuration_payload: Json; expected_organization_id: string }
         Returns: undefined
       }
     }

@@ -1,19 +1,27 @@
 import { z } from "zod";
+import {
+  syntheticIncidentCatalog,
+  syntheticNewsCatalog,
+  syntheticPeopleCatalog,
+  syntheticProjectCatalog,
+  syntheticTaskActions,
+  syntheticTreasuryConcepts,
+} from "@/demo-data/catalog";
 
 export const STANDARD_SCENARIO_COUNTS = {
-  people: 24,
-  teams: 4,
-  projects: 8,
-  tasks: 180,
-  leaveRequests: 96,
-  incidents: 120,
-  treasuryEntries: 540,
-  payrollRuns: 18,
-  changelogEntries: 24,
+  people: 32,
+  teams: 6,
+  projects: 12,
+  tasks: 320,
+  leaveRequests: 144,
+  incidents: 240,
+  treasuryEntries: 720,
+  payrollRuns: 24,
+  changelogEntries: 36,
 } as const;
 
 export type DemoScenarioDefinition = {
-  scenarioVersion: 1;
+  scenarioVersion: 2;
   seed: string;
   anchorDate: string;
   generatedAt: string;
@@ -92,6 +100,12 @@ export type DemoScenarioDefinition = {
       | "closed";
     priority: "low" | "medium" | "high" | "critical";
     category: "access" | "data" | "hardware" | "software" | "other";
+    affectedService: string;
+    impactScope: "individual" | "team" | "workspace";
+    detectionChannel: "monitoring" | "support" | "team" | "automation";
+    rootCause: string | null;
+    firstResponseAt: string | null;
+    correctiveTaskId: string | null;
     slaDueAt: string;
     resolution: string | null;
     createdAt: string;
@@ -103,6 +117,7 @@ export type DemoScenarioDefinition = {
     sourceSequence: number;
     entryDate: string;
     concept: string;
+    category: string;
     amountCents: number;
     currency: "EUR";
     status: "draft" | "registered" | "reconciled" | "validated" | "closed";
@@ -115,6 +130,7 @@ export type DemoScenarioDefinition = {
     grossTotalCents: number;
     deductionTotalCents: number;
     netTotalCents: number;
+    employerCostTotalCents: number;
     currency: "EUR";
     status:
       | "collecting"
@@ -135,7 +151,7 @@ export type DemoScenarioDefinition = {
 
 const isoDateSchema = z.iso.date();
 const scenarioSchema = z.object({
-  scenarioVersion: z.literal(1),
+  scenarioVersion: z.literal(2),
   seed: z.string().min(1),
   anchorDate: isoDateSchema,
   generatedAt: z.iso.datetime(),
@@ -174,18 +190,25 @@ const scenarioSchema = z.object({
     status: z.enum(["registered", "triaged", "assigned", "investigating", "resolved", "closed"]),
     priority: z.enum(["low", "medium", "high", "critical"]),
     category: z.enum(["access", "data", "hardware", "software", "other"]),
+    affectedService: z.string().min(2),
+    impactScope: z.enum(["individual", "team", "workspace"]),
+    detectionChannel: z.enum(["monitoring", "support", "team", "automation"]),
+    rootCause: z.string().nullable(),
+    firstResponseAt: z.iso.datetime().nullable(),
+    correctiveTaskId: z.uuid().nullable(),
     slaDueAt: z.iso.datetime(), resolution: z.string().nullable(), createdAt: z.iso.datetime(), updatedAt: z.iso.datetime(),
   })).length(STANDARD_SCENARIO_COUNTS.incidents),
   treasuryEntries: z.array(z.object({
     id: z.uuid(), source: z.enum(["Financial Source A", "Financial Source B"]),
     sourceSequence: z.number().int().positive(), entryDate: isoDateSchema,
-    concept: z.string(), amountCents: z.number().int(), currency: z.literal("EUR"),
+    concept: z.string(), category: z.string(), amountCents: z.number().int(), currency: z.literal("EUR"),
     status: z.enum(["draft", "registered", "reconciled", "validated", "closed"]),
   })).length(STANDARD_SCENARIO_COUNTS.treasuryEntries),
   payrollRuns: z.array(z.object({
     id: z.uuid(), periodStart: isoDateSchema, periodEnd: isoDateSchema,
     peopleCount: z.number().int().positive(), grossTotalCents: z.number().int().positive(),
     deductionTotalCents: z.number().int().nonnegative(), netTotalCents: z.number().int().positive(),
+    employerCostTotalCents: z.number().int().positive(),
     currency: z.literal("EUR"),
     status: z.enum(["collecting", "validating", "calculated", "reviewed", "closed"]),
   })).length(STANDARD_SCENARIO_COUNTS.payrollRuns),
@@ -245,33 +268,43 @@ function pick<T>(items: readonly T[], index: number) {
 }
 
 export function generateDemoScenario(
-  seed = "management-platform-standard-v1",
+  seed = "management-platform-standard-v2",
   anchorDate = "2026-07-01",
 ): DemoScenarioDefinition {
   const random = createRandom(seed);
-  const teams = ["Operaciones", "Producto", "Tecnología", "Servicios"];
-  const positions = ["Coordinación", "Especialista", "Analista", "Soporte", "Gestión de proyecto", "Consultoría"];
   const people: DemoScenarioDefinition["people"] = Array.from(
     { length: STANDARD_SCENARIO_COUNTS.people },
-    (_, index) => ({
-      id: deterministicUuid(seed, "person", index),
-      displayName: `Persona ${String(index + 1).padStart(2, "0")}`,
-      team: pick(teams, index),
-      positionTitle: pick(positions, index * 3 + 1),
-      status: index === 22 ? "suspended" : index === 23 ? "inactive" : "active",
-      roleCode: index === 0 ? "admin" : index < 4 ? "manager" : index > 20 ? "viewer" : "collaborator",
-    }),
+    (_, index) => {
+      const [displayName, team, positionTitle] = syntheticPeopleCatalog[index]!;
+      return {
+        id: deterministicUuid(seed, "person", index),
+        displayName,
+        team,
+        positionTitle,
+        status:
+          index === 29 ? "suspended" : index === 31 ? "inactive" : "active",
+        roleCode:
+          index === 0
+            ? "admin"
+            : index < 6
+              ? "manager"
+              : index > 28
+                ? "viewer"
+                : "collaborator",
+      };
+    },
   );
-  const projectStatuses = ["planned", "active", "active", "active", "on_hold", "active", "completed", "cancelled"] as const;
-  const projectHealth = ["on_track", "at_risk", "on_track", "off_track", "at_risk", "on_track", "on_track", "off_track"] as const;
-  const colors = ["#4f46e5", "#0d9488", "#d97706", "#2563eb", "#7c3aed", "#0891b2", "#16a34a", "#dc2626"];
-  const projects: DemoScenarioDefinition["projects"] = Array.from({ length: 8 }, (_, index) => {
+  const projectStatuses = ["active", "active", "active", "active", "on_hold", "active", "completed", "active", "planned", "active", "active", "completed"] as const;
+  const projectHealth = ["on_track", "at_risk", "on_track", "off_track", "at_risk", "on_track", "on_track", "at_risk", "on_track", "off_track", "on_track", "on_track"] as const;
+  const colors = ["#4f46e5", "#0d9488", "#d97706", "#2563eb", "#7c3aed", "#0891b2", "#16a34a", "#dc2626", "#0f766e", "#9333ea", "#0369a1", "#c2410c"];
+  const projects: DemoScenarioDefinition["projects"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.projects }, (_, index) => {
     const startDate = addMonths(anchorDate, index - 5);
+    const [code, name, summary] = syntheticProjectCatalog[index]!;
     return {
       id: deterministicUuid(seed, "project", index),
-      code: `PRJ-${String(index + 1).padStart(2, "0")}`,
-      name: `Iniciativa sintética ${String(index + 1).padStart(2, "0")}`,
-      summary: `Escenario demostrativo ${index + 1} para analizar planificación, capacidad y salud sin referencias profesionales reales.`,
+      code,
+      name,
+      summary,
       status: projectStatuses[index]!,
       health: projectHealth[index]!,
       ownerPersonId: people[index % 4]!.id,
@@ -283,17 +316,19 @@ export function generateDemoScenario(
   });
   const taskStatuses = ["pending", "in_progress", "blocked", "in_review", "completed"] as const;
   const priorities = ["low", "medium", "high", "urgent"] as const;
-  const tasks: DemoScenarioDefinition["tasks"] = Array.from({ length: 180 }, (_, index) => {
+  const tasks: DemoScenarioDefinition["tasks"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.tasks }, (_, index) => {
     const createdDate = addDays(anchorDate, -150 + Math.floor(index * 1.6));
     const status = pick(taskStatuses, index * 7 + Math.floor(random() * 3));
+    const project = projects[index % projects.length]!;
+    const action = pick(syntheticTaskActions, index * 5 + Math.floor(random() * 3));
     return {
       id: deterministicUuid(seed, "task", index),
-      projectId: projects[index % projects.length]!.id,
-      title: `Tarea sintética ${String(index + 1).padStart(3, "0")}`,
-      description: `Trabajo demostrativo generado para el escenario ${seed}; no representa una actividad profesional real.`,
+      projectId: project.id,
+      title: `${action} · ${project.name}`,
+      description: `Coordinar esta actividad con el equipo de ${project.name} y dejar documentadas las decisiones antes de la revisión.`,
       status,
       priority: pick(priorities, index * 5 + Math.floor(random() * 2)),
-      assigneePersonId: index % 11 === 0 ? null : people[index % 22]!.id,
+      assigneePersonId: index % 11 === 0 ? null : people[index % 30]!.id,
       dueDate: index % 13 === 0 ? null : addDays(createdDate, 7 + (index % 28)),
       createdAt: isoAt(createdDate, 8 + (index % 8)),
       updatedAt: isoAt(addDays(createdDate, Math.min(20, index % 24)), 10),
@@ -310,90 +345,149 @@ export function generateDemoScenario(
     Array.from({ length: index % 3 }, (_, comment) => ({
       id: deterministicUuid(seed, "task-comment", index * 3 + comment),
       taskId: task.id,
-      authorPersonId: people[(index + comment) % 22]!.id,
-      body: `Comentario sintético ${comment + 1} para documentar el seguimiento de la tarea.`,
+      authorPersonId: people[(index + comment) % 30]!.id,
+      body: pick([
+        "Criterios revisados con el equipo y listos para la siguiente validación.",
+        "Queda documentada la dependencia antes de continuar con la entrega.",
+      ] as const, comment),
       createdAt: task.updatedAt,
     })),
   );
   const leaveStatuses = ["draft", "submitted", "approved", "approved", "rejected", "cancelled"] as const;
-  const leaveRequests: DemoScenarioDefinition["leaveRequests"] = Array.from({ length: 96 }, (_, index) => {
-    const startDate = addDays(addMonths(anchorDate, -9), index * 6);
+  const leaveRequests: DemoScenarioDefinition["leaveRequests"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.leaveRequests }, (_, index) => {
+    const startDate = addDays(addMonths(anchorDate, -9), Math.floor(index * 3.7));
     return {
       id: deterministicUuid(seed, "leave", index),
-      personId: people[index % 22]!.id,
+      personId: people[index % 30]!.id,
       startDate,
       endDate: addDays(startDate, 1 + (index % 8)),
       type: index % 5 === 0 ? "personal" : "vacation",
-      reason: index % 5 === 0 ? "Gestión personal sintética." : "Descanso anual sintético planificado.",
+      reason: index % 5 === 0 ? "Gestión personal." : "Descanso anual planificado.",
       status: pick(leaveStatuses, index),
     };
   });
-  const incidentStatuses = ["registered", "triaged", "assigned", "investigating", "resolved", "closed"] as const;
-  const incidentPriorities = ["low", "medium", "high", "critical"] as const;
+  const incidentStatuses = [
+    "registered",
+    "triaged",
+    "assigned",
+    "investigating",
+    "resolved",
+    "closed",
+    "closed",
+    "resolved",
+  ] as const;
+  const incidentPriorities = [
+    "low",
+    "medium",
+    "medium",
+    "high",
+    "medium",
+    "low",
+    "high",
+    "critical",
+    "medium",
+    "high",
+  ] as const;
   const categories = ["access", "data", "hardware", "software", "other"] as const;
-  const incidents: DemoScenarioDefinition["incidents"] = Array.from({ length: 120 }, (_, index) => {
-    const createdDate = addDays(anchorDate, -120 + index * 2);
+  const services = ["Importaciones", "Permisos", "Analítica", "Tesorería", "Directorio", "Notificaciones"] as const;
+  const impactScopes = ["individual", "team", "workspace"] as const;
+  const detectionChannels = ["monitoring", "support", "team", "automation"] as const;
+  const incidents: DemoScenarioDefinition["incidents"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.incidents }, (_, index) => {
+    const createdDate = addDays(anchorDate, -180 + Math.floor(index * 1.4));
     const status = pick(incidentStatuses, index * 5);
     const priority = pick(incidentPriorities, index * 3);
     const resolved = status === "resolved" || status === "closed";
+    const project = projects[index % projects.length]!;
+    const [title, description] = pick(syntheticIncidentCatalog, index * 5);
     return {
       id: deterministicUuid(seed, "incident", index),
-      projectId: projects[index % projects.length]!.id,
-      requesterPersonId: people[(index + 7) % 22]!.id,
+      projectId: project.id,
+      requesterPersonId: people[(index + 7) % 30]!.id,
       assigneePersonId: status === "registered" ? null : people[index % 8]!.id,
-      title: `Incidencia sintética ${String(index + 1).padStart(3, "0")}`,
-      description: "Caso demostrativo para analizar clasificación, SLA y resolución sin datos de una organización real.",
+      title: `${title} · ${project.name}`,
+      description,
       status,
       priority,
       category: pick(categories, index * 7),
-      slaDueAt: isoAt(addDays(createdDate, priority === "critical" ? 1 : priority === "high" ? 2 : 5), 12),
-      resolution: resolved ? "Resolución sintética verificada." : null,
+      affectedService: pick(services, index * 3),
+      impactScope: pick(impactScopes, index * 7),
+      detectionChannel: pick(detectionChannels, index * 5),
+      rootCause: resolved
+        ? "La regla de validación no contemplaba una combinación de estados."
+        : null,
+      firstResponseAt:
+        status === "registered" ? null : isoAt(addDays(createdDate, 1), 10),
+      correctiveTaskId: resolved ? tasks[index % tasks.length]!.id : null,
+      slaDueAt: resolved
+        ? isoAt(
+            addDays(
+              createdDate,
+              priority === "critical" ? 1 : priority === "high" ? 2 : 5,
+            ),
+            12,
+          )
+        : isoAt(addDays(anchorDate, 14 + (index % 45)), 12),
+      resolution: resolved ? "Se ajustó la regla y se comprobó el servicio afectado." : null,
       createdAt: isoAt(createdDate, 9),
       updatedAt: isoAt(addDays(createdDate, resolved ? 3 + (index % 9) : index % 3), 15),
     };
   });
   const treasuryStatuses = ["draft", "registered", "reconciled", "validated", "closed"] as const;
-  const treasuryEntries: DemoScenarioDefinition["treasuryEntries"] = Array.from({ length: 540 }, (_, index) => ({
-    id: deterministicUuid(seed, "treasury", index),
-    source: index % 2 === 0 ? "Financial Source A" : "Financial Source B",
-    sourceSequence: index + 1,
-    entryDate: addDays(addMonths(anchorDate, -17), index),
-    concept: `Movimiento sintético importado ${String(index + 1).padStart(4, "0")}`,
-    amountCents: Math.round((4500 + random() * 240000) * (index % 3 === 0 ? 1 : -1)),
-    currency: "EUR",
-    status: pick(treasuryStatuses, index * 3),
-  }));
+  const treasuryEntries: DemoScenarioDefinition["treasuryEntries"] = Array.from(
+    { length: STANDARD_SCENARIO_COUNTS.treasuryEntries },
+    (_, index) => {
+      const monthIndex = Math.floor(index / 30);
+      const [concept, category] = pick(syntheticTreasuryConcepts, index * 7);
+      const isIncome = (index % 30) % 4 === 0;
+      return {
+        id: deterministicUuid(seed, "treasury", index),
+        source:
+          index % 2 === 0 ? "Financial Source A" : "Financial Source B",
+        sourceSequence: index + 1,
+        entryDate: addDays(addMonths(anchorDate, monthIndex - 23), index % 24),
+        concept,
+        category,
+        amountCents: isIncome
+          ? Math.round(660_000 + random() * 60_000)
+          : -Math.round(195_000 + random() * 25_000),
+        currency: "EUR",
+        status: pick(treasuryStatuses, index * 3),
+      };
+    },
+  );
   const payrollStatuses = ["collecting", "validating", "calculated", "reviewed", "closed"] as const;
-  const payrollRuns: DemoScenarioDefinition["payrollRuns"] = Array.from({ length: 18 }, (_, index) => {
-    const periodStart = addMonths(anchorDate, index - 17);
-    const gross = 6_200_000 + index * 82_000;
+  const payrollRuns: DemoScenarioDefinition["payrollRuns"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.payrollRuns }, (_, index) => {
+    const periodStart = addMonths(anchorDate, index - 23);
+    const gross = 8_650_000 + index * 97_000 + (index % 5) * 21_000;
     const deductions = Math.round(gross * (0.195 + (index % 4) * 0.006));
     return {
       id: deterministicUuid(seed, "payroll", index),
       periodStart,
       periodEnd: addDays(addMonths(periodStart, 1), -1),
-      peopleCount: 20 + (index % 5),
+      peopleCount: 27 + Math.min(5, Math.floor(index / 5)),
       grossTotalCents: gross,
       deductionTotalCents: deductions,
       netTotalCents: gross - deductions,
+      employerCostTotalCents: Math.round(gross * 1.315),
       currency: "EUR",
       status: index < 14 ? "closed" : pick(payrollStatuses, index),
     };
   });
-  const changelogEntries: DemoScenarioDefinition["changelogEntries"] = Array.from({ length: 24 }, (_, index) => {
-    const status = index < 18 ? "published" : index < 21 ? "in_review" : "draft";
-    const publishedDate = addDays(addMonths(anchorDate, -11), index * 15);
+  const changelogEntries: DemoScenarioDefinition["changelogEntries"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.changelogEntries }, (_, index) => {
+    const status = index < 28 ? "published" : index < 32 ? "in_review" : "draft";
+    const publishedDate = addDays(addMonths(anchorDate, -17), index * 15);
+    const title = pick(syntheticNewsCatalog, index * 5);
     return {
       id: deterministicUuid(seed, "changelog", index),
       version: `0.${Math.floor(index / 4) + 1}.${index % 4}`,
-      title: `Evolución demostrativa ${String(index + 1).padStart(2, "0")}`,
-      summary: "Nota editorial sintética sobre una mejora funcional de la plataforma de demostración.",
+      title,
+      summary: `Compartimos los cambios relacionados con ${title.toLowerCase()} y las recomendaciones para aplicarlos en el trabajo diario.`,
       status,
       publishedAt: status === "published" ? isoAt(publishedDate, 11) : null,
     };
   });
   return {
-    scenarioVersion: 1,
+    scenarioVersion: 2,
     seed,
     anchorDate,
     generatedAt: isoAt(anchorDate, 0),
@@ -453,6 +547,44 @@ export function validateDemoScenario(value: unknown) {
   for (const run of scenario.payrollRuns) {
     if (run.netTotalCents !== run.grossTotalCents - run.deductionTotalCents) throw new Error("Invalid payroll totals");
   }
+
+  const numberedLabels = [
+    ...scenario.people.map((person) => person.displayName),
+    ...scenario.projects.map((project) => project.name),
+    ...scenario.tasks.map((task) => task.title),
+    ...scenario.incidents.map((incident) => incident.title),
+  ];
+  if (
+    numberedLabels.some((label) =>
+      /^(persona|tarea|incidencia|proyecto)\s+\d+/i.test(label),
+    )
+  ) {
+    throw new Error("Numbered placeholder labels are not allowed");
+  }
+
+  const treasuryMonths = new Map<
+    string,
+    { income: number; expense: number }
+  >();
+  for (const entry of scenario.treasuryEntries) {
+    const key = entry.entryDate.slice(0, 7);
+    const month = treasuryMonths.get(key) ?? { income: 0, expense: 0 };
+    if (entry.amountCents > 0) month.income += entry.amountCents;
+    else month.expense += Math.abs(entry.amountCents);
+    treasuryMonths.set(key, month);
+  }
+  for (const [month, totals] of treasuryMonths) {
+    const margin =
+      totals.income > 0
+        ? (totals.income - totals.expense) / totals.income
+        : Number.NEGATIVE_INFINITY;
+    if (margin < 0.08 || margin > 0.22) {
+      throw new Error(
+        `Treasury margin outside the 8-22% target for ${month}: ${margin}`,
+      );
+    }
+  }
+
   return scenario;
 }
 
@@ -483,6 +615,17 @@ export function createScenarioReport(scenario: DemoScenarioDefinition) {
       treasuryEntries: scenario.treasuryEntries.length,
       payrollRuns: scenario.payrollRuns.length,
       changelogEntries: scenario.changelogEntries.length,
+      estimatedTraceRecords:
+        scenario.people.length +
+        scenario.projects.length +
+        scenario.tasks.length * 2 +
+        scenario.taskDependencies.length +
+        scenario.taskComments.length +
+        scenario.leaveRequests.length * 2 +
+        scenario.incidents.length * 2 +
+        scenario.treasuryEntries.length * 2 +
+        scenario.payrollRuns.length * 2 +
+        scenario.changelogEntries.length * 2,
     },
     coverage: {
       from: [...taskDates, ...leaveDates].sort()[0],

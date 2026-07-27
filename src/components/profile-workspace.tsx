@@ -21,6 +21,7 @@ import {
   type UserProfile,
 } from "@/domain/profile";
 import { personRoleCodes, type PersonRoleCode } from "@/domain/people";
+import { AvatarUploader } from "@/components/avatar-uploader";
 
 type WorkspaceStatus = {
   scenarioVersion: number | null;
@@ -102,9 +103,15 @@ export function ProfileWorkspace({
         </div>
         <span className="status-chip">
           <IconShieldCheck aria-hidden="true" size={18} />
-          Workspace aislado
+          Espacio personal aislado
         </span>
       </div>
+
+      <AvatarUploader
+        currentPath={profile.avatarPath}
+        currentUrl={profile.avatarUrl}
+        displayName={profile.alias ?? profile.displayName}
+      />
 
       <form className="profile-layout" onSubmit={submit}>
         <section className="card profile-section" aria-labelledby="identity-title">
@@ -179,8 +186,8 @@ export function ProfileWorkspace({
               >
                 {profileDashboards.map((dashboard) => (
                   <option key={dashboard} value={dashboard}>
-                    {dashboard === "control-center"
-                      ? "Centro de control"
+                    {dashboard === "analytics"
+                      ? "Analítica"
                       : dashboard === "projects"
                         ? "Proyectos"
                         : dashboard === "tasks"
@@ -345,7 +352,7 @@ export function ProfileWorkspace({
           <div className="section-header">
             <div>
               <p className="eyebrow">Salud técnica</p>
-              <h2 id="workspace-title">Estado del workspace</h2>
+              <h2 id="workspace-title">Estado del espacio personal</h2>
             </div>
           </div>
           {workspaceStatus ? (

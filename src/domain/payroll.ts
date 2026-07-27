@@ -21,12 +21,31 @@ export type PayrollRun = {
   grossTotalCents: number;
   deductionTotalCents: number;
   netTotalCents: number;
+  employerCostTotalCents?: number;
   currency: PayrollCurrency;
   notes: string;
   status: PayrollStatus;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+};
+
+export type PayrollBreakdown = {
+  id: string;
+  runId: string;
+  team: string;
+  peopleCount: number;
+  grossTotalCents: number;
+  employerCostTotalCents: number;
+};
+
+export type PayrollCheck = {
+  id: string;
+  runId: string;
+  code: "headcount_variation" | "gross_variation" | "totals_consistency";
+  severity: "info" | "warning" | "critical";
+  status: "passed" | "review";
+  summary: string;
 };
 
 export type PayrollEvent = {

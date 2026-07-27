@@ -1,6 +1,7 @@
 "use client";
 
-import { IconBrandGoogle, IconLoader2 } from "@tabler/icons-react";
+import { IconLoader2 } from "@tabler/icons-react";
+import Image from "next/image";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured, publicEnv } from "@/lib/env";
@@ -32,11 +33,19 @@ export function LoginButton() {
       onClick={signIn}
     >
       {loading ? (
-        <IconLoader2 aria-hidden="true" size={19} />
+        <IconLoader2 className="button-spinner" aria-hidden="true" size={20} />
       ) : (
-        <IconBrandGoogle aria-hidden="true" size={19} />
+        <Image
+          src="/google-g.svg"
+          alt=""
+          width={20}
+          height={20}
+        />
       )}
-      {configured ? "Continuar con Google" : "OAuth pendiente de configuración"}
+      Continuar con Google
+      {!configured ? (
+        <span className="sr-only">OAuth no configurado en este entorno local</span>
+      ) : null}
     </button>
   );
 }

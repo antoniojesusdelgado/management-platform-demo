@@ -23,6 +23,12 @@ export type Incident = {
   status: IncidentStatus;
   priority: IncidentPriority;
   category: IncidentCategory;
+  affectedService?: string;
+  impactScope?: "individual" | "team" | "workspace";
+  detectionChannel?: "monitoring" | "support" | "team" | "automation";
+  rootCause?: string | null;
+  firstResponseAt?: string | null;
+  correctiveTaskId?: string | null;
   projectId?: string | null;
   projectName?: string | null;
   requesterPersonId?: string;
@@ -53,6 +59,9 @@ export const incidentInputSchema = z.object({
   category: z.enum(incidentCategories),
   projectId: z.uuid().nullable().optional(),
   assigneeName: z.string().trim().min(2).max(100).nullable(),
+  affectedService: z.string().trim().min(2).max(120).optional(),
+  impactScope: z.enum(["individual", "team", "workspace"]).optional(),
+  detectionChannel: z.enum(["monitoring", "support", "team", "automation"]).optional(),
 });
 
 export type IncidentInput = z.input<typeof incidentInputSchema>;

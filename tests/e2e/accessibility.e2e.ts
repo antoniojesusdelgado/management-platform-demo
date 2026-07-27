@@ -50,12 +50,8 @@ test("leave detail has no detectable WCAG A/AA violations", async (
   await navigation
     .getByRole("button", { name: "Vacaciones", exact: true })
     .click();
-  await page
-    .getByRole("row")
-    .filter({ hasText: "Marta Soler" })
-    .getByRole("button", { name: /Ver detalle/ })
-    .click();
-  await expect(page.getByRole("dialog", { name: "Marta Soler" })).toBeVisible();
+  await page.getByRole("button", { name: /Ver detalle/ }).first().click();
+  await expect(page.locator('[role="dialog"]:visible')).toBeVisible();
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
     .analyze();
@@ -77,9 +73,14 @@ test("leave transition confirmation has no detectable WCAG A/AA violations", asy
   await navigation
     .getByRole("button", { name: "Vacaciones", exact: true })
     .click();
+  await page.getByRole("button", { name: "Nueva solicitud" }).click();
+  await page.getByLabel("Fecha inicial").fill("2026-10-05");
+  await page.getByLabel("Fecha final").fill("2026-10-07");
+  await page.getByLabel("Motivo").fill("Control de accesibilidad sintético.");
+  await page.getByRole("button", { name: "Enviar solicitud" }).click();
   await page
     .getByRole("row")
-    .filter({ hasText: "Elena Martín" })
+    .filter({ hasText: "Usuario invitado" })
     .getByRole("button", { name: /Rechazar solicitud/ })
     .click();
   await expect(
@@ -106,14 +107,12 @@ test("task detail has no detectable WCAG A/AA violations", async (
   await navigation.getByRole("button", { name: "Tareas", exact: true }).click();
   if (testInfo.project.name === "mobile") {
     await expect(page.getByRole("dialog", { name: "Módulos" })).toBeHidden();
-    await page
-      .getByRole("button", { name: "Lista", exact: true })
-      .click({ force: true });
   }
-  await page.getByRole("button", { name: /Preparar el informe semanal/ }).click();
-  await expect(
-    page.getByRole("dialog", { name: "Preparar el informe semanal" }),
-  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Lista", exact: true })
+    .click({ force: true });
+  await page.locator(".task-row").first().click();
+  await expect(page.locator('[role="dialog"]:visible')).toBeVisible();
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
     .analyze();
@@ -126,8 +125,8 @@ test("incident detail has no detectable WCAG A/AA violations", async ({ page }, 
   if (testInfo.project.name === "mobile") await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
   const navigation = page.getByRole("navigation", { name: "Módulos de la plataforma" }).filter({ visible: true });
   await navigation.getByRole("button", { name: "Incidencias", exact: true }).click();
-  await page.getByRole("button", { name: /Acceso bloqueado al entorno de pruebas/ }).click();
-  await expect(page.getByRole("dialog", { name: "Acceso bloqueado al entorno de pruebas" })).toBeVisible();
+  await page.locator(".task-row").first().click();
+  await expect(page.locator('[role="dialog"]:visible')).toBeVisible();
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
   expect(results.violations).toEqual([]);
 });
@@ -151,7 +150,7 @@ test("Treasury creation has no detectable WCAG A/AA violations", async ({ page }
   const navigation = page.getByRole("navigation", { name: "Módulos de la plataforma" }).filter({ visible: true });
   await navigation.getByRole("button", { name: "Tesorería", exact: true }).click();
   await page.getByRole("button", { name: "Nuevo movimiento" }).click();
-  await expect(page.getByRole("dialog", { name: "Nuevo movimiento sintético" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Nuevo movimiento" })).toBeVisible();
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
   expect(results.violations).toEqual([]);
 });
@@ -164,7 +163,7 @@ test("Payroll creation has no detectable WCAG A/AA violations", async ({ page },
   const navigation = page.getByRole("navigation", { name: "Módulos de la plataforma" }).filter({ visible: true });
   await navigation.getByRole("button", { name: "Nóminas", exact: true }).click();
   await page.getByRole("button", { name: "Nuevo ciclo" }).click();
-  await expect(page.getByRole("dialog", { name: "Nuevo ciclo sintético" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Nuevo ciclo" })).toBeVisible();
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
   expect(results.violations).toEqual([]);
 });
