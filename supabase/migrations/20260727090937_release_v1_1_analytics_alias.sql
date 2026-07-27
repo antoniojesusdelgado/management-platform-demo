@@ -1,3 +1,4 @@
+-- Applied remotely as 20260727090937.
 alter table public.module_settings
   drop constraint if exists module_settings_module_id_check;
 

@@ -12,7 +12,7 @@ const command = process.argv[2] ?? "validate";
 const seed = process.env.DEMO_SCENARIO_SEED ?? "management-platform-standard-v2";
 const anchorDate = process.env.DEMO_SCENARIO_ANCHOR ?? "2026-07-01";
 const sqlMigrationPath =
-  "supabase/migrations/20260726155945_release_v1_1_scenario_v2.sql";
+  "supabase/migrations/20260727090946_release_v1_1_scenario_v2.sql";
 
 async function prepareScenario() {
   const scenario = validateDemoScenario(generateDemoScenario(seed, anchorDate));

@@ -8,7 +8,7 @@ const OPERATIONAL_CONTENT_FILES = [
   "src/domain/integrations.ts",
   "src/demo-data/catalog.ts",
   "src/demo-data/scenario.ts",
-  "supabase/migrations/20260726155945_release_v1_1_scenario_v2.sql",
+  "supabase/migrations/20260727090946_release_v1_1_scenario_v2.sql",
 ];
 
 const disallowedPhrases = [

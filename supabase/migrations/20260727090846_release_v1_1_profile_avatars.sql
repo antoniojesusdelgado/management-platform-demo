@@ -1,3 +1,4 @@
+-- Applied remotely as 20260727090846.
 alter table public.profiles
   add column avatar_path text;
 

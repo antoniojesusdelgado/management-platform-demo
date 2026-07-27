@@ -1,3 +1,4 @@
+-- Applied remotely as 20260727090946.
 -- scenario-checksum: c42a65f8372a1614b1a18e50bc8b8b5953093aa0a75c3b2f8f2131176bb63d34
 create table public.demo_scenario_versions (
   organization_id uuid primary key references public.organizations(id) on delete cascade,

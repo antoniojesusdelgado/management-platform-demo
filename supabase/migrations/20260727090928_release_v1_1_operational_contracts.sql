@@ -1,3 +1,4 @@
+-- Applied remotely as 20260727090928.
 alter table public.incidents
   add column affected_service text not null default 'Operación',
   add column impact_scope text not null default 'team',
