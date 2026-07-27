@@ -188,13 +188,25 @@ function financeTotals(entries: TreasuryEntry[]) {
   };
 }
 
+function monthKeys(from: string, to: string) {
+  const cursor = new Date(`${from.slice(0, 7)}-01T00:00:00Z`);
+  const end = new Date(`${to.slice(0, 7)}-01T00:00:00Z`);
+  const keys: string[] = [];
+  while (cursor <= end) {
+    keys.push(cursor.toISOString().slice(0, 7));
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+  }
+  return keys;
+}
+
 function countSeries<T>(
   code: string,
   label: string,
   values: T[],
   key: (value: T) => string,
+  periods: string[] = [],
 ): AnalyticsSeries {
-  const counts = new Map<string, number>();
+  const counts = new Map<string, number>(periods.map((period) => [period, 0]));
   for (const value of values) {
     const period = key(value);
     counts.set(period, (counts.get(period) ?? 0) + 1);
@@ -215,8 +227,9 @@ function sumSeries<T>(
   values: T[],
   key: (value: T) => string,
   amount: (value: T) => number,
+  periods: string[] = [],
 ): AnalyticsSeries {
-  const totals = new Map<string, number>();
+  const totals = new Map<string, number>(periods.map((period) => [period, 0]));
   for (const value of values) {
     const period = key(value);
     totals.set(period, (totals.get(period) ?? 0) + amount(value));
@@ -307,6 +320,22 @@ export function buildAnalyticsSnapshot(
   const previousLatestPayroll = [...previousPayroll].sort((a, b) =>
     b.periodStart.localeCompare(a.periodStart),
   )[0];
+  const scenarioDates = [
+    ...data.projects.map((project) => project.startDate),
+    ...data.tasks.map((task) => task.createdAt),
+    ...data.incidents.map((incident) => incident.createdAt),
+    ...data.leaveRequests.map((leave) => leave.startDate),
+    ...data.treasuryEntries.map((entry) => entry.entryDate),
+    ...data.payrollRuns.map((run) => run.periodStart),
+  ]
+    .filter((value): value is string => Boolean(value))
+    .map((value) => value.slice(0, 10))
+    .sort();
+  const visibleMonthStart =
+    scenarioDates[0] && scenarioDates[0] > window.current.from
+      ? scenarioDates[0]
+      : window.current.from;
+  const visibleMonths = monthKeys(visibleMonthStart, window.current.to);
 
   const byView: Record<AnalyticsView, AnalyticsKpi[]> = {
     executive: [
@@ -350,12 +379,14 @@ export function buildAnalyticsSnapshot(
         "Tareas completadas por mes",
         completedTasks,
         (task) => task.updatedAt.slice(0, 7),
+        visibleMonths,
       ),
       countSeries(
         "incidents_monthly",
         "Incidencias registradas por mes",
         currentIncidents,
         (incident) => incident.createdAt.slice(0, 7),
+        visibleMonths,
       ),
     ],
     work: [
@@ -380,6 +411,7 @@ export function buildAnalyticsSnapshot(
         "Ausencias aprobadas por mes",
         currentLeaves,
         (leave) => leave.startDate.slice(0, 7),
+        visibleMonths,
       ),
       countSeries(
         "people_by_team",
@@ -409,6 +441,7 @@ export function buildAnalyticsSnapshot(
         currentTreasury,
         (entry) => entry.entryDate.slice(0, 7),
         (entry) => entry.amountCents,
+        visibleMonths,
       ),
       sumSeries(
         "payroll_cost_monthly",
@@ -416,6 +449,7 @@ export function buildAnalyticsSnapshot(
         currentPayroll,
         (run) => run.periodStart.slice(0, 7),
         (run) => run.employerCostTotalCents ?? 0,
+        visibleMonths,
       ),
     ],
   };

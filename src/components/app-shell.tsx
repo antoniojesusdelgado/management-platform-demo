@@ -154,9 +154,6 @@ export function AppShell({
                 </Dialog.Content>
               </Dialog.Portal>
             </Dialog.Root>
-            <IconGridDots aria-hidden="true" size={20} />
-            <span>Módulos</span>
-            <IconChevronDown aria-hidden="true" size={17} />
           </div>
 
           <div className="topbar-actions">

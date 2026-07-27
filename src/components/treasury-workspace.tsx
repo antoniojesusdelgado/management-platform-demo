@@ -185,10 +185,10 @@ export function TreasuryWorkspace({
       {loadError ? <div className="inline-alert" role="alert"><strong>No se pudo cargar Tesorería.</strong><span>{loadError}</span></div> : null}
 
       <section className="cards-grid" aria-label="Resumen de Tesorería">
-        <article className="card"><span className="muted">Saldo agregado EUR</span><strong className="metric-value">{formatCurrency(eurBalance, "EUR")}</strong></article>
-        <article className="card"><span className="muted">Pendientes de validar</span><strong className="metric-value">{entries.filter((entry) => ["registered", "reconciled"].includes(entry.status)).length}</strong></article>
-        <article className="card"><span className="muted">Movimientos cerrados</span><strong className="metric-value">{entries.filter((entry) => entry.status === "closed").length}</strong></article>
-        <article className="card"><span className="muted">Margen operativo</span><strong className="metric-value">{formatPercent(operatingMargin)}</strong></article>
+        <article className="card financial-summary-card"><span className="muted">Saldo</span><strong className="metric-value">{formatCurrency(eurBalance, "EUR")}</strong><small>Acumulado en euros</small></article>
+        <article className="card financial-summary-card"><span className="muted">Cobros</span><strong className="metric-value">{formatCurrency(eurIncome, "EUR")}</strong><small>Entradas registradas</small></article>
+        <article className="card financial-summary-card"><span className="muted">Pagos</span><strong className="metric-value">{formatCurrency(eurExpenses, "EUR")}</strong><small>Salidas registradas</small></article>
+        <article className="card financial-summary-card"><span className="muted">Pendientes</span><strong className="metric-value">{entries.filter((entry) => ["draft", "registered", "reconciled"].includes(entry.status)).length}</strong><small>{formatPercent(operatingMargin)} de margen</small></article>
       </section>
 
       <section className="section-block">

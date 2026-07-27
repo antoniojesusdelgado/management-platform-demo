@@ -98,7 +98,7 @@ export function TasksWorkspace({
   onComment,
   onDependency,
 }: TasksWorkspaceProps) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = "2026-06-23";
   const [statusFilter, setStatusFilter] = useState<"all" | TaskStatus>("all");
   const [priorityFilter, setPriorityFilter] = useState<"all" | TaskPriority>("all");
   const [assigneeFilter, setAssigneeFilter] = useState("all");

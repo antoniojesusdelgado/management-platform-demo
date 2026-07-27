@@ -2258,6 +2258,7 @@ export type Database = {
         Returns: undefined
       }
       restore_demo_scenario_v3: { Args: never; Returns: undefined }
+      restore_demo_scenario_v4: { Args: never; Returns: undefined }
       set_own_avatar_path: { Args: { target_path: string }; Returns: undefined }
       simulate_integration_run: {
         Args: {

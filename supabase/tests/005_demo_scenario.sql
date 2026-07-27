@@ -1,5 +1,5 @@
 begin;
-select plan(22);
+select plan(26);
 
 insert into auth.users (
   id,
@@ -30,7 +30,7 @@ select is(
       on membership.organization_id = organization.id
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
   ),
-  3,
+  4,
   'the provisioned workspace records its scenario version'
 );
 
@@ -119,8 +119,8 @@ select is(
       on membership.organization_id = run.organization_id
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
   ),
-  18::bigint,
-  'the scenario contains 18 aggregate payroll cycles'
+  6::bigint,
+  'the scenario contains six aggregate payroll cycles'
 );
 select is(
   (
@@ -130,8 +130,8 @@ select is(
       on membership.organization_id = entry.organization_id
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
   ),
-  9::bigint,
-  'the scenario contains nine changelog entries'
+  10::bigint,
+  'the scenario contains ten changelog entries'
 );
 select is(
   (
@@ -219,7 +219,7 @@ select is(
     ) distribution
   ),
   '{"active": 5, "completed": 3, "on_hold": 1, "planned": 1}'::jsonb,
-  'projects have the balanced V3 status distribution'
+  'projects have the balanced V4 status distribution'
 );
 select is(
   (
@@ -234,7 +234,7 @@ select is(
     ) distribution
   ),
   '{"blocked": 5, "completed": 70, "in_progress": 15, "in_review": 10, "pending": 20}'::jsonb,
-  'tasks have the balanced V3 status distribution'
+  'tasks have the balanced V4 status distribution'
 );
 select is(
   (
@@ -267,7 +267,7 @@ select ok(
     join public.memberships membership
       on membership.organization_id = entry.organization_id
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
-      and entry.status in ('draft', 'registered')
+      and entry.status in ('draft', 'registered', 'reconciled')
   ),
   'at most five percent of Treasury entries are pending validation'
 );
@@ -280,8 +280,8 @@ select is(
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
       and run.status = 'closed'
   ),
-  16::bigint,
-  'sixteen payroll cycles are closed'
+  4::bigint,
+  'four payroll cycles are closed'
 );
 select is(
   (
@@ -292,8 +292,86 @@ select is(
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
       and entry.status = 'published'
   ),
-  9::bigint,
-  'all nine changelog entries are published'
+  10::bigint,
+  'all ten changelog entries are published'
+);
+
+select is(
+  (
+    select organization.scenario_version
+    from public.organizations organization
+    join public.memberships membership
+      on membership.organization_id = organization.id
+    where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
+  ),
+  4,
+  'the organization uses Scenario V4'
+);
+
+select is(
+  (
+    select count(*)
+    from public.payroll_runs run
+    join public.memberships membership
+      on membership.organization_id = run.organization_id
+    where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
+      and run.period_start between date '2026-01-01' and date '2026-06-23'
+      and run.period_end between date '2026-01-01' and date '2026-06-23'
+  ),
+  6::bigint,
+  'six payroll cycles cover January through June'
+);
+
+select is(
+  (
+    select count(*)
+    from (
+      select project.start_date as value
+      from public.projects project
+      where project.organization_id = (
+        select organization_id from public.memberships
+        where profile_id = 'c0000000-0000-4000-8000-000000000001'
+      )
+      union all
+      select task.created_at::date
+      from public.tasks task
+      where task.organization_id = (
+        select organization_id from public.memberships
+        where profile_id = 'c0000000-0000-4000-8000-000000000001'
+      )
+      union all
+      select incident.created_at::date
+      from public.incidents incident
+      where incident.organization_id = (
+        select organization_id from public.memberships
+        where profile_id = 'c0000000-0000-4000-8000-000000000001'
+      )
+      union all
+      select entry.entry_date
+      from public.treasury_entries entry
+      where entry.organization_id = (
+        select organization_id from public.memberships
+        where profile_id = 'c0000000-0000-4000-8000-000000000001'
+      )
+    ) operational_date
+    where operational_date.value < date '2026-01-01'
+       or operational_date.value > date '2026-06-23'
+  ),
+  0::bigint,
+  'operational dates stay inside the public Scenario V4 timeline'
+);
+
+select is(
+  (
+    select jsonb_object_agg(entry.version, entry.published_at::date)
+    from public.changelog_entries entry
+    join public.memberships membership
+      on membership.organization_id = entry.organization_id
+    where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
+      and entry.version in ('1.1.0', '1.2.0', '1.2.1')
+  ),
+  '{"1.1.0": "2026-06-01", "1.2.0": "2026-06-15", "1.2.1": "2026-06-23"}'::jsonb,
+  'the public changelog uses the approved release dates'
 );
 
 select * from finish();

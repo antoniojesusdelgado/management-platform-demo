@@ -112,7 +112,7 @@ export async function updateWorkspaceConfigurationAction(
   }
 }
 
-export async function restoreDemoScenarioV3Action(): Promise<ActionResult> {
+export async function restoreDemoScenarioV4Action(): Promise<ActionResult> {
   try {
     const access = await requirePermission("settings.workspace.manage");
     const supabase = await createClient();

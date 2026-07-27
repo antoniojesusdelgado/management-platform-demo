@@ -131,7 +131,7 @@
 - [x] Safe role simulation that cannot elevate real permissions
 - [x] Projects portfolio with health, ownership, members and activity
 - [x] Project references in Tasks and Incidents
-- [x] Deterministic V3 scenario with 32 people, 10 projects, 120 tasks,
+- [x] Deterministic V4 scenario with 32 people, 10 projects, 120 tasks,
   72 leave requests, 60 incidents and 240 Treasury entries
 - [x] Offline aggregate adapters and documented data provenance
 - [x] SaaS OAuth screen, original visual assets and self-service profile
@@ -141,7 +141,7 @@
 - [x] Scheduled nightly integration worker with idempotent run sequences
 - [x] Centralized Analítica workspace with five business perspectives and saved views
 - [x] Editorial Changelog presentation and configurable workspace policies
-- [x] Guest state migrations through V11 with session-only persistence
+- [x] Guest state migrations through V12 with session-only persistence
 - [x] Remote Supabase migrations and validated Vercel Preview
 - [x] Production promotion from the validated Preview artifact
 - [x] RLS init-plan optimization and explicit mutation policies
@@ -153,3 +153,8 @@ Release v1.2.0 adds the stable application viewport, dynamic analytical
 comparisons, shared Spanish formatters and the balanced V3 scenario. Remote
 publication follows the validated Preview workflow documented in
 `docs/DEPLOYMENT.md`.
+
+Release v1.2.1 aligns the access screen with the approved composition, selects
+line or horizontal bar charts according to the data, standardizes dialogs and
+introduces Scenario V4 with a fixed public timeline from January through
+23 June 2026.

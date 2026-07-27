@@ -21,7 +21,7 @@ import {
   updateProjectAction,
 } from "@/app/app/project-actions";
 import { createChangelogAction, transitionChangelogAction, updateChangelogAction } from "@/app/app/changelog-actions";
-import { createInvitationAction, renameOrganizationAction, restoreDemoScenarioV3Action, updateMembershipAction, updateModuleSettingAction, updateRoleMetadataAction, updateRolePermissionsAction, updateWorkspaceConfigurationAction } from "@/app/app/settings-actions";
+import { createInvitationAction, renameOrganizationAction, restoreDemoScenarioV4Action, updateMembershipAction, updateModuleSettingAction, updateRoleMetadataAction, updateRolePermissionsAction, updateWorkspaceConfigurationAction } from "@/app/app/settings-actions";
 import { createTreasuryAction, transitionTreasuryAction, updateTreasuryAction } from "@/app/app/treasury-actions";
 import { createPayrollAction, transitionPayrollAction, updatePayrollAction } from "@/app/app/payroll-actions";
 import { simulateIntegrationAction } from "@/app/app/integration-actions";
@@ -182,7 +182,9 @@ export function AuthenticatedApp({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [localName, setLocalName] = useState(organizationName);
-  const [summaryAnchor] = useState(() => new Date());
+  const [summaryAnchor] = useState(
+    () => new Date("2026-06-23T12:00:00.000Z"),
+  );
 
   function performAction<T = undefined>(
     action: () => Promise<ActionResult<T>>,
@@ -374,7 +376,7 @@ export function AuthenticatedApp({
       </>
     );
   } else if (activeModule === "configuracion") {
-    content = canManageSettings ? <SettingsWorkspace organizationName={localName} configuration={workspaceConfiguration} moduleSettings={moduleSettings} roles={roles} memberships={memberships} invitations={invitations} auditEvents={adminAuditEvents} pending={pending} loadError={settingsLoadError} onRenameOrganization={(name: string) => performAction(() => renameOrganizationAction(name), "Identidad actualizada").then((ok) => { if (ok) setLocalName(name); return ok; })} onUpdateConfiguration={(configuration) => performAction(() => updateWorkspaceConfigurationAction(configuration), "Políticas actualizadas")} onUpdateModule={(moduleId: ModuleId, enabled: boolean, sortOrder: number) => performAction(() => updateModuleSettingAction({ moduleId, enabled, sortOrder }), "Módulo actualizado")} onUpdateRoleMetadata={(roleId: string, name: string, color: string) => performAction(() => updateRoleMetadataAction(roleId, name, color), "Rol actualizado")} onUpdateRolePermissions={(roleId: string, permissions: PermissionCode[]) => performAction(() => updateRolePermissionsAction(roleId, permissions), "Permisos actualizados")} onCreateInvitation={(email: string, roleId: string) => performAction(() => createInvitationAction(email, roleId), "Invitación creada sin envío externo")} onUpdateMembership={(membershipId: string, roleId: string, status: WorkspaceMembershipStatus) => performAction(() => updateMembershipAction(membershipId, roleId, status), "Acceso actualizado")} onRestoreDataset={() => performAction(() => restoreDemoScenarioV3Action(), "Datos restablecidos")} /> : <main className="workspace" id="main-content"><div className="page-heading"><div><p className="eyebrow">Administración</p><h1>Configuración</h1><p className="lede">Tu rol no permite realizar cambios administrativos en esta organización.</p></div></div><div className="inline-alert" role="status"><strong>Configuración en modo lectura.</strong><span>Solicita el permiso estable <code>settings.workspace.manage</code> a una persona administradora.</span></div></main>;
+    content = canManageSettings ? <SettingsWorkspace organizationName={localName} configuration={workspaceConfiguration} moduleSettings={moduleSettings} roles={roles} memberships={memberships} invitations={invitations} auditEvents={adminAuditEvents} pending={pending} loadError={settingsLoadError} onRenameOrganization={(name: string) => performAction(() => renameOrganizationAction(name), "Identidad actualizada").then((ok) => { if (ok) setLocalName(name); return ok; })} onUpdateConfiguration={(configuration) => performAction(() => updateWorkspaceConfigurationAction(configuration), "Políticas actualizadas")} onUpdateModule={(moduleId: ModuleId, enabled: boolean, sortOrder: number) => performAction(() => updateModuleSettingAction({ moduleId, enabled, sortOrder }), "Módulo actualizado")} onUpdateRoleMetadata={(roleId: string, name: string, color: string) => performAction(() => updateRoleMetadataAction(roleId, name, color), "Rol actualizado")} onUpdateRolePermissions={(roleId: string, permissions: PermissionCode[]) => performAction(() => updateRolePermissionsAction(roleId, permissions), "Permisos actualizados")} onCreateInvitation={(email: string, roleId: string) => performAction(() => createInvitationAction(email, roleId), "Invitación creada sin envío externo")} onUpdateMembership={(membershipId: string, roleId: string, status: WorkspaceMembershipStatus) => performAction(() => updateMembershipAction(membershipId, roleId, status), "Acceso actualizado")} onRestoreDataset={() => performAction(() => restoreDemoScenarioV4Action(), "Datos restablecidos")} /> : <main className="workspace" id="main-content"><div className="page-heading"><div><p className="eyebrow">Administración</p><h1>Configuración</h1><p className="lede">Tu rol no permite realizar cambios administrativos en esta organización.</p></div></div><div className="inline-alert" role="status"><strong>Configuración en modo lectura.</strong><span>Solicita el permiso estable <code>settings.workspace.manage</code> a una persona administradora.</span></div></main>;
   } else {
     content = (
       <ModuleWorkspace

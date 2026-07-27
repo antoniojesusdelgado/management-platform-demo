@@ -1,43 +1,31 @@
-# Design QA — v1.2.0
+# Design QA — v1.2.1
 
-## Visual truth and implementation
+## Reference
 
-- Previous access screen: `.artifacts/access-desktop.png` and `.artifacts/access-mobile.png`.
-- v1.2.0 implementation: `.artifacts/release-v1.2/acceso-desktop.png` and `.artifacts/release-v1.2/acceso-mobile.png`.
-- Combined comparison evidence: `.artifacts/release-v1.2/qa-access-desktop.png` and `.artifacts/release-v1.2/qa-access-mobile.png`.
-- Desktop viewport: 1440 × 900.
-- Mobile viewport: 390 × 844.
-- State: public access page, light color scheme, reduced motion enabled.
-- Focused evidence: Vacation and People dialogs, filtered Analytics, Payroll, Tasks and Changelog captures in `.artifacts/release-v1.2`.
+- Approved access design: `C:\Users\anton\Downloads\Imagen generada 1.png`
+- Reference viewport: 1486 × 1058 px
+- Final comparison: `.artifacts/release-v1.2.1/acceso-comparison.png`
 
-## Intended differences
+## Visual review
 
-- The product screenshot was removed from the access page.
-- The access page now uses the selected sober composition: navy header, concise introduction and a separate sign-in card.
-- Google is the primary action and uses the official multicolor G asset.
-- Guest access is labelled `Probar sin iniciar sesión`.
-- Decorative imagery, gradients and promotional copy were intentionally removed.
+- Access: the brand, heading, supporting copy and data notice align with the approved left panel. The existing access card and both authentication paths remain unchanged.
+- Navigation: the desktop module trigger is removed; the mobile menu trigger remains available.
+- Analytics: tabs wrap without a visible scrollbar, monthly series use line charts and categorical series use horizontal bars with complete labels.
+- Projects: cards expose project status while health remains secondary in the detail.
+- Dialogs: headers and close controls remain fixed while dialog bodies scroll independently.
+- Treasury and payroll: summaries use consistent hierarchy, tabular figures and separated metric labels and values.
+- Settings: related actions have explicit spacing and destructive actions are visually separated.
 
-## QA history
+## Responsive review
 
-### Pass 1
+Reviewed at 320, 360, 390, 768, 1024 and 1440 px through the Playwright responsive suite and release captures.
 
-- P1 responsiveness: the mobile legal copy extended beyond the 844 px viewport.
-  - Fix: reduced mobile vertical spacing and card padding while preserving readable tap targets.
-- P1 layout behavior: the document owned the scroll and the sticky sidebar was clipped when a dialog opened.
-  - Fix: moved scrolling to `app-main`, fixed the sidebar to `100dvh` and kept the dialog overlay viewport-bound.
-- P2 task board behavior: pagination ran before Kanban grouping and hid the `En revisión` column contents.
-  - Fix: the Kanban now receives all 50 open tasks plus a small recent completed sample; list pagination remains independent.
+- No global horizontal overflow.
+- Mobile navigation remains operable.
+- Charts and their accessible tables remain readable.
+- Dialog close controls and actions remain accessible.
+- Settings action groups stack on narrow screens.
 
-### Pass 2
+## Result
 
-- Desktop access hierarchy, spacing, typography, colors, icons and controls match the selected direction.
-- Mobile access fits within 390 × 844 without horizontal overflow or clipped actions.
-- Dialog headers, close controls and actions remain visible at page scroll depth.
-- Vacation table alignment follows the shared convention for text, quantities, states and actions.
-- Analytics filters visibly change the KPI and series content.
-- No generated illustrations, stock portraits, CSS drawings or placeholder imagery remain in the access experience.
-
-## Final result
-
-passed
+Passed for release validation.
