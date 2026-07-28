@@ -34,11 +34,6 @@ export default function DataProvenancePage() {
           son siempre agregados; la relación de participantes no contiene
           retribuciones individuales.
         </p>
-        <p>
-          La versión, el checksum, los recuentos, las licencias y las
-          transformaciones reproducibles se documentan en{" "}
-          <code>docs/DATA-PROVENANCE.md</code>.
-        </p>
         <Link className="button button-secondary" href="/login">
           Volver al acceso
         </Link>

@@ -1,98 +1,130 @@
-# Management Platform Demo
+# Plataforma de gestión
 
-Public, full-stack SaaS demonstration for documenting modular operations,
-permissions and process automation with synthetic data.
+[![CI](https://github.com/antoniojesusdelgado/management-platform-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/antoniojesusdelgado/management-platform-demo/actions/workflows/ci.yml)
 
-The repository is an independent technical reconstruction. It does not
-reproduce third-party source code, data, screens, workflows, brands or
-infrastructure.
+Aplicación SaaS modular de demostración para organizar proyectos, tareas,
+vacaciones, incidencias, tesorería, nóminas agregadas, personas y analítica.
 
-## Scope
+**Demo pública:** [plataformagestion.app](https://plataformagestion.app)
 
-- Eleven modules: Home, Leave, Analytics, Projects, Tasks, Incidents, Treasury,
-  Payroll, People, Changelog and Settings.
-- Complete verticals for Leave, Tasks, Incidents, People, Changelog, Settings,
-  Treasury and Payroll.
-- A public guest demo at `/demo/embed`, isolated from Supabase and persisted
-  only in `sessionStorage`.
-- A public Google OAuth entry point under `/app`. Each authenticated user gets
-  an isolated synthetic workspace with full demo permissions.
-- PostgreSQL schema, RLS policies, permission checks and pgTAP tests prepared
-  for an independent Supabase project.
-- Route-specific framing policy: only `/demo/embed` can be embedded, and only
-  from the exact `PORTFOLIO_ORIGIN`.
+> **English summary:** Independent full-stack management platform demo with a
+> session-only guest mode, isolated Google OAuth workspaces, PostgreSQL Row
+> Level Security, deterministic fictitious data and end-to-end validation.
 
-All public product copy is in Spanish. Code, routes, identifiers and repository
-documentation are in English.
+## Funciones principales
 
-## Local setup
+- Inicio con prioridades, agenda y actividad reciente.
+- Vacaciones con solicitudes, aprobación, calendario y solapamientos.
+- Analítica dinámica por periodo, proyecto, equipo, responsable y servicio.
+- Proyectos con responsables, progreso, salud e historial.
+- Tareas en Kanban, lista y bandeja, con dependencias y comentarios.
+- Incidencias con prioridad, SLA, causa, resolución y acciones correctivas.
+- Tesorería con importaciones, conciliación y excepciones.
+- Nóminas exclusivamente agregadas y participantes sin importes individuales.
+- Personal con directorio, modalidades contractuales y organigrama.
+- Novedades como cronología pública y Configuración parametrizable.
+
+## Arquitectura resumida
+
+```mermaid
+flowchart LR
+  guest["Demo invitada"] --> session["Zod + sessionStorage"]
+  user["Google OAuth"] --> next["Next.js"]
+  next --> auth["Supabase Auth PKCE"]
+  next --> db["PostgreSQL + RLS"]
+  next --> storage["Storage privado"]
+  github["GitHub Actions"] --> preview["Vercel Preview"]
+  preview --> production["Vercel Production"]
+```
+
+La experiencia invitada y la autenticada mantienen repositorios de datos
+independientes. Las lecturas autenticadas usan Server Components; las
+mutaciones usan Server Actions/RPC y RLS como última barrera.
+
+## Datos ficticios
+
+Todo el contenido operativo se genera localmente de forma determinista. No se
+incluyen datos, documentos, contactos, cuentas, salarios individuales,
+pantallas ni procesos internos de organizaciones reales. Los conectores son
+neutrales y no contactan servicios bancarios, laborales o de terceros.
+
+Consulta [Procedencia de los datos](docs/DATA-PROVENANCE.md) y el
+[caso de estudio técnico](docs/TECHNICAL-CASE-STUDY.md).
+
+## Desarrollo local
+
+Requisitos: Bun 1.3.14 y, para la base de datos local, Docker Desktop.
 
 ```powershell
+git clone https://github.com/antoniojesusdelgado/management-platform-demo.git
+Set-Location management-platform-demo
 bun install --frozen-lockfile
+Copy-Item .env.example .env.local
 bun run dev
 ```
 
-Open:
+Rutas:
 
-- `http://localhost:3000/demo/embed` for the guest demo.
-- `http://localhost:3000/login` for Google OAuth when Supabase is configured.
+- `http://localhost:3000/` — acceso público.
+- `http://localhost:3000/demo/embed` — demo invitada.
+- `http://localhost:3000/app/inicio` — aplicación autenticada.
 
-## Validation
+Google OAuth requiere un proyecto Supabase independiente configurado según la
+[guía de despliegue](docs/DEPLOYMENT.md).
+
+## Validación
 
 ```powershell
-bun test
 bun run lint
 bun run typecheck
+bun run test
+bun run content:validate
+bun run security:public-data
+bun run demo:data:generate
+bun run demo:data:validate
+bun run demo:data:report
 bun run build
 bun run e2e
+bun run e2e:a11y
 git diff --check
 ```
 
-Local Supabase validation additionally requires Docker:
+Con Docker:
 
 ```powershell
 bunx supabase start
 bunx supabase db reset
 bunx supabase test db
 bunx supabase db lint --local --level warning --fail-on error
+bunx supabase db advisors --local --type all
+bunx supabase gen types --lang typescript --local
 ```
 
-Docker is not required for the guest demo.
+## Variables
 
-## Environment
-
-Copy `.env.example` to `.env.local` after provisioning the independent
-Supabase project. Never commit `.env.local`.
-
-| Variable | Exposure | Purpose |
+| Variable | Exposición | Uso |
 | --- | --- | --- |
-| `NEXT_PUBLIC_APP_URL` | Browser | Exact application origin |
-| `NEXT_PUBLIC_VERCEL_URL` | Browser | Preview origin supplied by Vercel |
-| `NEXT_PUBLIC_SUPABASE_URL` | Browser | Independent project URL |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Browser | Publishable project key |
-| `PORTFOLIO_ORIGIN` | Server/build | Only allowed iframe ancestor |
-| `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL` | Browser | Public privacy contact |
+| `NEXT_PUBLIC_APP_URL` | Navegador | Origen canónico |
+| `NEXT_PUBLIC_VERCEL_URL` | Navegador | Origen Preview |
+| `NEXT_PUBLIC_SUPABASE_URL` | Navegador | Proyecto Supabase |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Navegador | Clave publicable |
+| `PORTFOLIO_ORIGIN` | Servidor/build | Origen permitido para iframe |
+| `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL` | Navegador | Contacto legal público |
 
-No OpenAI key is required at runtime. AI tools are part of the documented
-development workflow, not a product dependency.
+No se necesita una clave de OpenAI en runtime.
 
-## External services
+## Documentación
 
-Google OAuth credentials are configured directly in Supabase Auth and never as
-Vercel application variables. Supabase Auth necessarily retains the provider
-account identifier; the application does not copy the Google name, email or
-avatar into its operational profile.
+- [Caso de estudio técnico](docs/TECHNICAL-CASE-STUDY.md)
+- [Arquitectura](docs/ARCHITECTURE.md)
+- [Mapa de procesos](docs/PROCESS-MAPS.md)
+- [Permisos y RLS](docs/PERMISSIONS.md)
+- [Procedencia de los datos](docs/DATA-PROVENANCE.md)
+- [Despliegue](docs/DEPLOYMENT.md)
+- [Seguridad](SECURITY.md)
+- [Licencias de dependencias](docs/THIRD-PARTY-LICENSES.md)
 
-See [Deployment](docs/DEPLOYMENT.md) for the exact Preview, OAuth and production
-checklist.
+## Licencia
 
-See:
-
-- [Architecture](docs/ARCHITECTURE.md)
-- [Technical case study](docs/TECHNICAL-CASE-STUDY.md)
-- [Third-party licenses](docs/THIRD-PARTY-LICENSES.md)
-- [Roadmap](docs/ROADMAP.md)
-- [Permissions](docs/PERMISSIONS.md)
-- [Process maps](docs/PROCESS-MAPS.md)
-- [Deployment](docs/DEPLOYMENT.md)
-- [Security policy](SECURITY.md)
+Copyright © 2026 Antonio Jesús Delgado Briones. Todos los derechos reservados.
+Consulta [LICENSE](LICENSE). Las dependencias conservan sus licencias propias.

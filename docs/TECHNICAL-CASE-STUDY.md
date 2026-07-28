@@ -1,74 +1,85 @@
-# Technical case study
+# Caso de estudio técnico
 
-## 1. Purpose and boundaries
+## English summary
 
-This repository demonstrates a modular management SaaS using exclusively
-fictitious data. It is an independent implementation and does not reproduce
-third-party code, datasets, screens, brands, private structures or operating
-procedures.
+This repository is an independent, full-stack demonstration of a modular
+management platform. It combines a session-only guest experience with an
+isolated OAuth workspace backed by PostgreSQL and Row Level Security. All
+operational records are deterministic and fictitious; the project contains no
+third-party internal code, datasets, screens, brands or procedures.
 
-Functional requirements:
+## 1. Objetivo, alcance y restricciones
 
-- public Google OAuth and a guest mode without an account;
-- isolated organization data with role-based authorization and RLS;
-- modules for Home, Leave, Analytics, Projects, Tasks, Incidents, Treasury,
-  Payroll, People, Changelog and Settings;
-- traceable state transitions and neutral integration simulations;
-- responsive, keyboard-accessible UI;
-- deterministic, restorable demo data.
+La aplicación demuestra cómo organizar proyectos, tareas, vacaciones,
+incidencias, tesorería, nóminas agregadas, personas, novedades, configuración
+y analítica en una única interfaz. Se desarrolló como reconstrucción técnica
+independiente y neutral.
 
-Non-functional requirements:
+Requisitos funcionales:
 
-- TypeScript contracts validated with Zod;
-- no real identity, payroll, bank or employment records;
-- reproducible local database, migrations and pgTAP checks;
-- WCAG A/AA-oriented interactions and reduced motion support;
-- production builds and releases through GitHub Actions and Vercel;
-- no runtime paid dependency beyond the approved free-tier services.
+- acceso público mediante Google OAuth y modo invitado sin cuenta;
+- espacio aislado por identidad, autorización por roles y RLS;
+- trazabilidad inmutable de las transiciones operativas;
+- simulación de integraciones neutrales e idempotentes;
+- analítica filtrable con comparación entre periodos;
+- restauración reproducible del escenario de demostración;
+- interfaz responsive, accesible por teclado y compatible con movimiento
+  reducido.
 
-## 2. Stack and languages
+Requisitos no funcionales:
 
-| Layer | Technology |
-| --- | --- |
-| Web | Next.js 16 App Router, React 19, TypeScript |
-| UI | Tailwind CSS toolchain, CSS, Radix UI, Tabler Icons, Recharts, dnd-kit |
-| Validation | Zod, Bun tests |
-| Data | PostgreSQL, SQL migrations, Supabase Auth/Storage/RLS |
-| Browser tests | Playwright, Axe |
-| Delivery | Bun, GitHub Actions, Vercel |
+- contratos TypeScript validados con Zod;
+- ausencia de identidades, cuentas bancarias, salarios individuales y
+  documentos reales;
+- base de datos reproducible mediante migraciones y pruebas pgTAP;
+- validación continua de contenido, privacidad, accesibilidad y build;
+- despliegues trazables mediante GitHub Actions y Vercel;
+- uso exclusivo de servicios gratuitos previamente autorizados.
 
-## 3. System context
+## 2. Stack y responsabilidades
+
+| Capa | Tecnología | Responsabilidad |
+| --- | --- | --- |
+| Aplicación web | Next.js 16, React 19, TypeScript | Rutas, Server Components, Server Actions e interfaz |
+| Presentación | Tailwind CSS, CSS, Radix UI, Tabler Icons | Diseño, accesibilidad, foco y componentes |
+| Interacción | dnd-kit, Recharts | Kanban accesible y gráficos |
+| Validación | Zod, Bun test | Contratos, dominio y pruebas unitarias |
+| Datos | PostgreSQL, SQL, Supabase | Persistencia, Auth, Storage, RPC y RLS |
+| Navegador | Playwright, Axe | Recorridos E2E, responsive y accesibilidad |
+| Entrega | Bun, GitHub Actions, Vercel | Dependencias, CI, Preview y producción |
+
+## 3. Contexto del sistema
 
 ```mermaid
 flowchart LR
-  visitor["Visitor"] --> web["Next.js application"]
+  visitor["Persona visitante"] --> web["Aplicación Next.js"]
   google["Google OAuth"] --> auth["Supabase Auth"]
   web --> auth
-  web --> db["Supabase PostgreSQL"]
-  web --> storage["Private avatar storage"]
-  web --> session["Guest sessionStorage"]
+  web --> db["PostgreSQL con RLS"]
+  web --> storage["Storage privado de avatar"]
+  web --> session["sessionStorage invitado"]
   github["GitHub"] --> ci["GitHub Actions"]
   ci --> vercel["Vercel"]
   vercel --> web
 ```
 
-## 4. Containers and components
+## 4. Contenedores y componentes
 
 ```mermaid
 flowchart TB
-  browser["Browser"]
-  subgraph next["Next.js application"]
-    routes["App Router and Server Components"]
+  browser["Navegador"]
+  subgraph next["Aplicación Next.js"]
+    routes["App Router y Server Components"]
     actions["Server Actions"]
-    guest["Guest reducer and V13 schema"]
-    analytics["Pure analytics engine"]
-    ui["Responsive React workspaces"]
+    guest["Reducer invitado y GuestDemoState V14"]
+    analytics["Motor analítico puro"]
+    ui["Módulos React responsive"]
   end
   subgraph supabase["Supabase"]
-    auth["Auth PKCE"]
-    postgres["PostgreSQL and RLS"]
-    rpc["Private functions and RPC"]
-    storage["profile-avatars"]
+    auth["OAuth PKCE"]
+    postgres["PostgreSQL y RLS"]
+    rpc["Funciones privadas y RPC"]
+    storage["Bucket profile-avatars"]
   end
   browser --> routes
   browser --> guest
@@ -81,213 +92,246 @@ flowchart TB
   routes --> storage
 ```
 
-## 5. Guest and OAuth flows
+## 5. Flujos invitado y OAuth
 
 ```mermaid
 flowchart LR
-  start["Access"] --> choice{"Mode"}
-  choice -->|Guest| generate["Generate scenario V5"]
-  generate --> validate["Validate V13 with Zod"]
-  validate --> session["Persist only in sessionStorage"]
+  start["Acceso"] --> choice{"Modalidad"}
+  choice -->|Invitado| generate["Generar escenario V6"]
+  generate --> validate["Validar V14 con Zod"]
+  validate --> session["Persistir solo en sessionStorage"]
   choice -->|Google| pkce["OAuth PKCE"]
-  pkce --> provision["Provision isolated organization"]
-  provision --> anchor["Persist scenario anchor"]
-  anchor --> rls["Read and mutate through RLS"]
+  pkce --> provision["Crear o cargar organización aislada"]
+  provision --> anchor["Persistir fecha de anclaje"]
+  anchor --> rls["Leer y mutar con RLS"]
 ```
 
 ```mermaid
 sequenceDiagram
-  participant B as Browser
+  participant B as Navegador
   participant N as Next.js
   participant S as Supabase Auth
   participant G as Google
-  B->>N: Continue with Google
-  N->>S: signInWithOAuth and PKCE verifier
-  S->>G: Authorization request
-  G-->>B: User consent
-  B->>N: Callback with authorization code
-  N->>S: Exchange code for session
-  S-->>N: Secure session cookies
-  N->>S: Provision or load isolated organization
+  B->>N: Continuar con Google
+  N->>S: signInWithOAuth y verificador PKCE
+  S->>G: Solicitud de autorización
+  G-->>B: Consentimiento
+  B->>N: Callback con código
+  N->>S: Intercambio por sesión
+  S-->>N: Cookies seguras
+  N->>S: Aprovisionar o cargar organización
   N-->>B: /app/inicio
 ```
 
-## 6. Authenticated reads and mutations
+La modalidad invitada nunca consulta Supabase. Su estado se valida al
+hidratarse y se conserva únicamente durante la sesión de la pestaña. La
+modalidad OAuth mantiene una organización persistente por identidad.
+
+## 6. Lecturas y mutaciones autenticadas
 
 ```mermaid
 sequenceDiagram
-  participant U as User
+  participant U as Usuario
   participant SC as Server Component
   participant SA as Server Action
   participant DB as PostgreSQL
-  U->>SC: Open module
-  SC->>DB: Select with authenticated JWT
-  DB-->>SC: Organization-scoped rows through RLS
-  SC-->>U: Render
-  U->>SA: Submit validated mutation
-  SA->>SA: Zod and permission check
-  SA->>DB: RPC or scoped write
-  DB->>DB: Constraint, RLS and audit event
-  DB-->>SA: Typed result
+  U->>SC: Abrir módulo
+  SC->>DB: Lectura con JWT autenticado
+  DB-->>SC: Filas de la organización mediante RLS
+  SC-->>U: Renderizado
+  U->>SA: Enviar mutación
+  SA->>SA: Zod y comprobación de permiso
+  SA->>DB: RPC o escritura acotada
+  DB->>DB: Constraint, RLS y auditoría
+  DB-->>SA: Resultado tipado
   SA-->>U: ActionResult
 ```
 
-`ActionResult` is a discriminated union: typed success or a controlled error
-with a safe public code and message. Server Actions never return database
-details or secrets.
+`ActionResult` es una unión discriminada: éxito tipado o error controlado con
+código seguro y mensaje público. Las Server Actions no devuelven detalles de
+base de datos, secretos ni trazas internas.
 
-## 7. Authorization and RLS
+## 7. Autorización y RLS
 
 ```mermaid
 flowchart LR
-  identity["auth.uid"] --> membership["Active membership"]
-  membership --> real["Real role permissions"]
-  simulator["Optional simulated role"] --> effective["Effective permissions"]
+  identity["auth.uid"] --> membership["Membresía activa"]
+  membership --> real["Permisos del rol real"]
+  simulator["Rol simulado opcional"] --> effective["Permiso efectivo"]
   real --> effective
-  effective --> intersection["Intersection only"]
-  intersection --> action["Server Action check"]
-  intersection --> rls["RLS or private RPC"]
+  effective --> intersection["Intersección: nunca eleva privilegios"]
+  intersection --> action["Comprobación en Server Action"]
+  intersection --> rls["RLS o RPC privada"]
 ```
 
-The simulator can only reduce privileges. Tables exposed through the API have
-RLS enabled. Privileged functions use an empty `search_path`, revoke default
-execution rights and explicitly verify identity, membership and permission.
+Todas las tablas expuestas aplican RLS. Las funciones `SECURITY DEFINER`
+revocan permisos por defecto, fijan un `search_path` seguro y verifican
+explícitamente identidad, organización y permiso. La simulación de rol solo
+puede reducir el acceso real.
 
-## 8. Data model
+## 8. Modelo de datos
 
 ```mermaid
 erDiagram
-  ORGANIZATIONS ||--o{ MEMBERSHIPS : contains
-  PROFILES ||--o{ MEMBERSHIPS : authenticates
-  ORGANIZATIONS ||--o{ PEOPLE : employs
-  PEOPLE ||--o{ PEOPLE : manages
-  ORGANIZATIONS ||--o{ PROJECTS : owns
-  PROJECTS ||--o{ PROJECT_MEMBERS : includes
-  PEOPLE ||--o{ PROJECT_MEMBERS : participates
-  PROJECTS ||--o{ TASKS : groups
-  PEOPLE ||--o{ TASKS : assigned
-  TASKS ||--o{ TASK_DEPENDENCIES : depends
-  TASKS ||--o{ TASK_COMMENTS : discusses
-  TASKS ||--o{ TASK_EVENTS : audits
-  PROJECTS ||--o{ INCIDENTS : relates
-  PEOPLE ||--o{ INCIDENTS : requests
-  PEOPLE ||--o{ LEAVE_REQUESTS : requests
-  ORGANIZATIONS ||--o{ TREASURY_ENTRIES : records
-  ORGANIZATIONS ||--o{ PAYROLL_RUNS : aggregates
-  PAYROLL_RUNS ||--o{ PAYROLL_PARTICIPANTS : includes
-  PEOPLE ||--o{ PAYROLL_PARTICIPANTS : participates
-  ORGANIZATIONS ||--o{ INTEGRATION_CONNECTORS : configures
-  INTEGRATION_CONNECTORS ||--o{ INTEGRATION_RUNS : executes
-  INTEGRATION_RUNS ||--o{ DATA_QUALITY_ISSUES : detects
-  ORGANIZATIONS ||--|| WORKSPACE_CONFIGURATION : configures
-  ORGANIZATIONS ||--o{ AUDIT_EVENTS : records
+  ORGANIZATIONS ||--o{ MEMBERSHIPS : contiene
+  PROFILES ||--o{ MEMBERSHIPS : autentica
+  ORGANIZATIONS ||--o{ PEOPLE : agrupa
+  PEOPLE ||--o{ PEOPLE : coordina
+  ORGANIZATIONS ||--o{ PROJECTS : posee
+  PROJECTS ||--o{ PROJECT_MEMBERS : incluye
+  PEOPLE ||--o{ PROJECT_MEMBERS : participa
+  PROJECTS ||--o{ TASKS : agrupa
+  PEOPLE ||--o{ TASKS : recibe
+  TASKS ||--o{ TASK_DEPENDENCIES : depende
+  TASKS ||--o{ TASK_COMMENTS : comenta
+  TASKS ||--o{ TASK_EVENTS : audita
+  PROJECTS ||--o{ INCIDENTS : relaciona
+  PEOPLE ||--o{ INCIDENTS : solicita
+  PEOPLE ||--o{ LEAVE_REQUESTS : solicita
+  ORGANIZATIONS ||--o{ TREASURY_ENTRIES : registra
+  ORGANIZATIONS ||--o{ PAYROLL_RUNS : agrega
+  PAYROLL_RUNS ||--o{ PAYROLL_PARTICIPANTS : incluye
+  PEOPLE ||--o{ PAYROLL_PARTICIPANTS : participa
+  ORGANIZATIONS ||--o{ INTEGRATION_CONNECTORS : configura
+  INTEGRATION_CONNECTORS ||--o{ INTEGRATION_RUNS : ejecuta
+  INTEGRATION_RUNS ||--o{ DATA_QUALITY_ISSUES : detecta
+  ORGANIZATIONS ||--|| WORKSPACE_CONFIGURATION : configura
+  ORGANIZATIONS ||--o{ AUDIT_EVENTS : registra
 ```
 
-Profiles contain authentication preferences; people contain fictitious
-operational directory records; memberships join identity, organization and
-role. Payroll participants only state inclusion and validation status. They
-contain no individual monetary amount.
+`profiles` contiene preferencias de la identidad autenticada; `people`
+contiene fichas profesionales ficticias; `memberships` une identidad,
+organización y rol. `people.employment_contract_type` usa códigos estables y
+denominaciones laborales públicas. Los participantes de nómina solo indican
+inclusión y validación: nunca almacenan importes individuales.
 
-## 9. Integrations and idempotency
+## 9. Integraciones, idempotencia y recuperación
 
 ```mermaid
 sequenceDiagram
-  participant C as Scheduler or user
-  participant R as Integration runner
+  participant C as Programador o usuario
+  participant R as Ejecutor
   participant DB as PostgreSQL
-  C->>R: Run connector
-  R->>DB: Insert run with connector, date and sequence
-  DB-->>R: Existing or new idempotency key
-  R->>DB: Import generated aggregate items
-  R->>DB: Record duplicates and quality issues
-  R->>DB: Complete as succeeded, partial or failed
+  C->>R: Ejecutar conector
+  R->>DB: Crear ejecución con fecha y secuencia
+  DB-->>R: Clave idempotente existente o nueva
+  R->>DB: Importar elementos agregados ficticios
+  R->>DB: Registrar duplicados y controles
+  R->>DB: Finalizar con éxito, parcial o error
 ```
 
-Connectors are neutral reconstructions. A unique key formed by connector,
-effective date and source sequence prevents duplicate processing. No external
-bank, payroll or people system is contacted.
+La clave formada por conector, fecha efectiva y secuencia de origen evita
+duplicados. Los conectores son neutrales y no contactan bancos, asesorías ni
+sistemas de personal reales. Los reintentos y errores se registran sin
+credenciales ni payloads sensibles.
 
-## 10. Scenario lifecycle and analytics
+## 10. Escenario V6 y contratos
 
-Scenario V5 starts on `2025-01-01`. Guest sessions anchor to their first load.
-Authenticated organizations persist `scenario_anchor_date` on creation or
-explicit restoration. The anchor drives due dates, SLA, leave, treasury,
-payroll, integrations and analytics, so existing fictitious changes do not
-move with wall-clock time.
+El escenario V6 comienza el `2025-01-01` y termina en la fecha de anclaje de
+cada sesión u organización. La misma semilla y ancla producen el mismo
+checksum. `GuestDemoState V14` migra sesiones anteriores y preserva
+preferencias compatibles.
 
-The guest analytics engine is pure and operates in memory. Authenticated
-analytics uses organization-scoped aggregate queries/RPC with the same
-contracts. `AnalyticsWindow` produces current and previous periods;
-`AnalyticsSnapshot` contains KPIs, series, alerts, filters and update time.
+Distribución:
 
-## 11. Database controls
+- 32 personas, 6 equipos y cuatro modalidades contractuales;
+- 10 proyectos y 120 tareas, 90 de ellas completadas;
+- 104 solicitudes de vacaciones y 60 incidencias;
+- 360 movimientos de tesorería y 18 ciclos de nómina agregada;
+- 72 ejecuciones de integraciones con resultados variables.
 
-Migrations are append-only and cover:
+Reglas de dominio:
 
-1. base organizations, roles, memberships, audit and leave;
-2. tasks, incidents, people, changelog, settings, treasury and payroll;
-3. isolated public demo provisioning and lifecycle;
-4. projects, profile self-service, integrations and analytics;
-5. RLS/query hardening and avatar storage;
-6. scenario V2, V3, V4 and V5 compatibility migrations.
+- un proyecto con todas sus tareas completadas pasa a `Completado`;
+- un proyecto no completado mantiene trabajo abierto y un progreso máximo del
+  99 %;
+- las transiciones de tareas recalculan estado y progreso;
+- dependencias de tareas sin autorreferencias ni ciclos;
+- transiciones inválidas rechazadas en dominio, Server Action y SQL.
 
-Important constraints include organization foreign keys, valid state checks,
-no self-managed person, acyclic task dependencies at domain/function level,
-unique payroll participant per cycle/person and integration idempotency keys.
-Indexes place organization first for scoped reads and add partial indexes for
-active or unresolved records. `supabase db lint`, advisors and pgTAP validate
-schema, policies, function privileges and cross-organization denial.
+## 11. Analítica
 
-## 12. Security and privacy
+`AnalyticsFilter` modela periodo, proyecto, equipo, responsable, estado y
+servicio. `AnalyticsWindow` genera ventanas actual y anterior de igual
+duración. `AnalyticsSnapshot` contiene KPIs, series, alertas estructuradas,
+filtros y fecha de actualización.
 
-- OAuth authorization code flow with PKCE and SSR cookies.
-- RLS as the final database boundary.
-- Private avatar bucket with owner-only paths and signed URLs.
-- No service-role key in the browser.
-- Guest mode never calls Supabase.
-- Public-data CI detector blocks emails, bank identifiers, identity numbers,
-  telephone patterns and prohibited third-party terms.
-- CSP and iframe policy limit embedding to the configured origin.
-- Logs and audit events use safe descriptions without secrets.
+El invitado calcula en memoria. OAuth usa consultas agregadas acotadas por
+organización con el mismo contrato. Las definiciones públicas explican qué
+representa cada métrica, cómo interpretarla, su fuente funcional y su
+frecuencia, sin exponer tablas ni códigos internos. Los formatos compartidos
+distinguen recuentos, porcentajes, duraciones y moneda.
 
-The legal pages describe technical processing and are not legal advice.
+## 12. Migraciones, índices y constraints
 
-## 13. Accessibility, responsive and performance
+Las migraciones append-only cubren:
 
-Radix primitives supply focus management and keyboard semantics. All dialogs
-use fixed headers/actions, scrollable bodies and `100dvh` limits. Charts have
-equivalent tables. Motion honors `prefers-reduced-motion`. Responsive checks
-cover 320, 360, 390, 768, 1024 and 1440 px. Lists are paginated, Kanban owns
-its horizontal scroll, and authenticated analytics avoids downloading full
-datasets.
+1. organizaciones, roles, membresías, auditoría y vacaciones;
+2. tareas, incidencias, personas, novedades, configuración, tesorería y
+   nóminas;
+3. aprovisionamiento y ciclo de vida del escenario público;
+4. proyectos, perfil, integraciones y analítica;
+5. endurecimiento de RLS, consultas y Storage privado;
+6. compatibilidad de escenarios V2 a V6 y GuestDemoState hasta V14.
 
-## 14. Testing strategy
+Los índices priorizan `organization_id` en lecturas acotadas y añaden índices
+parciales para registros activos. Los constraints verifican estados,
+relaciones organizativas, participantes únicos, claves idempotentes, modalidad
+contractual y coherencia proyecto–tareas. pgTAP cubre esquema, privilegios,
+RLS, aislamiento y funciones de restauración.
 
-- domain: schemas, transitions, deterministic data, date windows and metrics;
-- browser: OAuth entry, guest flows, persistence, dialogs, responsive and CSV;
-- accessibility: Axe, keyboard, focus, contrast and reduced motion;
-- database: schema, RLS, roles, function privileges, idempotency and isolation;
-- delivery: lint, typecheck, unit tests, content/privacy validators, build,
-  E2E, database reset/lint/advisors and `git diff --check`.
+## 13. Seguridad, privacidad y propiedad
 
-## 15. CI/CD
+- OAuth authorization code con PKCE y cookies SSR.
+- RLS como barrera final de datos.
+- Bucket privado de avatar con rutas por propietario y URLs firmadas.
+- Ninguna service-role key llega al navegador.
+- Invitado sin llamadas a Supabase.
+- Detector CI de correos, identificadores financieros, documentos, teléfonos
+  y términos de proveedores reales.
+- CSP, framing, referrer policy y cabeceras de seguridad.
+- Licencia propietaria del repositorio e inventario separado de dependencias.
+
+Las páginas de Privacidad, Procedencia y Aviso legal describen el tratamiento
+técnico, el origen ficticio de los datos y la titularidad del software.
+
+## 14. Accesibilidad, responsive y rendimiento
+
+Radix aporta gestión de foco y semántica de teclado. Los diálogos mantienen
+cabecera y acciones fijas, cuerpo desplazable y límites basados en `100dvh`.
+Cada gráfico tiene tabla equivalente. El movimiento respeta
+`prefers-reduced-motion`.
+
+La validación cubre 320, 360, 390, 768, 1024 y 1440 px. Las listas usan
+paginación, el Kanban limita su desplazamiento a su propio panel y las
+consultas autenticadas de Analítica evitan descargar conjuntos completos.
+
+## 15. Estrategia de pruebas
+
+- dominio: schemas, transiciones, determinismo, fechas, proyectos y métricas;
+- navegador: acceso, invitado, persistencia, diálogos, filtros y CSV;
+- accesibilidad: Axe, teclado, foco, contraste y movimiento reducido;
+- base de datos: RLS, roles, funciones, idempotencia y aislamiento;
+- entrega: lint, typecheck, tests, validadores, build, E2E, reset, pgTAP,
+  linter, advisors y `git diff --check`.
+
+## 16. CI/CD
 
 ```mermaid
 flowchart LR
-  branch["Feature branch"] --> checks["Lint, typecheck, tests and build"]
+  branch["Rama de mantenimiento"] --> checks["Lint, tipos, tests y build"]
   checks --> pr["Pull request"]
   pr --> preview["Vercel Preview"]
-  preview --> qa["OAuth, RLS, accessibility and responsive QA"]
-  qa --> merge["Merge reviewed commit"]
-  merge --> production["Promote validated artifact"]
-  production --> smoke["Production smoke test"]
-  smoke --> tag["Git tag and GitHub Release"]
+  preview --> qa["QA OAuth, RLS, responsive y accesibilidad"]
+  qa --> merge["Merge del commit revisado"]
+  merge --> production["Promoción del artefacto validado"]
+  production --> smoke["Smoke test de producción"]
 ```
 
-Remote migrations are reviewed locally, applied before dependent code is
-promoted and never use credentials from the repository.
+Las migraciones remotas se revisan y validan localmente antes de aplicarse. El
+repositorio no contiene credenciales.
 
-## 16. Local installation and operations
+## 17. Instalación y operación local
 
 ```powershell
 bun install --frozen-lockfile
@@ -297,43 +341,42 @@ bunx supabase db reset
 bun run dev
 ```
 
-Required public variables are documented in `.env.example`. Google provider
-credentials are configured in Supabase Auth, not committed. Restore demo data
-from Settings to update the anchor intentionally. Recovery consists of
-reapplying append-only migrations, regenerating the deterministic scenario and
-verifying the audit event.
+Las variables públicas se documentan en `.env.example`. Las credenciales del
+proveedor Google se configuran en Supabase Auth. Restaurar datos desde
+Configuración actualiza de forma explícita el ancla y registra la operación.
 
-## 17. Requirements traceability and chronology
+## 18. Trazabilidad por hitos
 
-| Phase | Outcome |
+| Hito | Resultado |
 | --- | --- |
-| Foundation | Independent Next.js/Supabase architecture and guest boundary |
-| Leave | Date calculation, review transitions, calendar and audit |
-| Tasks | Kanban, dependencies, comments and WIP |
-| Incidents and People | SLA workflow, directory and availability |
-| Treasury and Payroll | Aggregate, traceable financial flows |
-| Projects and integrations | Cross-module planning and neutral automation |
-| v1.0.0 | First stable OAuth/RLS demonstration |
-| v1.1.0 | Profiles, visual system and analytics |
-| v1.2.0 | Balanced scenario and dynamic metric windows |
-| v1.2.1 | Responsive charts, dialogs and temporal consistency |
-| v1.2.2 | Final OAuth, scenario V5, payroll participants and organization view |
+| Requisitos y base | Arquitectura independiente, límites de datos y CI |
+| Vacaciones | Cálculo, revisión, calendario y auditoría |
+| Tareas | Kanban, dependencias, comentarios y WIP |
+| Incidencias y Personal | SLA, directorio, disponibilidad y organigrama |
+| Tesorería y Nóminas | Flujos agregados, conciliación y controles |
+| Proyectos e integraciones | Planificación transversal y automatización neutral |
+| v1.0.0 | Primera demostración estable con OAuth y RLS |
+| v1.1.0 | Perfil, sistema visual y Analítica |
+| v1.2.0 | Escenario equilibrado y ventanas dinámicas |
+| v1.2.1 | Gráficos, diálogos y consistencia temporal |
+| v1.2.2 | OAuth final, V5, participantes y organigrama |
+| Mantenimiento v1.2.2 | V6, contratos, tareas, proyectos y documentación |
 
-The public Changelog owns editorial dates. Git and deployment systems retain
-their actual technical timestamps.
+Las fechas editoriales se muestran en Novedades. Git y Vercel conservan sus
+timestamps técnicos reales.
 
-## 18. Architectural decisions and rejected alternatives
+## 19. Decisiones arquitectónicas
 
-- Two explicit repositories were selected over a shared client abstraction to
-  guarantee that guest mode cannot accidentally contact Supabase.
-- Deterministic generation was selected over live public SQL to avoid privacy,
-  availability, licensing and reproducibility risks.
-- Aggregated payroll was selected over fictitious individual salaries because
-  individual compensation is unnecessary for the technical demonstration.
-- Server Actions plus RLS were selected over browser writes so validation,
-  authorization and audit remain centralized.
-- Private uploads with local WebP processing were selected over paid image
-  transformations.
+- Dos repositorios de datos explícitos evitan que el invitado contacte
+  accidentalmente Supabase.
+- La generación determinista sustituye SQL público en vivo para proteger
+  privacidad, disponibilidad, licencias y reproducibilidad.
+- La nómina agregada evita modelar compensaciones individuales innecesarias.
+- Server Actions más RLS centralizan validación, autorización y auditoría.
+- Las subidas privadas se procesan en WebP en cliente sin transformaciones de
+  pago.
 
-Related records: `docs/adr`, `ARCHITECTURE.md`, `PERMISSIONS.md`,
-`DATA-PROVENANCE.md`, `PROCESS-MAPS.md`, `DEPLOYMENT.md`, `SECURITY.md`.
+Documentos relacionados: [Arquitectura](./ARCHITECTURE.md),
+[Permisos](./PERMISSIONS.md), [Procedencia](./DATA-PROVENANCE.md),
+[Procesos](./PROCESS-MAPS.md), [Despliegue](./DEPLOYMENT.md),
+[Seguridad](../SECURITY.md) y [decisiones ADR](./adr/).

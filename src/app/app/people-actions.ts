@@ -20,7 +20,7 @@ export async function createPersonAction(input: PersonInput): Promise<ActionResu
     const payload = personInputSchema.parse(input);
     const access = await requirePermission("people.profiles.manage");
     const supabase = await createClient();
-    const { error } = await supabase.from("people").insert({ organization_id: access.organizationId, display_name: payload.displayName, team: payload.team, position_title: payload.positionTitle, status: payload.status, role_code: payload.roleCode });
+    const { error } = await supabase.from("people").insert({ organization_id: access.organizationId, display_name: payload.displayName, team: payload.team, position_title: payload.positionTitle, status: payload.status, role_code: payload.roleCode, manager_person_id: payload.managerPersonId, employment_contract_type: payload.employmentContractType });
     if (error) return actionFailure("conflict", "No se pudo añadir el perfil.");
     revalidatePath("/app/personal");
     return actionSuccess();
@@ -33,7 +33,7 @@ export async function updatePersonAction(id: string, input: PersonInput): Promis
     const payload = personInputSchema.parse(input);
     const access = await requirePermission("people.profiles.manage");
     const supabase = await createClient();
-    const { error } = await supabase.from("people").update({ display_name: payload.displayName, team: payload.team, position_title: payload.positionTitle, status: payload.status, role_code: payload.roleCode, updated_at: new Date().toISOString() }).eq("id", personId).eq("organization_id", access.organizationId);
+    const { error } = await supabase.from("people").update({ display_name: payload.displayName, team: payload.team, position_title: payload.positionTitle, status: payload.status, role_code: payload.roleCode, manager_person_id: payload.managerPersonId, employment_contract_type: payload.employmentContractType, updated_at: new Date().toISOString() }).eq("id", personId).eq("organization_id", access.organizationId);
     if (error) return actionFailure("conflict", "No se pudo actualizar el perfil.");
     revalidatePath("/app/personal");
     return actionSuccess();

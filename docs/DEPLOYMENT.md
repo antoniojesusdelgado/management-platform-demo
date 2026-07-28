@@ -115,10 +115,11 @@ environment values. After promotion:
 
 ## Current release
 
-- Production: <https://management-platform-demo.vercel.app>
+- Production and canonical origin: <https://plataformagestion.app>
+- Vercel fallback: <https://management-platform-demo.vercel.app>
 - Stable branch Preview:
   <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Release target: `v1.0.0`
+- Published release: `v1.2.2`
 - Supabase region and plan: `eu-central-1`, Free
 - Production and Preview use environment-specific application and portfolio
   origins.
@@ -165,6 +166,9 @@ operating interval from 1 January 2025 through 17 June 2026, adds
 non-monetary payroll participants and the people hierarchy, and restores V4
 organizations once with an audit event.
 
-This document records the intended delivery sequence only. No remote migration,
-Preview, production promotion, tag or GitHub Release is performed until the
-local result has been reviewed and each external operation is authorized.
+The post-release maintenance keeps the `v1.2.2` tag immutable while introducing
+Scenario V6 and `GuestDemoState V14`. It adds employment contract modalities,
+rebalances task completion, enforces project progress/state consistency and
+improves user-facing analytical definitions and formatting. Delivery still
+uses a reviewed Preview before applying the compatible migration and promoting
+the same artifact.

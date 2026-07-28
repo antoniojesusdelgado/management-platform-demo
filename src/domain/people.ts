@@ -3,9 +3,23 @@ import type { LeaveRequest } from "@/domain/vacations";
 
 export const personStatuses = ["invited", "active", "suspended", "inactive"] as const;
 export const personRoleCodes = ["admin", "manager", "collaborator", "viewer"] as const;
+export const employmentContractTypes = [
+  "indefinite_ordinary",
+  "permanent_discontinuous",
+  "temporary_production",
+  "temporary_substitution",
+] as const;
 
 export type PersonStatus = (typeof personStatuses)[number];
 export type PersonRoleCode = (typeof personRoleCodes)[number];
+export type EmploymentContractType = (typeof employmentContractTypes)[number];
+
+export const employmentContractLabels: Record<EmploymentContractType, string> = {
+  indefinite_ordinary: "Indefinido ordinario",
+  permanent_discontinuous: "Indefinido fijo-discontinuo",
+  temporary_production: "Temporal por circunstancias de la producción",
+  temporary_substitution: "Temporal de sustitución",
+};
 
 export type Person = {
   id: string;
@@ -13,6 +27,7 @@ export type Person = {
   team: string;
   positionTitle: string;
   managerPersonId?: string | null;
+  employmentContractType: EmploymentContractType;
   status: PersonStatus;
   roleCode: PersonRoleCode;
   createdAt: string;
@@ -33,6 +48,7 @@ export const personInputSchema = z.object({
   team: z.string().trim().min(2).max(100),
   positionTitle: z.string().trim().min(2).max(120),
   managerPersonId: z.string().nullable().optional(),
+  employmentContractType: z.enum(employmentContractTypes),
   status: z.enum(personStatuses),
   roleCode: z.enum(personRoleCodes),
 });

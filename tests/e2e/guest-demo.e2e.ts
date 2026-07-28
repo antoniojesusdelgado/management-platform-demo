@@ -113,9 +113,12 @@ test("renders complete monthly and categorical Analytics series", async ({
       name: "Alternativa tabular: tareas completadas por mes",
     })
     .locator("tbody tr");
-  await expect(
-    timelineChart.locator(".recharts-xAxis .recharts-cartesian-axis-tick"),
-  ).toHaveCount(await timelineTable.count());
+  await expect(timelineTable).toHaveCount(19);
+  const visibleTimelineTicks = await timelineChart
+    .locator(".recharts-xAxis .recharts-cartesian-axis-tick")
+    .count();
+  expect(visibleTimelineTicks).toBeGreaterThanOrEqual(4);
+  expect(visibleTimelineTicks).toBeLessThan(19);
 
   await page
     .getByRole("button", { name: "Proyectos y tareas", exact: true })
@@ -339,7 +342,7 @@ test("creates, closes and restores an aggregated Payroll cycle", async ({ page }
 
   const run = payroll.locator(".treasury-row").filter({ hasText: "20 personas" }).first();
   await expect(run).toContainText("Recopilación");
-  await expect(run).toContainText(/4720,00\s€ neto/);
+  await expect(run).toContainText(/4\.720,00\s€ neto/);
   await run.click();
   const detail = page.getByRole("dialog", { name: /sept 2026/ });
   for (const transition of [

@@ -257,7 +257,7 @@ export default async function AppModulePage({
   ) {
     const supabase = await createClient();
     const [peopleResult, eventsResult] = await Promise.all([
-      supabase.from("people").select("id,display_name,team,position_title,status,role_code,manager_person_id,created_at,updated_at").eq("organization_id", access.organizationId).order("display_name"),
+      supabase.from("people").select("id,display_name,team,position_title,status,role_code,manager_person_id,employment_contract_type,created_at,updated_at").eq("organization_id", access.organizationId).order("display_name"),
       supabase.from("people_events").select("id,person_id,kind,note,created_at,actor:profiles!people_events_actor_profile_id_fkey(display_name)").eq("organization_id", access.organizationId).order("created_at", { ascending: false }).limit(100),
     ]);
     if (peopleResult.error || eventsResult.error) peopleLoadError = "Vuelve a intentarlo. Si el problema continúa, revisa la conexión local.";
@@ -269,6 +269,8 @@ export default async function AppModulePage({
       status: person.status,
       roleCode: person.role_code,
       managerPersonId: person.manager_person_id,
+      employmentContractType:
+        person.employment_contract_type as Person["employmentContractType"],
       createdAt: person.created_at,
       updatedAt: person.updated_at,
     }));
