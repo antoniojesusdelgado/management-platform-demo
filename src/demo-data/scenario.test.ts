@@ -83,7 +83,7 @@ describe("synthetic demo scenario", () => {
     expect([...monthly.values()].every((balance) => balance > 0)).toBe(true);
   });
 
-  test("matches the balanced V5 operating distributions", () => {
+  test("matches the balanced V6 operating distributions", () => {
     const scenario = validateDemoScenario(generateDemoScenario());
     const countBy = <T extends string>(values: T[]) =>
       Object.fromEntries(
@@ -93,7 +93,7 @@ describe("synthetic demo scenario", () => {
         ]),
       );
 
-    expect(scenario.scenarioVersion).toBe(5);
+    expect(scenario.scenarioVersion).toBe(6);
     expect(countBy(scenario.projects.map((project) => project.status))).toEqual({
       active: 5,
       on_hold: 1,
@@ -101,11 +101,21 @@ describe("synthetic demo scenario", () => {
       planned: 1,
     });
     expect(countBy(scenario.tasks.map((task) => task.status))).toEqual({
-      pending: 20,
-      in_progress: 15,
-      blocked: 5,
-      in_review: 10,
-      completed: 70,
+      pending: 12,
+      in_progress: 8,
+      blocked: 3,
+      in_review: 7,
+      completed: 90,
+    });
+    expect(
+      countBy(
+        scenario.people.map((person) => person.employmentContractType),
+      ),
+    ).toEqual({
+      indefinite_ordinary: 23,
+      permanent_discontinuous: 3,
+      temporary_production: 4,
+      temporary_substitution: 2,
     });
     expect(countBy(scenario.tasks.map((task) => task.priority))).toEqual({
       urgent: 5,

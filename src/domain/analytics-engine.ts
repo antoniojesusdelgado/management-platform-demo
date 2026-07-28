@@ -515,7 +515,9 @@ export function buildAnalyticsSnapshot(
             id: `alert-${view}-${item.code}`,
             severity: missesTarget ? ("warning" as const) : ("info" as const),
             title: item.label,
-            description: `${item.context}: ${item.value}`,
+            value: item.value,
+            unit: item.unit,
+            context: item.context,
             targetModule:
               view === "service"
                 ? "incidencias"

@@ -54,10 +54,6 @@ export default function PrivacyPage() {
           auditoría. Si consideras que el tratamiento no es correcto, también
           puedes reclamar ante la Agencia Española de Protección de Datos.
         </p>
-        <p className="legal-disclaimer">
-          Este texto es un borrador técnico informado y no constituye asesoramiento
-          jurídico profesional.
-        </p>
         <div className="legal-actions">
           <Link className="button button-secondary" href="/login">
             Volver al acceso

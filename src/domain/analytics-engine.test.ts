@@ -4,6 +4,7 @@ import {
   calculateVariation,
   createAnalyticsWindow,
 } from "@/domain/analytics-engine";
+import { controlCenterMetrics } from "@/domain/analytics";
 import { initialGuestDemoState } from "@/domain/guest-demo";
 
 const filters = {
@@ -135,5 +136,76 @@ describe("analytics engine", () => {
       "2026-05",
       "2026-06",
     ]);
+  });
+
+  test("uses public metric definitions without implementation identifiers", () => {
+    const forbiddenTerms = [
+      "on_track",
+      "due_date",
+      "leave_requests",
+      "projects",
+      "workspace",
+    ];
+    const publicCopy = controlCenterMetrics
+      .map((metric) =>
+        [
+          metric.description,
+          metric.interpretation,
+          metric.sourceLabel,
+          metric.updateFrequency,
+        ].join(" "),
+      )
+      .join(" ")
+      .toLocaleLowerCase("es");
+
+    for (const term of forbiddenTerms) {
+      expect(publicCopy).not.toContain(term);
+    }
+    expect(
+      controlCenterMetrics.every(
+        (metric) =>
+          metric.description.length > 20 &&
+          metric.interpretation.length > 20 &&
+          metric.sourceLabel.length > 2 &&
+          metric.updateFrequency.length > 10,
+      ),
+    ).toBe(true);
+  });
+
+  test("calculates integration success from completed runs in each window", () => {
+    const data = {
+      projects: initialGuestDemoState.projects,
+      tasks: initialGuestDemoState.tasks,
+      incidents: initialGuestDemoState.incidents,
+      people: initialGuestDemoState.people,
+      leaveRequests: initialGuestDemoState.leaveRequests,
+      treasuryEntries: initialGuestDemoState.treasuryEntries,
+      payrollRuns: initialGuestDemoState.payrollRuns,
+      integrationRuns: initialGuestDemoState.integrationRuns,
+    };
+    const all = buildAnalyticsSnapshot(
+      data,
+      { ...filters, period: "all" },
+      "executive",
+      new Date("2026-06-17T12:00:00Z"),
+    );
+    const recent = buildAnalyticsSnapshot(
+      data,
+      { ...filters, period: "90d" },
+      "executive",
+      new Date("2026-06-17T12:00:00Z"),
+    );
+    const allSuccess = all.kpis.find(
+      (item) => item.code === "integration_success",
+    );
+    const recentSuccess = recent.kpis.find(
+      (item) => item.code === "integration_success",
+    );
+
+    expect(allSuccess?.hasData).toBe(true);
+    expect(recentSuccess?.hasData).toBe(true);
+    expect(allSuccess?.value).toBeGreaterThan(0);
+    expect(recentSuccess?.value).toBeGreaterThan(0);
+    expect(allSuccess?.value).not.toBe(recentSuccess?.value);
   });
 });

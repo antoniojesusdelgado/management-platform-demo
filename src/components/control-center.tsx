@@ -25,7 +25,17 @@ import type { Project } from "@/domain/projects";
 import type { TaskItem } from "@/domain/tasks";
 import type { TreasuryEntry } from "@/domain/treasury";
 import type { LeaveRequest } from "@/domain/vacations";
-import { formatCurrency, formatDate, formatNumber, formatPercent } from "@/lib/format";
+import {
+  formatAnalyticsValue,
+  formatDate,
+  formatNumber,
+  formatPercent,
+} from "@/lib/format";
+import {
+  formatAnalyticsAxisLabel,
+  formatAnalyticsTableLabel,
+  getMonthlyTickGap,
+} from "@/lib/analytics-labels";
 import { isModuleId, type ModuleId } from "@/domain/modules";
 
 type Props = {
@@ -53,10 +63,7 @@ const views: Array<[AnalyticsView, string]> = [
 
 function formatKpi(kpi: AnalyticsKpi) {
   if (kpi.hasData === false) return "Sin datos";
-  if (kpi.unit === "currency") return formatCurrency(kpi.value);
-  if (kpi.unit === "percentage") return formatPercent(kpi.value);
-  if (kpi.unit === "days") return `${formatNumber(kpi.value, 1)} días`;
-  return formatNumber(kpi.value);
+  return formatAnalyticsValue(kpi.value, kpi.unit);
 }
 
 function deltaState(kpi: AnalyticsKpi) {
@@ -68,45 +75,8 @@ function deltaState(kpi: AnalyticsKpi) {
   return favorable ? "positive" : "negative";
 }
 
-const monthFormatter = new Intl.DateTimeFormat("es-ES", {
-  month: "short",
-  timeZone: "UTC",
-});
-const fullMonthFormatter = new Intl.DateTimeFormat("es-ES", {
-  month: "long",
-  timeZone: "UTC",
-});
-const userLabels: Record<string, string> = {
-  blocked: "Bloqueadas",
-  completed: "Completadas",
-  in_progress: "En curso",
-  in_review: "En revisión",
-  pending: "Pendientes",
-  assigned: "Asignadas",
-  closed: "Cerradas",
-  investigating: "En investigación",
-  registered: "Registradas",
-  resolved: "Resueltas",
-  triaged: "Clasificadas",
-};
-
 function isMonthlySeries(points: Array<{ period: string; value: number }>) {
   return points.every((point) => /^\d{4}-\d{2}$/.test(point.period));
-}
-
-function formatPeriodLabel(period: string) {
-  if (!/^\d{4}-\d{2}$/.test(period)) return userLabels[period] ?? period;
-  const [year, month] = period.split("-").map(Number);
-  return monthFormatter
-    .format(new Date(Date.UTC(year!, month! - 1, 1)))
-    .replace(".", "");
-}
-
-function formatTablePeriodLabel(period: string) {
-  if (!/^\d{4}-\d{2}$/.test(period)) return userLabels[period] ?? period;
-  const [year, month] = period.split("-").map(Number);
-  const label = fullMonthFormatter.format(new Date(Date.UTC(year!, month! - 1, 1)));
-  return `${label.charAt(0).toLocaleUpperCase("es")}${label.slice(1)}`;
 }
 
 export function ControlCenter({
@@ -159,6 +129,10 @@ export function ControlCenter({
   const snapshot = useMemo(
     () => buildAnalyticsSnapshot(data, filters, activeView, referenceDate),
     [activeView, data, filters, referenceDate],
+  );
+  const visibleMetricCodes = useMemo(
+    () => new Set(snapshot.kpis.map((item) => item.code)),
+    [snapshot.kpis],
   );
   const teams = [...new Set(people.map((person) => person.team))].sort();
   const services = [
@@ -406,7 +380,7 @@ export function ControlCenter({
             <span className={`analytics-delta ${deltaState(item)}`}>
               {item.variation === null
                 ? "Sin comparación"
-                : `${item.variation > 0 ? "+" : ""}${formatPercent(item.variation)} respecto al periodo anterior`}
+                : `${item.variation > 0 ? "+" : ""}${formatPercent(item.variation, 2)} respecto al periodo anterior`}
             </span>
           </article>
         ))}
@@ -422,7 +396,7 @@ export function ControlCenter({
             <div
               className={`chart-frame ${
                 isMonthlySeries(series.points)
-                  ? "chart-frame-timeline"
+                ? "chart-frame-timeline"
                   : "chart-frame-categories"
               }`}
               style={
@@ -441,8 +415,9 @@ export function ControlCenter({
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis
                       dataKey="period"
-                      interval={0}
-                      tickFormatter={formatPeriodLabel}
+                      interval="preserveStartEnd"
+                      minTickGap={getMonthlyTickGap(series.points.length)}
+                      tickFormatter={formatAnalyticsAxisLabel}
                     />
                     <YAxis
                       allowDecimals={series.unit !== "count"}
@@ -453,11 +428,9 @@ export function ControlCenter({
                       }
                     />
                     <Tooltip
-                      labelFormatter={(value) => formatTablePeriodLabel(String(value))}
+                      labelFormatter={(value) => formatAnalyticsTableLabel(String(value))}
                       formatter={(value) =>
-                        series.unit === "currency"
-                          ? formatCurrency(Number(value))
-                          : formatNumber(Number(value))
+                        formatAnalyticsValue(Number(value), series.unit)
                       }
                     />
                     <Line
@@ -490,13 +463,12 @@ export function ControlCenter({
                       dataKey="period"
                       width={190}
                       tick={{ fontSize: 11 }}
-                      tickFormatter={formatPeriodLabel}
+                      tickFormatter={formatAnalyticsAxisLabel}
                     />
                     <Tooltip
+                      labelFormatter={(value) => formatAnalyticsTableLabel(String(value))}
                       formatter={(value) =>
-                        series.unit === "currency"
-                          ? formatCurrency(Number(value))
-                          : formatNumber(Number(value))
+                        formatAnalyticsValue(Number(value), series.unit)
                       }
                     />
                     <Bar
@@ -514,11 +486,9 @@ export function ControlCenter({
               <tbody>
                 {series.points.map((point) => (
                   <tr key={point.period}>
-                    <td>{formatTablePeriodLabel(point.period)}</td>
+                    <td>{formatAnalyticsTableLabel(point.period)}</td>
                     <td>
-                      {series.unit === "currency"
-                        ? formatCurrency(point.value)
-                        : formatNumber(point.value)}
+                      {formatAnalyticsValue(point.value, series.unit)}
                     </td>
                   </tr>
                 ))}
@@ -539,7 +509,9 @@ export function ControlCenter({
               <li className="activity-item" key={alert.id}>
                 <span>
                   <strong>{alert.title}</strong>
-                  <span className="muted settings-list-copy">{alert.description}</span>
+                  <span className="muted settings-list-copy">
+                    {alert.context}: {formatAnalyticsValue(alert.value, alert.unit)}
+                  </span>
                 </span>
                 {onNavigate && isModuleId(alert.targetModule) ? (
                   <button
@@ -558,7 +530,19 @@ export function ControlCenter({
 
       <details className="card metric-definitions">
         <summary>Definiciones de métricas</summary>
-        <dl>{controlCenterMetrics.map((metric) => <div key={metric.code}><dt>{metric.label}</dt><dd>{metric.formula}. Fuente: {metric.source}. Actualización: {metric.freshness}.</dd></div>)}</dl>
+        <dl>
+          {controlCenterMetrics
+            .filter((metric) => visibleMetricCodes.has(metric.code))
+            .map((metric) => (
+              <div key={metric.code}>
+                <dt>{metric.label}</dt>
+                <dd>
+                  {metric.description} {metric.interpretation} Fuente:{" "}
+                  {metric.sourceLabel}. {metric.updateFrequency}.
+                </dd>
+              </div>
+            ))}
+        </dl>
       </details>
     </main>
   );

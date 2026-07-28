@@ -57,6 +57,7 @@ import {
 } from "@/domain/payroll";
 import { permissionCatalog, type PermissionCode } from "@/domain/permissions";
 import {
+  employmentContractTypes,
   personRoleCodes,
   personStatuses,
   type Person,
@@ -67,6 +68,8 @@ import {
   projectHealthValues,
   projectInputSchema,
   projectStatuses,
+  synchronizeProjectWithTasks,
+  synchronizeProjectsWithTasks,
   type Project,
   type ProjectEvent,
   type ProjectInput,
@@ -121,8 +124,8 @@ import {
 import { generateDemoScenario } from "@/demo-data/scenario";
 
 export type GuestDemoState = {
-  version: 13;
-  scenarioVersion: 5;
+  version: 14;
+  scenarioVersion: 6;
   scenarioAnchorDate: string;
   activeModule: ModuleId;
   organizationName: string;
@@ -281,6 +284,9 @@ const personSchema = z.object({
   team: z.string().min(2).max(100),
   positionTitle: z.string().min(2).max(120),
   managerPersonId: z.string().nullable().optional(),
+  employmentContractType: z
+    .enum(employmentContractTypes)
+    .default("indefinite_ordinary"),
   status: z.enum(personStatuses),
   roleCode: z.enum(personRoleCodes),
   createdAt: z.iso.datetime(),
@@ -435,11 +441,16 @@ const guestDemoStateV12Schema = guestDemoStateV11Schema.extend({
   scenarioVersion: z.literal(4),
 });
 
-export const guestDemoStateSchema = guestDemoStateV12Schema.extend({
+const guestDemoStateV13Schema = guestDemoStateV12Schema.extend({
   version: z.literal(13),
   scenarioVersion: z.literal(5),
   scenarioAnchorDate: z.iso.date(),
   payrollParticipants: z.array(payrollParticipantSchema),
+});
+
+export const guestDemoStateSchema = guestDemoStateV13Schema.extend({
+  version: z.literal(14),
+  scenarioVersion: z.literal(6),
 });
 
 function normalizeLegacyAnalyticsModule(value: unknown): unknown {
@@ -493,6 +504,9 @@ export function parseGuestDemoState(value: unknown): GuestDemoState | null {
   const normalized = normalizeLegacyAnalyticsModule(value);
   const result = guestDemoStateSchema.safeParse(normalized);
   if (result.success) return result.data;
+
+  const version13 = guestDemoStateV13Schema.safeParse(normalized);
+  if (version13.success) return migrateVersion13(version13.data);
 
   const version12 = guestDemoStateV12Schema.safeParse(normalized);
   if (version12.success) return migrateVersion12(version12.data);
@@ -738,6 +752,7 @@ function createInitialIncidentPeopleState(): Pick<
         displayName: "Elena Martín",
         team: "Operaciones",
         positionTitle: "Responsable de operaciones",
+        employmentContractType: "indefinite_ordinary",
         status: "active",
         roleCode: "manager",
         createdAt: "2026-07-01T08:00:00.000Z",
@@ -748,6 +763,7 @@ function createInitialIncidentPeopleState(): Pick<
         displayName: "Diego Santos",
         team: "Producto",
         positionTitle: "Especialista de producto",
+        employmentContractType: "indefinite_ordinary",
         status: "active",
         roleCode: "collaborator",
         createdAt: "2026-07-02T08:00:00.000Z",
@@ -758,6 +774,7 @@ function createInitialIncidentPeopleState(): Pick<
         displayName: "Marta Soler",
         team: "Tecnología",
         positionTitle: "Desarrolladora",
+        employmentContractType: "temporary_production",
         status: "invited",
         roleCode: "collaborator",
         createdAt: "2026-07-20T08:00:00.000Z",
@@ -1092,9 +1109,25 @@ function migrateVersion12(
   );
 }
 
+function migrateVersion13(
+  state: z.infer<typeof guestDemoStateV13Schema>,
+): GuestDemoState {
+  return guestDemoStateSchema.parse(
+    addStandardScenario({
+      ...initialGuestDemoStateBase,
+      organizationName: state.organizationName,
+      activeModule: state.activeModule,
+      preferences: state.preferences,
+      savedAnalyticsViews: state.savedAnalyticsViews,
+      workspaceConfiguration: state.workspaceConfiguration,
+      scenarioAnchorDate: state.scenarioAnchorDate,
+    }),
+  );
+}
+
 const initialGuestDemoStateBase: GuestDemoState = {
-  version: 13,
-  scenarioVersion: 5,
+  version: 14,
+  scenarioVersion: 6,
   scenarioAnchorDate: new Date().toISOString().slice(0, 10),
   activeModule: "inicio",
   organizationName: "Organización Aurora",
@@ -1178,7 +1211,7 @@ const initialGuestDemoStateBase: GuestDemoState = {
 
 function addStandardScenario(base: GuestDemoState): GuestDemoState {
   const scenario = generateDemoScenario(
-    "management-platform-standard-v5",
+    "management-platform-standard-v6",
     base.scenarioAnchorDate,
   );
   const peopleById = new Map(
@@ -1435,7 +1468,7 @@ export function guestDemoReducer(
 ): GuestDemoState {
   switch (action.type) {
     case "hydrate":
-      return action.state.version === 13 ? action.state : state;
+      return action.state;
     case "navigate":
       return { ...state, activeModule: action.module };
     case "create-leave": {
@@ -1525,9 +1558,15 @@ export function guestDemoReducer(
         createdAt,
         updatedAt: createdAt,
       };
+      const tasks = [task, ...state.tasks];
       return {
         ...state,
-        tasks: [task, ...state.tasks],
+        tasks,
+        projects: synchronizeProjectsWithTasks(
+          state.projects,
+          tasks,
+          createdAt,
+        ),
         taskEvents: [
           {
             id: stableId("task-event", state),
@@ -1548,26 +1587,32 @@ export function guestDemoReducer(
       if (!current) return state;
       const createdAt = new Date().toISOString();
       const assignmentChanged = current.assigneeName !== action.input.assigneeName;
+      const tasks = state.tasks.map((task) =>
+        task.id === action.taskId
+          ? {
+              ...task,
+              ...action.input,
+              projectId: action.input.projectId ?? null,
+              projectName:
+                state.projects.find(
+                  (project) => project.id === action.input.projectId,
+                )?.name ?? null,
+              assigneePersonId:
+                state.people.find(
+                  (person) =>
+                    person.displayName === action.input.assigneeName,
+                )?.id ?? null,
+              updatedAt: createdAt,
+            }
+          : task,
+      );
       return {
         ...state,
-        tasks: state.tasks.map((task) =>
-          task.id === action.taskId
-            ? {
-                ...task,
-                ...action.input,
-                projectId: action.input.projectId ?? null,
-                projectName:
-                  state.projects.find(
-                    (project) => project.id === action.input.projectId,
-                  )?.name ?? null,
-                assigneePersonId:
-                  state.people.find(
-                    (person) =>
-                      person.displayName === action.input.assigneeName,
-                  )?.id ?? null,
-                updatedAt: createdAt,
-              }
-            : task,
+        tasks,
+        projects: synchronizeProjectsWithTasks(
+          state.projects,
+          tasks,
+          createdAt,
         ),
         taskEvents: [
           {
@@ -1591,10 +1636,16 @@ export function guestDemoReducer(
       if (!current || !canTransitionTask(current.status, action.status)) return state;
       const createdAt = new Date().toISOString();
       const updated = transitionTask(current, action.status, createdAt);
+      const tasks = state.tasks.map((task) =>
+        task.id === action.taskId ? updated : task,
+      );
       return {
         ...state,
-        tasks: state.tasks.map((task) =>
-          task.id === action.taskId ? updated : task,
+        tasks,
+        projects: synchronizeProjectsWithTasks(
+          state.projects,
+          tasks,
+          createdAt,
         ),
         taskEvents: [
           {
@@ -1677,16 +1728,21 @@ export function guestDemoReducer(
           : current.health !== parsed.data.health
             ? "health"
             : "updated";
+      const updatedProject = synchronizeProjectWithTasks(
+        {
+          ...current,
+          ...parsed.data,
+          ownerName: owner?.displayName ?? null,
+          updatedAt: createdAt,
+        },
+        state.tasks,
+        createdAt,
+      );
       return {
         ...state,
         projects: state.projects.map((project) =>
           project.id === action.projectId
-            ? {
-                ...project,
-                ...parsed.data,
-                ownerName: owner?.displayName ?? null,
-                updatedAt: createdAt,
-              }
+            ? updatedProject
             : project,
         ),
         projectEvents: [

@@ -25,7 +25,7 @@ export const STANDARD_SCENARIO_COUNTS = {
 } as const;
 
 export type DemoScenarioDefinition = {
-  scenarioVersion: 5;
+  scenarioVersion: 6;
   seed: string;
   anchorDate: string;
   generatedAt: string;
@@ -35,6 +35,11 @@ export type DemoScenarioDefinition = {
     team: string;
     positionTitle: string;
     managerPersonId: string | null;
+    employmentContractType:
+      | "indefinite_ordinary"
+      | "permanent_discontinuous"
+      | "temporary_production"
+      | "temporary_substitution";
     status: "invited" | "active" | "suspended" | "inactive";
     roleCode: "admin" | "manager" | "collaborator" | "viewer";
   }>;
@@ -181,13 +186,19 @@ export type DemoScenarioDefinition = {
 
 const isoDateSchema = z.iso.date();
 const scenarioSchema = z.object({
-  scenarioVersion: z.literal(5),
+  scenarioVersion: z.literal(6),
   seed: z.string().min(1),
   anchorDate: isoDateSchema,
   generatedAt: z.iso.datetime(),
   people: z.array(z.object({
     id: z.uuid(), displayName: z.string().min(2), team: z.string().min(2),
     positionTitle: z.string().min(2), managerPersonId: z.uuid().nullable(),
+    employmentContractType: z.enum([
+      "indefinite_ordinary",
+      "permanent_discontinuous",
+      "temporary_production",
+      "temporary_substitution",
+    ]),
     status: z.enum(["invited", "active", "suspended", "inactive"]),
     roleCode: z.enum(["admin", "manager", "collaborator", "viewer"]),
   })).length(STANDARD_SCENARIO_COUNTS.people),
@@ -317,7 +328,7 @@ function pick<T>(items: readonly T[], index: number) {
 }
 
 export function generateDemoScenario(
-  seed = "management-platform-standard-v5",
+  seed = "management-platform-standard-v6",
   anchorDate = SCENARIO_REFERENCE_DATE,
 ): DemoScenarioDefinition {
   const random = createRandom(seed);
@@ -334,6 +345,14 @@ export function generateDemoScenario(
           index === 0
             ? null
             : deterministicUuid(seed, "person", index < 6 ? 0 : index % 6),
+        employmentContractType:
+          index < 23
+            ? "indefinite_ordinary"
+            : index < 26
+              ? "permanent_discontinuous"
+              : index < 30
+                ? "temporary_production"
+                : "temporary_substitution",
         status:
           index === 29 ? "suspended" : index === 31 ? "inactive" : "active",
         roleCode:
@@ -367,13 +386,18 @@ export function generateDemoScenario(
       color: colors[index]!,
     };
   });
-  const taskStatuses = [
-    ...Array<"pending">(20).fill("pending"),
-    ...Array<"in_progress">(15).fill("in_progress"),
-    ...Array<"blocked">(5).fill("blocked"),
-    ...Array<"in_review">(10).fill("in_review"),
-    ...Array<"completed">(70).fill("completed"),
-  ];
+  const openTaskStatusesByProject = [
+    ["pending", "pending", "pending", "in_progress", "blocked", "in_review"],
+    ["pending", "pending", "in_progress", "in_progress", "in_review"],
+    ["pending", "pending", "in_progress", "blocked", "in_review"],
+    ["pending", "pending", "in_progress", "in_review"],
+    ["pending", "in_progress", "blocked", "in_review"],
+    ["pending", "in_progress", "in_review"],
+    [],
+    [],
+    [],
+    ["pending", "in_progress", "in_review"],
+  ] as const;
   const priorities = [
     ...Array<"urgent">(5).fill("urgent"),
     ...Array<"high">(25).fill("high"),
@@ -385,8 +409,15 @@ export function generateDemoScenario(
   const tasks: DemoScenarioDefinition["tasks"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.tasks }, (_, index) => {
     const createdOffset = Math.floor((index * 520) / 119);
     const createdDate = addDays(SCENARIO_START_DATE, createdOffset);
-    const status = taskStatuses[index]!;
-    const project = projects[taskProjectIndexes[index]!]!;
+    const projectIndex = taskProjectIndexes[index]!;
+    const project = projects[projectIndex]!;
+    const firstProjectTaskIndex = taskProjectIndexes.indexOf(projectIndex);
+    const localTaskIndex = index - firstProjectTaskIndex;
+    const configuredStatus = openTaskStatusesByProject[projectIndex]![
+      localTaskIndex
+    ] as DemoScenarioDefinition["tasks"][number]["status"] | undefined;
+    const status: DemoScenarioDefinition["tasks"][number]["status"] =
+      configuredStatus ?? "completed";
     const action = pick(syntheticTaskActions, index * 5 + Math.floor(random() * 3));
     const dueDate =
       status === "completed"
@@ -666,7 +697,7 @@ export function generateDemoScenario(
     }),
   );
   return {
-    scenarioVersion: 5,
+    scenarioVersion: 6,
     seed,
     anchorDate,
     generatedAt: isoAt(anchorDate, 0),
@@ -787,11 +818,53 @@ export function validateDemoScenario(value: unknown) {
   const overdueOpenTasks = openTasks.filter(
     (task) => Boolean(task.dueDate && task.dueDate < scenario.anchorDate),
   );
-  if (openTasks.length !== 50 || overdueOpenTasks.length > 6) {
+  if (openTasks.length !== 30 || overdueOpenTasks.length > 6) {
     throw new Error("Task workload is outside the balanced scenario limits");
   }
-  if (scenario.tasks.filter((task) => task.status === "blocked").length !== 5) {
-    throw new Error("The scenario must contain exactly five blocked tasks");
+  const expectedTaskStatuses = {
+    completed: 90,
+    pending: 12,
+    in_progress: 8,
+    blocked: 3,
+    in_review: 7,
+  };
+  for (const [status, count] of Object.entries(expectedTaskStatuses)) {
+    if (scenario.tasks.filter((task) => task.status === status).length !== count) {
+      throw new Error(`Unexpected task distribution for ${status}`);
+    }
+  }
+
+  const expectedContracts = {
+    indefinite_ordinary: 23,
+    permanent_discontinuous: 3,
+    temporary_production: 4,
+    temporary_substitution: 2,
+  };
+  for (const [contract, count] of Object.entries(expectedContracts)) {
+    if (
+      scenario.people.filter(
+        (person) => person.employmentContractType === contract,
+      ).length !== count
+    ) {
+      throw new Error(`Unexpected employment contract distribution for ${contract}`);
+    }
+  }
+
+  for (const project of scenario.projects) {
+    const projectTasks = scenario.tasks.filter(
+      (task) => task.projectId === project.id,
+    );
+    const completedTasks = projectTasks.filter(
+      (task) => task.status === "completed",
+    ).length;
+    const progress = Math.round((completedTasks / projectTasks.length) * 100);
+    if (
+      (progress === 100 && project.status !== "completed") ||
+      (project.status === "completed" && progress !== 100) ||
+      (project.status !== "completed" && progress > 99)
+    ) {
+      throw new Error(`Project status and progress are inconsistent for ${project.code}`);
+    }
   }
 
   const openIncidents = scenario.incidents.filter(

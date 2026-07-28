@@ -20,6 +20,7 @@ export function formatCurrency(
     currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
+    useGrouping: "always",
   }).format(amountCents / 100);
 }
 
@@ -36,6 +37,22 @@ export function formatPercent(value: number, fractionDigits = 1) {
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
   }).format(value / 100);
+}
+
+export type AnalyticsDisplayUnit =
+  | "count"
+  | "percentage"
+  | "days"
+  | "currency";
+
+export function formatAnalyticsValue(
+  value: number,
+  unit: AnalyticsDisplayUnit,
+) {
+  if (unit === "currency") return formatCurrency(value);
+  if (unit === "percentage") return formatPercent(value, 2);
+  if (unit === "days") return `${formatNumber(value, 2)} días`;
+  return formatNumber(value);
 }
 
 export function formatDate(value: string) {

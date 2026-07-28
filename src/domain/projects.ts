@@ -83,5 +83,36 @@ export function getProjectProgress(
   const completed = projectTasks.filter(
     (task) => task.status === "completed",
   ).length;
-  return Math.round((completed / projectTasks.length) * 100);
+  if (completed === projectTasks.length) return 100;
+  return Math.min(99, Math.round((completed / projectTasks.length) * 100));
+}
+
+export function synchronizeProjectWithTasks(
+  project: Project,
+  tasks: readonly { projectId?: string | null; status: string }[],
+  updatedAt = project.updatedAt,
+) {
+  const projectTasks = tasks.filter((task) => task.projectId === project.id);
+  if (projectTasks.length === 0) return project;
+
+  const isComplete = projectTasks.every((task) => task.status === "completed");
+  const nextStatus: ProjectStatus = isComplete
+    ? "completed"
+    : project.status === "completed"
+      ? "active"
+      : project.status;
+
+  return nextStatus === project.status
+    ? project
+    : { ...project, status: nextStatus, updatedAt };
+}
+
+export function synchronizeProjectsWithTasks(
+  projects: readonly Project[],
+  tasks: readonly { projectId?: string | null; status: string }[],
+  updatedAt?: string,
+) {
+  return projects.map((project) =>
+    synchronizeProjectWithTasks(project, tasks, updatedAt ?? project.updatedAt),
+  );
 }

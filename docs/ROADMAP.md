@@ -112,10 +112,11 @@
 
 ## Release status
 
-- Production: <https://management-platform-demo.vercel.app>
+- Production and canonical origin: <https://plataformagestion.app>
+- Vercel fallback: <https://management-platform-demo.vercel.app>
 - Stable branch Preview:
   <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Release target: `v1.0.0`
+- Published release: `v1.2.2`
 - Remote database: 18 ordered migrations, including the release-hardening
   migration `20260726142334_harden_rls_and_query_performance.sql`.
 - Google OAuth login, logout and protected-route redirects validated in
@@ -141,7 +142,7 @@
 - [x] Scheduled nightly integration worker with idempotent run sequences
 - [x] Centralized Analítica workspace with five business perspectives and saved views
 - [x] Editorial Changelog presentation and configurable workspace policies
-- [x] Guest state migrations through V13 with session-only persistence
+- [x] Guest state migrations through V14 with session-only persistence
 - [x] Remote Supabase migrations and validated Vercel Preview
 - [x] Production promotion from the validated Preview artifact
 - [x] RLS init-plan optimization and explicit mutation policies
@@ -163,3 +164,8 @@ Release v1.2.2 extends the operating history from January 2025 through
 17 June 2026, introduces payroll participants without individual amounts,
 adds the team organization chart and improves the responsive Analytics,
 Tasks and Incidents experiences.
+
+The post-release v1.2.2 maintenance introduces Scenario V6 without moving the
+published tag. It adds employment contract modalities, increases the completed
+task baseline, enforces project progress/state consistency and replaces
+technical analytical definitions with user-facing explanations.

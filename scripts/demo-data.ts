@@ -6,13 +6,13 @@ import {
 } from "../src/demo-data/scenario";
 
 const outputDirectory = ".demo-data";
-const scenarioPath = `${outputDirectory}/scenario-v5.json`;
-const reportPath = `${outputDirectory}/scenario-v5-report.json`;
+const scenarioPath = `${outputDirectory}/scenario-v6.json`;
+const reportPath = `${outputDirectory}/scenario-v6-report.json`;
 const command = process.argv[2] ?? "validate";
-const seed = process.env.DEMO_SCENARIO_SEED ?? "management-platform-standard-v5";
+const seed = process.env.DEMO_SCENARIO_SEED ?? "management-platform-standard-v6";
 const anchorDate = process.env.DEMO_SCENARIO_ANCHOR ?? "2026-06-17";
 const sqlMigrationPath =
-  "supabase/migrations/20260728110000_release_v1_2_2_scenario_v5.sql";
+  "supabase/migrations/20260728160000_maintenance_v1_2_2_scenario_v6.sql";
 
 async function prepareScenario() {
   const scenario = validateDemoScenario(generateDemoScenario(seed, anchorDate));
@@ -37,7 +37,7 @@ if (command === "generate") {
   const sqlMigration = await Bun.file(sqlMigrationPath).text();
   if (!sqlMigration.includes(`scenario-checksum: ${first.checksum}`)) {
     throw new Error(
-      "The Scenario V5 SQL migration checksum differs from the TypeScript catalog",
+      "The Scenario V6 SQL migration checksum differs from the TypeScript catalog",
     );
   }
   const expectedSeries = [
@@ -57,7 +57,7 @@ if (command === "generate") {
       first.report.counts[key] !== expectedCount ||
       !sqlMigration.includes(sqlMarker)
     ) {
-      throw new Error(`Scenario V5 count mismatch for ${key}`);
+      throw new Error(`Scenario V6 count mismatch for ${key}`);
     }
   }
   console.log("Scenario is valid and deterministic");

@@ -1344,6 +1344,7 @@ export type Database = {
         Row: {
           created_at: string
           display_name: string
+          employment_contract_type: string
           id: string
           manager_person_id: string | null
           organization_id: string
@@ -1357,6 +1358,7 @@ export type Database = {
         Insert: {
           created_at?: string
           display_name: string
+          employment_contract_type?: string
           id?: string
           manager_person_id?: string | null
           organization_id: string
@@ -1370,6 +1372,7 @@ export type Database = {
         Update: {
           created_at?: string
           display_name?: string
+          employment_contract_type?: string
           id?: string
           manager_person_id?: string | null
           organization_id?: string
@@ -2325,6 +2328,7 @@ export type Database = {
       restore_demo_scenario_v3: { Args: never; Returns: undefined }
       restore_demo_scenario_v4: { Args: never; Returns: undefined }
       restore_demo_scenario_v5: { Args: never; Returns: undefined }
+      restore_demo_scenario_v6: { Args: never; Returns: undefined }
       set_own_avatar_path: { Args: { target_path: string }; Returns: undefined }
       simulate_integration_run: {
         Args: {

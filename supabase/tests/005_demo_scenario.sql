@@ -30,7 +30,7 @@ select is(
       on membership.organization_id = organization.id
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
   ),
-  5,
+  6,
   'the provisioned workspace records its scenario version'
 );
 
@@ -233,8 +233,8 @@ select is(
       group by task.status
     ) distribution
   ),
-  '{"blocked": 5, "completed": 70, "in_progress": 15, "in_review": 10, "pending": 20}'::jsonb,
-  'tasks have the balanced V4 status distribution'
+  '{"blocked": 3, "completed": 90, "in_progress": 8, "in_review": 7, "pending": 12}'::jsonb,
+  'tasks have the balanced V6 status distribution'
 );
 select is(
   (
@@ -304,8 +304,8 @@ select is(
       on membership.organization_id = organization.id
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
   ),
-  5,
-  'the organization uses Scenario V5'
+  6,
+  'the organization uses Scenario V6'
 );
 
 select is(
