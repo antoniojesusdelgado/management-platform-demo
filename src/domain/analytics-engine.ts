@@ -39,15 +39,18 @@ function toIsoDate(value: Date) {
   return value.toISOString().slice(0, 10);
 }
 
-function subtractMonths(value: Date, months: number) {
-  const result = new Date(value);
-  result.setUTCMonth(result.getUTCMonth() - months);
-  return result;
+function firstDayOfRollingMonthWindow(value: Date, months: number) {
+  return new Date(Date.UTC(
+    value.getUTCFullYear(),
+    value.getUTCMonth() - (months - 1),
+    1,
+  ));
 }
 
 export function createAnalyticsWindow(
   period: AnalyticsFilter["period"],
   now = new Date(),
+  historyStart = "2025-01-01",
 ): AnalyticsWindow {
   const to = new Date(Date.UTC(
     now.getUTCFullYear(),
@@ -59,11 +62,13 @@ export function createAnalyticsWindow(
     999,
   ));
   const from =
-    period === "30d"
+    period === "all"
+      ? new Date(`${historyStart}T00:00:00.000Z`)
+      : period === "30d"
       ? new Date(to.getTime() - 29 * DAY)
       : period === "90d"
         ? new Date(to.getTime() - 89 * DAY)
-        : subtractMonths(to, period === "6m" ? 6 : 12);
+        : firstDayOfRollingMonthWindow(to, period === "6m" ? 6 : 12);
   const currentFromDay = Date.UTC(
     from.getUTCFullYear(),
     from.getUTCMonth(),
@@ -106,6 +111,7 @@ function kpi(
   context: string,
   favorableDirection: AnalyticsKpi["favorableDirection"],
   target: number | null = null,
+  hasData = true,
 ): AnalyticsKpi {
   return {
     code,
@@ -117,6 +123,7 @@ function kpi(
     sparkline: [],
     favorableDirection,
     context,
+    hasData,
   };
 }
 
@@ -169,8 +176,14 @@ function slaCompliance(incidents: Incident[], now: string) {
 }
 
 function integrationSuccess(runs: IntegrationRun[]) {
-  if (!runs.length) return 100;
-  return (runs.filter((run) => run.status === "succeeded").length / runs.length) * 100;
+  const completed = runs.filter((run) =>
+    ["succeeded", "partial", "failed"].includes(run.status),
+  );
+  if (!completed.length) return null;
+  return (
+    completed.filter((run) => run.status === "succeeded").length /
+    completed.length
+  ) * 100;
 }
 
 function financeTotals(entries: TreasuryEntry[]) {
@@ -277,11 +290,15 @@ export function buildAnalyticsSnapshot(
     within(run.periodStart, window.previous),
   );
   const currentRuns = data.integrationRuns.filter((run) =>
-    within(run.effectiveDate, window.current),
+    within(run.effectiveDate, window.current) &&
+    (!filters.service || run.connectorId === filters.service),
   );
   const previousRuns = data.integrationRuns.filter((run) =>
-    within(run.effectiveDate, window.previous),
+    within(run.effectiveDate, window.previous) &&
+    (!filters.service || run.connectorId === filters.service),
   );
+  const currentIntegrationSuccess = integrationSuccess(currentRuns);
+  const previousIntegrationSuccess = integrationSuccess(previousRuns);
   const currentLeaves = related.leaveRequests.filter(
     (leave) => leave.status === "approved" && within(leave.startDate, window.current),
   );
@@ -344,7 +361,7 @@ export function buildAnalyticsSnapshot(
       kpi("sla_compliance", "Cumplimiento SLA", slaCompliance(currentIncidents, today), slaCompliance(previousIncidents, window.previous.to), "percentage", "objetivo 92 %", "increase", 92),
       kpi("cash_margin", "Margen operativo", currentFinance.margin, previousFinance.margin, "percentage", "objetivo 10–18 %", "increase", 12),
       kpi("available_capacity", "Capacidad disponible", capacity, null, "count", "personas", "neutral"),
-      kpi("integration_success", "Éxito de integraciones", integrationSuccess(currentRuns), integrationSuccess(previousRuns), "percentage", "ejecuciones del periodo", "increase", 95),
+      kpi("integration_success", "Éxito de integraciones", currentIntegrationSuccess ?? 0, previousIntegrationSuccess, "percentage", currentIntegrationSuccess === null ? "sin ejecuciones completadas" : "ejecuciones del periodo", "increase", 95, currentIntegrationSuccess !== null),
     ],
     work: [
       kpi("completed_tasks", "Tareas completadas", currentTasks.filter((task) => task.status === "completed").length, previousTasks.filter((task) => task.status === "completed").length, "count", "en el periodo", "increase"),
@@ -368,7 +385,7 @@ export function buildAnalyticsSnapshot(
       kpi("cash_balance", "Saldo del periodo", currentFinance.balance, previousFinance.balance, "currency", "entradas menos salidas", "increase"),
       kpi("cash_margin", "Margen operativo", currentFinance.margin, previousFinance.margin, "percentage", "objetivo 10–18 %", "increase", 12),
       kpi("payroll_cost", "Coste empresa", latestPayroll?.employerCostTotalCents ?? 0, previousLatestPayroll?.employerCostTotalCents ?? 0, "currency", "último ciclo del periodo", "neutral"),
-      kpi("integration_success", "Éxito de integraciones", integrationSuccess(currentRuns), integrationSuccess(previousRuns), "percentage", "ejecuciones del periodo", "increase", 95),
+      kpi("integration_success", "Éxito de integraciones", currentIntegrationSuccess ?? 0, previousIntegrationSuccess, "percentage", currentIntegrationSuccess === null ? "sin ejecuciones completadas" : "ejecuciones del periodo", "increase", 95, currentIntegrationSuccess !== null),
     ],
   };
   const completedTasks = currentTasks.filter((task) => task.status === "completed");
@@ -395,6 +412,9 @@ export function buildAnalyticsSnapshot(
         "Tareas por estado",
         currentTasks,
         (task) => task.status,
+        filters.status
+          ? [filters.status]
+          : ["pending", "in_progress", "blocked", "in_review", "completed"],
       ),
       countSeries(
         "tasks_by_project",
@@ -403,6 +423,7 @@ export function buildAnalyticsSnapshot(
         (task) =>
           related.projects.find((project) => project.id === task.projectId)?.name ??
           "Sin proyecto",
+        related.projects.map((project) => project.name),
       ),
     ],
     people: [
@@ -418,6 +439,7 @@ export function buildAnalyticsSnapshot(
         "Personas activas por equipo",
         activePeople,
         (person) => person.team,
+        [...new Set(related.people.map((person) => person.team))],
       ),
     ],
     service: [
@@ -426,12 +448,31 @@ export function buildAnalyticsSnapshot(
         "Incidencias por estado",
         currentIncidents,
         (incident) => incident.status,
+        filters.status
+          ? [filters.status]
+          : [
+              "registered",
+              "triaged",
+              "assigned",
+              "investigating",
+              "resolved",
+              "closed",
+            ],
       ),
       countSeries(
         "incidents_by_service",
         "Incidencias por servicio",
         currentIncidents,
         (incident) => incident.affectedService ?? "Sin servicio",
+        filters.service
+          ? [filters.service]
+          : [
+              ...new Set(
+                related.incidents.map(
+                  (incident) => incident.affectedService ?? "Sin servicio",
+                ),
+              ),
+            ],
       ),
     ],
     finance: [

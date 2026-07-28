@@ -7,23 +7,25 @@ import {
   syntheticTreasuryConcepts,
 } from "@/demo-data/catalog";
 
-export const SCENARIO_REFERENCE_DATE = "2026-06-23";
-export const SCENARIO_START_DATE = "2026-01-01";
+export const SCENARIO_REFERENCE_DATE = "2026-06-17";
+export const SCENARIO_START_DATE = "2025-01-01";
 
 export const STANDARD_SCENARIO_COUNTS = {
   people: 32,
   teams: 6,
   projects: 10,
   tasks: 120,
-  leaveRequests: 72,
+  leaveRequests: 104,
   incidents: 60,
-  treasuryEntries: 240,
-  payrollRuns: 6,
-  changelogEntries: 10,
+  treasuryEntries: 360,
+  payrollRuns: 18,
+  payrollParticipants: 576,
+  integrationRuns: 72,
+  changelogEntries: 12,
 } as const;
 
 export type DemoScenarioDefinition = {
-  scenarioVersion: 4;
+  scenarioVersion: 5;
   seed: string;
   anchorDate: string;
   generatedAt: string;
@@ -32,6 +34,7 @@ export type DemoScenarioDefinition = {
     displayName: string;
     team: string;
     positionTitle: string;
+    managerPersonId: string | null;
     status: "invited" | "active" | "suspended" | "inactive";
     roleCode: "admin" | "manager" | "collaborator" | "viewer";
   }>;
@@ -141,6 +144,31 @@ export type DemoScenarioDefinition = {
       | "reviewed"
       | "closed";
   }>;
+  payrollParticipants: Array<{
+    id: string;
+    runId: string;
+    personId: string;
+    personName: string;
+    team: string;
+    positionTitle: string;
+    inclusionStatus: "included" | "excluded";
+    validationStatus: "validated" | "pending" | "review";
+  }>;
+  integrationRuns: Array<{
+    id: string;
+    connectorId: string;
+    effectiveDate: string;
+    status: "succeeded" | "partial" | "failed";
+    triggerKind: "schedule";
+    sourceSequence: number;
+    processedCount: number;
+    importedCount: number;
+    duplicateCount: number;
+    errorCount: number;
+    safeSummary: string;
+    startedAt: string;
+    finishedAt: string;
+  }>;
   changelogEntries: Array<{
     id: string;
     version: string;
@@ -153,13 +181,14 @@ export type DemoScenarioDefinition = {
 
 const isoDateSchema = z.iso.date();
 const scenarioSchema = z.object({
-  scenarioVersion: z.literal(4),
+  scenarioVersion: z.literal(5),
   seed: z.string().min(1),
   anchorDate: isoDateSchema,
   generatedAt: z.iso.datetime(),
   people: z.array(z.object({
     id: z.uuid(), displayName: z.string().min(2), team: z.string().min(2),
-    positionTitle: z.string().min(2), status: z.enum(["invited", "active", "suspended", "inactive"]),
+    positionTitle: z.string().min(2), managerPersonId: z.uuid().nullable(),
+    status: z.enum(["invited", "active", "suspended", "inactive"]),
     roleCode: z.enum(["admin", "manager", "collaborator", "viewer"]),
   })).length(STANDARD_SCENARIO_COUNTS.people),
   projects: z.array(z.object({
@@ -214,6 +243,20 @@ const scenarioSchema = z.object({
     currency: z.literal("EUR"),
     status: z.enum(["collecting", "validating", "calculated", "reviewed", "closed"]),
   })).length(STANDARD_SCENARIO_COUNTS.payrollRuns),
+  payrollParticipants: z.array(z.object({
+    id: z.uuid(), runId: z.uuid(), personId: z.uuid(), personName: z.string().min(2),
+    team: z.string().min(2), positionTitle: z.string().min(2),
+    inclusionStatus: z.enum(["included", "excluded"]),
+    validationStatus: z.enum(["validated", "pending", "review"]),
+  })).length(STANDARD_SCENARIO_COUNTS.payrollParticipants),
+  integrationRuns: z.array(z.object({
+    id: z.uuid(), connectorId: z.string().min(3), effectiveDate: isoDateSchema,
+    status: z.enum(["succeeded", "partial", "failed"]), triggerKind: z.literal("schedule"),
+    sourceSequence: z.number().int().positive(), processedCount: z.number().int().nonnegative(),
+    importedCount: z.number().int().nonnegative(), duplicateCount: z.number().int().nonnegative(),
+    errorCount: z.number().int().nonnegative(), safeSummary: z.string().min(3),
+    startedAt: z.iso.datetime(), finishedAt: z.iso.datetime(),
+  })).length(STANDARD_SCENARIO_COUNTS.integrationRuns),
   changelogEntries: z.array(z.object({
     id: z.uuid(), version: z.string(), title: z.string(), summary: z.string(),
     status: z.enum(["draft", "in_review", "published"]), publishedAt: z.iso.datetime().nullable(),
@@ -274,7 +317,7 @@ function pick<T>(items: readonly T[], index: number) {
 }
 
 export function generateDemoScenario(
-  seed = "management-platform-standard-v4",
+  seed = "management-platform-standard-v5",
   anchorDate = SCENARIO_REFERENCE_DATE,
 ): DemoScenarioDefinition {
   const random = createRandom(seed);
@@ -287,6 +330,10 @@ export function generateDemoScenario(
         displayName,
         team,
         positionTitle,
+        managerPersonId:
+          index === 0
+            ? null
+            : deterministicUuid(seed, "person", index < 6 ? 0 : index % 6),
         status:
           index === 29 ? "suspended" : index === 31 ? "inactive" : "active",
         roleCode:
@@ -304,7 +351,7 @@ export function generateDemoScenario(
   const projectHealth = ["on_track", "on_track", "on_track", "on_track", "at_risk", "off_track", "on_track", "on_track", "on_track", "on_track"] as const;
   const colors = ["#4f46e5", "#0d9488", "#d97706", "#2563eb", "#7c3aed", "#0891b2", "#16a34a", "#dc2626", "#0f766e", "#9333ea", "#0369a1", "#c2410c"];
   const projects: DemoScenarioDefinition["projects"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.projects }, (_, index) => {
-    const startDate = addDays(SCENARIO_START_DATE, index * 8);
+    const startDate = addDays(SCENARIO_START_DATE, index * 36);
     const [code, name, summary] = syntheticProjectCatalog[index]!;
     return {
       id: deterministicUuid(seed, "project", index),
@@ -316,7 +363,7 @@ export function generateDemoScenario(
       ownerPersonId: people[index % 4]!.id,
       memberIds: Array.from({ length: 6 }, (_, member) => people[(index * 3 + member) % people.length]!.id),
       startDate,
-      targetDate: notAfter(addDays(startDate, 75 + index * 4), anchorDate),
+      targetDate: notAfter(addDays(startDate, 120 + index * 8), anchorDate),
       color: colors[index]!,
     };
   });
@@ -336,13 +383,14 @@ export function generateDemoScenario(
   const taskProjectIndexes = [16, 15, 14, 13, 12, 11, 10, 9, 8, 12]
     .flatMap((count, projectIndex) => Array<number>(count).fill(projectIndex));
   const tasks: DemoScenarioDefinition["tasks"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.tasks }, (_, index) => {
-    const createdDate = addDays(SCENARIO_START_DATE, Math.floor((index * 172) / 119));
+    const createdOffset = Math.floor((index * 520) / 119);
+    const createdDate = addDays(SCENARIO_START_DATE, createdOffset);
     const status = taskStatuses[index]!;
     const project = projects[taskProjectIndexes[index]!]!;
     const action = pick(syntheticTaskActions, index * 5 + Math.floor(random() * 3));
     const dueDate =
       status === "completed"
-        ? addDays(createdDate, Math.min(12 + (index % 35), Math.max(0, 172 - Math.floor((index * 172) / 119))))
+        ? addDays(createdDate, Math.min(12 + (index % 35), Math.max(0, 532 - createdOffset)))
         : index < 6
           ? addDays(anchorDate, -(2 + index * 3))
           : anchorDate;
@@ -358,7 +406,7 @@ export function generateDemoScenario(
       createdAt: isoAt(createdDate, 8 + (index % 8)),
       updatedAt: isoAt(
         status === "completed"
-          ? addDays(createdDate, Math.min(15 + (index % 40), Math.max(0, 172 - Math.floor((index * 172) / 119))))
+          ? addDays(createdDate, Math.min(15 + (index % 40), Math.max(0, 532 - createdOffset)))
           : addDays(anchorDate, -(index % 18)),
         10,
       ),
@@ -384,20 +432,27 @@ export function generateDemoScenario(
     })),
   );
   const leaveStatuses = [
-    ...Array<"approved">(45).fill("approved"),
+    ...Array<"approved">(80).fill("approved"),
     ...Array<"submitted">(8).fill("submitted"),
-    ...Array<"draft">(5).fill("draft"),
+    ...Array<"draft">(4).fill("draft"),
     ...Array<"rejected">(6).fill("rejected"),
-    ...Array<"cancelled">(8).fill("cancelled"),
+    ...Array<"cancelled">(6).fill("cancelled"),
   ];
-  const leaveRequests: DemoScenarioDefinition["leaveRequests"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.leaveRequests }, (_, index) => {
-    const startDate = addDays(SCENARIO_START_DATE, Math.floor((index * 168) / 71));
-    const duration = Math.min(1 + (index % 8), Math.max(0, 173 - Math.floor((index * 168) / 71)));
+  const leaveByMonth = [3, 3, 4, 5, 6, 8, 10, 11, 6, 5, 4, 9, 4, 4, 5, 5, 6, 6]
+    .flatMap((count, month) => Array.from({ length: count }, (_, position) => ({ month, position })));
+  const leaveRequests: DemoScenarioDefinition["leaveRequests"] = leaveByMonth.map(({ month, position }, index) => {
+    const teamIndex = position % 6;
+    const occurrence = Math.floor(position / 6);
+    const startDate = notAfter(
+      addDays(addMonths(SCENARIO_START_DATE, month), 2 + teamIndex * 3 + occurrence * 15),
+      anchorDate,
+    );
+    const duration = index % 7 === 0 ? 1 : 2 + (index % 5);
     return {
       id: deterministicUuid(seed, "leave", index),
-      personId: people[index % 30]!.id,
+      personId: people[(teamIndex + occurrence * 6 + month * 6) % 30]!.id,
       startDate,
-      endDate: addDays(startDate, duration),
+      endDate: notAfter(addDays(startDate, duration), anchorDate),
       type: index % 5 === 0 ? "personal" : "vacation",
       reason: index % 5 === 0 ? "Gestión personal." : "Descanso anual planificado.",
       status: leaveStatuses[(index * 29) % leaveStatuses.length]!,
@@ -424,9 +479,9 @@ export function generateDemoScenario(
   const impactScopes = ["individual", "team", "workspace"] as const;
   const detectionChannels = ["monitoring", "support", "team", "automation"] as const;
   const incidents: DemoScenarioDefinition["incidents"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.incidents }, (_, index) => {
-    const createdOffset = Math.floor((index * 171) / 59);
+    const createdOffset = Math.floor((index * 520) / 59);
     const createdDate = addDays(SCENARIO_START_DATE, createdOffset);
-    const daysRemaining = Math.max(0, 173 - createdOffset);
+    const daysRemaining = Math.max(0, 532 - createdOffset);
     const status = incidentStatuses[index]!;
     const priority = incidentPriorities[(index * 17) % incidentPriorities.length]!;
     const resolved = status === "resolved" || status === "closed";
@@ -487,9 +542,9 @@ export function generateDemoScenario(
   const treasuryEntries: DemoScenarioDefinition["treasuryEntries"] = Array.from(
     { length: STANDARD_SCENARIO_COUNTS.treasuryEntries },
     (_, index) => {
-      const monthIndex = Math.floor((index * 6) / STANDARD_SCENARIO_COUNTS.treasuryEntries);
-      const monthStart = Math.ceil((monthIndex * STANDARD_SCENARIO_COUNTS.treasuryEntries) / 6);
-      const monthEnd = Math.ceil(((monthIndex + 1) * STANDARD_SCENARIO_COUNTS.treasuryEntries) / 6);
+      const monthIndex = Math.floor((index * 18) / STANDARD_SCENARIO_COUNTS.treasuryEntries);
+      const monthStart = Math.ceil((monthIndex * STANDARD_SCENARIO_COUNTS.treasuryEntries) / 18);
+      const monthEnd = Math.ceil(((monthIndex + 1) * STANDARD_SCENARIO_COUNTS.treasuryEntries) / 18);
       const monthCount = monthEnd - monthStart;
       const monthPosition = index - monthStart;
       const [concept, category] = pick(syntheticTreasuryConcepts, index * 7);
@@ -506,7 +561,7 @@ export function generateDemoScenario(
         sourceSequence: index + 1,
         entryDate: addDays(
           addMonths(SCENARIO_START_DATE, monthIndex),
-          Math.floor((monthPosition * (monthIndex === 5 ? 22 : 27)) / Math.max(1, monthCount - 1)),
+          Math.floor((monthPosition * (monthIndex === 17 ? 16 : 27)) / Math.max(1, monthCount - 1)),
         ),
         concept,
         category,
@@ -523,16 +578,69 @@ export function generateDemoScenario(
     return {
       id: deterministicUuid(seed, "payroll", index),
       periodStart,
-      periodEnd: index === 5 ? anchorDate : addDays(addMonths(periodStart, 1), -1),
+      periodEnd: index === STANDARD_SCENARIO_COUNTS.payrollRuns - 1
+        ? anchorDate
+        : addDays(addMonths(periodStart, 1), -1),
       peopleCount: 30 + Math.min(2, Math.floor(index / 7)),
       grossTotalCents: gross,
       deductionTotalCents: deductions,
       netTotalCents: gross - deductions,
       employerCostTotalCents: Math.round(gross * (1.3 + (index % 4) * 0.01)),
       currency: "EUR",
-      status: index < 4 ? "closed" : index === 4 ? "reviewed" : "validating",
+      status: index < 16 ? "closed" : index === 16 ? "reviewed" : "validating",
     };
   });
+  const payrollParticipants: DemoScenarioDefinition["payrollParticipants"] =
+    payrollRuns.flatMap((run, runIndex) =>
+      people.map((person, personIndex) => ({
+        id: deterministicUuid(seed, "payroll-participant", runIndex * people.length + personIndex),
+        runId: run.id,
+        personId: person.id,
+        personName: person.displayName,
+        team: person.team,
+        positionTitle: person.positionTitle,
+        inclusionStatus:
+          person.status === "inactive" && runIndex >= 12 ? "excluded" as const : "included" as const,
+        validationStatus:
+          runIndex === payrollRuns.length - 1 && personIndex % 11 === 0
+            ? "review" as const
+            : runIndex >= payrollRuns.length - 2 && personIndex % 7 === 0
+              ? "pending" as const
+              : "validated" as const,
+      })),
+    );
+  const connectorIds = [
+    "financial-source-a",
+    "financial-source-b",
+    "payroll-master",
+    "people-master",
+  ] as const;
+  const integrationRuns: DemoScenarioDefinition["integrationRuns"] =
+    Array.from({ length: STANDARD_SCENARIO_COUNTS.integrationRuns }, (_, index) => {
+      const monthIndex = Math.floor(index / connectorIds.length);
+      const connectorId = connectorIds[index % connectorIds.length]!;
+      const effectiveDate = notAfter(addDays(addMonths(SCENARIO_START_DATE, monthIndex), 14 + (index % 4)), anchorDate);
+      const status =
+        index % 17 === 0 ? "failed" as const : index % 7 === 0 ? "partial" as const : "succeeded" as const;
+      const processedCount = connectorId.startsWith("financial") ? 40 : connectorId === "payroll-master" ? 32 : 18;
+      const errorCount = status === "failed" ? 4 : status === "partial" ? 1 : 0;
+      const duplicateCount = connectorId.startsWith("financial") ? index % 3 : 0;
+      return {
+        id: deterministicUuid(seed, "integration-run", index),
+        connectorId,
+        effectiveDate,
+        status,
+        triggerKind: "schedule",
+        sourceSequence: monthIndex + 1,
+        processedCount,
+        importedCount: processedCount - errorCount - duplicateCount,
+        duplicateCount,
+        errorCount,
+        safeSummary: status === "succeeded" ? "Ejecución completada." : "Ejecución revisada con incidencias controladas.",
+        startedAt: isoAt(effectiveDate, 2),
+        finishedAt: isoAt(effectiveDate, 3),
+      };
+    });
   const changelogTimeline = [
     ["0.1.0", "Base de la plataforma", "Estructura inicial, navegación por módulos y permisos de acceso.", "2026-02-02"],
     ["0.2.0", "Gestión de vacaciones", "Solicitudes, aprobaciones, calendario de ausencias y trazabilidad.", "2026-02-16"],
@@ -540,10 +648,12 @@ export function generateDemoScenario(
     ["0.4.0", "Incidencias y personal", "Ciclo de atención, tiempos de resolución y directorio del equipo.", "2026-03-16"],
     ["0.5.0", "Tesorería y nóminas", "Movimientos conciliados y ciclos de nómina con información agregada.", "2026-03-30"],
     ["0.6.0", "Integraciones y automatización", "Ejecuciones programadas, control de importaciones y calidad del dato.", "2026-04-20"],
+    ["0.7.0", "Migración de datos", "Carga histórica, validaciones de calidad y restauración controlada del escenario.", "2026-04-30"],
     ["1.0.0", "Primera versión estable", "Acceso con Google, aislamiento por organización y revisión de seguridad.", "2026-05-24"],
     ["1.1.0", "Analítica y experiencia de uso", "Indicadores, filtros, perfiles y mejoras generales de accesibilidad.", "2026-06-01"],
     ["1.2.0", "Datos equilibrados y análisis dinámico", "Escenario operativo revisado, filtros comparables y presentación más consistente.", "2026-06-15"],
-    ["1.2.1", "Ajustes finales de presentación", "Acceso, gráficos, proyectos, datos y comportamiento responsive revisados.", "2026-06-23"],
+    ["1.2.1", "Ajustes finales de presentación", "Acceso, gráficos, proyectos, datos y comportamiento responsive revisados.", "2026-06-16"],
+    ["1.2.2", "Interfaz y datos revisados", "Mejoras de acceso, analítica, trabajo móvil, nóminas y estructura de equipos.", "2026-06-17"],
   ] as const;
   const changelogEntries: DemoScenarioDefinition["changelogEntries"] = changelogTimeline.map(
     ([version, title, summary, publishedDate], index) => ({
@@ -556,7 +666,7 @@ export function generateDemoScenario(
     }),
   );
   return {
-    scenarioVersion: 4,
+    scenarioVersion: 5,
     seed,
     anchorDate,
     generatedAt: isoAt(anchorDate, 0),
@@ -569,6 +679,8 @@ export function generateDemoScenario(
     incidents,
     treasuryEntries,
     payrollRuns,
+    payrollParticipants,
+    integrationRuns,
     changelogEntries,
   };
 }
@@ -589,6 +701,8 @@ export function validateDemoScenario(value: unknown) {
     scenario.incidents,
     scenario.treasuryEntries,
     scenario.payrollRuns,
+    scenario.payrollParticipants,
+    scenario.integrationRuns,
     scenario.changelogEntries,
   ]) {
     for (const record of collection) {
@@ -600,6 +714,12 @@ export function validateDemoScenario(value: unknown) {
     if (!personIds.has(project.ownerPersonId)) throw new Error("Invalid project owner");
     if (project.memberIds.some((id) => !personIds.has(id))) throw new Error("Invalid project member");
     if (project.targetDate < project.startDate) throw new Error("Invalid project date range");
+  }
+  for (const person of scenario.people) {
+    if (person.managerPersonId && !personIds.has(person.managerPersonId)) {
+      throw new Error("Invalid person manager");
+    }
+    if (person.managerPersonId === person.id) throw new Error("A person cannot manage itself");
   }
   for (const task of scenario.tasks) {
     if (!projectIds.has(task.projectId)) throw new Error("Invalid task project");
@@ -625,6 +745,12 @@ export function validateDemoScenario(value: unknown) {
       throw new Error("Payroll totals fall outside the aggregate scenario limits");
     }
   }
+  const payrollRunIds = new Set(scenario.payrollRuns.map((run) => run.id));
+  for (const participant of scenario.payrollParticipants) {
+    if (!payrollRunIds.has(participant.runId) || !personIds.has(participant.personId)) {
+      throw new Error("Invalid payroll participant relation");
+    }
+  }
 
   const operationalDates = [
     scenario.generatedAt,
@@ -644,6 +770,11 @@ export function validateDemoScenario(value: unknown) {
     ]),
     ...scenario.treasuryEntries.map((entry) => entry.entryDate),
     ...scenario.payrollRuns.flatMap((run) => [run.periodStart, run.periodEnd]),
+    ...scenario.integrationRuns.flatMap((run) => [
+      run.effectiveDate,
+      run.startedAt,
+      run.finishedAt,
+    ]),
   ].map((date) => date.slice(0, 10));
   const outsideScenarioWindow = operationalDates.find(
     (date) => date < SCENARIO_START_DATE || date > scenario.anchorDate,
@@ -675,6 +806,37 @@ export function validateDemoScenario(value: unknown) {
     scenario.incidents.filter((incident) => incident.priority === "critical").length !== 2
   ) {
     throw new Error("Incident workload is outside the balanced scenario limits");
+  }
+
+  const expectedLeaveStatuses = {
+    approved: 80,
+    submitted: 8,
+    draft: 4,
+    rejected: 6,
+    cancelled: 6,
+  };
+  for (const [status, count] of Object.entries(expectedLeaveStatuses)) {
+    if (scenario.leaveRequests.filter((request) => request.status === status).length !== count) {
+      throw new Error(`Unexpected leave request distribution for ${status}`);
+    }
+  }
+  for (const team of new Set(scenario.people.map((person) => person.team))) {
+    const teamNames = new Set(
+      scenario.people.filter((person) => person.team === team).map((person) => person.id),
+    );
+    const approved = scenario.leaveRequests.filter(
+      (request) => request.status === "approved" && teamNames.has(request.personId),
+    );
+    for (
+      let cursor = new Date(`${SCENARIO_START_DATE}T00:00:00Z`);
+      cursor <= new Date(`${scenario.anchorDate}T00:00:00Z`);
+      cursor.setUTCDate(cursor.getUTCDate() + 1)
+    ) {
+      const day = cursor.toISOString().slice(0, 10);
+      if (approved.filter((request) => request.startDate <= day && request.endDate >= day).length > 2) {
+        throw new Error(`Too many simultaneous leave requests for ${team} on ${day}`);
+      }
+    }
   }
 
   const pendingTreasury = scenario.treasuryEntries.filter((entry) =>
@@ -758,6 +920,8 @@ export function createScenarioReport(scenario: DemoScenarioDefinition) {
       incidents: scenario.incidents.length,
       treasuryEntries: scenario.treasuryEntries.length,
       payrollRuns: scenario.payrollRuns.length,
+      payrollParticipants: scenario.payrollParticipants.length,
+      integrationRuns: scenario.integrationRuns.length,
       changelogEntries: scenario.changelogEntries.length,
       estimatedTraceRecords:
         scenario.people.length +
@@ -769,6 +933,8 @@ export function createScenarioReport(scenario: DemoScenarioDefinition) {
         scenario.incidents.length * 2 +
         scenario.treasuryEntries.length * 2 +
         scenario.payrollRuns.length * 2 +
+        scenario.payrollParticipants.length +
+        scenario.integrationRuns.length * 2 +
         scenario.changelogEntries.length * 2,
     },
     coverage: {

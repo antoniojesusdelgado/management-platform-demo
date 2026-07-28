@@ -131,8 +131,8 @@
 - [x] Safe role simulation that cannot elevate real permissions
 - [x] Projects portfolio with health, ownership, members and activity
 - [x] Project references in Tasks and Incidents
-- [x] Deterministic V4 scenario with 32 people, 10 projects, 120 tasks,
-  72 leave requests, 60 incidents and 240 Treasury entries
+- [x] Deterministic V5 scenario with 32 people, 10 projects, 120 tasks,
+  104 leave requests, 60 incidents and 360 Treasury entries
 - [x] Offline aggregate adapters and documented data provenance
 - [x] SaaS OAuth screen, original visual assets and self-service profile
 - [x] Accessible Kanban, keyboard/list alternative, swimlanes, WIP and
@@ -141,7 +141,7 @@
 - [x] Scheduled nightly integration worker with idempotent run sequences
 - [x] Centralized Analítica workspace with five business perspectives and saved views
 - [x] Editorial Changelog presentation and configurable workspace policies
-- [x] Guest state migrations through V12 with session-only persistence
+- [x] Guest state migrations through V13 with session-only persistence
 - [x] Remote Supabase migrations and validated Vercel Preview
 - [x] Production promotion from the validated Preview artifact
 - [x] RLS init-plan optimization and explicit mutation policies
@@ -158,3 +158,8 @@ Release v1.2.1 aligns the access screen with the approved composition, selects
 line or horizontal bar charts according to the data, standardizes dialogs and
 introduces Scenario V4 with a fixed public timeline from January through
 23 June 2026.
+
+Release v1.2.2 extends the operating history from January 2025 through
+17 June 2026, introduces payroll participants without individual amounts,
+adds the team organization chart and improves the responsive Analytics,
+Tasks and Incidents experiences.

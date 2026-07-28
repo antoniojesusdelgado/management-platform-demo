@@ -112,6 +112,7 @@ export function AppShell({
           <strong>Plataforma de gestión</strong>
           <br />
           {mode === "guest" ? "Sesión local" : organizationName}
+          <small>© 2026 Antonio Jesús Delgado Briones.</small>
         </div>
       </aside>
 

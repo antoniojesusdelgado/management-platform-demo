@@ -52,6 +52,7 @@ const views: Array<[AnalyticsView, string]> = [
 ];
 
 function formatKpi(kpi: AnalyticsKpi) {
+  if (kpi.hasData === false) return "Sin datos";
   if (kpi.unit === "currency") return formatCurrency(kpi.value);
   if (kpi.unit === "percentage") return formatPercent(kpi.value);
   if (kpi.unit === "days") return `${formatNumber(kpi.value, 1)} días`;
@@ -71,17 +72,41 @@ const monthFormatter = new Intl.DateTimeFormat("es-ES", {
   month: "short",
   timeZone: "UTC",
 });
+const fullMonthFormatter = new Intl.DateTimeFormat("es-ES", {
+  month: "long",
+  timeZone: "UTC",
+});
+const userLabels: Record<string, string> = {
+  blocked: "Bloqueadas",
+  completed: "Completadas",
+  in_progress: "En curso",
+  in_review: "En revisión",
+  pending: "Pendientes",
+  assigned: "Asignadas",
+  closed: "Cerradas",
+  investigating: "En investigación",
+  registered: "Registradas",
+  resolved: "Resueltas",
+  triaged: "Clasificadas",
+};
 
 function isMonthlySeries(points: Array<{ period: string; value: number }>) {
   return points.every((point) => /^\d{4}-\d{2}$/.test(point.period));
 }
 
 function formatPeriodLabel(period: string) {
-  if (!/^\d{4}-\d{2}$/.test(period)) return period;
+  if (!/^\d{4}-\d{2}$/.test(period)) return userLabels[period] ?? period;
   const [year, month] = period.split("-").map(Number);
   return monthFormatter
     .format(new Date(Date.UTC(year!, month! - 1, 1)))
     .replace(".", "");
+}
+
+function formatTablePeriodLabel(period: string) {
+  if (!/^\d{4}-\d{2}$/.test(period)) return userLabels[period] ?? period;
+  const [year, month] = period.split("-").map(Number);
+  const label = fullMonthFormatter.format(new Date(Date.UTC(year!, month! - 1, 1)));
+  return `${label.charAt(0).toLocaleUpperCase("es")}${label.slice(1)}`;
 }
 
 export function ControlCenter({
@@ -96,11 +121,11 @@ export function ControlCenter({
   savedViews = [],
   onSaveView,
   onNavigate,
-  referenceDate = new Date("2026-06-23T12:00:00.000Z"),
+  referenceDate = new Date(),
 }: Props) {
   const [activeView, setActiveView] = useState<AnalyticsView>("executive");
   const [filters, setFilters] = useState<AnalyticsFilter>({
-    period: "12m",
+    period: "all",
     comparison: "previous_period",
     projectId: null,
     team: null,
@@ -142,6 +167,7 @@ export function ControlCenter({
         .map((incident) => incident.affectedService)
         .filter((value): value is string => Boolean(value)),
     ),
+    ...integrationRuns.map((run) => run.connectorId),
   ].sort();
   const statusOptions =
     activeView === "service"
@@ -211,6 +237,7 @@ export function ControlCenter({
               updateFilter("period", event.target.value as AnalyticsFilter["period"])
             }
           >
+            <option value="all">Todo el histórico</option>
             <option value="30d">30 días</option>
             <option value="90d">90 días</option>
             <option value="6m">6 meses</option>
@@ -290,7 +317,17 @@ export function ControlCenter({
             >
               <option value="all">Todos los servicios</option>
               {services.map((service) => (
-                <option value={service} key={service}>{service}</option>
+                <option value={service} key={service}>
+                  {service === "financial-source-a"
+                    ? "Fuente financiera A"
+                    : service === "financial-source-b"
+                      ? "Fuente financiera B"
+                      : service === "payroll-master"
+                        ? "Maestro de nóminas"
+                        : service === "people-master"
+                          ? "Maestro de personal"
+                          : service}
+                </option>
               ))}
             </select>
           </label>
@@ -416,7 +453,7 @@ export function ControlCenter({
                       }
                     />
                     <Tooltip
-                      labelFormatter={(value) => formatPeriodLabel(String(value))}
+                      labelFormatter={(value) => formatTablePeriodLabel(String(value))}
                       formatter={(value) =>
                         series.unit === "currency"
                           ? formatCurrency(Number(value))
@@ -453,6 +490,7 @@ export function ControlCenter({
                       dataKey="period"
                       width={190}
                       tick={{ fontSize: 11 }}
+                      tickFormatter={formatPeriodLabel}
                     />
                     <Tooltip
                       formatter={(value) =>
@@ -476,7 +514,7 @@ export function ControlCenter({
               <tbody>
                 {series.points.map((point) => (
                   <tr key={point.period}>
-                    <td>{formatPeriodLabel(point.period)}</td>
+                    <td>{formatTablePeriodLabel(point.period)}</td>
                     <td>
                       {series.unit === "currency"
                         ? formatCurrency(point.value)

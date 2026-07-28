@@ -12,6 +12,7 @@ import {
   type PayrollCurrency,
   type PayrollEvent,
   type PayrollInput,
+  type PayrollParticipant,
   type PayrollRun,
   type PayrollStatus,
 } from "@/domain/payroll";
@@ -20,6 +21,7 @@ import { formatCurrency, formatDate, formatDateTime, formatPercent } from "@/lib
 type Props = {
   runs: PayrollRun[];
   events: PayrollEvent[];
+  participants?: PayrollParticipant[];
   pending?: boolean;
   loadError?: string;
   canManage?: boolean;
@@ -54,7 +56,7 @@ function toForm(run: PayrollRun): FormState {
   return { periodStart: run.periodStart, periodEnd: run.periodEnd, peopleCount: String(run.peopleCount), grossTotal: (run.grossTotalCents / 100).toFixed(2), deductionTotal: (run.deductionTotalCents / 100).toFixed(2), currency: run.currency, notes: run.notes };
 }
 
-export function PayrollWorkspace({ runs, events, pending = false, loadError, canManage = true, onCreate, onUpdate, onTransition }: Props) {
+export function PayrollWorkspace({ runs, events, participants = [], pending = false, loadError, canManage = true, onCreate, onUpdate, onTransition }: Props) {
   const [status, setStatus] = useState<"all" | PayrollStatus>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -62,7 +64,25 @@ export function PayrollWorkspace({ runs, events, pending = false, loadError, can
   const [form, setForm] = useState<FormState>(emptyForm());
   const [formError, setFormError] = useState("");
   const [note, setNote] = useState("");
+  const [participantSearch, setParticipantSearch] = useState("");
+  const [participantTeam, setParticipantTeam] = useState("all");
+  const [participantPage, setParticipantPage] = useState(1);
   const selected = runs.find((run) => run.id === selectedId) ?? null;
+  const selectedParticipants = useMemo(
+    () =>
+      participants.filter(
+        (participant) =>
+          participant.runId === selectedId &&
+          (participantTeam === "all" || participant.team === participantTeam) &&
+          `${participant.personName} ${participant.positionTitle}`
+            .toLocaleLowerCase("es")
+            .includes(participantSearch.trim().toLocaleLowerCase("es")),
+      ),
+    [participantSearch, participantTeam, participants, selectedId],
+  );
+  const participantTeams = [...new Set(participants.map((participant) => participant.team))].sort();
+  const participantPageCount = Math.max(1, Math.ceil(selectedParticipants.length / 8));
+  const visibleParticipants = selectedParticipants.slice((participantPage - 1) * 8, participantPage * 8);
   const visibleRuns = useMemo(() => runs.filter((run) => status === "all" || run.status === status), [runs, status]);
   const orderedRuns = [...runs].sort((a, b) =>
     b.periodStart.localeCompare(a.periodStart),
@@ -146,6 +166,20 @@ export function PayrollWorkspace({ runs, events, pending = false, loadError, can
       <section className="cards-grid payroll-detail-metrics" aria-label="Totales del ciclo"><article className="card payroll-detail-metric"><span className="muted">Bruto</span><strong>{money(selected.grossTotalCents, selected.currency)}</strong></article><article className="card payroll-detail-metric"><span className="muted">Deducciones</span><strong>{money(selected.deductionTotalCents, selected.currency)}</strong></article><article className="card payroll-detail-metric"><span className="muted">Neto</span><strong>{money(payrollNetTotal(selected), selected.currency)}</strong></article><article className="card payroll-detail-metric"><span className="muted">Coste empresa</span><strong>{money(selected.employerCostTotalCents ?? Math.round(selected.grossTotalCents * 1.315), selected.currency)}</strong></article></section>
       <div className="metadata-strip"><span>Control de totales <strong>{selected.netTotalCents === selected.grossTotalCents - selected.deductionTotalCents ? "Correcto" : "Revisar"}</strong></span><span>Variación de personas <strong>Dentro de umbral</strong></span></div>
       {selected.notes ? <p>{selected.notes}</p> : null}{canManage && selected.status === "collecting" ? <button className="button button-secondary" type="button" onClick={() => openEdit(selected)}>Editar recopilación</button> : null}
+      <section className="section-block payroll-participants">
+        <div className="section-heading">
+          <div><h3>Personas incluidas</h3><p className="muted">Estado de inclusión y validación, sin importes individuales.</p></div>
+          <span className="status-chip">{selectedParticipants.length} personas</span>
+        </div>
+        <div className="payroll-participant-filters">
+          <label className="field">Buscar<input value={participantSearch} onChange={(event) => { setParticipantSearch(event.target.value); setParticipantPage(1); }} placeholder="Nombre o puesto" /></label>
+          <label className="field">Equipo<select value={participantTeam} onChange={(event) => { setParticipantTeam(event.target.value); setParticipantPage(1); }}><option value="all">Todos los equipos</option>{participantTeams.map((team) => <option key={team}>{team}</option>)}</select></label>
+        </div>
+        <div className="payroll-participant-list">
+          {visibleParticipants.map((participant) => <article key={participant.id}><span><strong>{participant.personName}</strong><small>{participant.positionTitle} · {participant.team}</small></span><span className="status">{participant.inclusionStatus === "included" ? "Incluida" : "Excluida"}</span><span className="status">{participant.validationStatus === "validated" ? "Validada" : participant.validationStatus === "pending" ? "Pendiente" : "Revisar"}</span></article>)}
+        </div>
+        {participantPageCount > 1 ? <div className="pagination"><button className="button button-secondary" type="button" disabled={participantPage === 1} onClick={() => setParticipantPage((page) => page - 1)}>Anterior</button><span>Página {participantPage} de {participantPageCount}</span><button className="button button-secondary" type="button" disabled={participantPage === participantPageCount} onClick={() => setParticipantPage((page) => page + 1)}>Siguiente</button></div> : null}
+      </section>
       {canManage && selected.status !== "closed" ? <section className="section-block"><h3>Siguiente control</h3><label className="field transition-note-field">Nota de decisión<textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="Describe la comprobación agregada realizada." /></label><div className="task-actions">{payrollStatuses.filter((item) => canTransitionPayroll(selected.status, item)).map((item) => <button className="button button-primary" type="button" disabled={pending || note.trim().length < 3} onClick={() => transition(item)} key={item}>Marcar como {statusLabels[item].toLocaleLowerCase("es")}</button>)}</div></section> : null}
       <section className="section-block"><h3>Trazabilidad</h3><ul className="request-timeline">{events.filter((event) => event.runId === selected.id).map((event) => <li key={event.id}><span className="timeline-dot" /><div><strong>{event.note}</strong><p className="muted">{event.actorName} · {formatDateTime(event.createdAt)}</p></div></li>)}</ul></section>
     </Dialog.Content> : null}</Dialog.Portal></Dialog.Root>

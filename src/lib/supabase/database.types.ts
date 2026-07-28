@@ -1044,6 +1044,7 @@ export type Database = {
           id: string
           last_active_at: string
           name: string
+          scenario_anchor_date: string
           scenario_version: number | null
           slug: string
           updated_at: string
@@ -1053,6 +1054,7 @@ export type Database = {
           id?: string
           last_active_at?: string
           name: string
+          scenario_anchor_date?: string
           scenario_version?: number | null
           slug: string
           updated_at?: string
@@ -1062,6 +1064,7 @@ export type Database = {
           id?: string
           last_active_at?: string
           name?: string
+          scenario_anchor_date?: string
           scenario_version?: number | null
           slug?: string
           updated_at?: string
@@ -1216,6 +1219,58 @@ export type Database = {
           },
         ]
       }
+      payroll_participants: {
+        Row: {
+          created_at: string
+          id: string
+          inclusion_status: string
+          organization_id: string
+          person_id: string
+          run_id: string
+          validation_status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inclusion_status: string
+          organization_id: string
+          person_id: string
+          run_id: string
+          validation_status: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inclusion_status?: string
+          organization_id?: string
+          person_id?: string
+          run_id?: string
+          validation_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_participants_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_participants_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_participants_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payroll_runs: {
         Row: {
           created_at: string
@@ -1290,6 +1345,7 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          manager_person_id: string | null
           organization_id: string
           position_title: string
           profile_id: string | null
@@ -1302,6 +1358,7 @@ export type Database = {
           created_at?: string
           display_name: string
           id?: string
+          manager_person_id?: string | null
           organization_id: string
           position_title?: string
           profile_id?: string | null
@@ -1314,6 +1371,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          manager_person_id?: string | null
           organization_id?: string
           position_title?: string
           profile_id?: string | null
@@ -1323,6 +1381,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "people_manager_person_id_fkey"
+            columns: ["manager_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "people_organization_id_fkey"
             columns: ["organization_id"]
@@ -2259,6 +2324,7 @@ export type Database = {
       }
       restore_demo_scenario_v3: { Args: never; Returns: undefined }
       restore_demo_scenario_v4: { Args: never; Returns: undefined }
+      restore_demo_scenario_v5: { Args: never; Returns: undefined }
       set_own_avatar_path: { Args: { target_path: string }; Returns: undefined }
       simulate_integration_run: {
         Args: {

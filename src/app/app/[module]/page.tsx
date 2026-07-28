@@ -8,7 +8,7 @@ import type { Person, PersonEvent } from "@/domain/people";
 import type { Project, ProjectEvent } from "@/domain/projects";
 import type { ChangelogEntry, ChangelogEvent } from "@/domain/changelog";
 import type { TreasuryCurrency, TreasuryEntry, TreasuryEvent } from "@/domain/treasury";
-import type { PayrollCurrency, PayrollEvent, PayrollRun } from "@/domain/payroll";
+import type { PayrollCurrency, PayrollEvent, PayrollParticipant, PayrollRun } from "@/domain/payroll";
 import type { DataQualityIssue, IntegrationConnector, IntegrationRun, SavedAnalyticsView } from "@/domain/integrations";
 import type { PermissionCode } from "@/domain/permissions";
 import { createDefaultModuleSettings, type AdminAuditEvent, type ConfigurableRole, type ModuleSetting, type WorkspaceInvitation, type WorkspaceMembership } from "@/domain/settings";
@@ -97,6 +97,11 @@ export default async function AppModulePage({
     .select("display_name,alias,avatar_path")
     .eq("id", access.userId)
     .single();
+  const { data: currentOrganization } = await profileClient
+    .from("organizations")
+    .select("scenario_anchor_date")
+    .eq("id", access.organizationId)
+    .single();
   const signedAvatar = currentProfile?.avatar_path
     ? await profileClient.storage
         .from("profile-avatars")
@@ -133,6 +138,7 @@ export default async function AppModulePage({
   let treasuryLoadError: string | undefined;
   let canManageTreasury = false;
   let payrollRuns: PayrollRun[] = [];
+  let payrollParticipants: PayrollParticipant[] = [];
   let payrollEvents: PayrollEvent[] = [];
   let payrollLoadError: string | undefined;
   let canManagePayroll = false;
@@ -251,7 +257,7 @@ export default async function AppModulePage({
   ) {
     const supabase = await createClient();
     const [peopleResult, eventsResult] = await Promise.all([
-      supabase.from("people").select("id,display_name,team,position_title,status,role_code,created_at,updated_at").eq("organization_id", access.organizationId).order("display_name"),
+      supabase.from("people").select("id,display_name,team,position_title,status,role_code,manager_person_id,created_at,updated_at").eq("organization_id", access.organizationId).order("display_name"),
       supabase.from("people_events").select("id,person_id,kind,note,created_at,actor:profiles!people_events_actor_profile_id_fkey(display_name)").eq("organization_id", access.organizationId).order("created_at", { ascending: false }).limit(100),
     ]);
     if (peopleResult.error || eventsResult.error) peopleLoadError = "Vuelve a intentarlo. Si el problema continúa, revisa la conexión local.";
@@ -262,6 +268,7 @@ export default async function AppModulePage({
       positionTitle: person.position_title,
       status: person.status,
       roleCode: person.role_code,
+      managerPersonId: person.manager_person_id,
       createdAt: person.created_at,
       updatedAt: person.updated_at,
     }));
@@ -351,13 +358,30 @@ export default async function AppModulePage({
   if (module === "nominas") {
     canManagePayroll = await hasWorkspacePermission("payroll.runs.manage");
     const supabase = await createClient();
-    const [runsResult, eventsResult] = await Promise.all([
+    const [runsResult, eventsResult, participantsResult] = await Promise.all([
       supabase.from("payroll_runs").select("id,period_start,period_end,people_count,gross_total_cents,deduction_total_cents,net_total_cents,employer_cost_total_cents,currency,notes,status,created_at,updated_at,creator:profiles!payroll_runs_created_by_fkey(display_name)").eq("organization_id", access.organizationId).order("period_start", { ascending: false }),
       supabase.from("payroll_events").select("id,run_id,kind,from_status,to_status,note,created_at,actor:profiles!payroll_events_actor_profile_id_fkey(display_name)").eq("organization_id", access.organizationId).order("created_at", { ascending: false }).limit(150),
+      supabase.from("payroll_participants").select("id,run_id,person_id,inclusion_status,validation_status,person:people!payroll_participants_person_id_fkey(display_name,team,position_title)").eq("organization_id", access.organizationId).order("created_at"),
     ]);
+    if (participantsResult.error) payrollLoadError = "Vuelve a intentarlo. Si el problema continúa, revisa tus permisos o la conexión local.";
     if (runsResult.error || eventsResult.error) payrollLoadError = "Vuelve a intentarlo. Si el problema continúa, revisa tus permisos o la conexión local.";
     payrollRuns = (runsResult.data ?? []).map((run) => ({ id: run.id, periodStart: run.period_start, periodEnd: run.period_end, peopleCount: run.people_count, grossTotalCents: run.gross_total_cents, deductionTotalCents: run.deduction_total_cents, netTotalCents: run.net_total_cents ?? run.gross_total_cents - run.deduction_total_cents, employerCostTotalCents: run.employer_cost_total_cents ?? undefined, currency: run.currency as PayrollCurrency, notes: run.notes, status: run.status, createdBy: (run.creator as unknown as { display_name: string }).display_name, createdAt: run.created_at, updatedAt: run.updated_at }));
     payrollEvents = (eventsResult.data ?? []).map((event) => ({ id: String(event.id), runId: event.run_id, kind: event.kind as PayrollEvent["kind"], fromStatus: event.from_status, toStatus: event.to_status, note: event.note, actorName: (event.actor as unknown as { display_name: string } | null)?.display_name ?? "Sistema", createdAt: event.created_at }));
+    payrollParticipants = (participantsResult.data ?? []).map((participant) => {
+      const person = participant.person as unknown as { display_name: string; team: string; position_title: string };
+      return {
+        id: participant.id,
+        runId: participant.run_id,
+        personId: participant.person_id,
+        personName: person.display_name,
+        team: person.team,
+        positionTitle: person.position_title,
+        inclusionStatus:
+          participant.inclusion_status as PayrollParticipant["inclusionStatus"],
+        validationStatus:
+          participant.validation_status as PayrollParticipant["validationStatus"],
+      };
+    });
   }
 
   if (
@@ -602,6 +626,10 @@ export default async function AppModulePage({
     <AuthenticatedApp
       activeModule={module}
       organizationName={access.organizationName}
+      scenarioAnchorDate={
+        currentOrganization?.scenario_anchor_date ??
+        new Date().toISOString().slice(0, 10)
+      }
       avatarUrl={signedAvatar?.data?.signedUrl ?? null}
       displayName={currentProfile?.alias ?? currentProfile?.display_name}
       leaveRequests={leaveRequests}
@@ -634,6 +662,7 @@ export default async function AppModulePage({
       treasuryLoadError={treasuryLoadError}
       canManageTreasury={canManageTreasury}
       payrollRuns={payrollRuns}
+      payrollParticipants={payrollParticipants}
       payrollEvents={payrollEvents}
       payrollLoadError={payrollLoadError}
       canManagePayroll={canManagePayroll}

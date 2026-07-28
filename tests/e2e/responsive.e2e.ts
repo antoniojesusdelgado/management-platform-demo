@@ -95,7 +95,7 @@ test("access and every module avoid global horizontal overflow at release sizes"
     await page.setViewportSize(viewport);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(
-      page.getByRole("heading", { name: "Accede a la plataforma", level: 1 }),
+      page.getByRole("heading", { name: "Gestión diaria en un solo lugar", level: 1 }),
     ).toBeVisible();
     await expect(page.getByRole("link", { name: "Probar sin iniciar sesión" })).toBeVisible();
     await expectNoGlobalHorizontalOverflow(page);

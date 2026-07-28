@@ -40,6 +40,7 @@ type TasksWorkspaceProps = {
   assigneeOptions?: string[];
   projectOptions?: Array<{ id: string; name: string }>;
   currentUserName?: string;
+  referenceDate?: string;
   onCreate: (input: TaskInput) => boolean | Promise<boolean>;
   onUpdate: (taskId: string, input: TaskInput) => boolean | Promise<boolean>;
   onTransition: (
@@ -92,13 +93,14 @@ export function TasksWorkspace({
   assigneeOptions = defaultAssignees,
   projectOptions = [],
   currentUserName = "Usuario invitado",
+  referenceDate = new Date().toISOString().slice(0, 10),
   onCreate,
   onUpdate,
   onTransition,
   onComment,
   onDependency,
 }: TasksWorkspaceProps) {
-  const today = "2026-06-23";
+  const today = referenceDate;
   const [statusFilter, setStatusFilter] = useState<"all" | TaskStatus>("all");
   const [priorityFilter, setPriorityFilter] = useState<"all" | TaskPriority>("all");
   const [assigneeFilter, setAssigneeFilter] = useState("all");

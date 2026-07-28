@@ -30,6 +30,7 @@ type Props = {
   events: IncidentEvent[];
   assigneeOptions?: string[];
   projectOptions?: Array<{ id: string; name: string }>;
+  referenceDate?: string;
   pending?: boolean;
   loadError?: string;
   onCreate: (input: IncidentInput) => boolean | Promise<boolean>;
@@ -80,6 +81,7 @@ export function IncidentsWorkspace({
   events,
   assigneeOptions = defaultAssignees,
   projectOptions = [],
+  referenceDate = new Date().toISOString(),
   pending = false,
   loadError,
   onCreate,
@@ -115,7 +117,9 @@ export function IncidentsWorkspace({
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
   );
-  const overdue = incidents.filter((item) => isIncidentOverdue(item)).length;
+  const overdue = incidents.filter((item) =>
+    isIncidentOverdue(item, referenceDate),
+  ).length;
 
   function openCreate() {
     setEditingId(null);
@@ -269,7 +273,7 @@ export function IncidentsWorkspace({
           {filtered.length ? (
             pagedIncidents.map((item) => (
               <button
-                className="task-row"
+                className="task-row incident-row"
                 type="button"
                 key={item.id}
                 onClick={() => setSelectedId(item.id)}

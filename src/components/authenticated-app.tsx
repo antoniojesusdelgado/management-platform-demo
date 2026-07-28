@@ -21,7 +21,7 @@ import {
   updateProjectAction,
 } from "@/app/app/project-actions";
 import { createChangelogAction, transitionChangelogAction, updateChangelogAction } from "@/app/app/changelog-actions";
-import { createInvitationAction, renameOrganizationAction, restoreDemoScenarioV4Action, updateMembershipAction, updateModuleSettingAction, updateRoleMetadataAction, updateRolePermissionsAction, updateWorkspaceConfigurationAction } from "@/app/app/settings-actions";
+import { createInvitationAction, renameOrganizationAction, restoreDemoScenarioV5Action, updateMembershipAction, updateModuleSettingAction, updateRoleMetadataAction, updateRolePermissionsAction, updateWorkspaceConfigurationAction } from "@/app/app/settings-actions";
 import { createTreasuryAction, transitionTreasuryAction, updateTreasuryAction } from "@/app/app/treasury-actions";
 import { createPayrollAction, transitionPayrollAction, updatePayrollAction } from "@/app/app/payroll-actions";
 import { simulateIntegrationAction } from "@/app/app/integration-actions";
@@ -67,7 +67,7 @@ import type {
   TaskStatus,
 } from "@/domain/tasks";
 import type { TreasuryEntry, TreasuryEvent, TreasuryInput, TreasuryStatus } from "@/domain/treasury";
-import type { PayrollEvent, PayrollInput, PayrollRun, PayrollStatus } from "@/domain/payroll";
+import type { PayrollEvent, PayrollInput, PayrollParticipant, PayrollRun, PayrollStatus } from "@/domain/payroll";
 import type { DataQualityIssue, IntegrationConnector, IntegrationRun, SavedAnalyticsView } from "@/domain/integrations";
 import {
   defaultWorkspaceConfiguration,
@@ -77,6 +77,7 @@ import {
 type AuthenticatedAppProps = {
   activeModule: ModuleId;
   organizationName: string;
+  scenarioAnchorDate: string;
   avatarUrl?: string | null;
   displayName?: string;
   leaveRequests?: LeaveRequest[];
@@ -109,6 +110,7 @@ type AuthenticatedAppProps = {
   treasuryLoadError?: string;
   canManageTreasury?: boolean;
   payrollRuns?: PayrollRun[];
+  payrollParticipants?: PayrollParticipant[];
   payrollEvents?: PayrollEvent[];
   payrollLoadError?: string;
   canManagePayroll?: boolean;
@@ -130,6 +132,7 @@ type AuthenticatedAppProps = {
 export function AuthenticatedApp({
   activeModule,
   organizationName,
+  scenarioAnchorDate,
   avatarUrl,
   displayName,
   leaveRequests = [],
@@ -162,6 +165,7 @@ export function AuthenticatedApp({
   treasuryLoadError,
   canManageTreasury = false,
   payrollRuns = [],
+  payrollParticipants = [],
   payrollEvents = [],
   payrollLoadError,
   canManagePayroll = false,
@@ -183,7 +187,7 @@ export function AuthenticatedApp({
   const [pending, startTransition] = useTransition();
   const [localName, setLocalName] = useState(organizationName);
   const [summaryAnchor] = useState(
-    () => new Date("2026-06-23T12:00:00.000Z"),
+    () => new Date(`${scenarioAnchorDate}T12:00:00.000Z`),
   );
 
   function performAction<T = undefined>(
@@ -254,6 +258,7 @@ export function AuthenticatedApp({
         payrollRuns={payrollRuns}
         integrationRuns={integrationRuns}
         savedViews={savedAnalyticsViews}
+        referenceDate={summaryAnchor}
         onSaveView={(view) =>
           performAction(
             () =>
@@ -317,6 +322,7 @@ export function AuthenticatedApp({
         projectOptions={projects.map(({ id, name }) => ({ id, name }))}
         assigneeOptions={taskAssignees}
         currentUserName={currentUserName}
+        referenceDate={scenarioAnchorDate}
         pending={pending}
         loadError={taskLoadError}
         onCreate={(input: TaskInput) =>
@@ -349,13 +355,13 @@ export function AuthenticatedApp({
       />
     );
   } else if (activeModule === "incidencias") {
-    content = <IncidentsWorkspace incidents={incidents} events={incidentEvents} assigneeOptions={incidentAssignees} projectOptions={projects.map(({ id, name }) => ({ id, name }))} pending={pending} loadError={incidentLoadError} onCreate={(input: IncidentInput) => performAction(() => createIncidentAction(input), "Incidencia registrada")} onUpdate={(id: string, input: IncidentInput) => performAction(() => updateIncidentAction(id, input), "Incidencia actualizada")} onTransition={(id: string, status: IncidentStatus, note: string) => performAction(() => transitionIncidentAction({ incidentId: id, status, note }), "Estado actualizado")} />;
+    content = <IncidentsWorkspace incidents={incidents} events={incidentEvents} assigneeOptions={incidentAssignees} projectOptions={projects.map(({ id, name }) => ({ id, name }))} referenceDate={`${scenarioAnchorDate}T12:00:00.000Z`} pending={pending} loadError={incidentLoadError} onCreate={(input: IncidentInput) => performAction(() => createIncidentAction(input), "Incidencia registrada")} onUpdate={(id: string, input: IncidentInput) => performAction(() => updateIncidentAction(id, input), "Incidencia actualizada")} onTransition={(id: string, status: IncidentStatus, note: string) => performAction(() => transitionIncidentAction({ incidentId: id, status, note }), "Estado actualizado")} />;
   } else if (activeModule === "proyectos") {
     content = <ProjectsWorkspace projects={projects} events={projectEvents} people={people} tasks={tasks} incidents={incidents} pending={pending} loadError={projectsLoadError} canManage={canManageProjects} onCreate={(input: ProjectInput) => performAction(() => createProjectAction(input), "Proyecto creado")} onUpdate={(id: string, input: ProjectInput) => performAction(() => updateProjectAction(id, input), "Proyecto actualizado")} />;
   } else if (activeModule === "personal") {
     content = (
       <>
-        <PeopleWorkspace people={people} events={peopleEvents} leaveRequests={leaveRequests} pending={pending} loadError={peopleLoadError} onCreate={(input: PersonInput) => performAction(() => createPersonAction(input), "Perfil añadido")} onUpdate={(id: string, input: PersonInput) => performAction(() => updatePersonAction(id, input), "Perfil actualizado")} />
+        <PeopleWorkspace people={people} events={peopleEvents} leaveRequests={leaveRequests} referenceDate={scenarioAnchorDate} pending={pending} loadError={peopleLoadError} onCreate={(input: PersonInput) => performAction(() => createPersonAction(input), "Perfil añadido")} onUpdate={(id: string, input: PersonInput) => performAction(() => updatePersonAction(id, input), "Perfil actualizado")} />
         <IntegrationsCenter connectors={integrationConnectors} runs={integrationRuns} issues={dataQualityIssues} kind="people" pending={pending} canManage={canManageIntegrations} onSimulate={(connectorId) => performAction(() => simulateIntegrationAction(connectorId), "Sincronización completada")} />
       </>
     );
@@ -371,12 +377,12 @@ export function AuthenticatedApp({
   } else if (activeModule === "nominas") {
     content = (
       <>
-        <PayrollWorkspace runs={payrollRuns} events={payrollEvents} pending={pending} loadError={payrollLoadError} canManage={canManagePayroll} onCreate={(input: PayrollInput) => performAction(() => createPayrollAction(input), "Ciclo creado")} onUpdate={(id: string, input: PayrollInput) => performAction(() => updatePayrollAction(id, input), "Recopilación agregada actualizada")} onTransition={(id: string, status: PayrollStatus, note: string) => performAction(() => transitionPayrollAction(id, status, note), "Control de Nóminas registrado")} />
+        <PayrollWorkspace runs={payrollRuns} participants={payrollParticipants} events={payrollEvents} pending={pending} loadError={payrollLoadError} canManage={canManagePayroll} onCreate={(input: PayrollInput) => performAction(() => createPayrollAction(input), "Ciclo creado")} onUpdate={(id: string, input: PayrollInput) => performAction(() => updatePayrollAction(id, input), "Recopilación agregada actualizada")} onTransition={(id: string, status: PayrollStatus, note: string) => performAction(() => transitionPayrollAction(id, status, note), "Control de Nóminas registrado")} />
         <IntegrationsCenter connectors={integrationConnectors} runs={integrationRuns} issues={dataQualityIssues} kind="payroll" pending={pending} canManage={canManageIntegrations} onSimulate={(connectorId) => performAction(() => simulateIntegrationAction(connectorId), "Sincronización agregada completada")} />
       </>
     );
   } else if (activeModule === "configuracion") {
-    content = canManageSettings ? <SettingsWorkspace organizationName={localName} configuration={workspaceConfiguration} moduleSettings={moduleSettings} roles={roles} memberships={memberships} invitations={invitations} auditEvents={adminAuditEvents} pending={pending} loadError={settingsLoadError} onRenameOrganization={(name: string) => performAction(() => renameOrganizationAction(name), "Identidad actualizada").then((ok) => { if (ok) setLocalName(name); return ok; })} onUpdateConfiguration={(configuration) => performAction(() => updateWorkspaceConfigurationAction(configuration), "Políticas actualizadas")} onUpdateModule={(moduleId: ModuleId, enabled: boolean, sortOrder: number) => performAction(() => updateModuleSettingAction({ moduleId, enabled, sortOrder }), "Módulo actualizado")} onUpdateRoleMetadata={(roleId: string, name: string, color: string) => performAction(() => updateRoleMetadataAction(roleId, name, color), "Rol actualizado")} onUpdateRolePermissions={(roleId: string, permissions: PermissionCode[]) => performAction(() => updateRolePermissionsAction(roleId, permissions), "Permisos actualizados")} onCreateInvitation={(email: string, roleId: string) => performAction(() => createInvitationAction(email, roleId), "Invitación creada sin envío externo")} onUpdateMembership={(membershipId: string, roleId: string, status: WorkspaceMembershipStatus) => performAction(() => updateMembershipAction(membershipId, roleId, status), "Acceso actualizado")} onRestoreDataset={() => performAction(() => restoreDemoScenarioV4Action(), "Datos restablecidos")} /> : <main className="workspace" id="main-content"><div className="page-heading"><div><p className="eyebrow">Administración</p><h1>Configuración</h1><p className="lede">Tu rol no permite realizar cambios administrativos en esta organización.</p></div></div><div className="inline-alert" role="status"><strong>Configuración en modo lectura.</strong><span>Solicita el permiso estable <code>settings.workspace.manage</code> a una persona administradora.</span></div></main>;
+    content = canManageSettings ? <SettingsWorkspace organizationName={localName} configuration={workspaceConfiguration} moduleSettings={moduleSettings} roles={roles} memberships={memberships} invitations={invitations} auditEvents={adminAuditEvents} pending={pending} loadError={settingsLoadError} onRenameOrganization={(name: string) => performAction(() => renameOrganizationAction(name), "Identidad actualizada").then((ok) => { if (ok) setLocalName(name); return ok; })} onUpdateConfiguration={(configuration) => performAction(() => updateWorkspaceConfigurationAction(configuration), "Políticas actualizadas")} onUpdateModule={(moduleId: ModuleId, enabled: boolean, sortOrder: number) => performAction(() => updateModuleSettingAction({ moduleId, enabled, sortOrder }), "Módulo actualizado")} onUpdateRoleMetadata={(roleId: string, name: string, color: string) => performAction(() => updateRoleMetadataAction(roleId, name, color), "Rol actualizado")} onUpdateRolePermissions={(roleId: string, permissions: PermissionCode[]) => performAction(() => updateRolePermissionsAction(roleId, permissions), "Permisos actualizados")} onCreateInvitation={(email: string, roleId: string) => performAction(() => createInvitationAction(email, roleId), "Invitación creada sin envío externo")} onUpdateMembership={(membershipId: string, roleId: string, status: WorkspaceMembershipStatus) => performAction(() => updateMembershipAction(membershipId, roleId, status), "Acceso actualizado")} onRestoreDataset={() => performAction(() => restoreDemoScenarioV5Action(), "Datos restablecidos")} /> : <main className="workspace" id="main-content"><div className="page-heading"><div><p className="eyebrow">Administración</p><h1>Configuración</h1><p className="lede">Tu rol no permite realizar cambios administrativos en esta organización.</p></div></div><div className="inline-alert" role="status"><strong>Configuración en modo lectura.</strong><span>Solicita el permiso estable <code>settings.workspace.manage</code> a una persona administradora.</span></div></main>;
   } else {
     content = (
       <ModuleWorkspace

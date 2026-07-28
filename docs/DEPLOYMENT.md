@@ -156,3 +156,15 @@ organizations on V3, and records `demo.scenario.v4_restored` in the audit log.
 The delivery sequence is unchanged: local reset and pgTAP, application checks,
 Preview QA, remote migration dry run, compatible migration, promotion of the
 validated Preview artifact, production smoke test, tag and GitHub Release.
+
+## Release v1.2.2
+
+Release `v1.2.2` is developed on
+`codex/management-platform-v1-2-2`. Scenario V5 extends the fictional
+operating interval from 1 January 2025 through 17 June 2026, adds
+non-monetary payroll participants and the people hierarchy, and restores V4
+organizations once with an audit event.
+
+This document records the intended delivery sequence only. No remote migration,
+Preview, production promotion, tag or GitHub Release is performed until the
+local result has been reviewed and each external operation is authorized.

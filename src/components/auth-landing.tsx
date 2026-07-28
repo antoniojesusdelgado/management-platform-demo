@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { LoginButton } from "@/app/login/login-button";
 import { getWorkspaceAccess } from "@/lib/auth";
+import { LegalFooter } from "@/components/legal-footer";
 
 const errorMessages = {
   oauth:
@@ -24,26 +25,29 @@ export async function AuthLanding({ errorCode }: AuthLandingProps) {
 
   return (
     <main className="oauth-page">
+      <header className="oauth-header">
+        <Link className="oauth-brand" href="/" aria-label="Plataforma de gestión">
+          <Image src="/brand-symbol.svg" alt="" width={48} height={48} priority />
+          <strong>Plataforma de gestión</strong>
+          <span aria-hidden="true" />
+          <small>Aplicación de demostración</small>
+        </Link>
+      </header>
       <section className="oauth-showcase" aria-labelledby="login-title">
         <div className="oauth-showcase-inner">
-          <Link className="oauth-brand" href="/" aria-label="Plataforma de gestión">
-            <Image
-              src="/brand-symbol.svg"
-              alt=""
-              width={62}
-              height={62}
-              priority
-            />
-            <span>
-              <strong>Plataforma de gestión</strong>
-              <small>Aplicación de demostración</small>
-            </span>
-          </Link>
           <div className="oauth-showcase-copy">
-            <h1 id="login-title">Accede a la plataforma</h1>
+            <h1 id="login-title">
+              Gestión diaria
+              <br />
+              en un solo lugar
+            </h1>
             <p>
-              Inicia sesión con Google para guardar tus cambios en un espacio
-              personal, o explora la demo.
+              Gestiona proyectos, tareas, vacaciones e incidencias desde una
+              plataforma centralizada.
+            </p>
+            <p>
+              Mantén el control operativo y la información organizada para
+              tomar mejores decisiones.
             </p>
           </div>
           <p className="oauth-data-notice">
@@ -101,9 +105,11 @@ export async function AuthLanding({ errorCode }: AuthLandingProps) {
           <p className="oauth-legal">
             Al continuar aceptas el uso técnico de la sesión descrito en{" "}
             <a href="/privacidad">Privacidad</a>. Consulta también la{" "}
-            <a href="/procedencia-datos">procedencia de los datos</a>.
+            <a href="/procedencia-datos">procedencia de los datos</a> y el{" "}
+            <a href="/aviso-legal">aviso legal</a>.
           </p>
         </div>
+        <LegalFooter />
       </section>
     </main>
   );

@@ -46,10 +46,13 @@ import {
   payrollCurrencies,
   payrollInputSchema,
   payrollStatuses,
+  payrollParticipantInclusionStatuses,
+  payrollParticipantValidationStatuses,
   transitionPayrollRun,
   type PayrollEvent,
   type PayrollInput,
   type PayrollRun,
+  type PayrollParticipant,
   type PayrollStatus,
 } from "@/domain/payroll";
 import { permissionCatalog, type PermissionCode } from "@/domain/permissions";
@@ -118,8 +121,9 @@ import {
 import { generateDemoScenario } from "@/demo-data/scenario";
 
 export type GuestDemoState = {
-  version: 12;
-  scenarioVersion: 4;
+  version: 13;
+  scenarioVersion: 5;
+  scenarioAnchorDate: string;
   activeModule: ModuleId;
   organizationName: string;
   leaveRequests: LeaveRequest[];
@@ -144,6 +148,7 @@ export type GuestDemoState = {
   treasuryEntries: TreasuryEntry[];
   treasuryEvents: TreasuryEvent[];
   payrollRuns: PayrollRun[];
+  payrollParticipants: PayrollParticipant[];
   payrollEvents: PayrollEvent[];
   integrationConnectors: IntegrationConnector[];
   integrationRuns: IntegrationRun[];
@@ -275,6 +280,7 @@ const personSchema = z.object({
   displayName: z.string().min(2).max(100),
   team: z.string().min(2).max(100),
   positionTitle: z.string().min(2).max(120),
+  managerPersonId: z.string().nullable().optional(),
   status: z.enum(personStatuses),
   roleCode: z.enum(personRoleCodes),
   createdAt: z.iso.datetime(),
@@ -350,6 +356,16 @@ const payrollEventSchema = z.object({
   fromStatus: z.enum(payrollStatuses).nullable(), toStatus: z.enum(payrollStatuses), note: z.string().min(3).max(1_000),
   actorName: z.string().min(1), createdAt: z.iso.datetime(),
 });
+const payrollParticipantSchema = z.object({
+  id: z.string().min(1),
+  runId: z.string().min(1),
+  personId: z.string().min(1),
+  personName: z.string().min(2),
+  team: z.string().min(2),
+  positionTitle: z.string().min(2),
+  inclusionStatus: z.enum(payrollParticipantInclusionStatuses),
+  validationStatus: z.enum(payrollParticipantValidationStatuses),
+});
 
 const guestDemoStateV6Schema = guestDemoStateV5Schema.extend({
   version: z.literal(6),
@@ -414,9 +430,16 @@ const guestDemoStateV11Schema = guestDemoStateV10Schema.extend({
   scenarioVersion: z.literal(3),
 });
 
-export const guestDemoStateSchema = guestDemoStateV11Schema.extend({
+const guestDemoStateV12Schema = guestDemoStateV11Schema.extend({
   version: z.literal(12),
   scenarioVersion: z.literal(4),
+});
+
+export const guestDemoStateSchema = guestDemoStateV12Schema.extend({
+  version: z.literal(13),
+  scenarioVersion: z.literal(5),
+  scenarioAnchorDate: z.iso.date(),
+  payrollParticipants: z.array(payrollParticipantSchema),
 });
 
 function normalizeLegacyAnalyticsModule(value: unknown): unknown {
@@ -470,6 +493,9 @@ export function parseGuestDemoState(value: unknown): GuestDemoState | null {
   const normalized = normalizeLegacyAnalyticsModule(value);
   const result = guestDemoStateSchema.safeParse(normalized);
   if (result.success) return result.data;
+
+  const version12 = guestDemoStateV12Schema.safeParse(normalized);
+  if (version12.success) return migrateVersion12(version12.data);
 
   const version11 = guestDemoStateV11Schema.safeParse(normalized);
   if (version11.success) return migrateVersion11(version11.data);
@@ -1051,13 +1077,30 @@ function migrateVersion11(
   );
 }
 
+function migrateVersion12(
+  state: z.infer<typeof guestDemoStateV12Schema>,
+): GuestDemoState {
+  return guestDemoStateSchema.parse(
+    addStandardScenario({
+      ...initialGuestDemoStateBase,
+      organizationName: state.organizationName,
+      activeModule: state.activeModule,
+      preferences: state.preferences,
+      savedAnalyticsViews: state.savedAnalyticsViews,
+      workspaceConfiguration: state.workspaceConfiguration,
+    }),
+  );
+}
+
 const initialGuestDemoStateBase: GuestDemoState = {
-  version: 12,
-  scenarioVersion: 4,
+  version: 13,
+  scenarioVersion: 5,
+  scenarioAnchorDate: new Date().toISOString().slice(0, 10),
   activeModule: "inicio",
   organizationName: "Organización Aurora",
   integrationConnectors: createDefaultIntegrationConnectors(),
   integrationRuns: [],
+  payrollParticipants: [],
   dataQualityIssues: [],
   preferences: {
     simulatedRole: null,
@@ -1134,7 +1177,10 @@ const initialGuestDemoStateBase: GuestDemoState = {
 };
 
 function addStandardScenario(base: GuestDemoState): GuestDemoState {
-  const scenario = generateDemoScenario();
+  const scenario = generateDemoScenario(
+    "management-platform-standard-v5",
+    base.scenarioAnchorDate,
+  );
   const peopleById = new Map(
     scenario.people.map((person) => [person.id, person]),
   );
@@ -1311,6 +1357,7 @@ function addStandardScenario(base: GuestDemoState): GuestDemoState {
         updatedAt: scenario.generatedAt,
       })),
     ],
+    payrollParticipants: [...scenario.payrollParticipants],
     payrollEvents: [
       ...scenario.payrollRuns.map((run) => ({
         id: `event-${run.id}`,
@@ -1323,6 +1370,7 @@ function addStandardScenario(base: GuestDemoState): GuestDemoState {
         createdAt: scenario.generatedAt,
       })),
     ],
+    integrationRuns: [...scenario.integrationRuns],
     changelogEntries: [
       ...scenario.changelogEntries.map((entry) => ({
         ...entry,
@@ -1345,9 +1393,14 @@ function addStandardScenario(base: GuestDemoState): GuestDemoState {
   };
 }
 
-export const initialGuestDemoState = addStandardScenario(
-  initialGuestDemoStateBase,
-);
+export function createInitialGuestDemoState(anchorDate = new Date().toISOString().slice(0, 10)) {
+  return addStandardScenario({
+    ...structuredClone(initialGuestDemoStateBase),
+    scenarioAnchorDate: anchorDate,
+  });
+}
+
+export const initialGuestDemoState = createInitialGuestDemoState();
 
 function stableId(prefix: string, state: GuestDemoState) {
   return `${prefix}-${String(
@@ -1382,7 +1435,7 @@ export function guestDemoReducer(
 ): GuestDemoState {
   switch (action.type) {
     case "hydrate":
-      return action.state.version === 12 ? action.state : state;
+      return action.state.version === 13 ? action.state : state;
     case "navigate":
       return { ...state, activeModule: action.module };
     case "create-leave": {
@@ -2115,7 +2168,7 @@ export function guestDemoReducer(
       };
     }
     case "reset":
-      return structuredClone(initialGuestDemoState);
+      return createInitialGuestDemoState();
     default:
       return state;
   }

@@ -3,15 +3,14 @@
 Public, full-stack SaaS demonstration for documenting modular operations,
 permissions and process automation with synthetic data.
 
-The repository is an independent technical reconstruction. Fundación
-Cibervoluntarios is professional context for the portfolio case study only:
-this codebase does not reproduce its internal source code, data, screens,
-workflows or infrastructure.
+The repository is an independent technical reconstruction. It does not
+reproduce third-party source code, data, screens, workflows, brands or
+infrastructure.
 
 ## Scope
 
-- Nine modules: Home, Leave, Tasks, Incidents, Treasury, Payroll, People,
-  Changelog and Settings.
+- Eleven modules: Home, Leave, Analytics, Projects, Tasks, Incidents, Treasury,
+  Payroll, People, Changelog and Settings.
 - Complete verticals for Leave, Tasks, Incidents, People, Changelog, Settings,
   Treasury and Payroll.
 - A public guest demo at `/demo/embed`, isolated from Supabase and persisted
@@ -52,9 +51,9 @@ git diff --check
 Local Supabase validation additionally requires Docker:
 
 ```powershell
-bunx supabase db start
-bunx supabase db reset --local
-bunx supabase test db --local
+bunx supabase start
+bunx supabase db reset
+bunx supabase test db
 bunx supabase db lint --local --level warning --fail-on error
 ```
 
@@ -72,6 +71,7 @@ Supabase project. Never commit `.env.local`.
 | `NEXT_PUBLIC_SUPABASE_URL` | Browser | Independent project URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Browser | Publishable project key |
 | `PORTFOLIO_ORIGIN` | Server/build | Only allowed iframe ancestor |
+| `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL` | Browser | Public privacy contact |
 
 No OpenAI key is required at runtime. AI tools are part of the documented
 development workflow, not a product dependency.
@@ -89,6 +89,8 @@ checklist.
 See:
 
 - [Architecture](docs/ARCHITECTURE.md)
+- [Technical case study](docs/TECHNICAL-CASE-STUDY.md)
+- [Third-party licenses](docs/THIRD-PARTY-LICENSES.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Permissions](docs/PERMISSIONS.md)
 - [Process maps](docs/PROCESS-MAPS.md)

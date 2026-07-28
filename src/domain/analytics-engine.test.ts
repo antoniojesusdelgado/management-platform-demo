@@ -118,10 +118,16 @@ describe("analytics engine", () => {
       data,
       { ...filters, period: "12m" },
       "executive",
-      new Date("2026-06-23T12:00:00Z"),
+      new Date("2026-06-17T12:00:00Z"),
     );
 
     expect(snapshot.series[0]?.points.map((point) => point.period)).toEqual([
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
       "2026-01",
       "2026-02",
       "2026-03",

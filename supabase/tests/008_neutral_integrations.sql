@@ -51,17 +51,26 @@ select lives_ok(
   'an authorized user can run a neutral simulation'
 );
 select is(
-  (select count(*) from public.integration_runs),
+  (select count(*) from public.integration_runs where trigger_kind = 'manual'),
   1::bigint,
   'the simulation creates one run'
 );
 select is(
-  (select processed_count from public.integration_runs),
+  (
+    select processed_count
+    from public.integration_runs
+    where trigger_kind = 'manual'
+  ),
   36,
   'the financial simulation records its processed volume'
 );
 select is(
-  (select count(*) from public.integration_run_items),
+  (
+    select count(*)
+    from public.integration_run_items item
+    join public.integration_runs run on run.id = item.run_id
+    where run.trigger_kind = 'manual'
+  ),
   36::bigint,
   'every processed record has a safe run item'
 );
