@@ -4,7 +4,7 @@ import { IconLoader2 } from "@tabler/icons-react";
 import Image from "next/image";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { isSupabaseConfigured, publicEnv } from "@/lib/env";
+import { isSupabaseConfigured } from "@/lib/env";
 
 export function LoginButton() {
   const [loading, setLoading] = useState(false);
@@ -14,11 +14,10 @@ export function LoginButton() {
     if (!configured) return;
     setLoading(true);
     const supabase = createClient();
-    const appOrigin = publicEnv.appUrl ?? window.location.origin;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${appOrigin}/auth/callback?next=/app/inicio`,
+        redirectTo: `${window.location.origin}/auth/callback?next=/app/inicio`,
       },
     });
 
