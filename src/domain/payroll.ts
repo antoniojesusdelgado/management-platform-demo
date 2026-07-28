@@ -48,6 +48,27 @@ export type PayrollCheck = {
   summary: string;
 };
 
+export const payrollParticipantInclusionStatuses = [
+  "included",
+  "excluded",
+] as const;
+export const payrollParticipantValidationStatuses = [
+  "validated",
+  "pending",
+  "review",
+] as const;
+
+export type PayrollParticipant = {
+  id: string;
+  runId: string;
+  personId: string;
+  personName: string;
+  team: string;
+  positionTitle: string;
+  inclusionStatus: (typeof payrollParticipantInclusionStatuses)[number];
+  validationStatus: (typeof payrollParticipantValidationStatuses)[number];
+};
+
 export type PayrollEvent = {
   id: string;
   runId: string;

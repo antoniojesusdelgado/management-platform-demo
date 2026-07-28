@@ -17,7 +17,7 @@ import {
   IconLock,
   IconMessage,
 } from "@tabler/icons-react";
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import { InitialsAvatar } from "@/components/initials-avatar";
 import {
   canTransitionTask,
@@ -231,6 +231,7 @@ export function TaskKanban({
   onMove,
   onWipLimitChange,
 }: TaskKanbanProps) {
+  const [mobileStatus, setMobileStatus] = useState<TaskStatus>("pending");
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor),
@@ -251,14 +252,20 @@ export function TaskKanban({
       collisionDetection={closestCorners}
       onDragEnd={(event) => void handleDragEnd(event)}
     >
+      <label className="kanban-mobile-status">
+        Estado
+        <select value={mobileStatus} onChange={(event) => setMobileStatus(event.target.value as TaskStatus)}>
+          {taskStatuses.map((status) => <option value={status} key={status}>{statusLabels[status]}</option>)}
+        </select>
+      </label>
       <div className="kanban-board">
         {lanes.map((lane) => (
           <section className="kanban-swimlane" key={lane}>
             {swimlane !== "none" ? <h3>{lane}</h3> : null}
             <div className="kanban-columns">
               {taskStatuses.map((status) => (
+                <div className={`kanban-column-slot${status === mobileStatus ? " is-mobile-active" : ""}`} key={status}>
                 <KanbanColumn
-                  key={status}
                   lane={lane}
                   status={status}
                   tasks={tasks.filter(
@@ -274,6 +281,7 @@ export function TaskKanban({
                   onMove={onMove}
                   onWipLimitChange={onWipLimitChange}
                 />
+                </div>
               ))}
             </div>
           </section>

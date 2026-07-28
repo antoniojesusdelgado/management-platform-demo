@@ -1,5 +1,5 @@
 export type AnalyticsFilter = {
-  period: "30d" | "90d" | "6m" | "12m";
+  period: "all" | "30d" | "90d" | "6m" | "12m";
   comparison: "previous_period" | "none";
   projectId: string | null;
   team: string | null;
@@ -18,6 +18,7 @@ export type AnalyticsKpi = {
   sparkline: number[];
   favorableDirection: "increase" | "decrease" | "neutral";
   context: string;
+  hasData?: boolean;
 };
 
 export type AnalyticsWindow = {

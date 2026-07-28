@@ -2,7 +2,7 @@ import { mkdir } from "node:fs/promises";
 import { chromium } from "@playwright/test";
 
 const baseUrl = process.env.PRODUCT_CAPTURE_ORIGIN ?? "http://127.0.0.1:3210";
-const outputDirectory = ".artifacts/release-v1.2.1";
+const outputDirectory = ".artifacts/release-v1.2.2";
 const modules = [
   ["Vacaciones", "vacaciones"],
   ["Analítica", "analitica"],
@@ -98,6 +98,23 @@ try {
         await page.locator('[role="dialog"]:visible').waitFor();
         await page.screenshot({
           path: `${outputDirectory}/personal-dialogo-${viewport.name}.png`,
+          animations: "disabled",
+        });
+        await page.keyboard.press("Escape");
+
+        await page.getByRole("button", { name: "Organigrama" }).click();
+        await page.waitForTimeout(250);
+        await page.screenshot({
+          path: `${outputDirectory}/organigrama-${viewport.name}.png`,
+          animations: "disabled",
+        });
+      }
+
+      if (slug === "nominas") {
+        await page.locator(".treasury-row").first().click();
+        await page.locator('[role="dialog"]:visible').waitFor();
+        await page.screenshot({
+          path: `${outputDirectory}/nominas-dialogo-${viewport.name}.png`,
           animations: "disabled",
         });
         await page.keyboard.press("Escape");

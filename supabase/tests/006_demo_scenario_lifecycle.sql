@@ -88,7 +88,7 @@ select is(
       select organization_id from public.memberships where profile_id = auth.uid()
     )
   ),
-  241::bigint,
+  361::bigint,
   'the temporary Treasury record is visible before restoration'
 );
 select lives_ok(
@@ -107,7 +107,7 @@ select is(
       select organization_id from public.memberships where profile_id = auth.uid()
     )
   ),
-  240::bigint,
+  360::bigint,
   'module restoration returns Treasury to its standard volume'
 );
 select is(

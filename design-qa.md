@@ -1,31 +1,67 @@
-# Design QA — v1.2.1
+# Design QA — acceso v1.2.2
 
-## Reference
+## Evidencias
 
-- Approved access design: `C:\Users\anton\Downloads\Imagen generada 1.png`
-- Reference viewport: 1486 × 1058 px
-- Final comparison: `.artifacts/release-v1.2.1/acceso-comparison.png`
+- Verdad visual: `C:\Users\anton\Downloads\OAuth Front-End.png`.
+- Implementación: `artifacts/release-v1.2.2/access-implementation-final.png`.
+- Comparación conjunta: `artifacts/release-v1.2.2/access-comparison.png`.
+- Ruta y estado: `/`, sesión sin autenticar y OAuth no configurado en local.
+- Viewport CSS: `1488 × 1058 px`.
+- Densidad: `1×`.
+- Imagen de referencia: `1488 × 1058 px`.
+- Captura de implementación: `1488 × 1058 px`.
+- Normalización: no fue necesario escalar para la comparación.
 
-## Visual review
+## Superficies revisadas
 
-- Access: the brand, heading, supporting copy and data notice align with the approved left panel. The existing access card and both authentication paths remain unchanged.
-- Navigation: the desktop module trigger is removed; the mobile menu trigger remains available.
-- Analytics: tabs wrap without a visible scrollbar, monthly series use line charts and categorical series use horizontal bars with complete labels.
-- Projects: cards expose project status while health remains secondary in the detail.
-- Dialogs: headers and close controls remain fixed while dialog bodies scroll independently.
-- Treasury and payroll: summaries use consistent hierarchy, tabular figures and separated metric labels and values.
-- Settings: related actions have explicit spacing and destructive actions are visually separated.
+- Tipografía: jerarquía, peso, saltos de línea, altura de línea y alineación de
+  marca, titular, texto descriptivo, botones y textos legales.
+- Espaciado: cabecera de 100 px, división 50/50, posición y dimensiones de la
+  tarjeta, ritmos verticales y márgenes del bloque izquierdo.
+- Color: navy de cabecera, blanco del bloque de presentación, gris del panel,
+  bordes neutrales y acento azul.
+- Assets: símbolo original del producto e icono oficial de Google, sin
+  sustituciones dibujadas en CSS.
+- Contenido: los textos y acciones coinciden con la referencia. El aviso legal
+  y el copyright amplían la referencia por un requisito explícito del cierre.
 
-## Responsive review
+## Comparación e iteraciones
 
-Reviewed at 320, 360, 390, 768, 1024 and 1440 px through the Playwright responsive suite and release captures.
+### Iteración 1 — bloqueada
 
-- No global horizontal overflow.
-- Mobile navigation remains operable.
-- Charts and their accessible tables remain readable.
-- Dialog close controls and actions remain accessible.
-- Settings action groups stack on narrow screens.
+- [P1] El titular izquierdo y el título de la tarjeta tenían un peso demasiado
+  ligero.
+- [P2] La tarjeta estaba desplazada 30 px hacia la derecha.
+- [P2] La cabecera de la tarjeta estaba alineada a la izquierda y el ritmo
+  vertical no coincidía con la referencia.
 
-## Result
+Correcciones: pesos de texto ajustados, tarjeta desplazada al eje de la
+referencia, contenido centrado y espaciado vertical normalizado.
 
-Passed for release validation.
+Evidencia posterior: `artifacts/release-v1.2.2/access-implementation-02.png`.
+
+### Iteración 2 — bloqueada
+
+- [P2] El titular se repartía en tres líneas o incorporaba «en» en la primera
+  línea según el ancho disponible.
+- [P2] El borde de la acción invitada no utilizaba el acento azul aprobado.
+
+Correcciones: salto editorial explícito después de «Gestión diaria», tamaño y
+altura de línea ajustados, y borde azul en la acción secundaria.
+
+Evidencia posterior:
+`artifacts/release-v1.2.2/access-implementation-final.png`.
+
+### Iteración final — aprobada
+
+La composición conjunta confirma que no quedan diferencias P0, P1 o P2 en los
+cinco frentes obligatorios. El copyright y los enlaces legales permanecen fuera
+de la tarjeta, discretos y alineados al pie, por requisito funcional. No fue
+necesaria una comparación adicional por regiones: todos los elementos críticos
+son legibles a escala completa en la composición conjunta.
+
+Interacciones primarias verificadas en navegador: carga de `/`, presencia de
+Google, enlace de acceso invitado y enlaces legales. La consola no mostró
+errores de aplicación durante la captura.
+
+final result: passed

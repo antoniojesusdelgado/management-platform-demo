@@ -108,9 +108,14 @@ test("renders complete monthly and categorical Analytics series", async ({
 
   const timelineChart = page.locator(".chart-frame-timeline").first();
   await expect(timelineChart).toBeVisible();
+  const timelineTable = page
+    .getByRole("table", {
+      name: "Alternativa tabular: tareas completadas por mes",
+    })
+    .locator("tbody tr");
   await expect(
     timelineChart.locator(".recharts-xAxis .recharts-cartesian-axis-tick"),
-  ).toHaveCount(6);
+  ).toHaveCount(await timelineTable.count());
 
   await page
     .getByRole("button", { name: "Proyectos y tareas", exact: true })
@@ -353,6 +358,31 @@ test("creates, closes and restores an aggregated Payroll cycle", async ({ page }
   await expect(
     page.locator(".treasury-row").filter({ hasText: "20 personas" }).first(),
   ).toContainText("Cerrado");
+});
+
+test("shows payroll participants without amounts and opens the team chart", async ({
+  page,
+}, testInfo) => {
+  const mobile = testInfo.project.name === "mobile";
+  await navigateToModule(page, "Nóminas", mobile);
+  await page.locator(".treasury-row").first().click();
+  const payrollDetail = page.locator('[role="dialog"]:visible');
+  await expect(
+    payrollDetail.getByRole("heading", { name: "Personas incluidas" }),
+  ).toBeVisible();
+  await expect(payrollDetail.getByLabel("Buscar")).toBeVisible();
+  await expect(payrollDetail.getByLabel("Equipo")).toBeVisible();
+  await expect(payrollDetail.locator(".payroll-participant-list article")).toHaveCount(8);
+  await payrollDetail.getByLabel("Buscar").fill("Lucía");
+  await expect(payrollDetail.locator(".payroll-participant-list article")).toHaveCount(1);
+  await expect(payrollDetail).not.toContainText(/bruto individual|neto individual|salario individual/i);
+  await page.keyboard.press("Escape");
+
+  await navigateToModule(page, "Personal", mobile);
+  await page.getByRole("button", { name: "Organigrama" }).click();
+  const organization = page.getByLabel("Organigrama por equipos");
+  await expect(organization.locator(".organization-team")).toHaveCount(6);
+  await expect(organization.getByText("Responsable").first()).toBeVisible();
 });
 
 test("configures modules and audits role metadata independently", async ({ page }, testInfo) => {

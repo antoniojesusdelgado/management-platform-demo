@@ -35,7 +35,8 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        command: "bun run start -- --hostname 127.0.0.1 --port 3001",
+        command:
+          "node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3001",
         url: `${baseURL}/demo/embed`,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

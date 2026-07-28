@@ -12,6 +12,7 @@ export type Person = {
   displayName: string;
   team: string;
   positionTitle: string;
+  managerPersonId?: string | null;
   status: PersonStatus;
   roleCode: PersonRoleCode;
   createdAt: string;
@@ -31,6 +32,7 @@ export const personInputSchema = z.object({
   displayName: z.string().trim().min(2).max(100),
   team: z.string().trim().min(2).max(100),
   positionTitle: z.string().trim().min(2).max(120),
+  managerPersonId: z.string().nullable().optional(),
   status: z.enum(personStatuses),
   roleCode: z.enum(personRoleCodes),
 });

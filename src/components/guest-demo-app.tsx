@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Dashboard } from "@/components/dashboard";
 import { ControlCenter } from "@/components/control-center";
@@ -130,8 +130,9 @@ export function GuestDemoApp() {
   const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState("");
   const [storageAvailable, setStorageAvailable] = useState(true);
-  const [summaryAnchor] = useState(
-    () => new Date("2026-06-23T12:00:00.000Z"),
+  const summaryAnchor = useMemo(
+    () => new Date(`${state.scenarioAnchorDate}T12:00:00.000Z`),
+    [state.scenarioAnchorDate],
   );
 
   useEffect(() => {
@@ -384,6 +385,7 @@ export function GuestDemoApp() {
           integrationRuns={state.integrationRuns}
           savedViews={state.savedAnalyticsViews}
           onSaveView={saveAnalyticsView}
+          referenceDate={summaryAnchor}
         />
       );
     }
@@ -407,6 +409,7 @@ export function GuestDemoApp() {
           comments={state.taskComments}
           events={state.taskEvents}
           projectOptions={state.projects.map(({ id, name }) => ({ id, name }))}
+          referenceDate={state.scenarioAnchorDate}
           onCreate={createTask}
           onUpdate={updateTask}
           onTransition={transitionTask}
@@ -431,13 +434,13 @@ export function GuestDemoApp() {
     }
 
     if (state.activeModule === "incidencias") {
-      return <IncidentsWorkspace incidents={state.incidents} events={state.incidentEvents} assigneeOptions={state.people.filter((person) => person.status === "active").map((person) => person.displayName)} projectOptions={state.projects.map(({ id, name }) => ({ id, name }))} onCreate={createIncident} onUpdate={updateIncident} onTransition={transitionIncident} />;
+      return <IncidentsWorkspace incidents={state.incidents} events={state.incidentEvents} assigneeOptions={state.people.filter((person) => person.status === "active").map((person) => person.displayName)} projectOptions={state.projects.map(({ id, name }) => ({ id, name }))} referenceDate={`${state.scenarioAnchorDate}T12:00:00.000Z`} onCreate={createIncident} onUpdate={updateIncident} onTransition={transitionIncident} />;
     }
 
     if (state.activeModule === "personal") {
       return (
         <>
-          <PeopleWorkspace people={state.people} events={state.peopleEvents} leaveRequests={state.leaveRequests} onCreate={createPerson} onUpdate={updatePerson} />
+          <PeopleWorkspace people={state.people} events={state.peopleEvents} leaveRequests={state.leaveRequests} referenceDate={state.scenarioAnchorDate} onCreate={createPerson} onUpdate={updatePerson} />
           <IntegrationsCenter connectors={state.integrationConnectors} runs={state.integrationRuns} issues={state.dataQualityIssues} kind="people" onSimulate={simulateIntegration} />
         </>
       );
@@ -459,7 +462,7 @@ export function GuestDemoApp() {
     if (state.activeModule === "nominas") {
       return (
         <>
-          <PayrollWorkspace runs={state.payrollRuns} events={state.payrollEvents} onCreate={createPayroll} onUpdate={updatePayroll} onTransition={transitionPayroll} />
+          <PayrollWorkspace runs={state.payrollRuns} participants={state.payrollParticipants} events={state.payrollEvents} onCreate={createPayroll} onUpdate={updatePayroll} onTransition={transitionPayroll} />
           <IntegrationsCenter connectors={state.integrationConnectors} runs={state.integrationRuns} issues={state.dataQualityIssues} kind="payroll" onSimulate={simulateIntegration} />
         </>
       );
