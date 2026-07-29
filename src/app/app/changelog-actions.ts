@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { actionFailure, actionSuccess, type ActionResult } from "@/domain/action-result";
 import { changelogInputSchema, changelogStatuses, type ChangelogInput } from "@/domain/changelog";
+import { plainTextSchema } from "@/domain/validation";
 import { requirePermission } from "@/lib/authorization";
 import { createClient } from "@/lib/supabase/server";
 
 const idSchema = z.uuid();
-const transitionSchema = z.object({ entryId: idSchema, status: z.enum(changelogStatuses), note: z.string().trim().min(3).max(1_000) });
+const transitionSchema = z.object({ entryId: idSchema, status: z.enum(changelogStatuses), note: plainTextSchema({ min: 3, max: 1_000 }) });
 function failure(error: unknown): ActionResult<never> {
   if (error instanceof z.ZodError) return actionFailure("validation_error", "Revisa los datos introducidos.");
   if (error instanceof Error && error.message === "Authentication required") return actionFailure("authentication_required", "La sesión ha caducado. Inicia sesión de nuevo.");

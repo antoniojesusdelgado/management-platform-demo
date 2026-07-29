@@ -17,7 +17,7 @@ import {
   IconLock,
   IconMessage,
 } from "@tabler/icons-react";
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import { InitialsAvatar } from "@/components/initials-avatar";
 import {
   canTransitionTask,
@@ -40,6 +40,7 @@ type TaskKanbanProps = {
   onOpen: (taskId: string) => void;
   onMove: (task: TaskItem, status: TaskStatus) => Promise<boolean>;
   onWipLimitChange: (status: TaskStatus, limit: number) => void;
+  onStatusFilterChange: (status: TaskStatus) => void;
 };
 
 function laneFor(task: TaskItem, mode: SwimlaneMode) {
@@ -232,7 +233,11 @@ export function TaskKanban({
   onOpen,
   onMove,
   onWipLimitChange,
+  onStatusFilterChange,
 }: TaskKanbanProps) {
+  const [mobileStatus, setMobileStatus] = useState<TaskStatus>(
+    statusFilter === "all" ? "pending" : statusFilter,
+  );
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor),
@@ -241,6 +246,9 @@ export function TaskKanban({
   const visibleStatuses = taskStatuses.filter(
     (status) => statusFilter === "all" || status === statusFilter,
   );
+
+  const activeMobileStatus =
+    statusFilter === "all" ? mobileStatus : statusFilter;
 
   async function handleDragEnd(event: DragEndEvent) {
     if (!event.over) return;
@@ -257,6 +265,23 @@ export function TaskKanban({
       onDragEnd={(event) => void handleDragEnd(event)}
     >
       <div className="kanban-board">
+        <label className="kanban-mobile-status">
+          <span>Columna del tablero</span>
+          <select
+            value={activeMobileStatus}
+            onChange={(event) => {
+              const nextStatus = event.target.value as TaskStatus;
+              setMobileStatus(nextStatus);
+              if (statusFilter !== "all") onStatusFilterChange(nextStatus);
+            }}
+          >
+            {taskStatuses.map((status) => (
+              <option value={status} key={status}>
+                {statusLabels[status]}
+              </option>
+            ))}
+          </select>
+        </label>
         {lanes.map((lane) => (
           <section className="kanban-swimlane" key={lane}>
             {swimlane !== "none" ? <h3>{lane}</h3> : null}
@@ -266,7 +291,13 @@ export function TaskKanban({
               key={`${lane}-${statusFilter}`}
             >
               {visibleStatuses.map((status) => (
-                <div className="kanban-column-slot" key={status}>
+                <div
+                  className="kanban-column-slot"
+                  data-mobile-active={
+                    statusFilter !== "all" || status === activeMobileStatus
+                  }
+                  key={status}
+                >
                   <KanbanColumn
                     lane={lane}
                     status={status}

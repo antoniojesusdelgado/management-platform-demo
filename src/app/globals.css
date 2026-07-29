@@ -3887,29 +3887,38 @@ h3 {
     margin: 0.75rem 0;
   }
 
+  .kanban-mobile-status span {
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 760;
+  }
+
+  .kanban-mobile-status select {
+    width: 100%;
+    min-width: 0;
+  }
+
   .kanban-columns {
+    display: block;
     width: 100%;
     max-width: 100%;
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
-    scroll-snap-type: x mandatory;
-    scroll-padding-inline: 0;
+    overflow-x: hidden;
     padding-inline: 0;
-    padding-bottom: 0.75rem;
+    padding-bottom: 0;
   }
 
   .kanban-columns[data-single-column="true"] {
     overflow-x: hidden;
-    scroll-snap-type: none;
   }
 
   .kanban-column-slot {
-    display: block;
-    flex: 0 0 100%;
+    display: none;
     width: 100%;
     max-width: 100%;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
+  }
+
+  .kanban-column-slot[data-mobile-active="true"] {
+    display: block;
   }
 
   .kanban-column,

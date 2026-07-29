@@ -1,6 +1,6 @@
 {
   "name": "management-platform-demo",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -17,7 +17,8 @@
     "demo:data:report": "bun run scripts/demo-data.ts report",
     "content:validate": "bun run scripts/validate-ui-copy.ts",
     "visual:review": "node scripts/capture-release-visuals.mjs",
-    "security:public-data": "bun run scripts/validate-public-data.ts"
+    "security:public-data": "bun run scripts/validate-public-data.ts",
+    "security:secrets": "bun run scripts/validate-secrets.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

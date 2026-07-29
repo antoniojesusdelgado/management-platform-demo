@@ -9,6 +9,7 @@ import {
   type TreasuryInput,
   type TreasuryStatus,
 } from "@/domain/treasury";
+import { plainTextSchema } from "@/domain/validation";
 import { requirePermission } from "@/lib/authorization";
 import { createClient } from "@/lib/supabase/server";
 
@@ -16,7 +17,7 @@ const idSchema = z.uuid();
 const transitionSchema = z.object({
   entryId: idSchema,
   status: z.enum(treasuryStatuses),
-  note: z.string().trim().min(3).max(1_000),
+  note: plainTextSchema({ min: 3, max: 1_000 }),
 });
 
 function failure(error: unknown): ActionResult<never> {

@@ -276,15 +276,23 @@ test("mobile filters, tables, Kanban and dialogs stay inside their panels", asyn
     clientWidth: element.clientWidth,
     scrollWidth: element.scrollWidth,
     scrollLeft: element.scrollLeft,
-    firstColumnWidth:
-      element.querySelector<HTMLElement>(".kanban-column-slot")?.offsetWidth ??
-      0,
+    visibleColumns: [...element.querySelectorAll<HTMLElement>(
+      ".kanban-column-slot",
+    )].filter((column) => column.getClientRects().length > 0).length,
   }));
-  expect(overflow.scrollWidth).toBeGreaterThan(overflow.clientWidth);
+  expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth);
   expect(overflow.scrollLeft).toBeLessThanOrEqual(2);
-  expect(overflow.firstColumnWidth).toBeLessThanOrEqual(overflow.clientWidth);
+  expect(overflow.visibleColumns).toBe(1);
   await expectPanelsInsideViewport(page);
   await expectNoGlobalHorizontalOverflow(page);
+
+  await page.getByLabel("Columna del tablero").selectOption("blocked");
+  await expect(
+    kanban.locator('.kanban-column-slot[data-mobile-active="true"]'),
+  ).toHaveAttribute("data-mobile-active", "true");
+  await expect(
+    kanban.locator('.kanban-column-slot[data-mobile-active="true"]'),
+  ).toContainText("Bloqueada");
 
   await page.getByLabel("Estado").selectOption("in_progress");
   const singleColumn = await kanban.evaluate((element) => ({
@@ -302,5 +310,5 @@ test("mobile filters, tables, Kanban and dialogs stay inside their panels", asyn
   expect(filterWidths.every((width) => width <= 288)).toBe(true);
 
   await openModule(page, "Novedades");
-  await expect(page.getByText("v1.3.0", { exact: true })).toBeVisible();
+  await expect(page.getByText("v1.3.1", { exact: true })).toBeVisible();
 });

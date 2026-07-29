@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { personRoleCodes, type PersonRoleCode } from "@/domain/people";
+import { plainTextSchema } from "@/domain/validation";
 
 export const profileLocales = ["es-ES", "en-GB"] as const;
 export const profileTimezones = [
@@ -46,7 +47,7 @@ export type ManagedProfileFields = {
 };
 
 export const profilePreferencesSchema = z.object({
-  alias: z.string().trim().min(2).max(80).nullable(),
+  alias: plainTextSchema({ min: 2, max: 80 }).nullable(),
   locale: z.enum(profileLocales),
   timezone: z.enum(profileTimezones),
   theme: z.enum(profileThemes),

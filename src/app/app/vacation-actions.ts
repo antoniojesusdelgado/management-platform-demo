@@ -9,13 +9,14 @@ import {
 } from "@/domain/action-result";
 import type { LeaveRequestInput } from "@/domain/vacations";
 import { leaveRequestInputSchema } from "@/domain/vacations";
+import { plainTextSchema } from "@/domain/validation";
 import { requirePermission } from "@/lib/authorization";
 import { createClient } from "@/lib/supabase/server";
 
 const transitionSchema = z.object({
   requestId: z.uuid(),
   status: z.enum(["submitted", "approved", "rejected", "cancelled"]),
-  note: z.string().trim().min(3).max(300),
+  note: plainTextSchema({ min: 3, max: 300 }),
 });
 
 function mapActionError(error: unknown): ActionResult<never> {

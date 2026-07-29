@@ -342,6 +342,7 @@ export function TasksWorkspace({
             wipLimits={wipLimits}
             statusLabels={statusLabels}
             statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
             onOpen={setSelectedId}
             onMove={moveFromBoard}
             onWipLimitChange={(status, limit) =>

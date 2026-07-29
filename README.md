@@ -80,6 +80,7 @@ bun run typecheck
 bun run test
 bun run content:validate
 bun run security:public-data
+bun run security:secrets
 bun run demo:data:generate
 bun run demo:data:validate
 bun run demo:data:report
@@ -107,6 +108,12 @@ y Scenario V7 incremental hasta ayer en `Europe/Madrid`. La RPC autenticada
 solo anexa el intervalo pendiente, usa bloqueo por organización y conserva
 filas operativas existentes.
 
+La versión patch `1.3.1` corrige el Kanban móvil para renderizar una sola
+columna entre 320 y 390 px, completa de forma aditiva el histórico V7 de
+organizaciones autenticadas antiguas y refuerza validación de texto, CSP con
+nonce, rate limiting de la API y detección de secretos. El backfill no elimina
+ni sobrescribe registros del usuario.
+
 ## Variables
 
 | Variable | Exposición | Uso |
@@ -128,6 +135,7 @@ No se necesita una clave de OpenAI en runtime.
 - [Permisos y RLS](docs/PERMISSIONS.md)
 - [Procedencia de los datos](docs/DATA-PROVENANCE.md)
 - [Despliegue](docs/DEPLOYMENT.md)
+- [Runbook de backfill V7](docs/SCENARIO-V7-BACKFILL.md)
 - [Seguridad](SECURITY.md)
 - [Licencias de dependencias](docs/THIRD-PARTY-LICENSES.md)
 

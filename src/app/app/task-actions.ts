@@ -12,6 +12,7 @@ import {
   taskStatuses,
   type TaskInput,
 } from "@/domain/tasks";
+import { plainTextSchema } from "@/domain/validation";
 import { requirePermission } from "@/lib/authorization";
 import { createClient } from "@/lib/supabase/server";
 
@@ -19,11 +20,11 @@ const taskIdSchema = z.uuid();
 const transitionSchema = z.object({
   taskId: taskIdSchema,
   status: z.enum(taskStatuses),
-  note: z.string().trim().min(3).max(300),
+  note: plainTextSchema({ min: 3, max: 300 }),
 });
 const commentSchema = z.object({
   taskId: taskIdSchema,
-  body: z.string().trim().min(2).max(1_000),
+  body: plainTextSchema({ min: 2, max: 1_000 }),
 });
 const dependencySchema = z.object({
   taskId: taskIdSchema,

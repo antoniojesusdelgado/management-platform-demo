@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { actionFailure, actionSuccess, type ActionResult } from "@/domain/action-result";
 import { calculateSyntheticSlaDueAt, incidentInputSchema, incidentStatuses, type IncidentInput } from "@/domain/incidents";
+import { plainTextSchema } from "@/domain/validation";
 import { requirePermission } from "@/lib/authorization";
 import { createClient } from "@/lib/supabase/server";
 
 const idSchema = z.uuid();
-const transitionSchema = z.object({ incidentId: idSchema, status: z.enum(incidentStatuses), note: z.string().trim().min(3).max(2_000) });
+const transitionSchema = z.object({ incidentId: idSchema, status: z.enum(incidentStatuses), note: plainTextSchema({ min: 3, max: 2_000 }) });
 
 function failure(error: unknown): ActionResult<never> {
   if (error instanceof z.ZodError) return actionFailure("validation_error", "Revisa los datos introducidos.");

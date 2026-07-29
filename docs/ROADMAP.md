@@ -179,3 +179,9 @@ through the previous Madrid day, stable analytics service contracts, bounded
 growing queries and separate security workflows. Publication still requires a
 validated Preview, passive ZAP, remote migration review and two-identity OAuth
 isolation before the candidate is marked ready.
+
+Release v1.3.1 is a patch that keeps v1.3.0 immutable. It fixes the one-column
+mobile Tasks contract, backfills legacy authenticated organizations
+additively, adds layered rate limiting and secret detection, centralizes
+server-side plain-text validation and applies nonce-based CSP to dynamic
+surfaces.

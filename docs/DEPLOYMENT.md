@@ -119,7 +119,7 @@ environment values. After promotion:
 - Vercel fallback: <https://management-platform-demo.vercel.app>
 - Stable branch Preview:
   <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Release candidate: `v1.3.0`
+- Release candidate: `v1.3.1`
 - Supabase region and plan: `eu-central-1`, Free
 - Production and Preview use environment-specific application and portfolio
   origins.
@@ -135,6 +135,32 @@ environment values. After promotion:
   the database advisors.
 - Live isolation with a second Google identity remains a manual acceptance
   check. Multi-organization access isolation is covered by pgTAP.
+
+## Release v1.3.1
+
+Release `v1.3.1` is delivered from
+`codex/management-platform-v1-3-1` as an immutable patch over v1.3.0:
+
+1. Run the complete application and local Supabase validation matrix.
+2. Review `supabase db push --dry-run` and record organization counts before
+   applying the additive migration.
+3. Push the single release commit, open the PR and validate its Preview at
+   320/360/390 and desktop widths.
+4. Stage Vercel Firewall rules in log mode only. The user reviews traffic and
+   publishes the draft from the dashboard; automation does not enable it.
+5. Apply the migration, verify `scenario_v7_backfilled_at`, one `backfilled`
+   event, preserved edited rows and 245–255 active people.
+6. Run guest and existing-Google-user smoke tests, passive ZAP and security
+   advisor review.
+7. Promote the validated Preview, merge the authorized PR and tag the included
+   main commit as `v1.3.1`.
+
+The detailed database procedure is in
+[SCENARIO-V7-BACKFILL.md](./SCENARIO-V7-BACKFILL.md). The PostgREST limiter is
+enforced in the compatible migration; the outer IP-based WAF remains in
+observation until the user publishes the reviewed rules. The staged state and
+current plan limitation are recorded in
+[VERCEL-FIREWALL-V1.3.1.md](./VERCEL-FIREWALL-V1.3.1.md).
 
 ## Release v1.3.0
 

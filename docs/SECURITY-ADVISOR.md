@@ -36,6 +36,9 @@ RPC must satisfy all of the following invariants:
 Module and multi-organization pgTAP suites verify the authorization outcomes.
 `supabase/tests/014_release_v1_3.sql` additionally covers the guarded Scenario
 V7 RPC, private generator, RLS on both new tables and mojibake detection.
+`supabase/tests/015_release_v1_3_1.sql` covers the backfill marker,
+TypeScript/SQL workforce milestones, idempotency, legacy RPC revocation and
+rate-limit behavior below and above the expensive-operation threshold.
 
 The advisor warning must not be dismissed globally. Any new privileged RPC
 requires an individual review, a minimum grant, an identity check and pgTAP
@@ -44,6 +47,12 @@ coverage before it can join this allowlist.
 CI runs `bun audit --audit-level=high`, CodeQL and Dependency Review. The ZAP
 Baseline workflow is manual and accepts only a validated root HTTPS
 `*.vercel.app` Preview; its passive report is retained as an artifact.
+
+`check_management_request_rate_limit` is the only privileged function granted
+to `authenticator` rather than application roles. It is registered as the
+PostgREST pre-request hook, stores only a one-way subject hash and bounded path,
+and is not executable by `anon` or `authenticated`. Historical V3–V6 restore
+RPCs and the V2 restoration marker are explicitly revoked.
 
 ## Authentication advisor
 

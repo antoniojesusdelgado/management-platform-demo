@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { plainTextSchema } from "@/domain/validation";
 
 export const incidentStatuses = [
   "registered",
@@ -53,13 +54,13 @@ export type IncidentEvent = {
 };
 
 export const incidentInputSchema = z.object({
-  title: z.string().trim().min(3).max(160),
-  description: z.string().trim().min(3).max(2_000),
+  title: plainTextSchema({ min: 3, max: 160 }),
+  description: plainTextSchema({ min: 3, max: 2_000 }),
   priority: z.enum(incidentPriorities),
   category: z.enum(incidentCategories),
   projectId: z.uuid().nullable().optional(),
-  assigneeName: z.string().trim().min(2).max(100).nullable(),
-  affectedService: z.string().trim().min(2).max(120).optional(),
+  assigneeName: plainTextSchema({ min: 2, max: 100 }).nullable(),
+  affectedService: plainTextSchema({ min: 2, max: 120 }).optional(),
   impactScope: z.enum(["individual", "team", "workspace"]).optional(),
   detectionChannel: z.enum(["monitoring", "support", "team", "automation"]).optional(),
 });

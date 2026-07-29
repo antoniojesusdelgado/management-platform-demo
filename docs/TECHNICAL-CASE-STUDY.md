@@ -372,9 +372,11 @@ Configuración actualiza de forma explícita el ancla y registra la operación.
 | v1.2.2 | OAuth final, V5, participantes y organigrama |
 | Mantenimiento v1.2.2 | V6, contratos, tareas, proyectos y documentación |
 | v1.3.0 | Tema completo, V7 incremental, contratos analíticos, equipos cerrados y seguridad |
+| v1.3.1 | Tareas móviles, backfill V7 aditivo, rate limiting, CSP y escaneo de secretos |
 
 Las fechas editoriales se muestran en Novedades; v1.3.0 utiliza el 23 de junio
-de 2026. Git, PostgreSQL y Vercel conservan sus timestamps técnicos reales.
+de 2026 y v1.3.1 el 29 de julio de 2026. Git, PostgreSQL y Vercel conservan sus
+timestamps técnicos reales.
 
 El tema claro es el valor inicial y el modo oscuro se activa manualmente desde
 Perfil. La compatibilidad migra cualquier preferencia histórica `system` a
