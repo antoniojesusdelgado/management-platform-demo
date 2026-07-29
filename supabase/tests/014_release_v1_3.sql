@@ -1,5 +1,47 @@
 begin;
-select plan(18);
+select plan(22);
+
+insert into auth.users (
+  id,
+  aud,
+  role,
+  email,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  created_at,
+  updated_at
+)
+values (
+  'f3000000-0000-4000-8000-000000000001',
+  'authenticated',
+  'authenticated',
+  'release-v1-3-user@example.test',
+  '{"provider":"google","providers":["google"]}',
+  '{}',
+  now(),
+  now()
+);
+
+select is(
+  (
+    select theme
+    from public.profiles
+    where id = 'f3000000-0000-4000-8000-000000000001'
+  ),
+  'light',
+  'new profiles default to the light theme'
+);
+
+select throws_ok(
+  $$
+    update public.profiles
+    set theme = 'system'
+    where id = 'f3000000-0000-4000-8000-000000000001'
+  $$,
+  '23514',
+  null,
+  'the removed system theme cannot be persisted'
+);
 
 select has_table(
   'public',
@@ -170,11 +212,62 @@ select is(
       select title from public.changelog_entries
       union all
       select summary from public.changelog_entries
+      union all
+      select note from public.people_events
     ) copy
     where copy.value ~ '(Ãƒ|Ã‚|Ã¢|ï¿½)'
   ),
   0::bigint,
   'operational copy contains no known mojibake signatures'
+);
+
+select is(
+  (
+    select count(*)
+    from public.organizations organization
+    where exists (
+      select 1
+      from public.memberships membership
+      where membership.organization_id = organization.id
+    )
+      and exists (
+      select 1
+      from public.changelog_entries entry
+      where entry.organization_id = organization.id
+        and entry.version = '1.3.0'
+        and entry.status = 'published'
+    )
+  ),
+  (
+    select count(*)
+    from public.organizations organization
+    where exists (
+      select 1
+      from public.memberships membership
+      where membership.organization_id = organization.id
+    )
+  ),
+  'v1.3.0 is published for every initialized organization'
+);
+
+select is(
+  (
+    select count(*)
+    from public.changelog_entries
+    where version = '1.3.0'
+      and status = 'published'
+      and published_at::date = date '2026-06-23'
+  ),
+  (
+    select count(*)
+    from public.organizations organization
+    where exists (
+      select 1
+      from public.memberships membership
+      where membership.organization_id = organization.id
+    )
+  ),
+  'v1.3.0 uses the approved editorial publication date'
 );
 
 select * from finish();

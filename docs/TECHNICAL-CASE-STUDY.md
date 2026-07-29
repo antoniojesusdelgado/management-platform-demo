@@ -71,7 +71,7 @@ flowchart TB
   subgraph next["Aplicación Next.js"]
     routes["App Router y Server Components"]
     actions["Server Actions"]
-    guest["Reducer invitado y GuestDemoState V15"]
+    guest["Reducer invitado y GuestDemoState V16"]
     analytics["Motor analítico puro"]
     ui["Módulos React responsive"]
   end
@@ -98,7 +98,7 @@ flowchart TB
 flowchart LR
   start["Acceso"] --> choice{"Modalidad"}
   choice -->|Invitado| generate["Generar escenario V7"]
-  generate --> validate["Validar V15 con Zod"]
+  generate --> validate["Validar V16 con Zod"]
   validate --> session["Persistir solo en sessionStorage"]
   choice -->|Google| pkce["OAuth PKCE"]
   pkce --> provision["Crear o cargar organización aislada"]
@@ -232,8 +232,14 @@ credenciales ni payloads sensibles.
 
 El escenario V7 comienza el `2025-01-01` y crece hasta ayer en
 `Europe/Madrid`. La misma semilla y ancla producen el mismo checksum.
-`GuestDemoState V15` conserva las entidades y preferencias de V14, y solo
-anexa IDs deterministas ausentes.
+`GuestDemoState V16` conserva las entidades y preferencias de V15 y añade la
+entrada editorial de v1.3.0 sin regenerar el escenario ni sobrescribir cambios
+operativos. La migración V14 a V15 continúa anexando únicamente IDs
+deterministas ausentes.
+
+La corrección operativa final eleva de forma aditiva `scenario_version` a 7
+cuando una organización ya estaba generada hasta ayer. Así se evita que la RPC
+salga sin trabajo pendiente y conserve por error la marca histórica V6.
 
 Distribución:
 
@@ -275,7 +281,7 @@ Las migraciones append-only cubren:
 3. aprovisionamiento y ciclo de vida del escenario público;
 4. proyectos, perfil, integraciones y analítica;
 5. endurecimiento de RLS, consultas y Storage privado;
-6. compatibilidad de escenarios V2 a V7 y GuestDemoState hasta V15;
+6. compatibilidad de escenarios V2 a V7 y GuestDemoState hasta V16;
 7. dimensiones estables de servicio y auditoría de evolución incremental.
 
 Los índices priorizan `organization_id` en lecturas acotadas y añaden índices
@@ -356,7 +362,7 @@ Configuración actualiza de forma explícita el ancla y registra la operación.
 | Requisitos y base | Arquitectura independiente, límites de datos y CI |
 | Vacaciones | Cálculo, revisión, calendario y auditoría |
 | Tareas | Kanban, dependencias, comentarios y WIP |
-| Incidencias y Personal | SLA, directorio, disponibilidad y organigrama |
+| Incidencias y Personal | SLA, directorio, disponibilidad, equipos cerrados y organigrama |
 | Tesorería y Nóminas | Flujos agregados, conciliación y controles |
 | Proyectos e integraciones | Planificación transversal y automatización neutral |
 | v1.0.0 | Primera demostración estable con OAuth y RLS |
@@ -365,10 +371,14 @@ Configuración actualiza de forma explícita el ancla y registra la operación.
 | v1.2.1 | Gráficos, diálogos y consistencia temporal |
 | v1.2.2 | OAuth final, V5, participantes y organigrama |
 | Mantenimiento v1.2.2 | V6, contratos, tareas, proyectos y documentación |
-| v1.3.0 | Tema completo, V7 incremental, contratos analíticos y seguridad |
+| v1.3.0 | Tema completo, V7 incremental, contratos analíticos, equipos cerrados y seguridad |
 
-Las fechas editoriales se muestran en Novedades. Git y Vercel conservan sus
-timestamps técnicos reales.
+Las fechas editoriales se muestran en Novedades; v1.3.0 utiliza el 23 de junio
+de 2026. Git, PostgreSQL y Vercel conservan sus timestamps técnicos reales.
+
+El tema claro es el valor inicial y el modo oscuro se activa manualmente desde
+Perfil. La compatibilidad migra cualquier preferencia histórica `system` a
+`light`, sin depender de cambios del sistema operativo.
 
 ## 19. Decisiones arquitectónicas
 

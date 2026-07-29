@@ -675,10 +675,9 @@ export default async function AppModulePage({
       displayName={currentProfile?.alias ?? currentProfile?.display_name}
       theme={
         currentProfile?.theme === "light" ||
-        currentProfile?.theme === "dark" ||
-        currentProfile?.theme === "system"
+        currentProfile?.theme === "dark"
           ? currentProfile.theme
-          : "system"
+          : "light"
       }
       density={
         currentProfile?.density === "compact" ? "compact" : "comfortable"

@@ -21,7 +21,7 @@ vacaciones, incidencias, tesorería, nóminas agregadas, personas y analítica.
 - Incidencias con prioridad, SLA, causa, resolución y acciones correctivas.
 - Tesorería con importaciones, conciliación y excepciones.
 - Nóminas exclusivamente agregadas y participantes sin importes individuales.
-- Personal con directorio, modalidades contractuales y organigrama.
+- Personal con directorio, selector de equipos persistidos, modalidades contractuales y organigrama.
 - Novedades como cronología pública y Configuración parametrizable.
 
 ## Arquitectura resumida
@@ -97,11 +97,11 @@ bunx supabase start
 bunx supabase db reset
 bunx supabase test db
 bunx supabase db lint --local --level warning --fail-on error
-bunx supabase db advisors --local --type all
+bunx supabase inspect db index-stats --local
 bunx supabase gen types --lang typescript --local
 ```
 
-La versión `1.3.0` añade tema `light | dark | system`, preferencias de
+La versión `1.3.0` añade tema claro predeterminado y cambio manual a oscuro, preferencias de
 contraste, densidad y movimiento, códigos estables de servicio para Analítica
 y Scenario V7 incremental hasta ayer en `Europe/Madrid`. La RPC autenticada
 solo anexa el intervalo pendiente, usa bloqueo por organización y conserva

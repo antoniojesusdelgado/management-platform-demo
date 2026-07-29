@@ -144,7 +144,7 @@ export function AuthenticatedApp({
   activeModule,
   organizationName,
   scenarioAnchorDate,
-  theme = "system",
+  theme = "light",
   density = "comfortable",
   reducedMotion = false,
   highContrast = false,

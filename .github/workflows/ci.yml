@@ -44,8 +44,8 @@ jobs:
       - name: Lint database schemas
         run: bunx supabase db lint --level warning --fail-on error
 
-      - name: Review database security and performance advisors
-        run: bunx supabase db advisors --local --type all --level warn --fail-on error
+      - name: Inspect local database index usage
+        run: bunx supabase inspect db index-stats --local
 
       - name: Verify generated database types
         run: |

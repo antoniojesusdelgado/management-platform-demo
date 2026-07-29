@@ -56,10 +56,22 @@ tax identifiers, receipts and documents. Collection edits and monotonic status
 changes run through privileged RPCs and append immutable events; authenticated
 roles receive no direct table writes.
 
-The guest state is currently version 15 and Scenario V7. Zod validates restored
+The guest state is currently version 16 and Scenario V7. Zod validates restored
 sessions before rendering. The V14 to V15 migration preserves operational
-changes and preferences, appending only deterministic entities that are
-missing; the editorial changelog remains manual.
+changes and preferences while appending only missing deterministic entities;
+the V15 to V16 migration adds the v1.3.0 editorial release entry without
+regenerating the daily scenario.
+
+Theme selection is explicit: new and legacy workspaces resolve to `light` by
+default, while `dark` is enabled manually from the profile. The runtime does
+not follow operating-system color-scheme changes; legacy `system` values are
+normalized to `light` in session state and in the compatible SQL migration.
+
+People creation and editing reuse the distinct team values already persisted
+for the active organization. The UI exposes those values as a closed selector,
+and the authenticated Server Action repeats the organization-scoped existence
+check before persisting the profile. Professional start and end dates are
+written together with the remaining employment fields.
 
 Authenticated workspaces call `ensure_demo_scenario_current` before module
 queries. PostgreSQL locks the organization row, generates only the missing

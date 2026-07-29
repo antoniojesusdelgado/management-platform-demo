@@ -8,7 +8,7 @@ export const profileTimezones = [
   "Atlantic/Canary",
   "UTC",
 ] as const;
-export const profileThemes = ["light", "dark", "system"] as const;
+export const profileThemes = ["light", "dark"] as const;
 export const profileDensities = ["comfortable", "compact"] as const;
 export const profileDashboards = [
   "analytics",

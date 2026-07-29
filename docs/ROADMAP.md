@@ -145,7 +145,7 @@
 - [x] Guest state migrations through V15 with session-only persistence
 - [x] Scenario V7 proportional growth and authenticated incremental RPC
 - [x] Stable analytics service codes and saved-filter migration
-- [x] Light, dark and system themes with experience preferences
+- [x] Default light and manually selected dark themes with experience preferences
 - [x] CodeQL, Dependency Review, dependency audit and gated ZAP baseline
 - [x] Remote Supabase migrations and validated Vercel Preview
 - [x] Production promotion from the validated Preview artifact

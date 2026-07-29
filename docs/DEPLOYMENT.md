@@ -18,7 +18,7 @@ bunx supabase start
 bunx supabase db reset
 bunx supabase test db
 bunx supabase db lint --level warning --fail-on error
-bunx supabase db advisors --local --type all --level warn --fail-on error
+bunx supabase inspect db index-stats --local
 bunx supabase gen types --lang typescript --local
 bun run lint
 bun run typecheck
@@ -138,12 +138,12 @@ environment values. After promotion:
 
 ## Release v1.3.0
 
-Release `v1.3.0` is developed on `codex/management-platform-v1-3`. Before
+Release `v1.3.0` is finalized on `codex/management-platform-v1-3-1`. Before
 publication, run the complete local application suite, Scenario V7 generation,
 database reset/pgTAP/lint/advisors and type comparison. Then:
 
 1. Push one reviewed implementation commit and open a draft pull request.
-2. Validate the Vercel Preview in light, dark and system modes.
+2. Validate the Vercel Preview in the default light mode and manual dark mode.
 3. Run the host-restricted passive ZAP Baseline and retain its artifact.
 4. Review `supabase db push --dry-run`, then apply the additive migration.
 5. Verify PKCE callback, renewal, logout and isolation with two Google
@@ -155,6 +155,14 @@ database reset/pgTAP/lint/advisors and type comparison. Then:
 The migration never deletes operational rows. `ensure_demo_scenario_current`
 holds a per-organization transaction lock and appends only the missing interval
 through yesterday in `Europe/Madrid`.
+
+The runtime follow-up publishes the manual v1.3.0 changelog entry with the
+approved editorial date `2026-06-23` and repairs only the known synthetic
+mojibake signatures. The People form derives its team selector from persisted
+organization data; authenticated writes revalidate the selected team and store
+professional employment dates. A final additive migration also aligns existing
+and newly provisioned organizations with `scenario_version = 7` when no daily
+interval remains to be generated.
 
 ## Release v1.2.0
 

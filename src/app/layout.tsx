@@ -45,14 +45,8 @@ const themeBootstrap = `
   try {
     const key = "management-platform-theme";
     const stored = sessionStorage.getItem(key);
-    const preference =
-      stored === "light" || stored === "dark" || stored === "system"
-        ? stored
-        : "system";
-    const theme =
-      preference === "system"
-        ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-        : preference;
+    const preference = stored === "dark" ? "dark" : "light";
+    const theme = preference;
     const root = document.documentElement;
     root.dataset.themePreference = preference;
     root.dataset.theme = theme;

@@ -30,7 +30,7 @@ select is(
       on membership.organization_id = organization.id
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
   ),
-  6,
+  7,
   'the provisioned workspace records its scenario version'
 );
 
@@ -130,8 +130,8 @@ select is(
       on membership.organization_id = entry.organization_id
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
   ),
-  12::bigint,
-  'the scenario contains twelve changelog entries'
+  13::bigint,
+  'the scenario contains thirteen changelog entries'
 );
 select is(
   (
@@ -292,8 +292,8 @@ select is(
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
       and entry.status = 'published'
   ),
-  12::bigint,
-  'all twelve changelog entries are published'
+  13::bigint,
+  'all thirteen changelog entries are published'
 );
 
 select is(
@@ -304,8 +304,8 @@ select is(
       on membership.organization_id = organization.id
     where membership.profile_id = 'c0000000-0000-4000-8000-000000000001'
   ),
-  6,
-  'the organization uses Scenario V6'
+  7,
+  'the organization uses Scenario V7'
 );
 
 select is(

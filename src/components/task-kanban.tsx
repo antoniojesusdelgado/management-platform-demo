@@ -238,6 +238,9 @@ export function TaskKanban({
     useSensor(KeyboardSensor),
   );
   const lanes = [...new Set(tasks.map((task) => laneFor(task, swimlane)))];
+  const visibleStatuses = taskStatuses.filter(
+    (status) => statusFilter === "all" || status === statusFilter,
+  );
 
   async function handleDragEnd(event: DragEndEvent) {
     if (!event.over) return;
@@ -257,31 +260,31 @@ export function TaskKanban({
         {lanes.map((lane) => (
           <section className="kanban-swimlane" key={lane}>
             {swimlane !== "none" ? <h3>{lane}</h3> : null}
-            <div className="kanban-columns">
-              {taskStatuses
-                .filter(
-                  (status) => statusFilter === "all" || status === statusFilter,
-                )
-                .map((status) => (
-                  <div className="kanban-column-slot" key={status}>
-                    <KanbanColumn
-                      lane={lane}
-                      status={status}
-                      tasks={tasks.filter(
-                        (task) =>
-                          laneFor(task, swimlane) === lane &&
-                          task.status === status,
-                      )}
-                      today={today}
-                      pending={pending}
-                      limit={wipLimits[status]}
-                      statusLabels={statusLabels}
-                      onOpen={onOpen}
-                      onMove={onMove}
-                      onWipLimitChange={onWipLimitChange}
-                    />
-                  </div>
-                ))}
+            <div
+              className="kanban-columns"
+              data-single-column={visibleStatuses.length === 1}
+              key={`${lane}-${statusFilter}`}
+            >
+              {visibleStatuses.map((status) => (
+                <div className="kanban-column-slot" key={status}>
+                  <KanbanColumn
+                    lane={lane}
+                    status={status}
+                    tasks={tasks.filter(
+                      (task) =>
+                        laneFor(task, swimlane) === lane &&
+                        task.status === status,
+                    )}
+                    today={today}
+                    pending={pending}
+                    limit={wipLimits[status]}
+                    statusLabels={statusLabels}
+                    onOpen={onOpen}
+                    onMove={onMove}
+                    onWipLimitChange={onWipLimitChange}
+                  />
+                </div>
+              ))}
             </div>
           </section>
         ))}
