@@ -84,6 +84,62 @@ async function openModule(
   await expect(page.getByRole("heading", { name: moduleName, level: 1 })).toBeVisible();
 }
 
+test("light, dark and system resolve before content at every release width", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "chromium");
+  test.setTimeout(180_000);
+
+  for (const theme of ["light", "dark", "system"] as const) {
+    await page.emulateMedia({
+      colorScheme: theme === "system" ? "dark" : theme,
+      reducedMotion: "reduce",
+    });
+    for (const viewport of viewports) {
+      await page.setViewportSize(viewport);
+      await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
+      await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+      await expect
+        .poll(() =>
+          page.evaluate(() =>
+            window.sessionStorage.getItem("management-platform-demo:v1"),
+          ),
+        )
+        .not.toBeNull();
+      await page.evaluate((preference) => {
+        const key = "management-platform-demo:v1";
+        const raw = window.sessionStorage.getItem(key);
+        if (!raw) throw new Error("Guest state was not initialized");
+        const state = JSON.parse(raw) as {
+          preferences: { theme: "light" | "dark" | "system" };
+        };
+        state.preferences.theme = preference;
+        window.sessionStorage.setItem(key, JSON.stringify(state));
+        window.sessionStorage.setItem("management-platform-theme", preference);
+      }, theme);
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+
+      const experience = await page.evaluate(() => ({
+        preference: document.documentElement.dataset.themePreference,
+        resolved: document.documentElement.dataset.theme,
+        colorScheme: document.documentElement.style.colorScheme,
+        reducedMotion: getComputedStyle(
+          document.querySelector(".app-frame")!,
+        ).animationDuration,
+      }));
+      const expected = theme === "system" ? "dark" : theme;
+      expect(experience.preference).toBe(theme);
+      expect(experience.resolved).toBe(expected);
+      expect(experience.colorScheme).toBe(expected);
+      expect(Number.parseFloat(experience.reducedMotion)).toBeLessThanOrEqual(
+        0.00001,
+      );
+      await expectNoGlobalHorizontalOverflow(page);
+    }
+  }
+});
+
 test("access and every module avoid global horizontal overflow at release sizes", async (
   { page },
   testInfo,

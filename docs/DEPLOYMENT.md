@@ -119,7 +119,7 @@ environment values. After promotion:
 - Vercel fallback: <https://management-platform-demo.vercel.app>
 - Stable branch Preview:
   <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Published release: `v1.2.2`
+- Release candidate: `v1.3.0`
 - Supabase region and plan: `eu-central-1`, Free
 - Production and Preview use environment-specific application and portfolio
   origins.
@@ -135,6 +135,26 @@ environment values. After promotion:
   the database advisors.
 - Live isolation with a second Google identity remains a manual acceptance
   check. Multi-organization access isolation is covered by pgTAP.
+
+## Release v1.3.0
+
+Release `v1.3.0` is developed on `codex/management-platform-v1-3`. Before
+publication, run the complete local application suite, Scenario V7 generation,
+database reset/pgTAP/lint/advisors and type comparison. Then:
+
+1. Push one reviewed implementation commit and open a draft pull request.
+2. Validate the Vercel Preview in light, dark and system modes.
+3. Run the host-restricted passive ZAP Baseline and retain its artifact.
+4. Review `supabase db push --dry-run`, then apply the additive migration.
+5. Verify PKCE callback, renewal, logout and isolation with two Google
+   identities.
+6. Promote exactly the validated Preview artifact.
+7. After authorized merge, confirm tree equality, tag `v1.3.0` and publish the
+   GitHub Release.
+
+The migration never deletes operational rows. `ensure_demo_scenario_current`
+holds a per-organization transaction lock and appends only the missing interval
+through yesterday in `Europe/Madrid`.
 
 ## Release v1.2.0
 

@@ -28,6 +28,8 @@ export type Person = {
   positionTitle: string;
   managerPersonId?: string | null;
   employmentContractType: EmploymentContractType;
+  employmentStartDate: string;
+  employmentEndDate: string | null;
   status: PersonStatus;
   roleCode: PersonRoleCode;
   createdAt: string;
@@ -49,6 +51,8 @@ export const personInputSchema = z.object({
   positionTitle: z.string().trim().min(2).max(120),
   managerPersonId: z.string().nullable().optional(),
   employmentContractType: z.enum(employmentContractTypes),
+  employmentStartDate: z.iso.date().default("2025-01-01"),
+  employmentEndDate: z.iso.date().nullable().default(null),
   status: z.enum(personStatuses),
   roleCode: z.enum(personRoleCodes),
 });

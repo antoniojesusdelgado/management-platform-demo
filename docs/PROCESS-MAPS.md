@@ -77,3 +77,18 @@ flowchart LR
 flowchart LR
   Define --> ValidatePermissions["Validate permissions"] --> Apply --> Audit
 ```
+
+## Incremental demo scenario
+
+```mermaid
+flowchart LR
+  Enter["Enter organization"] --> Authenticate
+  Authenticate --> Authorize["Verify active membership"]
+  Authorize --> Lock["Lock organization"]
+  Lock --> Pending{"Missing dates through yesterday?"}
+  Pending -->|No| Load["Load module"]
+  Pending -->|Yes| Generate["Append deterministic interval"]
+  Generate --> Audit["Record counts and audit"]
+  Audit --> Advance["Advance horizon atomically"]
+  Advance --> Load
+```

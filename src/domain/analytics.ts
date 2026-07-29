@@ -8,6 +8,12 @@ export type AnalyticsFilter = {
   service: string | null;
 };
 
+export type AnalyticsServiceDimension = {
+  code: string;
+  label: string;
+  kind: "incident" | "integration";
+};
+
 export type AnalyticsKpi = {
   code: string;
   label: string;

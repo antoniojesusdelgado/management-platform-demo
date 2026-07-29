@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  buildAnalyticsServiceDimensions,
   buildAnalyticsSnapshot,
   calculateVariation,
   createAnalyticsWindow,
@@ -70,10 +71,14 @@ describe("analytics engine", () => {
       treasuryEntries: initialGuestDemoState.treasuryEntries,
       payrollRuns: initialGuestDemoState.payrollRuns,
       integrationRuns: initialGuestDemoState.integrationRuns,
+      integrationConnectors: initialGuestDemoState.integrationConnectors,
     };
-    const service = data.incidents.find(
+    const serviceLabel = data.incidents.find(
       (incident) => incident.affectedService,
     )?.affectedService;
+    const service = buildAnalyticsServiceDimensions(data).find(
+      (dimension) => dimension.label === serviceLabel,
+    )?.code;
     expect(service).toBeTruthy();
 
     const work = buildAnalyticsSnapshot(
@@ -99,7 +104,7 @@ describe("analytics engine", () => {
     ]);
     expect(
       filteredService.series[1].points.every(
-        (point) => point.period === service,
+        (point) => point.period === serviceLabel,
       ),
     ).toBe(true);
   });

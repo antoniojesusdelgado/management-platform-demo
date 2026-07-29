@@ -7,27 +7,113 @@ import {
   syntheticTreasuryConcepts,
 } from "@/demo-data/catalog";
 
-export const SCENARIO_REFERENCE_DATE = "2026-06-17";
 export const SCENARIO_START_DATE = "2025-01-01";
+export const SCENARIO_TIME_ZONE = "Europe/Madrid";
+
+export function getScenarioGeneratedThroughDate(now = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: SCENARIO_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const value = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  const today = new Date(
+    Date.UTC(Number(value.year), Number(value.month) - 1, Number(value.day)),
+  );
+  today.setUTCDate(today.getUTCDate() - 1);
+  return today.toISOString().slice(0, 10);
+}
+
+export const SCENARIO_REFERENCE_DATE = getScenarioGeneratedThroughDate();
 
 export const STANDARD_SCENARIO_COUNTS = {
-  people: 32,
+  people: 266,
   teams: 6,
   projects: 10,
-  tasks: 120,
-  leaveRequests: 104,
-  incidents: 60,
-  treasuryEntries: 360,
-  payrollRuns: 18,
-  payrollParticipants: 576,
-  integrationRuns: 72,
+  tasksPerActivePerson: 0.3,
+  leaveRequestsPerActivePerson: 0.035,
+  incidentsPerActivePerson: 0.02,
+  treasuryEntriesPerActivePerson: 0.1,
+  minimumTreasuryEntriesPerMonth: 20,
+  integrationRunsPerMonth: 4,
   changelogEntries: 12,
 } as const;
 
+function dateFromOffset(startDate: string, offset: number) {
+  const date = new Date(`${startDate}T12:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + offset);
+  return date.toISOString().slice(0, 10);
+}
+
+function employmentPeriodForIndex(index: number) {
+  if (index < 100) {
+    return {
+      employmentStartDate: SCENARIO_START_DATE,
+      employmentEndDate:
+        index >= 97 && index <= 99
+          ? dateFromOffset("2025-08-04", index - 97)
+          : null,
+    };
+  }
+
+  if (index < 145) {
+    return {
+      employmentStartDate: dateFromOffset(
+        "2025-01-02",
+        Math.floor(((index - 100) * 178) / 44),
+      ),
+      employmentEndDate: null,
+    };
+  }
+
+  if (index < 183) {
+    return {
+      employmentStartDate: dateFromOffset(
+        "2025-09-01",
+        Math.floor(((index - 145) * 120) / 37),
+      ),
+      employmentEndDate:
+        index >= 176 && index <= 178
+          ? dateFromOffset("2026-04-13", index - 176)
+          : null,
+    };
+  }
+
+  if (index < 218) {
+    return {
+      employmentStartDate: dateFromOffset(
+        "2026-01-02",
+        Math.floor(((index - 183) * 87) / 34),
+      ),
+      employmentEndDate: null,
+    };
+  }
+
+  if (index < 256) return {
+    employmentStartDate: dateFromOffset(
+      "2026-05-01",
+      Math.floor(((index - 218) * 59) / 37),
+    ),
+    employmentEndDate:
+      index >= 246
+        ? dateFromOffset("2026-07-05", (index - 246) * 7)
+        : null,
+  };
+
+  const postJuneIndex = index - 256;
+  return {
+    employmentStartDate: dateFromOffset("2026-07-03", postJuneIndex * 7),
+    employmentEndDate: null,
+  };
+}
+
 export type DemoScenarioDefinition = {
-  scenarioVersion: 6;
+  scenarioVersion: 7;
   seed: string;
   anchorDate: string;
+  scenarioStartDate: string;
+  scenarioGeneratedThroughDate: string;
   generatedAt: string;
   people: Array<{
     id: string;
@@ -35,6 +121,8 @@ export type DemoScenarioDefinition = {
     team: string;
     positionTitle: string;
     managerPersonId: string | null;
+    employmentStartDate: string;
+    employmentEndDate: string | null;
     employmentContractType:
       | "indefinite_ordinary"
       | "permanent_discontinuous"
@@ -186,13 +274,17 @@ export type DemoScenarioDefinition = {
 
 const isoDateSchema = z.iso.date();
 const scenarioSchema = z.object({
-  scenarioVersion: z.literal(6),
+  scenarioVersion: z.literal(7),
   seed: z.string().min(1),
   anchorDate: isoDateSchema,
+  scenarioStartDate: isoDateSchema,
+  scenarioGeneratedThroughDate: isoDateSchema,
   generatedAt: z.iso.datetime(),
   people: z.array(z.object({
     id: z.uuid(), displayName: z.string().min(2), team: z.string().min(2),
     positionTitle: z.string().min(2), managerPersonId: z.uuid().nullable(),
+    employmentStartDate: isoDateSchema,
+    employmentEndDate: isoDateSchema.nullable(),
     employmentContractType: z.enum([
       "indefinite_ordinary",
       "permanent_discontinuous",
@@ -201,7 +293,7 @@ const scenarioSchema = z.object({
     ]),
     status: z.enum(["invited", "active", "suspended", "inactive"]),
     roleCode: z.enum(["admin", "manager", "collaborator", "viewer"]),
-  })).length(STANDARD_SCENARIO_COUNTS.people),
+  })).min(100),
   projects: z.array(z.object({
     id: z.uuid(), code: z.string(), name: z.string(), summary: z.string(),
     status: z.enum(["planned", "active", "on_hold", "completed", "cancelled"]),
@@ -214,7 +306,7 @@ const scenarioSchema = z.object({
     status: z.enum(["pending", "in_progress", "blocked", "in_review", "completed"]),
     priority: z.enum(["low", "medium", "high", "urgent"]), assigneePersonId: z.uuid().nullable(),
     dueDate: isoDateSchema.nullable(), createdAt: z.iso.datetime(), updatedAt: z.iso.datetime(),
-  })).length(STANDARD_SCENARIO_COUNTS.tasks),
+  })).min(1),
   taskDependencies: z.array(z.object({
     id: z.uuid(), taskId: z.uuid(), dependsOnTaskId: z.uuid(),
   })),
@@ -225,7 +317,7 @@ const scenarioSchema = z.object({
     id: z.uuid(), personId: z.uuid(), startDate: isoDateSchema, endDate: isoDateSchema,
     type: z.enum(["vacation", "personal"]),
     reason: z.string(), status: z.enum(["draft", "submitted", "approved", "rejected", "cancelled"]),
-  })).length(STANDARD_SCENARIO_COUNTS.leaveRequests),
+  })).min(1),
   incidents: z.array(z.object({
     id: z.uuid(), projectId: z.uuid(), requesterPersonId: z.uuid(), assigneePersonId: z.uuid().nullable(),
     title: z.string(), description: z.string(),
@@ -239,13 +331,13 @@ const scenarioSchema = z.object({
     firstResponseAt: z.iso.datetime().nullable(),
     correctiveTaskId: z.uuid().nullable(),
     slaDueAt: z.iso.datetime(), resolution: z.string().nullable(), createdAt: z.iso.datetime(), updatedAt: z.iso.datetime(),
-  })).length(STANDARD_SCENARIO_COUNTS.incidents),
+  })).min(1),
   treasuryEntries: z.array(z.object({
     id: z.uuid(), source: z.enum(["Financial Source A", "Financial Source B"]),
     sourceSequence: z.number().int().positive(), entryDate: isoDateSchema,
     concept: z.string(), category: z.string(), amountCents: z.number().int(), currency: z.literal("EUR"),
     status: z.enum(["draft", "registered", "reconciled", "validated", "closed"]),
-  })).length(STANDARD_SCENARIO_COUNTS.treasuryEntries),
+  })).min(1),
   payrollRuns: z.array(z.object({
     id: z.uuid(), periodStart: isoDateSchema, periodEnd: isoDateSchema,
     peopleCount: z.number().int().positive(), grossTotalCents: z.number().int().positive(),
@@ -253,13 +345,13 @@ const scenarioSchema = z.object({
     employerCostTotalCents: z.number().int().positive(),
     currency: z.literal("EUR"),
     status: z.enum(["collecting", "validating", "calculated", "reviewed", "closed"]),
-  })).length(STANDARD_SCENARIO_COUNTS.payrollRuns),
+  })).min(1),
   payrollParticipants: z.array(z.object({
     id: z.uuid(), runId: z.uuid(), personId: z.uuid(), personName: z.string().min(2),
     team: z.string().min(2), positionTitle: z.string().min(2),
     inclusionStatus: z.enum(["included", "excluded"]),
     validationStatus: z.enum(["validated", "pending", "review"]),
-  })).length(STANDARD_SCENARIO_COUNTS.payrollParticipants),
+  })).min(1),
   integrationRuns: z.array(z.object({
     id: z.uuid(), connectorId: z.string().min(3), effectiveDate: isoDateSchema,
     status: z.enum(["succeeded", "partial", "failed"]), triggerKind: z.literal("schedule"),
@@ -267,7 +359,7 @@ const scenarioSchema = z.object({
     importedCount: z.number().int().nonnegative(), duplicateCount: z.number().int().nonnegative(),
     errorCount: z.number().int().nonnegative(), safeSummary: z.string().min(3),
     startedAt: z.iso.datetime(), finishedAt: z.iso.datetime(),
-  })).length(STANDARD_SCENARIO_COUNTS.integrationRuns),
+  })).min(1),
   changelogEntries: z.array(z.object({
     id: z.uuid(), version: z.string(), title: z.string(), summary: z.string(),
     status: z.enum(["draft", "in_review", "published"]), publishedAt: z.iso.datetime().nullable(),
@@ -315,6 +407,103 @@ function addMonths(value: string, months: number) {
   return date.toISOString().slice(0, 10);
 }
 
+function getScenarioMonthStarts(anchorDate: string) {
+  const months: string[] = [];
+  let monthStart = SCENARIO_START_DATE;
+  const anchorMonth = `${anchorDate.slice(0, 7)}-01`;
+  while (monthStart <= anchorMonth) {
+    months.push(monthStart);
+    monthStart = addMonths(monthStart, 1);
+  }
+  return months;
+}
+
+export function getScenarioPeriodCounts(anchorDate = SCENARIO_REFERENCE_DATE) {
+  const months = getScenarioMonthStarts(anchorDate);
+  const activeAt = (date: string) =>
+    Array.from({ length: STANDARD_SCENARIO_COUNTS.people }, (_, index) =>
+      employmentPeriodForIndex(index),
+    ).filter(
+      (period) =>
+        period.employmentStartDate <= date &&
+        (period.employmentEndDate === null ||
+          period.employmentEndDate > date),
+    ).length;
+  const monthMetrics = months.map((monthStart) => {
+    const periodEnd = notAfter(addDays(addMonths(monthStart, 1), -1), anchorDate);
+    const activePeople = activeAt(periodEnd);
+    const month = Number(monthStart.slice(5, 7));
+    const leaveSeasonality =
+      month === 7 || month === 8 ? 2 : month === 12 ? 1.6 : 1;
+    return {
+      activePeople,
+      tasks: Math.max(
+        1,
+        Math.round(activePeople * STANDARD_SCENARIO_COUNTS.tasksPerActivePerson),
+      ),
+      leaveRequests: Math.max(
+        1,
+        Math.round(
+          activePeople *
+            STANDARD_SCENARIO_COUNTS.leaveRequestsPerActivePerson *
+            leaveSeasonality,
+        ),
+      ),
+      incidents: Math.max(
+        2,
+        Math.round(
+          activePeople *
+            STANDARD_SCENARIO_COUNTS.incidentsPerActivePerson,
+        ),
+      ),
+      treasuryEntries: Math.max(
+        STANDARD_SCENARIO_COUNTS.minimumTreasuryEntriesPerMonth,
+        Math.round(
+          activePeople *
+            STANDARD_SCENARIO_COUNTS.treasuryEntriesPerActivePerson,
+        ),
+      ),
+    };
+  });
+  return {
+    months: months.length,
+    tasks: monthMetrics.reduce((total, month) => total + month.tasks, 0),
+    leaveRequests: monthMetrics.reduce(
+      (total, month) => total + month.leaveRequests,
+      0,
+    ),
+    incidents: monthMetrics.reduce(
+      (total, month) => total + month.incidents,
+      0,
+    ),
+    treasuryEntries: monthMetrics.reduce(
+      (total, month) => total + month.treasuryEntries,
+      0,
+    ),
+    payrollRuns: months.length,
+    integrationRuns:
+      months.length * STANDARD_SCENARIO_COUNTS.integrationRunsPerMonth,
+    monthMetrics,
+  };
+}
+
+function isPersonActiveOnDate(
+  person: DemoScenarioDefinition["people"][number],
+  date: string,
+) {
+  return (
+    person.employmentStartDate <= date &&
+    (person.employmentEndDate === null || person.employmentEndDate > date)
+  );
+}
+
+export function countActivePeopleOnDate(
+  people: DemoScenarioDefinition["people"],
+  date: string,
+) {
+  return people.filter((person) => isPersonActiveOnDate(person, date)).length;
+}
+
 function isoAt(value: string, hour = 9) {
   return `${value}T${String(hour).padStart(2, "0")}:00:00.000Z`;
 }
@@ -328,14 +517,29 @@ function pick<T>(items: readonly T[], index: number) {
 }
 
 export function generateDemoScenario(
-  seed = "management-platform-standard-v6",
+  seed = "management-platform-standard-v7",
   anchorDate = SCENARIO_REFERENCE_DATE,
 ): DemoScenarioDefinition {
   const random = createRandom(seed);
   const people: DemoScenarioDefinition["people"] = Array.from(
     { length: STANDARD_SCENARIO_COUNTS.people },
     (_, index) => {
-      const [displayName, team, positionTitle] = syntheticPeopleCatalog[index]!;
+      const baseProfile = syntheticPeopleCatalog[index % syntheticPeopleCatalog.length]!;
+      const surnameProfile =
+        syntheticPeopleCatalog[
+          (index + Math.floor(index / syntheticPeopleCatalog.length) * 7) %
+            syntheticPeopleCatalog.length
+        ]!;
+      const displayName =
+        index < syntheticPeopleCatalog.length
+          ? baseProfile[0]
+          : `${baseProfile[0].split(" ")[0]} ${surnameProfile[0].split(" ").at(-1)}`;
+      const [, team, positionTitle] = baseProfile;
+      const employmentPeriod = employmentPeriodForIndex(index);
+      const hasStarted = employmentPeriod.employmentStartDate <= anchorDate;
+      const hasEnded =
+        employmentPeriod.employmentEndDate !== null &&
+        employmentPeriod.employmentEndDate <= anchorDate;
       return {
         id: deterministicUuid(seed, "person", index),
         displayName,
@@ -346,15 +550,16 @@ export function generateDemoScenario(
             ? null
             : deterministicUuid(seed, "person", index < 6 ? 0 : index % 6),
         employmentContractType:
-          index < 23
+          index % 32 < 23
             ? "indefinite_ordinary"
-            : index < 26
+            : index % 32 < 26
               ? "permanent_discontinuous"
-              : index < 30
+              : index % 32 < 30
                 ? "temporary_production"
                 : "temporary_substitution",
-        status:
-          index === 29 ? "suspended" : index === 31 ? "inactive" : "active",
+        employmentStartDate: employmentPeriod.employmentStartDate,
+        employmentEndDate: employmentPeriod.employmentEndDate,
+        status: !hasStarted ? "invited" : hasEnded ? "inactive" : "active",
         roleCode:
           index === 0
             ? "admin"
@@ -369,6 +574,7 @@ export function generateDemoScenario(
   const projectStatuses = ["active", "active", "active", "active", "active", "on_hold", "completed", "completed", "completed", "planned"] as const;
   const projectHealth = ["on_track", "on_track", "on_track", "on_track", "at_risk", "off_track", "on_track", "on_track", "on_track", "on_track"] as const;
   const colors = ["#4f46e5", "#0d9488", "#d97706", "#2563eb", "#7c3aed", "#0891b2", "#16a34a", "#dc2626", "#0f766e", "#9333ea", "#0369a1", "#c2410c"];
+  const monthStarts = getScenarioMonthStarts(anchorDate);
   const projects: DemoScenarioDefinition["projects"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.projects }, (_, index) => {
     const startDate = addDays(SCENARIO_START_DATE, index * 36);
     const [code, name, summary] = syntheticProjectCatalog[index]!;
@@ -386,75 +592,126 @@ export function generateDemoScenario(
       color: colors[index]!,
     };
   });
-  const openTaskStatusesByProject = [
-    ["pending", "pending", "pending", "in_progress", "blocked", "in_review"],
-    ["pending", "pending", "in_progress", "in_progress", "in_review"],
-    ["pending", "pending", "in_progress", "blocked", "in_review"],
-    ["pending", "pending", "in_progress", "in_review"],
-    ["pending", "in_progress", "blocked", "in_review"],
-    ["pending", "in_progress", "in_review"],
-    [],
-    [],
-    [],
-    ["pending", "in_progress", "in_review"],
+  const taskBlueprints = monthStarts.flatMap((monthStart, monthIndex) => {
+    const periodEnd = notAfter(addDays(addMonths(monthStart, 1), -1), anchorDate);
+    const availableDays =
+      Math.floor(
+        (new Date(`${periodEnd}T12:00:00.000Z`).getTime() -
+          new Date(`${monthStart}T12:00:00.000Z`).getTime()) /
+          86_400_000,
+      ) + 1;
+    const activePeople = countActivePeopleOnDate(people, periodEnd);
+    const count = Math.max(
+      1,
+      Math.round(activePeople * STANDARD_SCENARIO_COUNTS.tasksPerActivePerson),
+    );
+    return Array.from({ length: count }, (_, monthPosition) => ({
+      createdDate: addDays(
+        monthStart,
+        Math.floor(
+          (monthPosition * Math.max(0, availableDays - 1)) /
+            Math.max(1, count - 1),
+        ),
+      ),
+      projectIndex:
+        (monthIndex * 3 + monthPosition * 7) %
+        STANDARD_SCENARIO_COUNTS.projects,
+    }));
+  });
+  const openTaskTarget = Math.round(taskBlueprints.length * 0.125);
+  const openTaskIndexes = new Set(
+    taskBlueprints
+      .map((blueprint, index) => ({ ...blueprint, index }))
+      .filter(
+        ({ projectIndex }) => projects[projectIndex]!.status !== "completed",
+      )
+      .slice(-openTaskTarget)
+      .map(({ index }) => index),
+  );
+  const openStatuses = [
+    "pending",
+    "pending",
+    "pending",
+    "in_progress",
+    "in_progress",
+    "blocked",
+    "in_review",
   ] as const;
   const priorities = [
-    ...Array<"urgent">(5).fill("urgent"),
-    ...Array<"high">(25).fill("high"),
-    ...Array<"medium">(60).fill("medium"),
-    ...Array<"low">(30).fill("low"),
-  ];
-  const taskProjectIndexes = [16, 15, 14, 13, 12, 11, 10, 9, 8, 12]
-    .flatMap((count, projectIndex) => Array<number>(count).fill(projectIndex));
-  const tasks: DemoScenarioDefinition["tasks"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.tasks }, (_, index) => {
-    const createdOffset = Math.floor((index * 520) / 119);
-    const createdDate = addDays(SCENARIO_START_DATE, createdOffset);
-    const projectIndex = taskProjectIndexes[index]!;
+    "low",
+    "medium",
+    "medium",
+    "medium",
+    "high",
+    "high",
+    "urgent",
+  ] as const;
+  const tasks: DemoScenarioDefinition["tasks"] = taskBlueprints.map(
+    ({ createdDate, projectIndex }, index) => {
     const project = projects[projectIndex]!;
-    const firstProjectTaskIndex = taskProjectIndexes.indexOf(projectIndex);
-    const localTaskIndex = index - firstProjectTaskIndex;
-    const configuredStatus = openTaskStatusesByProject[projectIndex]![
-      localTaskIndex
-    ] as DemoScenarioDefinition["tasks"][number]["status"] | undefined;
     const status: DemoScenarioDefinition["tasks"][number]["status"] =
-      configuredStatus ?? "completed";
+      openTaskIndexes.has(index)
+        ? openStatuses[index % openStatuses.length]!
+        : "completed";
     const action = pick(syntheticTaskActions, index * 5 + Math.floor(random() * 3));
+    const daysFromCreation = Math.max(
+      0,
+      Math.floor(
+        (new Date(`${anchorDate}T12:00:00.000Z`).getTime() -
+          new Date(`${createdDate}T12:00:00.000Z`).getTime()) /
+          86_400_000,
+      ),
+    );
     const dueDate =
       status === "completed"
-        ? addDays(createdDate, Math.min(12 + (index % 35), Math.max(0, 532 - createdOffset)))
-        : index < 6
-          ? addDays(anchorDate, -(2 + index * 3))
+        ? addDays(createdDate, Math.min(12 + (index % 20), daysFromCreation))
+        : index % 19 === 0
+          ? addDays(anchorDate, -(2 + (index % 6)))
           : anchorDate;
+    const activePeople = people.filter((person) =>
+      isPersonActiveOnDate(person, createdDate),
+    );
     return {
       id: deterministicUuid(seed, "task", index),
       projectId: project.id,
       title: `${action} · ${project.name}`,
       description: `Coordinar esta actividad con el equipo de ${project.name} y dejar documentadas las decisiones antes de la revisión.`,
       status,
-      priority: priorities[(index * 37) % priorities.length]!,
-      assigneePersonId: index % 12 === 0 ? null : people[(index * 7) % 30]!.id,
+      priority: priorities[(index * 5) % priorities.length]!,
+      assigneePersonId:
+        index % 12 === 0
+          ? null
+          : activePeople[(index * 7) % activePeople.length]?.id ?? null,
       dueDate: index % 17 === 0 ? null : dueDate,
       createdAt: isoAt(createdDate, 8 + (index % 8)),
       updatedAt: isoAt(
         status === "completed"
-          ? addDays(createdDate, Math.min(15 + (index % 40), Math.max(0, 532 - createdOffset)))
+          ? addDays(createdDate, Math.min(15 + (index % 20), daysFromCreation))
           : addDays(anchorDate, -(index % 18)),
         10,
       ),
     };
   });
   const taskDependencies = tasks
-    .filter((_, index) => index > 0 && index % 4 === 0)
+    .filter((_, index) => index > 0 && index % 5 === 0)
     .map((task, index) => ({
       id: deterministicUuid(seed, "task-dependency", index),
       taskId: task.id,
       dependsOnTaskId: tasks[tasks.indexOf(task) - 1]!.id,
     }));
   const taskComments = tasks.flatMap((task, index) =>
-    Array.from({ length: index % 3 }, (_, comment) => ({
+    Array.from({ length: index % 2 }, (_, comment) => ({
       id: deterministicUuid(seed, "task-comment", index * 3 + comment),
       taskId: task.id,
-      authorPersonId: people[(index + comment) % 30]!.id,
+      authorPersonId:
+        people.filter((person) =>
+          isPersonActiveOnDate(person, task.updatedAt.slice(0, 10)),
+        )[(index + comment) % Math.max(
+          1,
+          people.filter((person) =>
+            isPersonActiveOnDate(person, task.updatedAt.slice(0, 10)),
+          ).length,
+        )]?.id ?? people[0]!.id,
       body: pick([
         "Criterios revisados con el equipo y listos para la siguiente validación.",
         "Queda documentada la dependencia antes de continuar con la entrega.",
@@ -462,67 +719,122 @@ export function generateDemoScenario(
       createdAt: task.updatedAt,
     })),
   );
-  const leaveStatuses = [
-    ...Array<"approved">(80).fill("approved"),
-    ...Array<"submitted">(8).fill("submitted"),
-    ...Array<"draft">(4).fill("draft"),
-    ...Array<"rejected">(6).fill("rejected"),
-    ...Array<"cancelled">(6).fill("cancelled"),
-  ];
-  const leaveByMonth = [3, 3, 4, 5, 6, 8, 10, 11, 6, 5, 4, 9, 4, 4, 5, 5, 6, 6]
-    .flatMap((count, month) => Array.from({ length: count }, (_, position) => ({ month, position })));
-  const leaveRequests: DemoScenarioDefinition["leaveRequests"] = leaveByMonth.map(({ month, position }, index) => {
-    const teamIndex = position % 6;
-    const occurrence = Math.floor(position / 6);
-    const startDate = notAfter(
-      addDays(addMonths(SCENARIO_START_DATE, month), 2 + teamIndex * 3 + occurrence * 15),
-      anchorDate,
-    );
-    const duration = index % 7 === 0 ? 1 : 2 + (index % 5);
-    return {
-      id: deterministicUuid(seed, "leave", index),
-      personId: people[(teamIndex + occurrence * 6 + month * 6) % 30]!.id,
-      startDate,
-      endDate: notAfter(addDays(startDate, duration), anchorDate),
-      type: index % 5 === 0 ? "personal" : "vacation",
-      reason: index % 5 === 0 ? "Gestión personal." : "Descanso anual planificado.",
-      status: leaveStatuses[(index * 29) % leaveStatuses.length]!,
-    };
-  });
-  const incidentStatuses = [
-    ...Array<"registered">(2).fill("registered"),
-    ...Array<"triaged">(2).fill("triaged"),
-    ...Array<"assigned">(3).fill("assigned"),
-    ...Array<"investigating">(5).fill("investigating"),
-    ...Array<"resolved">(18).fill("resolved"),
-    ...Array<"closed">(30).fill("closed"),
-  ];
-  const incidentPriorities = [
-    ...Array<"critical">(2).fill("critical"),
-    ...Array<"high">(10).fill("high"),
-    ...Array<"medium">(30).fill("medium"),
-    ...Array<"low">(18).fill("low"),
-  ];
-  const incidentProjectIndexes = [10, 9, 8, 7, 6, 5, 4, 4, 3, 4]
-    .flatMap((count, projectIndex) => Array<number>(count).fill(projectIndex));
+  let leaveIndex = 0;
+  const leaveRequests: DemoScenarioDefinition["leaveRequests"] =
+    monthStarts.flatMap((monthStart) => {
+      const periodEnd = notAfter(addDays(addMonths(monthStart, 1), -1), anchorDate);
+      const activePeople = people.filter((person) =>
+        isPersonActiveOnDate(person, periodEnd),
+      );
+      const month = Number(monthStart.slice(5, 7));
+      const seasonality =
+        month === 7 || month === 8 ? 2 : month === 12 ? 1.6 : 1;
+      const count = Math.max(
+        1,
+        Math.round(
+          activePeople.length *
+            STANDARD_SCENARIO_COUNTS.leaveRequestsPerActivePerson *
+            seasonality,
+        ),
+      );
+      return Array.from({ length: count }, (_, monthPosition) => {
+        const index = leaveIndex++;
+        const teamNames = [...new Set(activePeople.map((person) => person.team))];
+        const teamName = teamNames[monthPosition % teamNames.length]!;
+        const teamPeople = activePeople.filter(
+          (person) => person.team === teamName,
+        );
+        const teamPosition = Math.floor(monthPosition / teamNames.length);
+        const startDate = notAfter(
+          addDays(
+            monthStart,
+            2 + ((teamPosition * 8 + (monthPosition % teamNames.length) * 2) % 24),
+          ),
+          anchorDate,
+        );
+        const duration = index % 7 === 0 ? 1 : 2 + (index % 4);
+        const isRecent = startDate.slice(0, 7) === anchorDate.slice(0, 7);
+        const status: DemoScenarioDefinition["leaveRequests"][number]["status"] =
+          isRecent
+            ? index % 3 === 0
+              ? "draft"
+              : "submitted"
+            : index % 17 === 0
+              ? "rejected"
+              : index % 13 === 0
+                ? "cancelled"
+                : "approved";
+        return {
+          id: deterministicUuid(seed, "leave", index),
+          personId: teamPeople[teamPosition % teamPeople.length]!.id,
+          startDate,
+          endDate: notAfter(addDays(startDate, duration), anchorDate),
+          type: index % 5 === 0 ? "personal" : "vacation",
+          reason:
+            index % 5 === 0
+              ? "Gestión personal."
+              : "Descanso anual planificado.",
+          status,
+        };
+      });
+    });
   const categories = ["access", "data", "hardware", "software", "other"] as const;
   const services = ["Importaciones", "Permisos", "Analítica", "Tesorería", "Directorio", "Notificaciones"] as const;
   const impactScopes = ["individual", "team", "workspace"] as const;
   const detectionChannels = ["monitoring", "support", "team", "automation"] as const;
-  const incidents: DemoScenarioDefinition["incidents"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.incidents }, (_, index) => {
-    const createdOffset = Math.floor((index * 520) / 59);
-    const createdDate = addDays(SCENARIO_START_DATE, createdOffset);
-    const daysRemaining = Math.max(0, 532 - createdOffset);
-    const status = incidentStatuses[index]!;
-    const priority = incidentPriorities[(index * 17) % incidentPriorities.length]!;
+  let incidentIndex = 0;
+  const incidents: DemoScenarioDefinition["incidents"] =
+    monthStarts.flatMap((monthStart) => {
+      const periodEnd = notAfter(addDays(addMonths(monthStart, 1), -1), anchorDate);
+      const activePeople = people.filter((person) =>
+        isPersonActiveOnDate(person, periodEnd),
+      );
+      const count = Math.max(
+        2,
+        Math.round(
+          activePeople.length *
+            STANDARD_SCENARIO_COUNTS.incidentsPerActivePerson,
+        ),
+      );
+      return Array.from({ length: count }, (_, monthPosition) => {
+    const index = incidentIndex++;
+    const createdDate = notAfter(
+      addDays(monthStart, 3 + ((monthPosition * 7 + index) % 24)),
+      anchorDate,
+    );
+    const daysRemaining = Math.max(
+      0,
+      Math.floor(
+        (new Date(`${anchorDate}T12:00:00.000Z`).getTime() -
+          new Date(`${createdDate}T12:00:00.000Z`).getTime()) /
+          86_400_000,
+      ),
+    );
+    const isRecent = daysRemaining <= 45;
+    const status: DemoScenarioDefinition["incidents"][number]["status"] =
+      isRecent
+        ? pick(
+            ["registered", "triaged", "assigned", "investigating"] as const,
+            index,
+          )
+        : index % 3 === 0
+          ? "resolved"
+          : "closed";
+    const priority = pick(
+      ["low", "medium", "medium", "high", "critical"] as const,
+      index * 7,
+    );
     const resolved = status === "resolved" || status === "closed";
-    const project = projects[incidentProjectIndexes[index]!]!;
+    const project = projects[(index * 7 + monthPosition) % projects.length]!;
     const [title, description] = pick(syntheticIncidentCatalog, index * 5);
     return {
       id: deterministicUuid(seed, "incident", index),
       projectId: project.id,
-      requesterPersonId: people[(index + 7) % 30]!.id,
-      assigneePersonId: status === "registered" ? null : people[index % 8]!.id,
+      requesterPersonId: activePeople[(index + 7) % activePeople.length]!.id,
+      assigneePersonId:
+        status === "registered"
+          ? null
+          : activePeople[index % activePeople.length]!.id,
       title: `${title} · ${project.name}`,
       description,
       status,
@@ -562,83 +874,154 @@ export function generateDemoScenario(
         15,
       ),
     };
-  });
-  const treasuryStatuses = [
-    ...Array<"draft">(4).fill("draft"),
-    ...Array<"registered">(4).fill("registered"),
-    ...Array<"reconciled">(8).fill("reconciled"),
-    ...Array<"validated">(104).fill("validated"),
-    ...Array<"closed">(120).fill("closed"),
-  ];
-  const treasuryEntries: DemoScenarioDefinition["treasuryEntries"] = Array.from(
-    { length: STANDARD_SCENARIO_COUNTS.treasuryEntries },
-    (_, index) => {
-      const monthIndex = Math.floor((index * 18) / STANDARD_SCENARIO_COUNTS.treasuryEntries);
-      const monthStart = Math.ceil((monthIndex * STANDARD_SCENARIO_COUNTS.treasuryEntries) / 18);
-      const monthEnd = Math.ceil(((monthIndex + 1) * STANDARD_SCENARIO_COUNTS.treasuryEntries) / 18);
-      const monthCount = monthEnd - monthStart;
-      const monthPosition = index - monthStart;
-      const [concept, category] = pick(syntheticTreasuryConcepts, index * 7);
-      const isIncome = monthPosition < 2;
-      const incomeAmount = 2_700_000 + monthIndex * 18_000;
+      });
+    });
+  const treasuryEntries: DemoScenarioDefinition["treasuryEntries"] =
+    monthStarts.flatMap((monthStart, monthIndex) => {
+      const periodEnd = notAfter(addDays(addMonths(monthStart, 1), -1), anchorDate);
+      const availableDays =
+        Math.floor(
+          (new Date(`${periodEnd}T12:00:00.000Z`).getTime() -
+            new Date(`${monthStart}T12:00:00.000Z`).getTime()) /
+            86_400_000,
+        ) + 1;
+      const activePeople = countActivePeopleOnDate(people, periodEnd);
+      const entryCount = Math.max(
+        STANDARD_SCENARIO_COUNTS.minimumTreasuryEntriesPerMonth,
+        Math.round(
+          activePeople *
+            STANDARD_SCENARIO_COUNTS.treasuryEntriesPerActivePerson,
+        ),
+      );
+      const incomeAmount = Math.round(activePeople * (31_000 + (monthIndex % 5) * 700));
       const targetMargin = 0.11 + (monthIndex % 7) * 0.01;
       const expenseAmount = Math.round(
-        (incomeAmount * 2 * (1 - targetMargin)) / (monthCount - 2),
+        (incomeAmount * 2 * (1 - targetMargin)) /
+          (entryCount - 2),
+      );
+
+      return Array.from(
+        { length: entryCount },
+        (_, monthPosition) => {
+          const index =
+            monthStarts
+              .slice(0, monthIndex)
+              .reduce((total, priorMonthStart) => {
+                const priorEnd = notAfter(
+                  addDays(addMonths(priorMonthStart, 1), -1),
+                  anchorDate,
+                );
+                const priorActive = countActivePeopleOnDate(people, priorEnd);
+                return (
+                  total +
+                  Math.max(
+                    STANDARD_SCENARIO_COUNTS.minimumTreasuryEntriesPerMonth,
+                    Math.round(
+                      priorActive *
+                        STANDARD_SCENARIO_COUNTS.treasuryEntriesPerActivePerson,
+                    ),
+                  )
+                );
+              }, 0) +
+            monthPosition;
+          const [concept, category] = pick(
+            syntheticTreasuryConcepts,
+            index * 7,
+          );
+          const isIncome = monthPosition < 2;
+          const isCurrentMonth = monthIndex === monthStarts.length - 1;
+          const status =
+            isCurrentMonth && monthPosition === 2
+              ? ("registered" as const)
+              : isCurrentMonth && monthPosition === 3
+                ? ("reconciled" as const)
+                : monthIndex >= monthStarts.length - 2
+                  ? ("validated" as const)
+                  : ("closed" as const);
+
+          return {
+            id: deterministicUuid(seed, "treasury", index),
+            source:
+              index % 2 === 0
+                ? ("Financial Source A" as const)
+                : ("Financial Source B" as const),
+            sourceSequence: index + 1,
+            entryDate: addDays(
+              monthStart,
+              Math.floor(
+                (monthPosition * Math.max(0, availableDays - 1)) /
+                  Math.max(
+                    1,
+                    entryCount - 1,
+                  ),
+              ),
+            ),
+            concept,
+            category,
+            amountCents: isIncome ? incomeAmount : -expenseAmount,
+            currency: "EUR" as const,
+            status,
+          };
+        },
+      );
+    });
+  const payrollRuns: DemoScenarioDefinition["payrollRuns"] = monthStarts.map(
+    (periodStart, index) => {
+      const periodEnd = notAfter(
+        addDays(addMonths(periodStart, 1), -1),
+        anchorDate,
+      );
+      const peopleCount = countActivePeopleOnDate(people, periodEnd);
+      const grossPerPerson = 300_000 + (index % 6) * 3_500;
+      const gross = peopleCount * grossPerPerson;
+      const deductions = Math.round(
+        gross * (0.195 + (index % 4) * 0.006),
       );
       return {
-        id: deterministicUuid(seed, "treasury", index),
-        source:
-          index % 2 === 0 ? "Financial Source A" : "Financial Source B",
-        sourceSequence: index + 1,
-        entryDate: addDays(
-          addMonths(SCENARIO_START_DATE, monthIndex),
-          Math.floor((monthPosition * (monthIndex === 17 ? 16 : 27)) / Math.max(1, monthCount - 1)),
+        id: deterministicUuid(seed, "payroll", index),
+        periodStart,
+        periodEnd,
+        peopleCount,
+        grossTotalCents: gross,
+        deductionTotalCents: deductions,
+        netTotalCents: gross - deductions,
+        employerCostTotalCents: Math.round(
+          gross * (1.3 + (index % 4) * 0.01),
         ),
-        concept,
-        category,
-        amountCents: isIncome ? incomeAmount : -expenseAmount,
-        currency: "EUR",
-        status: treasuryStatuses[(index * 101) % treasuryStatuses.length]!,
+        currency: "EUR" as const,
+        status:
+          index < monthStarts.length - 2
+            ? ("closed" as const)
+            : index === monthStarts.length - 2
+              ? ("reviewed" as const)
+              : ("validating" as const),
       };
     },
   );
-  const payrollRuns: DemoScenarioDefinition["payrollRuns"] = Array.from({ length: STANDARD_SCENARIO_COUNTS.payrollRuns }, (_, index) => {
-    const periodStart = addMonths(SCENARIO_START_DATE, index);
-    const gross = 9_200_000 + index * 120_000 + (index % 4) * 45_000;
-    const deductions = Math.round(gross * (0.195 + (index % 4) * 0.006));
-    return {
-      id: deterministicUuid(seed, "payroll", index),
-      periodStart,
-      periodEnd: index === STANDARD_SCENARIO_COUNTS.payrollRuns - 1
-        ? anchorDate
-        : addDays(addMonths(periodStart, 1), -1),
-      peopleCount: 30 + Math.min(2, Math.floor(index / 7)),
-      grossTotalCents: gross,
-      deductionTotalCents: deductions,
-      netTotalCents: gross - deductions,
-      employerCostTotalCents: Math.round(gross * (1.3 + (index % 4) * 0.01)),
-      currency: "EUR",
-      status: index < 16 ? "closed" : index === 16 ? "reviewed" : "validating",
-    };
-  });
   const payrollParticipants: DemoScenarioDefinition["payrollParticipants"] =
     payrollRuns.flatMap((run, runIndex) =>
-      people.map((person, personIndex) => ({
-        id: deterministicUuid(seed, "payroll-participant", runIndex * people.length + personIndex),
-        runId: run.id,
-        personId: person.id,
-        personName: person.displayName,
-        team: person.team,
-        positionTitle: person.positionTitle,
-        inclusionStatus:
-          person.status === "inactive" && runIndex >= 12 ? "excluded" as const : "included" as const,
-        validationStatus:
-          runIndex === payrollRuns.length - 1 && personIndex % 11 === 0
-            ? "review" as const
-            : runIndex >= payrollRuns.length - 2 && personIndex % 7 === 0
-              ? "pending" as const
-              : "validated" as const,
-      })),
+      people.flatMap((person, personIndex) => {
+        if (!isPersonActiveOnDate(person, run.periodEnd)) return [];
+        return [{
+          id: deterministicUuid(
+            seed,
+            "payroll-participant",
+            runIndex * people.length + personIndex,
+          ),
+          runId: run.id,
+          personId: person.id,
+          personName: person.displayName,
+          team: person.team,
+          positionTitle: person.positionTitle,
+          inclusionStatus: "included" as const,
+          validationStatus:
+            runIndex === payrollRuns.length - 1 && personIndex % 17 === 0
+              ? ("review" as const)
+              : runIndex >= payrollRuns.length - 2 && personIndex % 23 === 0
+                ? ("pending" as const)
+                : ("validated" as const),
+        }];
+      }),
     );
   const connectorIds = [
     "financial-source-a",
@@ -647,13 +1030,29 @@ export function generateDemoScenario(
     "people-master",
   ] as const;
   const integrationRuns: DemoScenarioDefinition["integrationRuns"] =
-    Array.from({ length: STANDARD_SCENARIO_COUNTS.integrationRuns }, (_, index) => {
+    Array.from(
+      {
+        length:
+          monthStarts.length *
+          STANDARD_SCENARIO_COUNTS.integrationRunsPerMonth,
+      },
+      (_, index) => {
       const monthIndex = Math.floor(index / connectorIds.length);
       const connectorId = connectorIds[index % connectorIds.length]!;
-      const effectiveDate = notAfter(addDays(addMonths(SCENARIO_START_DATE, monthIndex), 14 + (index % 4)), anchorDate);
+      const monthStart = monthStarts[monthIndex]!;
+      const periodEnd = notAfter(addDays(addMonths(monthStart, 1), -1), anchorDate);
+      const activePeople = countActivePeopleOnDate(people, periodEnd);
+      const effectiveDate = notAfter(
+        addDays(monthStart, 8 + (index % 4) * 5),
+        anchorDate,
+      );
       const status =
         index % 17 === 0 ? "failed" as const : index % 7 === 0 ? "partial" as const : "succeeded" as const;
-      const processedCount = connectorId.startsWith("financial") ? 40 : connectorId === "payroll-master" ? 32 : 18;
+      const processedCount = connectorId.startsWith("financial")
+        ? Math.max(20, Math.round(activePeople * 0.8))
+        : connectorId === "payroll-master"
+          ? activePeople
+          : Math.max(12, Math.round(activePeople * 0.55));
       const errorCount = status === "failed" ? 4 : status === "partial" ? 1 : 0;
       const duplicateCount = connectorId.startsWith("financial") ? index % 3 : 0;
       return {
@@ -671,7 +1070,8 @@ export function generateDemoScenario(
         startedAt: isoAt(effectiveDate, 2),
         finishedAt: isoAt(effectiveDate, 3),
       };
-    });
+      },
+    );
   const changelogTimeline = [
     ["0.1.0", "Base de la plataforma", "Estructura inicial, navegación por módulos y permisos de acceso.", "2026-02-02"],
     ["0.2.0", "Gestión de vacaciones", "Solicitudes, aprobaciones, calendario de ausencias y trazabilidad.", "2026-02-16"],
@@ -697,9 +1097,11 @@ export function generateDemoScenario(
     }),
   );
   return {
-    scenarioVersion: 6,
+    scenarioVersion: 7,
     seed,
     anchorDate,
+    scenarioStartDate: SCENARIO_START_DATE,
+    scenarioGeneratedThroughDate: anchorDate,
     generatedAt: isoAt(anchorDate, 0),
     people,
     projects,
@@ -766,10 +1168,12 @@ export function validateDemoScenario(value: unknown) {
   }
   for (const run of scenario.payrollRuns) {
     if (run.netTotalCents !== run.grossTotalCents - run.deductionTotalCents) throw new Error("Invalid payroll totals");
+    const grossPerPerson =
+      run.peopleCount > 0 ? run.grossTotalCents / run.peopleCount : 0;
     const costRatio = run.employerCostTotalCents / run.grossTotalCents;
     if (
-      run.grossTotalCents < 9_200_000 ||
-      run.grossTotalCents > 11_800_000 ||
+      grossPerPerson < 290_000 ||
+      grossPerPerson > 330_000 ||
       costRatio < 1.28 ||
       costRatio > 1.34
     ) {
@@ -818,35 +1222,29 @@ export function validateDemoScenario(value: unknown) {
   const overdueOpenTasks = openTasks.filter(
     (task) => Boolean(task.dueDate && task.dueDate < scenario.anchorDate),
   );
-  if (openTasks.length !== 30 || overdueOpenTasks.length > 6) {
+  const completedTaskRatio =
+    scenario.tasks.filter((task) => task.status === "completed").length /
+    scenario.tasks.length;
+  if (
+    completedTaskRatio < 0.85 ||
+    completedTaskRatio > 0.9 ||
+    overdueOpenTasks.length > Math.max(6, Math.ceil(openTasks.length * 0.08))
+  ) {
     throw new Error("Task workload is outside the balanced scenario limits");
   }
-  const expectedTaskStatuses = {
-    completed: 90,
-    pending: 12,
-    in_progress: 8,
-    blocked: 3,
-    in_review: 7,
-  };
-  for (const [status, count] of Object.entries(expectedTaskStatuses)) {
-    if (scenario.tasks.filter((task) => task.status === status).length !== count) {
-      throw new Error(`Unexpected task distribution for ${status}`);
-    }
-  }
 
-  const expectedContracts = {
-    indefinite_ordinary: 23,
-    permanent_discontinuous: 3,
-    temporary_production: 4,
-    temporary_substitution: 2,
-  };
-  for (const [contract, count] of Object.entries(expectedContracts)) {
+  for (const contract of [
+    "indefinite_ordinary",
+    "permanent_discontinuous",
+    "temporary_production",
+    "temporary_substitution",
+  ] as const) {
     if (
-      scenario.people.filter(
+      !scenario.people.some(
         (person) => person.employmentContractType === contract,
-      ).length !== count
+      )
     ) {
-      throw new Error(`Unexpected employment contract distribution for ${contract}`);
+      throw new Error(`Missing employment contract type: ${contract}`);
     }
   }
 
@@ -874,24 +1272,20 @@ export function validateDemoScenario(value: unknown) {
     (incident) => incident.slaDueAt.slice(0, 10) < scenario.anchorDate,
   );
   if (
-    openIncidents.length !== 12 ||
-    overdueIncidents.length > 2 ||
-    scenario.incidents.filter((incident) => incident.priority === "critical").length !== 2
+    openIncidents.length === 0 ||
+    overdueIncidents.length > Math.max(2, Math.ceil(openIncidents.length * 0.25)) ||
+    !scenario.incidents.some((incident) => incident.priority === "critical")
   ) {
     throw new Error("Incident workload is outside the balanced scenario limits");
   }
 
-  const expectedLeaveStatuses = {
-    approved: 80,
-    submitted: 8,
-    draft: 4,
-    rejected: 6,
-    cancelled: 6,
-  };
-  for (const [status, count] of Object.entries(expectedLeaveStatuses)) {
-    if (scenario.leaveRequests.filter((request) => request.status === status).length !== count) {
-      throw new Error(`Unexpected leave request distribution for ${status}`);
-    }
+  if (
+    !scenario.leaveRequests.some((request) => request.status === "approved") ||
+    !scenario.leaveRequests.some((request) =>
+      ["submitted", "draft"].includes(request.status),
+    )
+  ) {
+    throw new Error("Leave request history lacks completed or current work");
   }
   for (const team of new Set(scenario.people.map((person) => person.team))) {
     const teamNames = new Set(
@@ -976,8 +1370,6 @@ export async function checksumScenario(scenario: DemoScenarioDefinition) {
 }
 
 export function createScenarioReport(scenario: DemoScenarioDefinition) {
-  const taskDates = scenario.tasks.map((task) => task.createdAt.slice(0, 10));
-  const leaveDates = scenario.leaveRequests.flatMap((request) => [request.startDate, request.endDate]);
   return {
     scenarioVersion: scenario.scenarioVersion,
     seed: scenario.seed,
@@ -1011,8 +1403,8 @@ export function createScenarioReport(scenario: DemoScenarioDefinition) {
         scenario.changelogEntries.length * 2,
     },
     coverage: {
-      from: [...taskDates, ...leaveDates].sort()[0],
-      to: [...taskDates, ...leaveDates].sort().at(-1),
+      from: scenario.scenarioStartDate,
+      to: scenario.scenarioGeneratedThroughDate,
     },
   };
 }

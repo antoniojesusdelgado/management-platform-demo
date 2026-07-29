@@ -116,7 +116,7 @@
 - Vercel fallback: <https://management-platform-demo.vercel.app>
 - Stable branch Preview:
   <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Published release: `v1.2.2`
+- Release candidate: `v1.3.0`
 - Remote database: 18 ordered migrations, including the release-hardening
   migration `20260726142334_harden_rls_and_query_performance.sql`.
 - Google OAuth login, logout and protected-route redirects validated in
@@ -142,7 +142,11 @@
 - [x] Scheduled nightly integration worker with idempotent run sequences
 - [x] Centralized Analítica workspace with five business perspectives and saved views
 - [x] Editorial Changelog presentation and configurable workspace policies
-- [x] Guest state migrations through V14 with session-only persistence
+- [x] Guest state migrations through V15 with session-only persistence
+- [x] Scenario V7 proportional growth and authenticated incremental RPC
+- [x] Stable analytics service codes and saved-filter migration
+- [x] Light, dark and system themes with experience preferences
+- [x] CodeQL, Dependency Review, dependency audit and gated ZAP baseline
 - [x] Remote Supabase migrations and validated Vercel Preview
 - [x] Production promotion from the validated Preview artifact
 - [x] RLS init-plan optimization and explicit mutation policies
@@ -169,3 +173,9 @@ The post-release v1.2.2 maintenance introduces Scenario V6 without moving the
 published tag. It adds employment contract modalities, increases the completed
 task baseline, enforces project progress/state consistency and replaces
 technical analytical definitions with user-facing explanations.
+
+Release v1.3.0 introduces the complete semantic theme, Scenario V7 growth
+through the previous Madrid day, stable analytics service contracts, bounded
+growing queries and separate security workflows. Publication still requires a
+validated Preview, passive ZAP, remote migration review and two-identity OAuth
+isolation before the candidate is marked ready.

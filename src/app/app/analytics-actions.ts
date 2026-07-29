@@ -2,6 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import type {
+  AnalyticsFilter,
+  AnalyticsSnapshot,
+} from "@/domain/analytics";
+import type { AnalyticsView } from "@/domain/analytics-engine";
 import {
   actionFailure,
   actionSuccess,
@@ -10,10 +15,58 @@ import {
 import { requirePermission } from "@/lib/authorization";
 import { createClient } from "@/lib/supabase/server";
 
+const analyticsFilterSchema = z.object({
+  period: z.enum(["all", "30d", "90d", "6m", "12m"]),
+  comparison: z.enum(["previous_period", "none"]),
+  projectId: z.string().max(120).nullable(),
+  team: z.string().max(120).nullable(),
+  ownerId: z.string().max(120).nullable(),
+  status: z.string().max(120).nullable(),
+  service: z.string().max(160).nullable(),
+});
+
 const savedViewInputSchema = z.object({
   name: z.string().trim().min(2).max(80),
-  projectId: z.string().max(80).nullable(),
+  filters: analyticsFilterSchema,
 });
+
+const analyticsViewSchema = z.enum([
+  "executive",
+  "work",
+  "people",
+  "service",
+  "finance",
+]);
+
+export async function loadAnalyticsSnapshotAction(
+  filters: AnalyticsFilter,
+  view: AnalyticsView,
+): Promise<AnalyticsSnapshot | null> {
+  const parsedFilters = analyticsFilterSchema.safeParse(filters);
+  const parsedView = analyticsViewSchema.safeParse(view);
+  if (!parsedFilters.success || !parsedView.success) return null;
+
+  try {
+    const access = await requirePermission("analytics.dashboards.view");
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("get_analytics_snapshot", {
+      expected_organization_id: access.organizationId,
+      filter_period: parsedFilters.data.period,
+      filter_project_id: parsedFilters.data.projectId ?? undefined,
+      filter_team: parsedFilters.data.team ?? undefined,
+      filter_owner_id: parsedFilters.data.ownerId ?? undefined,
+      filter_status: parsedFilters.data.status ?? undefined,
+      filter_service: parsedFilters.data.service ?? undefined,
+      target_view: parsedView.data,
+    });
+    if (error || !data || typeof data !== "object" || Array.isArray(data)) {
+      return null;
+    }
+    return data as unknown as AnalyticsSnapshot;
+  } catch {
+    return null;
+  }
+}
 
 export async function saveAnalyticsViewAction(
   input: z.infer<typeof savedViewInputSchema>,
@@ -34,7 +87,7 @@ export async function saveAnalyticsViewAction(
           profile_id: access.userId,
           name: parsed.data.name,
           module_id: "analitica",
-          filters: { projectId: parsed.data.projectId },
+          filters: parsed.data.filters,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "organization_id,profile_id,module_id,name" },

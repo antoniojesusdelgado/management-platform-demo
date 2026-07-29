@@ -56,11 +56,34 @@ tax identifiers, receipts and documents. Collection edits and monotonic status
 changes run through privileged RPCs and append immutable events; authenticated
 roles receive no direct table writes.
 
-The guest state is currently version 9. Zod validates restored sessions and
-incremental migrations preserve every prior version before rendering. V7 adds
-Projects and `people` references, V8 adds neutral integration runs, and V9 adds
-preferences, role simulation and saved analytical views.
+The guest state is currently version 15 and Scenario V7. Zod validates restored
+sessions before rendering. The V14 to V15 migration preserves operational
+changes and preferences, appending only deterministic entities that are
+missing; the editorial changelog remains manual.
+
+Authenticated workspaces call `ensure_demo_scenario_current` before module
+queries. PostgreSQL locks the organization row, generates only the missing
+interval through yesterday in `Europe/Madrid`, inserts deterministic IDs with
+`ON CONFLICT DO NOTHING`, appends an evolution/audit event and advances the
+horizon atomically.
+
+Analytics exposes `AnalyticsServiceDimension { code, label, kind }`. Connector
+UUIDs and historical incident labels remain internal bindings. Saved filters,
+KPIs, comparisons, alerts, drill-down and accessible tables all use the same
+stable service code.
 
 The server checks authorization close to the write and RLS repeats the boundary
 inside PostgreSQL. The organization identifier sent by the client is never
 trusted on its own.
+
+## Scenario V7 data path
+
+```mermaid
+flowchart LR
+  Route["Authenticated organization entry"] --> RPC["Guarded public RPC"]
+  RPC --> Lock["Organization row lock"]
+  Lock --> Private["Private interval generator"]
+  Private --> Append["Deterministic inserts"]
+  Append --> Audit["Evolution and audit events"]
+  Audit --> Horizon["Atomic generated-through update"]
+```

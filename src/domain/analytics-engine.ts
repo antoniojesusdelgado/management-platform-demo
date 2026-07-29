@@ -2,12 +2,13 @@ import type {
   AnalyticsAlert,
   AnalyticsFilter,
   AnalyticsKpi,
+  AnalyticsServiceDimension,
   AnalyticsSeries,
   AnalyticsSnapshot,
   AnalyticsWindow,
 } from "@/domain/analytics";
 import type { Incident } from "@/domain/incidents";
-import type { IntegrationRun } from "@/domain/integrations";
+import type { IntegrationConnector, IntegrationRun } from "@/domain/integrations";
 import type { PayrollRun } from "@/domain/payroll";
 import type { Person } from "@/domain/people";
 import type { Project } from "@/domain/projects";
@@ -31,9 +32,91 @@ export type AnalyticsData = {
   treasuryEntries: TreasuryEntry[];
   payrollRuns: PayrollRun[];
   integrationRuns: IntegrationRun[];
+  integrationConnectors?: IntegrationConnector[];
 };
 
 const DAY = 86_400_000;
+
+type AnalyticsServiceBinding = AnalyticsServiceDimension & {
+  connectorIds: string[];
+  incidentLabels: string[];
+};
+
+function toServiceSlug(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function buildAnalyticsServiceBindings(
+  data: Pick<AnalyticsData, "incidents" | "integrationConnectors">,
+): AnalyticsServiceBinding[] {
+  const dimensions = new Map<string, AnalyticsServiceBinding>();
+
+  for (const incident of data.incidents) {
+    const label = incident.affectedService?.trim();
+    if (!label) continue;
+    const code = `incident:${toServiceSlug(label)}`;
+    const current = dimensions.get(code);
+    if (current) {
+      if (!current.incidentLabels.includes(label)) current.incidentLabels.push(label);
+    } else {
+      dimensions.set(code, {
+        code,
+        label,
+        kind: "incident",
+        connectorIds: [],
+        incidentLabels: [label],
+      });
+    }
+  }
+
+  for (const connector of data.integrationConnectors ?? []) {
+    const code = `integration:${toServiceSlug(connector.code)}`;
+    const current = dimensions.get(code);
+    if (current) {
+      if (!current.connectorIds.includes(connector.id)) current.connectorIds.push(connector.id);
+    } else {
+      dimensions.set(code, {
+        code,
+        label: connector.name,
+        kind: "integration",
+        connectorIds: [connector.id],
+        incidentLabels: [],
+      });
+    }
+  }
+
+  return [...dimensions.values()].sort((left, right) =>
+    left.label.localeCompare(right.label, "es"),
+  );
+}
+
+export function buildAnalyticsServiceDimensions(
+  data: Pick<AnalyticsData, "incidents" | "integrationConnectors">,
+): AnalyticsServiceDimension[] {
+  return buildAnalyticsServiceBindings(data).map(({ code, label, kind }) => ({
+    code,
+    label,
+    kind,
+  }));
+}
+
+export function resolveAnalyticsServiceCode(
+  value: string | null | undefined,
+  data: Pick<AnalyticsData, "incidents" | "integrationConnectors">,
+) {
+  if (!value) return null;
+  return buildAnalyticsServiceBindings(data).find(
+    (item) =>
+      item.code === value ||
+      item.connectorIds.includes(value) ||
+      item.incidentLabels.includes(value),
+  )?.code ?? null;
+}
 
 function toIsoDate(value: Date) {
   return value.toISOString().slice(0, 10);
@@ -128,6 +211,9 @@ function kpi(
 }
 
 function filterByRelations(data: AnalyticsData, filters: AnalyticsFilter) {
+  const serviceDimension = buildAnalyticsServiceBindings(data).find(
+    (item) => item.code === filters.service,
+  );
   const people = data.people.filter(
     (person) =>
       (!filters.team || person.team === filters.team) &&
@@ -157,7 +243,12 @@ function filterByRelations(data: AnalyticsData, filters: AnalyticsFilter) {
         Boolean(incident.assigneePersonId && personIds.has(incident.assigneePersonId)) ||
         Boolean(incident.assigneeName && personNames.has(incident.assigneeName))) &&
       (!filters.status || incident.status === filters.status) &&
-      (!filters.service || incident.affectedService === filters.service),
+      (!filters.service ||
+        serviceDimension?.kind !== "incident" ||
+          Boolean(
+            incident.affectedService &&
+              serviceDimension.incidentLabels.includes(incident.affectedService),
+          )),
   );
   const leaveRequests = data.leaveRequests.filter(
     (request) => !filters.team && !filters.ownerId || personNames.has(request.employeeName),
@@ -289,13 +380,20 @@ export function buildAnalyticsSnapshot(
   const previousPayroll = data.payrollRuns.filter((run) =>
     within(run.periodStart, window.previous),
   );
+  const serviceDimension = buildAnalyticsServiceBindings(data).find(
+    (item) => item.code === filters.service,
+  );
   const currentRuns = data.integrationRuns.filter((run) =>
     within(run.effectiveDate, window.current) &&
-    (!filters.service || run.connectorId === filters.service),
+    (!filters.service ||
+      serviceDimension?.kind !== "integration" ||
+      serviceDimension.connectorIds.includes(run.connectorId)),
   );
   const previousRuns = data.integrationRuns.filter((run) =>
     within(run.effectiveDate, window.previous) &&
-    (!filters.service || run.connectorId === filters.service),
+    (!filters.service ||
+      serviceDimension?.kind !== "integration" ||
+      serviceDimension.connectorIds.includes(run.connectorId)),
   );
   const currentIntegrationSuccess = integrationSuccess(currentRuns);
   const previousIntegrationSuccess = integrationSuccess(previousRuns);
@@ -389,6 +487,16 @@ export function buildAnalyticsSnapshot(
     ],
   };
   const completedTasks = currentTasks.filter((task) => task.status === "completed");
+  const incidentServicePeriods =
+    filters.service && serviceDimension?.kind === "incident"
+      ? serviceDimension.incidentLabels
+      : [
+          ...new Set(
+            related.incidents.map(
+              (incident) => incident.affectedService ?? "Sin servicio",
+            ),
+          ),
+        ];
   const bySeries: Record<AnalyticsView, AnalyticsSeries[]> = {
     executive: [
       countSeries(
@@ -464,15 +572,7 @@ export function buildAnalyticsSnapshot(
         "Incidencias por servicio",
         currentIncidents,
         (incident) => incident.affectedService ?? "Sin servicio",
-        filters.service
-          ? [filters.service]
-          : [
-              ...new Set(
-                related.incidents.map(
-                  (incident) => incident.affectedService ?? "Sin servicio",
-                ),
-              ),
-            ],
+        incidentServicePeriods,
       ),
     ],
     finance: [

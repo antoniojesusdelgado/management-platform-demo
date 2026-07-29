@@ -11,13 +11,25 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  buildAnalyticsServiceDimensions,
   buildAnalyticsSnapshot,
+  resolveAnalyticsServiceCode,
   type AnalyticsView,
 } from "@/domain/analytics-engine";
-import { controlCenterMetrics, type AnalyticsFilter, type AnalyticsKpi } from "@/domain/analytics";
-import type { IntegrationRun, SavedAnalyticsView } from "@/domain/integrations";
+import {
+  controlCenterMetrics,
+  type AnalyticsFilter,
+  type AnalyticsKpi,
+  type AnalyticsServiceDimension,
+  type AnalyticsSnapshot,
+} from "@/domain/analytics";
+import type {
+  IntegrationConnector,
+  IntegrationRun,
+  SavedAnalyticsView,
+} from "@/domain/integrations";
 import type { Incident } from "@/domain/incidents";
 import type { PayrollRun } from "@/domain/payroll";
 import type { Person } from "@/domain/people";
@@ -37,6 +49,7 @@ import {
   getMonthlyTickGap,
 } from "@/lib/analytics-labels";
 import { isModuleId, type ModuleId } from "@/domain/modules";
+import { useTheme } from "@/components/theme-provider";
 
 type Props = {
   projects: Project[];
@@ -47,7 +60,13 @@ type Props = {
   treasuryEntries: TreasuryEntry[];
   payrollRuns?: PayrollRun[];
   integrationRuns?: IntegrationRun[];
+  integrationConnectors?: IntegrationConnector[];
+  serviceDimensions?: AnalyticsServiceDimension[];
   savedViews?: SavedAnalyticsView[];
+  onLoadSnapshot?: (
+    filters: AnalyticsFilter,
+    view: AnalyticsView,
+  ) => Promise<AnalyticsSnapshot | null>;
   onSaveView?: (view: SavedAnalyticsView) => boolean | Promise<boolean>;
   onNavigate?: (module: ModuleId) => void;
   referenceDate?: Date;
@@ -88,11 +107,15 @@ export function ControlCenter({
   treasuryEntries,
   payrollRuns = [],
   integrationRuns = [],
+  integrationConnectors = [],
+  serviceDimensions,
   savedViews = [],
+  onLoadSnapshot,
   onSaveView,
   onNavigate,
   referenceDate = new Date(),
 }: Props) {
+  const { reducedMotion } = useTheme();
   const [activeView, setActiveView] = useState<AnalyticsView>("executive");
   const [filters, setFilters] = useState<AnalyticsFilter>({
     period: "all",
@@ -114,9 +137,11 @@ export function ControlCenter({
       treasuryEntries,
       payrollRuns,
       integrationRuns,
+      integrationConnectors,
     }),
     [
       incidents,
+      integrationConnectors,
       integrationRuns,
       leaveRequests,
       payrollRuns,
@@ -126,23 +151,40 @@ export function ControlCenter({
       treasuryEntries,
     ],
   );
-  const snapshot = useMemo(
+  const localSnapshot = useMemo(
     () => buildAnalyticsSnapshot(data, filters, activeView, referenceDate),
     [activeView, data, filters, referenceDate],
   );
+  const [remoteSnapshot, setRemoteSnapshot] =
+    useState<AnalyticsSnapshot | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  useEffect(() => {
+    if (!onLoadSnapshot) return;
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      setRemoteSnapshot(null);
+      setAnalyticsLoading(true);
+    });
+    void onLoadSnapshot(filters, activeView).then((next) => {
+      if (!active) return;
+      setRemoteSnapshot(next);
+      setAnalyticsLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [activeView, filters, onLoadSnapshot]);
+  const snapshot = remoteSnapshot ?? localSnapshot;
   const visibleMetricCodes = useMemo(
     () => new Set(snapshot.kpis.map((item) => item.code)),
     [snapshot.kpis],
   );
   const teams = [...new Set(people.map((person) => person.team))].sort();
-  const services = [
-    ...new Set(
-      incidents
-        .map((incident) => incident.affectedService)
-        .filter((value): value is string => Boolean(value)),
-    ),
-    ...integrationRuns.map((run) => run.connectorId),
-  ].sort();
+  const services = useMemo(
+    () => serviceDimensions ?? buildAnalyticsServiceDimensions(data),
+    [data, serviceDimensions],
+  );
   const statusOptions =
     activeView === "service"
       ? [
@@ -164,7 +206,7 @@ export function ControlCenter({
   const showTeam = ["executive", "work", "people", "service"].includes(activeView);
   const showOwner = ["work", "service"].includes(activeView);
   const showStatus = ["work", "service"].includes(activeView);
-  const showService = ["executive", "service"].includes(activeView);
+  const showService = ["executive", "service", "finance"].includes(activeView);
 
   function updateFilter<K extends keyof AnalyticsFilter>(
     key: K,
@@ -182,7 +224,9 @@ export function ControlCenter({
             Consulta los principales indicadores y revisa el detalle de cada área.
           </p>
         </div>
-        <span className="status-chip">Datos actualizados</span>
+        <span className="status-chip">
+          {analyticsLoading ? "Actualizando datos" : "Datos actualizados"}
+        </span>
       </div>
 
       <nav className="analytics-view-tabs" aria-label="Vistas de Analítica">
@@ -291,16 +335,8 @@ export function ControlCenter({
             >
               <option value="all">Todos los servicios</option>
               {services.map((service) => (
-                <option value={service} key={service}>
-                  {service === "financial-source-a"
-                    ? "Fuente financiera A"
-                    : service === "financial-source-b"
-                      ? "Fuente financiera B"
-                      : service === "payroll-master"
-                        ? "Maestro de nóminas"
-                        : service === "people-master"
-                          ? "Maestro de personal"
-                          : service}
+                <option value={service.code} key={service.code}>
+                  {service.label}
                 </option>
               ))}
             </select>
@@ -358,7 +394,11 @@ export function ControlCenter({
                   team: view.filters.team ?? null,
                   ownerId: view.filters.ownerId ?? null,
                   status: view.filters.status ?? null,
-                  service: view.filters.service ?? null,
+                  service:
+                    services.find(
+                      (service) => service.code === view.filters.service,
+                    )?.code ??
+                    resolveAnalyticsServiceCode(view.filters.service, data),
                 }))
               }
             >
@@ -412,7 +452,11 @@ export function ControlCenter({
                     data={series.points}
                     margin={{ top: 12, right: 18, bottom: 8, left: 8 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <CartesianGrid
+                      stroke="var(--chart-grid)"
+                      strokeDasharray="3 3"
+                      vertical={false}
+                    />
                     <XAxis
                       dataKey="period"
                       interval="preserveStartEnd"
@@ -428,6 +472,13 @@ export function ControlCenter({
                       }
                     />
                     <Tooltip
+                      contentStyle={{
+                        background: "var(--surface)",
+                        border: "1px solid var(--line)",
+                        borderRadius: "10px",
+                        color: "var(--text)",
+                      }}
+                      labelStyle={{ color: "var(--text)" }}
                       labelFormatter={(value) => formatAnalyticsTableLabel(String(value))}
                       formatter={(value) =>
                         formatAnalyticsValue(Number(value), series.unit)
@@ -436,10 +487,16 @@ export function ControlCenter({
                     <Line
                       dataKey="value"
                       type="monotone"
-                      stroke={index === 0 ? "#2563eb" : "#0f766e"}
+                      stroke={
+                        index === 0
+                          ? "var(--chart-primary)"
+                          : "var(--chart-secondary)"
+                      }
                       strokeWidth={3}
                       dot={{ r: 4 }}
                       activeDot={{ r: 6 }}
+                      animationDuration={180}
+                      isAnimationActive={!reducedMotion}
                     />
                   </LineChart>
                 ) : (
@@ -448,7 +505,11 @@ export function ControlCenter({
                     layout="vertical"
                     margin={{ top: 8, right: 20, bottom: 8, left: 8 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <CartesianGrid
+                      stroke="var(--chart-grid)"
+                      strokeDasharray="3 3"
+                      horizontal={false}
+                    />
                     <XAxis
                       type="number"
                       allowDecimals={series.unit !== "count"}
@@ -466,6 +527,13 @@ export function ControlCenter({
                       tickFormatter={formatAnalyticsAxisLabel}
                     />
                     <Tooltip
+                      contentStyle={{
+                        background: "var(--surface)",
+                        border: "1px solid var(--line)",
+                        borderRadius: "10px",
+                        color: "var(--text)",
+                      }}
+                      labelStyle={{ color: "var(--text)" }}
                       labelFormatter={(value) => formatAnalyticsTableLabel(String(value))}
                       formatter={(value) =>
                         formatAnalyticsValue(Number(value), series.unit)
@@ -473,8 +541,14 @@ export function ControlCenter({
                     />
                     <Bar
                       dataKey="value"
-                      fill={index === 0 ? "#2563eb" : "#0f766e"}
+                      fill={
+                        index === 0
+                          ? "var(--chart-primary)"
+                          : "var(--chart-secondary)"
+                      }
                       radius={[0, 6, 6, 0]}
+                      animationDuration={180}
+                      isAnimationActive={!reducedMotion}
                     />
                   </BarChart>
                 )}

@@ -5,7 +5,9 @@ import {
 } from "@/demo-data/calibration";
 import {
   checksumScenario,
+  countActivePeopleOnDate,
   generateDemoScenario,
+  getScenarioPeriodCounts,
   STANDARD_SCENARIO_COUNTS,
   validateDemoScenario,
 } from "@/demo-data/scenario";
@@ -13,24 +15,17 @@ import {
 describe("synthetic demo scenario", () => {
   test("generates the standard volume with valid relationships", () => {
     const scenario = validateDemoScenario(generateDemoScenario());
+    const periodCounts = getScenarioPeriodCounts(scenario.anchorDate);
     expect(scenario.people).toHaveLength(STANDARD_SCENARIO_COUNTS.people);
     expect(new Set(scenario.people.map((person) => person.team)).size).toBe(
       STANDARD_SCENARIO_COUNTS.teams,
     );
     expect(scenario.projects).toHaveLength(STANDARD_SCENARIO_COUNTS.projects);
-    expect(scenario.tasks).toHaveLength(STANDARD_SCENARIO_COUNTS.tasks);
-    expect(scenario.leaveRequests).toHaveLength(
-      STANDARD_SCENARIO_COUNTS.leaveRequests,
-    );
-    expect(scenario.incidents).toHaveLength(
-      STANDARD_SCENARIO_COUNTS.incidents,
-    );
-    expect(scenario.treasuryEntries).toHaveLength(
-      STANDARD_SCENARIO_COUNTS.treasuryEntries,
-    );
-    expect(scenario.payrollRuns).toHaveLength(
-      STANDARD_SCENARIO_COUNTS.payrollRuns,
-    );
+    expect(scenario.tasks).toHaveLength(periodCounts.tasks);
+    expect(scenario.leaveRequests).toHaveLength(periodCounts.leaveRequests);
+    expect(scenario.incidents).toHaveLength(periodCounts.incidents);
+    expect(scenario.treasuryEntries).toHaveLength(periodCounts.treasuryEntries);
+    expect(scenario.payrollRuns).toHaveLength(periodCounts.payrollRuns);
     expect(scenario.changelogEntries).toHaveLength(
       STANDARD_SCENARIO_COUNTS.changelogEntries,
     );
@@ -83,8 +78,9 @@ describe("synthetic demo scenario", () => {
     expect([...monthly.values()].every((balance) => balance > 0)).toBe(true);
   });
 
-  test("matches the balanced V6 operating distributions", () => {
+  test("matches the balanced V7 operating distributions", () => {
     const scenario = validateDemoScenario(generateDemoScenario());
+    const periodCounts = getScenarioPeriodCounts(scenario.anchorDate);
     const countBy = <T extends string>(values: T[]) =>
       Object.fromEntries(
         [...new Set(values)].map((value) => [
@@ -93,69 +89,73 @@ describe("synthetic demo scenario", () => {
         ]),
       );
 
-    expect(scenario.scenarioVersion).toBe(6);
+    expect(scenario.scenarioVersion).toBe(7);
     expect(countBy(scenario.projects.map((project) => project.status))).toEqual({
       active: 5,
       on_hold: 1,
       completed: 3,
       planned: 1,
     });
-    expect(countBy(scenario.tasks.map((task) => task.status))).toEqual({
-      pending: 12,
-      in_progress: 8,
-      blocked: 3,
-      in_review: 7,
-      completed: 90,
-    });
+    const taskStatuses = countBy(
+      scenario.tasks.map((task) => task.status),
+    );
+    const completionRatio =
+      (taskStatuses.completed ?? 0) / scenario.tasks.length;
+    expect(completionRatio).toBeGreaterThanOrEqual(0.85);
+    expect(completionRatio).toBeLessThanOrEqual(0.9);
+    expect(taskStatuses.pending).toBeGreaterThan(0);
+    expect(taskStatuses.in_progress).toBeGreaterThan(0);
+    expect(taskStatuses.blocked).toBeGreaterThan(0);
+    expect(taskStatuses.in_review).toBeGreaterThan(0);
     expect(
-      countBy(
-        scenario.people.map((person) => person.employmentContractType),
-      ),
-    ).toEqual({
-      indefinite_ordinary: 23,
-      permanent_discontinuous: 3,
-      temporary_production: 4,
-      temporary_substitution: 2,
-    });
-    expect(countBy(scenario.tasks.map((task) => task.priority))).toEqual({
-      urgent: 5,
-      high: 25,
-      medium: 60,
-      low: 30,
-    });
-    expect(countBy(scenario.incidents.map((incident) => incident.status))).toEqual({
-      registered: 2,
-      triaged: 2,
-      assigned: 3,
-      investigating: 5,
-      resolved: 18,
-      closed: 30,
-    });
-    expect(countBy(scenario.incidents.map((incident) => incident.priority))).toEqual({
-      critical: 2,
-      high: 10,
-      medium: 30,
-      low: 18,
-    });
-    expect(countBy(scenario.leaveRequests.map((request) => request.status))).toEqual({
-      approved: 80,
-      submitted: 8,
-      draft: 4,
-      rejected: 6,
-      cancelled: 6,
-    });
-    expect(scenario.treasuryEntries).toHaveLength(360);
-    expect(scenario.payrollRuns.filter((run) => run.status === "closed")).toHaveLength(16);
-    expect(scenario.payrollRuns).toHaveLength(18);
-    expect(scenario.payrollParticipants).toHaveLength(576);
-    expect(scenario.integrationRuns).toHaveLength(72);
+      Object.keys(
+        countBy(
+          scenario.people.map((person) => person.employmentContractType),
+        ),
+      ).sort(),
+    ).toEqual([
+      "indefinite_ordinary",
+      "permanent_discontinuous",
+      "temporary_production",
+      "temporary_substitution",
+    ]);
+    expect(
+      Object.keys(countBy(scenario.tasks.map((task) => task.priority))).sort(),
+    ).toEqual(["high", "low", "medium", "urgent"]);
+    expect(
+      scenario.incidents.filter((incident) =>
+        ["registered", "triaged", "assigned", "investigating"].includes(
+          incident.status,
+        ),
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(
+      scenario.incidents.filter((incident) =>
+        ["resolved", "closed"].includes(incident.status),
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(
+      scenario.leaveRequests.filter((request) => request.status === "approved")
+        .length,
+    ).toBeGreaterThan(0);
+    expect(scenario.treasuryEntries).toHaveLength(periodCounts.treasuryEntries);
+    expect(scenario.payrollRuns.filter((run) => run.status === "closed")).toHaveLength(
+      Math.max(0, periodCounts.payrollRuns - 2),
+    );
+    expect(scenario.payrollRuns).toHaveLength(periodCounts.payrollRuns);
+    expect(scenario.payrollParticipants).toHaveLength(
+      scenario.payrollRuns.reduce((total, run) => total + run.peopleCount, 0),
+    );
+    expect(scenario.integrationRuns).toHaveLength(periodCounts.integrationRuns);
     expect(
       scenario.changelogEntries.every((entry) => entry.status === "published"),
     ).toBe(true);
   });
 
   test("keeps every operational date inside the public timeline", () => {
-    const scenario = validateDemoScenario(generateDemoScenario());
+    const scenario = validateDemoScenario(
+      generateDemoScenario("management-platform-timeline-v7", "2026-06-17"),
+    );
     expect(scenario.anchorDate).toBe("2026-06-17");
     expect(scenario.payrollRuns).toHaveLength(18);
     expect(scenario.payrollRuns.at(0)?.periodStart).toBe("2025-01-01");
@@ -170,6 +170,20 @@ describe("synthetic demo scenario", () => {
       ["1.2.1", "2026-06-16"],
       ["1.2.2", "2026-06-17"],
     ]);
+  });
+
+  test("reconstructs the planned workforce curve with controlled reductions", () => {
+    const scenario = validateDemoScenario(
+      generateDemoScenario("management-platform-workforce-v7", "2026-06-30"),
+    );
+
+    expect(countActivePeopleOnDate(scenario.people, "2025-01-01")).toBe(100);
+    expect(countActivePeopleOnDate(scenario.people, "2025-06-30")).toBe(145);
+    expect(countActivePeopleOnDate(scenario.people, "2025-08-31")).toBe(142);
+    expect(countActivePeopleOnDate(scenario.people, "2025-12-31")).toBe(180);
+    expect(countActivePeopleOnDate(scenario.people, "2026-03-31")).toBe(215);
+    expect(countActivePeopleOnDate(scenario.people, "2026-04-30")).toBe(212);
+    expect(countActivePeopleOnDate(scenario.people, "2026-06-30")).toBe(250);
   });
 });
 

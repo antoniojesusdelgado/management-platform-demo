@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ProfileWorkspace } from "@/components/profile-workspace";
+import { ThemePreferencesSync } from "@/components/theme-provider";
 import type {
   ManagedProfileFields,
   UserProfile,
@@ -23,19 +24,27 @@ type Props = {
 export function ProfilePageClient(props: Props) {
   const router = useRouter();
   return (
-    <AppShell
-      activeModule="inicio"
-      organizationName={props.organizationName}
-      mode="authenticated"
-      onNavigate={(module) => router.push(`/app/${module}`)}
-      avatarUrl={props.profile.avatarUrl}
-      displayName={props.profile.alias ?? props.profile.displayName}
-    >
-      <ProfileWorkspace
-        profile={props.profile}
-        managed={props.managed}
-        workspaceStatus={props.workspaceStatus}
+    <>
+      <ThemePreferencesSync
+        theme={props.profile.theme}
+        density={props.profile.density}
+        reducedMotion={props.profile.reducedMotion}
+        highContrast={props.profile.highContrast}
       />
-    </AppShell>
+      <AppShell
+        activeModule="inicio"
+        organizationName={props.organizationName}
+        mode="authenticated"
+        onNavigate={(module) => router.push(`/app/${module}`)}
+        avatarUrl={props.profile.avatarUrl}
+        displayName={props.profile.alias ?? props.profile.displayName}
+      >
+        <ProfileWorkspace
+          profile={props.profile}
+          managed={props.managed}
+          workspaceStatus={props.workspaceStatus}
+        />
+      </AppShell>
+    </>
   );
 }

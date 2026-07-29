@@ -15,7 +15,8 @@ The release hardening migration:
 
 ## Privileged RPC allowlist
 
-The application intentionally exposes 19 authenticated `SECURITY DEFINER`
+The application intentionally exposes a reviewed allowlist of authenticated
+`SECURITY DEFINER`
 functions through PostgREST. They provide the transactional boundary for
 validated state transitions, aggregate financial demo workflows, self-service
 preferences, workspace lifecycle and synthetic integration runs.
@@ -33,10 +34,16 @@ RPC must satisfy all of the following invariants:
 
 `supabase/tests/011_release_hardening.sql` verifies the structural invariants.
 Module and multi-organization pgTAP suites verify the authorization outcomes.
+`supabase/tests/014_release_v1_3.sql` additionally covers the guarded Scenario
+V7 RPC, private generator, RLS on both new tables and mojibake detection.
 
 The advisor warning must not be dismissed globally. Any new privileged RPC
 requires an individual review, a minimum grant, an identity check and pgTAP
 coverage before it can join this allowlist.
+
+CI runs `bun audit --audit-level=high`, CodeQL and Dependency Review. The ZAP
+Baseline workflow is manual and accepts only a validated root HTTPS
+`*.vercel.app` Preview; its passive report is retained as an artifact.
 
 ## Authentication advisor
 

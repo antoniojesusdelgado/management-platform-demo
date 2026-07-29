@@ -25,7 +25,10 @@ import { createInvitationAction, renameOrganizationAction, restoreDemoScenarioV6
 import { createTreasuryAction, transitionTreasuryAction, updateTreasuryAction } from "@/app/app/treasury-actions";
 import { createPayrollAction, transitionPayrollAction, updatePayrollAction } from "@/app/app/payroll-actions";
 import { simulateIntegrationAction } from "@/app/app/integration-actions";
-import { saveAnalyticsViewAction } from "@/app/app/analytics-actions";
+import {
+  loadAnalyticsSnapshotAction,
+  saveAnalyticsViewAction,
+} from "@/app/app/analytics-actions";
 import { AppShell } from "@/components/app-shell";
 import { Dashboard } from "@/components/dashboard";
 import { ControlCenter } from "@/components/control-center";
@@ -40,7 +43,9 @@ import { TasksWorkspace } from "@/components/tasks-workspace";
 import { TreasuryWorkspace } from "@/components/treasury-workspace";
 import { PayrollWorkspace } from "@/components/payroll-workspace";
 import { VacationsWorkspace } from "@/components/vacations-workspace";
+import { ThemePreferencesSync } from "@/components/theme-provider";
 import type { ModuleId } from "@/domain/modules";
+import type { UserProfile } from "@/domain/profile";
 import type { ChangelogEntry, ChangelogEvent, ChangelogInput, ChangelogStatus } from "@/domain/changelog";
 import type { PermissionCode } from "@/domain/permissions";
 import type { AdminAuditEvent, ConfigurableRole, ModuleSetting, WorkspaceInvitation, WorkspaceMembership, WorkspaceMembershipStatus } from "@/domain/settings";
@@ -69,6 +74,7 @@ import type {
 import type { TreasuryEntry, TreasuryEvent, TreasuryInput, TreasuryStatus } from "@/domain/treasury";
 import type { PayrollEvent, PayrollInput, PayrollParticipant, PayrollRun, PayrollStatus } from "@/domain/payroll";
 import type { DataQualityIssue, IntegrationConnector, IntegrationRun, SavedAnalyticsView } from "@/domain/integrations";
+import type { AnalyticsServiceDimension } from "@/domain/analytics";
 import {
   defaultWorkspaceConfiguration,
   type WorkspaceConfiguration,
@@ -78,6 +84,10 @@ type AuthenticatedAppProps = {
   activeModule: ModuleId;
   organizationName: string;
   scenarioAnchorDate: string;
+  theme?: UserProfile["theme"];
+  density?: UserProfile["density"];
+  reducedMotion?: boolean;
+  highContrast?: boolean;
   avatarUrl?: string | null;
   displayName?: string;
   leaveRequests?: LeaveRequest[];
@@ -119,6 +129,7 @@ type AuthenticatedAppProps = {
   dataQualityIssues?: DataQualityIssue[];
   canManageIntegrations?: boolean;
   savedAnalyticsViews?: SavedAnalyticsView[];
+  analyticsServiceDimensions?: AnalyticsServiceDimension[];
   moduleSettings?: ModuleSetting[];
   roles?: ConfigurableRole[];
   memberships?: WorkspaceMembership[];
@@ -133,6 +144,10 @@ export function AuthenticatedApp({
   activeModule,
   organizationName,
   scenarioAnchorDate,
+  theme = "system",
+  density = "comfortable",
+  reducedMotion = false,
+  highContrast = false,
   avatarUrl,
   displayName,
   leaveRequests = [],
@@ -174,6 +189,7 @@ export function AuthenticatedApp({
   dataQualityIssues = [],
   canManageIntegrations = false,
   savedAnalyticsViews = [],
+  analyticsServiceDimensions = [],
   moduleSettings = [],
   roles = [],
   memberships = [],
@@ -257,14 +273,34 @@ export function AuthenticatedApp({
         treasuryEntries={treasuryEntries}
         payrollRuns={payrollRuns}
         integrationRuns={integrationRuns}
+        integrationConnectors={integrationConnectors}
+        serviceDimensions={analyticsServiceDimensions}
         savedViews={savedAnalyticsViews}
+        onLoadSnapshot={loadAnalyticsSnapshotAction}
         referenceDate={summaryAnchor}
         onSaveView={(view) =>
           performAction(
             () =>
               saveAnalyticsViewAction({
                 name: view.name,
-                projectId: view.filters.projectId,
+                filters: {
+                  period:
+                    view.filters.period === "30d" ||
+                    view.filters.period === "90d" ||
+                    view.filters.period === "6m" ||
+                    view.filters.period === "12m"
+                      ? view.filters.period
+                      : "all",
+                  comparison:
+                    view.filters.comparison === "none"
+                      ? "none"
+                      : "previous_period",
+                  projectId: view.filters.projectId ?? null,
+                  team: view.filters.team ?? null,
+                  ownerId: view.filters.ownerId ?? null,
+                  status: view.filters.status ?? null,
+                  service: view.filters.service ?? null,
+                },
               }),
             "Vista analítica guardada",
           )
@@ -400,6 +436,12 @@ export function AuthenticatedApp({
 
   return (
     <>
+      <ThemePreferencesSync
+        theme={theme}
+        density={density}
+        reducedMotion={reducedMotion}
+        highContrast={highContrast}
+      />
       <AppShell
         activeModule={activeModule}
         organizationName={localName}

@@ -377,7 +377,15 @@ test("shows payroll participants without amounts and opens the team chart", asyn
   await expect(payrollDetail.getByLabel("Equipo")).toBeVisible();
   await expect(payrollDetail.locator(".payroll-participant-list article")).toHaveCount(8);
   await payrollDetail.getByLabel("Buscar").fill("Lucía");
-  await expect(payrollDetail.locator(".payroll-participant-list article")).toHaveCount(1);
+  const filteredParticipants = payrollDetail.locator(
+    ".payroll-participant-list article",
+  );
+  await expect(filteredParticipants.first()).toBeVisible();
+  expect(
+    await filteredParticipants.evaluateAll((items) =>
+      items.every((item) => item.textContent?.includes("Lucía")),
+    ),
+  ).toBe(true);
   await expect(payrollDetail).not.toContainText(/bruto individual|neto individual|salario individual/i);
   await page.keyboard.press("Escape");
 
