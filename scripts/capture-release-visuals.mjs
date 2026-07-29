@@ -4,8 +4,8 @@ import { chromium } from "@playwright/test";
 
 const externalOrigin = process.env.PRODUCT_CAPTURE_ORIGIN;
 const baseUrl = externalOrigin ?? "http://127.0.0.1:3210";
-const outputDirectory = ".artifacts/release-v1.3.0";
-const themes = ["light", "dark", "system"];
+const outputDirectory = ".artifacts/release-v1.3.1";
+const themes = ["light", "dark"];
 const viewports = [
   { name: "desktop", width: 1440, height: 900 },
   { name: "mobile", width: 390, height: 844 },
@@ -67,7 +67,7 @@ try {
     for (const viewport of viewports) {
       const page = await browser.newPage({
         viewport: { width: viewport.width, height: viewport.height },
-        colorScheme: theme === "system" ? "dark" : theme,
+        colorScheme: theme,
         reducedMotion: "reduce",
       });
       await page.addInitScript((preference) => {

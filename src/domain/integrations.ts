@@ -59,7 +59,7 @@ export type SavedAnalyticsView = {
 export type GuestPreferences = {
   simulatedRole: "admin" | "manager" | "collaborator" | "viewer" | null;
   defaultDashboard: "analytics" | "projects" | "tasks" | "vacations";
-  theme: "light" | "dark" | "system";
+  theme: "light" | "dark";
   density: "comfortable" | "compact";
 };
 
@@ -116,7 +116,7 @@ export const guestPreferencesSchema = z.object({
     "tasks",
     "vacations",
   ]),
-  theme: z.enum(["light", "dark", "system"]),
+  theme: z.enum(["light", "dark"]),
   density: z.enum(["comfortable", "compact"]),
 });
 

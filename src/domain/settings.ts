@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { moduleIds, type ModuleId } from "@/domain/modules";
 import { permissionCatalog, type PermissionCode } from "@/domain/permissions";
+import { plainTextSchema } from "@/domain/validation";
 
 export type ModuleSetting = {
   moduleId: ModuleId;
@@ -47,7 +48,7 @@ export type AdminAuditEvent = {
 };
 
 export const roleMetadataSchema = z.object({
-  name: z.string().trim().min(2).max(60),
+  name: plainTextSchema({ min: 2, max: 60 }),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
 });
 

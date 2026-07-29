@@ -110,8 +110,8 @@ select is(
     'public.restore_demo_scenario_v5()',
     'EXECUTE'
   ),
-  true,
-  'authenticated users can invoke the guarded Scenario V5 restore'
+  false,
+  'authenticated users cannot invoke the superseded Scenario V5 restore'
 );
 
 select ok(

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { LeaveRequest } from "@/domain/vacations";
+import { plainTextSchema } from "@/domain/validation";
 
 export const personStatuses = ["invited", "active", "suspended", "inactive"] as const;
 export const personRoleCodes = ["admin", "manager", "collaborator", "viewer"] as const;
@@ -46,9 +47,9 @@ export type PersonEvent = {
 };
 
 export const personInputSchema = z.object({
-  displayName: z.string().trim().min(2).max(100),
-  team: z.string().trim().min(2).max(100),
-  positionTitle: z.string().trim().min(2).max(120),
+  displayName: plainTextSchema({ min: 2, max: 100 }),
+  team: plainTextSchema({ min: 2, max: 100 }),
+  positionTitle: plainTextSchema({ min: 2, max: 120 }),
   managerPersonId: z.string().nullable().optional(),
   employmentContractType: z.enum(employmentContractTypes),
   employmentStartDate: z.iso.date().default("2025-01-01"),

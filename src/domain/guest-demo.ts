@@ -128,7 +128,7 @@ import {
 } from "@/demo-data/scenario";
 
 export type GuestDemoState = {
-  version: 15;
+  version: 17;
   scenarioVersion: 7;
   scenarioAnchorDate: string;
   scenarioStartDate: string;
@@ -461,11 +461,19 @@ const guestDemoStateV14Schema = guestDemoStateV13Schema.extend({
   scenarioVersion: z.literal(6),
 });
 
-export const guestDemoStateSchema = guestDemoStateV14Schema.extend({
+const guestDemoStateV15Schema = guestDemoStateV14Schema.extend({
   version: z.literal(15),
   scenarioVersion: z.literal(7),
   scenarioStartDate: z.iso.date(),
   scenarioGeneratedThroughDate: z.iso.date(),
+});
+
+const guestDemoStateV16Schema = guestDemoStateV15Schema.extend({
+  version: z.literal(16),
+});
+
+export const guestDemoStateSchema = guestDemoStateV16Schema.extend({
+  version: z.literal(17),
 });
 
 function normalizeLegacyAnalyticsModule(value: unknown): unknown {
@@ -509,6 +517,9 @@ function normalizeLegacyAnalyticsModule(value: unknown): unknown {
     if (preferences.defaultDashboard === "control-center") {
       preferences.defaultDashboard = "analytics";
     }
+    if (preferences.theme === "system") {
+      preferences.theme = "light";
+    }
     state.preferences = preferences;
   }
 
@@ -519,6 +530,12 @@ export function parseGuestDemoState(value: unknown): GuestDemoState | null {
   const normalized = normalizeLegacyAnalyticsModule(value);
   const result = guestDemoStateSchema.safeParse(normalized);
   if (result.success) return result.data;
+
+  const version16 = guestDemoStateV16Schema.safeParse(normalized);
+  if (version16.success) return migrateVersion16(version16.data);
+
+  const version15 = guestDemoStateV15Schema.safeParse(normalized);
+  if (version15.success) return migrateVersion15(version15.data);
 
   const version14 = guestDemoStateV14Schema.safeParse(normalized);
   if (version14.success) return migrateVersion14(version14.data);
@@ -1064,7 +1081,7 @@ function migrateVersion8(
     preferences: {
       simulatedRole: null,
       defaultDashboard: "analytics",
-      theme: "system",
+      theme: "light",
       density: "comfortable",
     },
     savedAnalyticsViews: [],
@@ -1154,7 +1171,7 @@ function migrateVersion14(
 ): GuestDemoState {
   const generated = addStandardScenario({
     ...state,
-    version: 15,
+    version: 17,
     scenarioVersion: 7,
     scenarioStartDate: SCENARIO_START_DATE,
     scenarioGeneratedThroughDate: state.scenarioAnchorDate,
@@ -1169,8 +1186,9 @@ function migrateVersion14(
     ),
   ];
 
-  return guestDemoStateSchema.parse({
+  return migrateVersion15(guestDemoStateV15Schema.parse({
     ...generated,
+    version: 15,
     organizationName: state.organizationName,
     activeModule: state.activeModule,
     preferences: state.preferences,
@@ -1216,11 +1234,73 @@ function migrateVersion14(
     ),
     changelogEntries: state.changelogEntries,
     changelogEvents: state.changelogEvents,
+  }));
+}
+
+function migrateVersion15(
+  state: z.infer<typeof guestDemoStateV15Schema>,
+): GuestDemoState {
+  const generated = addStandardScenario({
+    ...initialGuestDemoStateBase,
+    scenarioAnchorDate: state.scenarioAnchorDate,
+    scenarioGeneratedThroughDate: state.scenarioGeneratedThroughDate,
+  });
+  const release = generated.changelogEntries.find(
+    (entry) => entry.version === "1.3.0",
+  );
+  const releaseEvent = release
+    ? generated.changelogEvents.find((event) => event.entryId === release.id)
+    : null;
+
+  return migrateVersion16(guestDemoStateV16Schema.parse({
+    ...state,
+    version: 16,
+    changelogEntries:
+      release &&
+      !state.changelogEntries.some((entry) => entry.version === release.version)
+        ? [...state.changelogEntries, release]
+        : state.changelogEntries,
+    changelogEvents:
+      releaseEvent &&
+      !state.changelogEvents.some((event) => event.id === releaseEvent.id)
+        ? [...state.changelogEvents, releaseEvent]
+        : state.changelogEvents,
+  }));
+}
+
+function migrateVersion16(
+  state: z.infer<typeof guestDemoStateV16Schema>,
+): GuestDemoState {
+  const generated = addStandardScenario({
+    ...initialGuestDemoStateBase,
+    scenarioAnchorDate: state.scenarioAnchorDate,
+    scenarioGeneratedThroughDate: state.scenarioGeneratedThroughDate,
+  });
+  const release = generated.changelogEntries.find(
+    (entry) => entry.version === "1.3.1",
+  );
+  const releaseEvent = release
+    ? generated.changelogEvents.find((event) => event.entryId === release.id)
+    : null;
+
+  return guestDemoStateSchema.parse({
+    ...state,
+    version: 17,
+    changelogEntries:
+      release &&
+      !state.changelogEntries.some((entry) => entry.version === release.version)
+        ? [...state.changelogEntries, release]
+        : state.changelogEntries,
+    changelogEvents:
+      releaseEvent &&
+      !state.changelogEvents.some((event) => event.id === releaseEvent.id)
+        ? [...state.changelogEvents, releaseEvent]
+        : state.changelogEvents,
   });
 }
 
 const initialGuestDemoStateBase: GuestDemoState = {
-  version: 15,
+  version: 17,
   scenarioVersion: 7,
   scenarioAnchorDate: getScenarioGeneratedThroughDate(),
   scenarioStartDate: SCENARIO_START_DATE,
@@ -1234,7 +1314,7 @@ const initialGuestDemoStateBase: GuestDemoState = {
   preferences: {
     simulatedRole: null,
     defaultDashboard: "analytics",
-    theme: "system",
+    theme: "light",
     density: "comfortable",
   },
   savedAnalyticsViews: [],
@@ -1341,7 +1421,7 @@ function addStandardScenario(base: GuestDemoState): GuestDemoState {
 
   return {
     ...base,
-    version: 15,
+    version: 17,
     scenarioVersion: 7,
     scenarioAnchorDate: scenario.scenarioGeneratedThroughDate,
     scenarioStartDate: scenario.scenarioStartDate,

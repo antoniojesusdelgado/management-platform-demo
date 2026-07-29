@@ -30,6 +30,16 @@ test("the embed route is the only frameable public surface", async ({
   expect(headers["content-security-policy"]).toContain("object-src 'none'");
 });
 
+test("dynamic authentication surfaces use a nonce-based script policy", async ({
+  request,
+}) => {
+  const response = await request.get("/login");
+  const policy = response.headers()["content-security-policy"];
+
+  expect(policy).toMatch(/script-src 'self' 'nonce-[^']+' 'strict-dynamic'/);
+  expect(policy).not.toContain("script-src 'self' 'unsafe-inline'");
+});
+
 test("OAuth callback rejects missing codes and external next targets", async ({
   request,
   baseURL,

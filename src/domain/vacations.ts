@@ -6,6 +6,7 @@ import {
   parseISO,
 } from "date-fns";
 import { z } from "zod";
+import { plainTextSchema } from "@/domain/validation";
 
 export const leaveRequestStatuses = [
   "draft",
@@ -45,7 +46,7 @@ export const leaveRequestInputSchema = z
     startDate: z.iso.date(),
     endDate: z.iso.date(),
     type: z.enum(["vacation", "personal"]),
-    reason: z.string().trim().min(8, "Añade al menos 8 caracteres.").max(300),
+    reason: plainTextSchema({ min: 8, max: 300 }),
   })
   .superRefine((value, context) => {
     if (isAfter(parseISO(value.startDate), parseISO(value.endDate))) {

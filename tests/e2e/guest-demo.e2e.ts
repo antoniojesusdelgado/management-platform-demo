@@ -264,12 +264,23 @@ test("adds a safe synthetic person profile", async ({ page }, testInfo) => {
   await page.getByRole("button", { name: "Añadir perfil" }).click();
   const dialog = page.getByRole("dialog", { name: "Añadir perfil" });
   await dialog.getByLabel("Nombre").fill("Perfil de prueba");
-  await dialog.getByLabel("Equipo").fill("Equipo demo");
+  const teamSelect = dialog.getByLabel("Equipo");
+  await expect(teamSelect).toHaveRole("combobox");
+  await expect(teamSelect.locator("option")).toContainText([
+    "Selecciona un equipo",
+    "Administración",
+    "Atención",
+    "Datos",
+    "Operaciones",
+    "Producto",
+    "Tecnología",
+  ]);
+  await teamSelect.selectOption("Operaciones");
   await dialog.getByLabel("Puesto").fill("Puesto demostrativo");
   await dialog.getByLabel("Estado").selectOption("active");
   await dialog.getByLabel("Rol").selectOption("viewer");
   await dialog.getByRole("button", { name: "Guardar" }).click();
-  await expect(page.getByRole("button", { name: /Perfil de prueba/ })).toContainText("Disponible");
+  await expect(page.getByRole("button", { name: /Perfil de prueba/ })).toContainText("Operaciones");
 });
 
 test("creates, reviews and publishes a changelog entry", async ({ page }, testInfo) => {

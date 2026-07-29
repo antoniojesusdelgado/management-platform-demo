@@ -18,7 +18,7 @@ bunx supabase start
 bunx supabase db reset
 bunx supabase test db
 bunx supabase db lint --level warning --fail-on error
-bunx supabase db advisors --local --type all --level warn --fail-on error
+bunx supabase inspect db index-stats --local
 bunx supabase gen types --lang typescript --local
 bun run lint
 bun run typecheck
@@ -119,7 +119,7 @@ environment values. After promotion:
 - Vercel fallback: <https://management-platform-demo.vercel.app>
 - Stable branch Preview:
   <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Release candidate: `v1.3.0`
+- Release candidate: `v1.3.1`
 - Supabase region and plan: `eu-central-1`, Free
 - Production and Preview use environment-specific application and portfolio
   origins.
@@ -136,14 +136,40 @@ environment values. After promotion:
 - Live isolation with a second Google identity remains a manual acceptance
   check. Multi-organization access isolation is covered by pgTAP.
 
+## Release v1.3.1
+
+Release `v1.3.1` is delivered from
+`codex/management-platform-v1-3-1` as an immutable patch over v1.3.0:
+
+1. Run the complete application and local Supabase validation matrix.
+2. Review `supabase db push --dry-run` and record organization counts before
+   applying the additive migration.
+3. Push the single release commit, open the PR and validate its Preview at
+   320/360/390 and desktop widths.
+4. Stage Vercel Firewall rules in log mode only. The user reviews traffic and
+   publishes the draft from the dashboard; automation does not enable it.
+5. Apply the migration, verify `scenario_v7_backfilled_at`, one `backfilled`
+   event, preserved edited rows and 245–255 active people.
+6. Run guest and existing-Google-user smoke tests, passive ZAP and security
+   advisor review.
+7. Promote the validated Preview, merge the authorized PR and tag the included
+   main commit as `v1.3.1`.
+
+The detailed database procedure is in
+[SCENARIO-V7-BACKFILL.md](./SCENARIO-V7-BACKFILL.md). The PostgREST limiter is
+enforced in the compatible migration; the outer IP-based WAF remains in
+observation until the user publishes the reviewed rules. The staged state and
+current plan limitation are recorded in
+[VERCEL-FIREWALL-V1.3.1.md](./VERCEL-FIREWALL-V1.3.1.md).
+
 ## Release v1.3.0
 
-Release `v1.3.0` is developed on `codex/management-platform-v1-3`. Before
+Release `v1.3.0` is finalized on `codex/management-platform-v1-3-1`. Before
 publication, run the complete local application suite, Scenario V7 generation,
 database reset/pgTAP/lint/advisors and type comparison. Then:
 
 1. Push one reviewed implementation commit and open a draft pull request.
-2. Validate the Vercel Preview in light, dark and system modes.
+2. Validate the Vercel Preview in the default light mode and manual dark mode.
 3. Run the host-restricted passive ZAP Baseline and retain its artifact.
 4. Review `supabase db push --dry-run`, then apply the additive migration.
 5. Verify PKCE callback, renewal, logout and isolation with two Google
@@ -155,6 +181,14 @@ database reset/pgTAP/lint/advisors and type comparison. Then:
 The migration never deletes operational rows. `ensure_demo_scenario_current`
 holds a per-organization transaction lock and appends only the missing interval
 through yesterday in `Europe/Madrid`.
+
+The runtime follow-up publishes the manual v1.3.0 changelog entry with the
+approved editorial date `2026-06-23` and repairs only the known synthetic
+mojibake signatures. The People form derives its team selector from persisted
+organization data; authenticated writes revalidate the selected team and store
+professional employment dates. A final additive migration also aligns existing
+and newly provisioned organizations with `scenario_version = 7` when no daily
+interval remains to be generated.
 
 ## Release v1.2.0
 

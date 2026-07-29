@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { plainTextSchema } from "@/domain/validation";
 
 export const payrollStatuses = [
   "collecting",
@@ -88,7 +89,7 @@ export const payrollInputSchema = z
     grossTotalCents: z.number().int().min(1).max(10_000_000_000),
     deductionTotalCents: z.number().int().min(0).max(10_000_000_000),
     currency: z.enum(payrollCurrencies),
-    notes: z.string().trim().max(1_000),
+    notes: plainTextSchema({ max: 1_000 }),
   })
   .refine((value) => value.periodEnd >= value.periodStart, {
     message: "El periodo finaliza antes de comenzar.",

@@ -12,7 +12,7 @@ import {
 import type { UserProfile } from "@/domain/profile";
 
 export type ThemePreference = UserProfile["theme"];
-type ResolvedTheme = Exclude<ThemePreference, "system">;
+type ResolvedTheme = ThemePreference;
 
 const THEME_STORAGE_KEY = "management-platform-theme";
 const DARK_THEME_COLOR = "#071a2f";
@@ -32,17 +32,6 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function systemTheme(): ResolvedTheme {
-  if (typeof window === "undefined") return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
-}
-
-function resolveTheme(preference: ThemePreference): ResolvedTheme {
-  return preference === "system" ? systemTheme() : preference;
-}
-
 function updateThemeColor(theme: ResolvedTheme) {
   let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
   if (!meta) {
@@ -54,43 +43,28 @@ function updateThemeColor(theme: ResolvedTheme) {
 }
 
 function applyTheme(preference: ThemePreference): ResolvedTheme {
-  const theme = resolveTheme(preference);
   const root = document.documentElement;
   root.dataset.themePreference = preference;
-  root.dataset.theme = theme;
-  root.style.colorScheme = theme;
-  updateThemeColor(theme);
-  return theme;
+  root.dataset.theme = preference;
+  root.style.colorScheme = preference;
+  updateThemeColor(preference);
+  return preference;
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [preference, setPreferenceState] = useState<ThemePreference>(() => {
-    if (typeof window === "undefined") return "system";
+    if (typeof window === "undefined") return "light";
     const stored = window.sessionStorage.getItem(THEME_STORAGE_KEY);
-    return stored === "light" || stored === "dark" || stored === "system"
-      ? stored
-      : "system";
+    return stored === "dark" ? "dark" : "light";
   });
-  const [systemResolvedTheme, setSystemResolvedTheme] =
-    useState<ResolvedTheme>(systemTheme);
   const [profileReducedMotion, setProfileReducedMotion] = useState(false);
   const [systemReducedMotion, setSystemReducedMotion] = useState(false);
-  const resolvedTheme =
-    preference === "system" ? systemResolvedTheme : preference;
+  const resolvedTheme = preference;
   const reducedMotion = profileReducedMotion || systemReducedMotion;
 
   useEffect(() => {
     applyTheme(preference);
-  }, [preference, systemResolvedTheme]);
-
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = () => {
-      setSystemResolvedTheme(media.matches ? "dark" : "light");
-    };
-    media.addEventListener("change", handleChange);
-    return () => media.removeEventListener("change", handleChange);
-  }, []);
+  }, [preference]);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");

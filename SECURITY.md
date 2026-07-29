@@ -36,6 +36,23 @@ Before a release:
 3. Rotate any secret that may have appeared in logs or local screenshots.
 4. Review dependency advisories and Supabase Security Advisor results.
 5. Run `bun run security:public-data` against runtime files and fixtures.
+6. Run `bun run security:secrets`; CI checks tracked files and full Git history
+   and rejects server-secret names under `NEXT_PUBLIC_*`.
+
+## Request and input protection
+
+- Vercel Firewall rules are prepared in log mode for OAuth callback, Server
+  Actions and expensive operations; enforcement is enabled manually only after
+  reviewing Preview and production traffic.
+- PostgREST mutations pass through a database pre-request rate limiter. Normal
+  mutations allow 120 requests per minute and expensive scenario/integration
+  RPCs allow 10; the next request returns HTTP `429` with `Retry-After`.
+- Reusable Zod schemas normalize Unicode, bound lengths and reject control
+  characters or executable markup on the server. SQL punctuation remains plain
+  data and Supabase queries remain parameterized.
+- Authenticated dynamic surfaces use a per-request script nonce. The only
+  `dangerouslySetInnerHTML` payload is the repository-owned static theme
+  bootstrap; user input never reaches that API.
 
 The rationale and testable invariants for intentionally exposed privileged
 RPCs are maintained in [docs/SECURITY-ADVISOR.md](docs/SECURITY-ADVISOR.md).

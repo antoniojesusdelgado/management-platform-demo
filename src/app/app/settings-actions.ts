@@ -12,6 +12,7 @@ import {
   workspaceConfigurationSchema,
   type WorkspaceConfiguration,
 } from "@/domain/workspace-configuration";
+import { plainTextSchema } from "@/domain/validation";
 
 const idSchema = z.uuid();
 const moduleSchema = z.object({ moduleId: z.enum(moduleIds), enabled: z.boolean(), sortOrder: z.number().int().nonnegative().max(moduleIds.length - 1) });
@@ -25,7 +26,7 @@ function failure(error: unknown): ActionResult<never> {
 
 export async function renameOrganizationAction(name: string): Promise<ActionResult> {
   try {
-    const value = z.string().trim().min(2).max(100).parse(name);
+    const value = plainTextSchema({ min: 2, max: 100 }).parse(name);
     const access = await requirePermission("settings.workspace.manage");
     const supabase = await createClient();
     const { error } = await supabase.from("organizations").update({ name: value, updated_at: new Date().toISOString() }).eq("id", access.organizationId);

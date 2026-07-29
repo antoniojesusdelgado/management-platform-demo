@@ -1091,6 +1091,7 @@ export type Database = {
           name: string
           scenario_anchor_date: string
           scenario_generated_through_date: string
+          scenario_v7_backfilled_at: string | null
           scenario_version: number | null
           slug: string
           updated_at: string
@@ -1102,6 +1103,7 @@ export type Database = {
           name: string
           scenario_anchor_date?: string
           scenario_generated_through_date?: string
+          scenario_v7_backfilled_at?: string | null
           scenario_version?: number | null
           slug: string
           updated_at?: string
@@ -1113,6 +1115,7 @@ export type Database = {
           name?: string
           scenario_anchor_date?: string
           scenario_generated_through_date?: string
+          scenario_v7_backfilled_at?: string | null
           scenario_version?: number | null
           slug?: string
           updated_at?: string
@@ -2378,6 +2381,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_management_request_rate_limit: { Args: never; Returns: undefined }
       clear_own_avatar_path: { Args: never; Returns: undefined }
       create_payroll_run: {
         Args: {

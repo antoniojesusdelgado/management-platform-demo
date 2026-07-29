@@ -37,7 +37,7 @@ export const STANDARD_SCENARIO_COUNTS = {
   treasuryEntriesPerActivePerson: 0.1,
   minimumTreasuryEntriesPerMonth: 20,
   integrationRunsPerMonth: 4,
-  changelogEntries: 12,
+  changelogEntries: 14,
 } as const;
 
 function dateFromOffset(startDate: string, offset: number) {
@@ -1085,6 +1085,8 @@ export function generateDemoScenario(
     ["1.2.0", "Datos equilibrados y análisis dinámico", "Escenario operativo revisado, filtros comparables y presentación más consistente.", "2026-06-15"],
     ["1.2.1", "Ajustes finales de presentación", "Acceso, gráficos, proyectos, datos y comportamiento responsive revisados.", "2026-06-16"],
     ["1.2.2", "Interfaz y datos revisados", "Mejoras de acceso, analítica, trabajo móvil, nóminas y estructura de equipos.", "2026-06-17"],
+    ["1.3.0", "Tema y experiencia responsive", "Tema claro por defecto y oscuro manual, analítica estable y Scenario V7 incremental.", "2026-06-23"],
+    ["1.3.1", "Corrección responsive y seguridad", "Tareas móviles, backfill aditivo y controles de seguridad reforzados.", "2026-07-29"],
   ] as const;
   const changelogEntries: DemoScenarioDefinition["changelogEntries"] = changelogTimeline.map(
     ([version, title, summary, publishedDate], index) => ({

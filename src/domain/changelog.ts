@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { plainTextSchema } from "@/domain/validation";
 
 export const changelogStatuses = ["draft", "in_review", "published"] as const;
 export type ChangelogStatus = (typeof changelogStatuses)[number];
@@ -27,8 +28,8 @@ export type ChangelogEvent = {
 
 export const changelogInputSchema = z.object({
   version: z.string().trim().min(1).max(30).regex(/^\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?$/),
-  title: z.string().trim().min(3).max(120),
-  summary: z.string().trim().min(8).max(1_000),
+  title: plainTextSchema({ min: 3, max: 120 }),
+  summary: plainTextSchema({ min: 8, max: 1_000 }),
 });
 
 export type ChangelogInput = z.infer<typeof changelogInputSchema>;

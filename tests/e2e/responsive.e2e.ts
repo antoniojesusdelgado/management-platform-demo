@@ -65,6 +65,32 @@ async function expectNoGlobalHorizontalOverflow(page: Page) {
   ).toBeLessThanOrEqual(dimensions.clientWidth);
 }
 
+async function expectPanelsInsideViewport(page: Page) {
+  const { panels, viewportWidth } = await page.evaluate(() => ({
+    viewportWidth: innerWidth,
+    panels: [
+      ...document.querySelectorAll<HTMLElement>(
+        ".workspace, .section-block, .kanban-board, .kanban-columns, .data-table-wrap, .dialog-content",
+      ),
+    ]
+      .filter((element) => element.getClientRects().length > 0)
+      .map((element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          className: element.className,
+          left: Math.round(rect.left),
+          right: Math.round(rect.right),
+        };
+      }),
+  }));
+  expect(
+    panels.every(
+      ({ left, right }) => left >= -1 && right <= viewportWidth + 1,
+    ),
+    JSON.stringify(panels),
+  ).toBe(true);
+}
+
 async function openModule(
   page: Page,
   moduleName: (typeof modules)[number],
@@ -84,15 +110,24 @@ async function openModule(
   await expect(page.getByRole("heading", { name: moduleName, level: 1 })).toBeVisible();
 }
 
-test("light, dark and system resolve before content at every release width", async ({
+test("light and dark resolve before content at every release width", async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== "chromium");
   test.setTimeout(180_000);
 
-  for (const theme of ["light", "dark", "system"] as const) {
+  await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
+  await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-theme-preference",
+    "light",
+  );
+
+  for (const theme of ["light", "dark"] as const) {
     await page.emulateMedia({
-      colorScheme: theme === "system" ? "dark" : theme,
+      colorScheme: theme,
       reducedMotion: "reduce",
     });
     for (const viewport of viewports) {
@@ -111,7 +146,7 @@ test("light, dark and system resolve before content at every release width", asy
         const raw = window.sessionStorage.getItem(key);
         if (!raw) throw new Error("Guest state was not initialized");
         const state = JSON.parse(raw) as {
-          preferences: { theme: "light" | "dark" | "system" };
+          preferences: { theme: "light" | "dark" };
         };
         state.preferences.theme = preference;
         window.sessionStorage.setItem(key, JSON.stringify(state));
@@ -128,7 +163,7 @@ test("light, dark and system resolve before content at every release width", asy
           document.querySelector(".app-frame")!,
         ).animationDuration,
       }));
-      const expected = theme === "system" ? "dark" : theme;
+      const expected = theme;
       expect(experience.preference).toBe(theme);
       expect(experience.resolved).toBe(expected);
       expect(experience.colorScheme).toBe(expected);
@@ -136,6 +171,19 @@ test("light, dark and system resolve before content at every release width", asy
         0.00001,
       );
       await expectNoGlobalHorizontalOverflow(page);
+
+      if (viewport.width === 320 && expected === "dark") {
+        await openModule(page, "Configuración");
+        const control = page.locator("input, select, textarea").first();
+        await expect(control).toBeVisible();
+        const colors = await control.evaluate((element) => {
+          const style = getComputedStyle(element);
+          return { background: style.backgroundColor, foreground: style.color };
+        });
+        expect(colors.background).not.toBe("rgb(255, 255, 255)");
+        expect(colors.foreground).not.toBe(colors.background);
+        await expectPanelsInsideViewport(page);
+      }
     }
   }
 });
@@ -203,7 +251,15 @@ test("mobile filters, tables, Kanban and dialogs stay inside their panels", asyn
   await openModule(page, "Vacaciones");
   const tableContainer = page.locator(".data-table-wrap").first();
   await expect(tableContainer).toBeVisible();
-  await expect(tableContainer.locator("thead")).toBeVisible();
+  await expect(tableContainer.locator("thead")).toBeHidden();
+  const tableGeometry = await tableContainer.evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+  }));
+  expect(tableGeometry.scrollWidth).toBeLessThanOrEqual(
+    tableGeometry.clientWidth,
+  );
+  await expectPanelsInsideViewport(page);
   await expectNoGlobalHorizontalOverflow(page);
 
   await page.getByRole("button", { name: "Nueva solicitud" }).click();
@@ -219,13 +275,40 @@ test("mobile filters, tables, Kanban and dialogs stay inside their panels", asyn
   const overflow = await kanban.evaluate((element) => ({
     clientWidth: element.clientWidth,
     scrollWidth: element.scrollWidth,
+    scrollLeft: element.scrollLeft,
+    visibleColumns: [...element.querySelectorAll<HTMLElement>(
+      ".kanban-column-slot",
+    )].filter((column) => column.getClientRects().length > 0).length,
   }));
-  expect(overflow.scrollWidth).toBeGreaterThanOrEqual(overflow.clientWidth);
+  expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth);
+  expect(overflow.scrollLeft).toBeLessThanOrEqual(2);
+  expect(overflow.visibleColumns).toBe(1);
+  await expectPanelsInsideViewport(page);
   await expectNoGlobalHorizontalOverflow(page);
+
+  await page.getByLabel("Columna del tablero").selectOption("blocked");
+  await expect(
+    kanban.locator('.kanban-column-slot[data-mobile-active="true"]'),
+  ).toHaveAttribute("data-mobile-active", "true");
+  await expect(
+    kanban.locator('.kanban-column-slot[data-mobile-active="true"]'),
+  ).toContainText("Bloqueada");
+
+  await page.getByLabel("Estado").selectOption("in_progress");
+  const singleColumn = await kanban.evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+    columns: element.querySelectorAll(".kanban-column-slot").length,
+  }));
+  expect(singleColumn.columns).toBe(1);
+  expect(singleColumn.scrollWidth).toBeLessThanOrEqual(singleColumn.clientWidth);
 
   await openModule(page, "Analítica");
   const filterWidths = await page.locator(".analytics-toolbar label").evaluateAll(
     (labels) => labels.map((label) => label.getBoundingClientRect().width),
   );
   expect(filterWidths.every((width) => width <= 288)).toBe(true);
+
+  await openModule(page, "Novedades");
+  await expect(page.getByText("v1.3.1", { exact: true })).toBeVisible();
 });

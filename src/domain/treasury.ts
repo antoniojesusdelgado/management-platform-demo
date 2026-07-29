@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { plainTextSchema } from "@/domain/validation";
 
 export const treasuryStatuses = [
   "draft",
@@ -40,8 +41,8 @@ export type TreasuryEvent = {
 
 export const treasuryInputSchema = z.object({
   entryDate: z.iso.date(),
-  concept: z.string().trim().min(3).max(160),
-  category: z.string().trim().min(2).max(80).optional(),
+  concept: plainTextSchema({ min: 3, max: 160 }),
+  category: plainTextSchema({ min: 2, max: 80 }).optional(),
   amountCents: z
     .number()
     .int()

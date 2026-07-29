@@ -228,11 +228,7 @@ export function ProfileWorkspace({
               >
                 {profileThemes.map((theme) => (
                   <option key={theme} value={theme}>
-                    {theme === "light"
-                      ? "Claro"
-                      : theme === "dark"
-                        ? "Oscuro"
-                        : "Sistema"}
+                    {theme === "light" ? "Claro" : "Oscuro"}
                   </option>
                 ))}
               </select>

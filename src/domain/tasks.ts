@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { plainTextSchema } from "@/domain/validation";
 
 export const taskStatuses = [
   "pending",
@@ -56,11 +57,11 @@ export type TaskEvent = {
 };
 
 export const taskInputSchema = z.object({
-  title: z.string().trim().min(3).max(160),
-  description: z.string().trim().max(2_000),
+  title: plainTextSchema({ min: 3, max: 160 }),
+  description: plainTextSchema({ max: 2_000 }),
   priority: z.enum(taskPriorities),
   projectId: z.uuid().nullable().optional(),
-  assigneeName: z.string().trim().min(2).max(100).nullable(),
+  assigneeName: plainTextSchema({ min: 2, max: 100 }).nullable(),
   dueDate: z.iso.date().nullable(),
 });
 

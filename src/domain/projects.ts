@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { plainTextSchema } from "@/domain/validation";
 
 export const projectStatuses = [
   "planned",
@@ -51,8 +52,8 @@ export const projectInputSchema = z
       .min(2)
       .max(16)
       .regex(/^[A-Z][A-Z0-9-]+$/),
-    name: z.string().trim().min(3).max(120),
-    summary: z.string().trim().max(1_000),
+    name: plainTextSchema({ min: 3, max: 120 }),
+    summary: plainTextSchema({ max: 1_000 }),
     status: z.enum(projectStatuses),
     health: z.enum(projectHealthValues),
     ownerPersonId: z.uuid().nullable(),

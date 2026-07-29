@@ -12,6 +12,7 @@ import {
   actionSuccess,
   type ActionResult,
 } from "@/domain/action-result";
+import { plainTextSchema } from "@/domain/validation";
 import { requirePermission } from "@/lib/authorization";
 import { createClient } from "@/lib/supabase/server";
 
@@ -19,14 +20,14 @@ const analyticsFilterSchema = z.object({
   period: z.enum(["all", "30d", "90d", "6m", "12m"]),
   comparison: z.enum(["previous_period", "none"]),
   projectId: z.string().max(120).nullable(),
-  team: z.string().max(120).nullable(),
+  team: plainTextSchema({ max: 120 }).nullable(),
   ownerId: z.string().max(120).nullable(),
-  status: z.string().max(120).nullable(),
-  service: z.string().max(160).nullable(),
+  status: plainTextSchema({ max: 120 }).nullable(),
+  service: plainTextSchema({ max: 160 }).nullable(),
 });
 
 const savedViewInputSchema = z.object({
-  name: z.string().trim().min(2).max(80),
+  name: plainTextSchema({ min: 2, max: 80 }),
   filters: analyticsFilterSchema,
 });
 
