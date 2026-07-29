@@ -71,7 +71,7 @@ flowchart TB
   subgraph next["Aplicación Next.js"]
     routes["App Router y Server Components"]
     actions["Server Actions"]
-    guest["Reducer invitado y GuestDemoState V14"]
+    guest["Reducer invitado y GuestDemoState V15"]
     analytics["Motor analítico puro"]
     ui["Módulos React responsive"]
   end
@@ -97,8 +97,8 @@ flowchart TB
 ```mermaid
 flowchart LR
   start["Acceso"] --> choice{"Modalidad"}
-  choice -->|Invitado| generate["Generar escenario V6"]
-  generate --> validate["Validar V14 con Zod"]
+  choice -->|Invitado| generate["Generar escenario V7"]
+  generate --> validate["Validar V15 con Zod"]
   validate --> session["Persistir solo en sessionStorage"]
   choice -->|Google| pkce["OAuth PKCE"]
   pkce --> provision["Crear o cargar organización aislada"]
@@ -193,10 +193,13 @@ erDiagram
   PAYROLL_RUNS ||--o{ PAYROLL_PARTICIPANTS : incluye
   PEOPLE ||--o{ PAYROLL_PARTICIPANTS : participa
   ORGANIZATIONS ||--o{ INTEGRATION_CONNECTORS : configura
+  ORGANIZATIONS ||--o{ ANALYTICS_SERVICE_DIMENSIONS : define
+  ANALYTICS_SERVICE_DIMENSIONS ||--o{ INCIDENTS : clasifica
   INTEGRATION_CONNECTORS ||--o{ INTEGRATION_RUNS : ejecuta
   INTEGRATION_RUNS ||--o{ DATA_QUALITY_ISSUES : detecta
   ORGANIZATIONS ||--|| WORKSPACE_CONFIGURATION : configura
   ORGANIZATIONS ||--o{ AUDIT_EVENTS : registra
+  ORGANIZATIONS ||--o{ SCENARIO_EVOLUTION_EVENTS : evoluciona
 ```
 
 `profiles` contiene preferencias de la identidad autenticada; `people`
@@ -225,20 +228,20 @@ duplicados. Los conectores son neutrales y no contactan bancos, asesorías ni
 sistemas de personal reales. Los reintentos y errores se registran sin
 credenciales ni payloads sensibles.
 
-## 10. Escenario V6 y contratos
+## 10. Escenario V7 y contratos
 
-El escenario V6 comienza el `2025-01-01` y termina en la fecha de anclaje de
-cada sesión u organización. La misma semilla y ancla producen el mismo
-checksum. `GuestDemoState V14` migra sesiones anteriores y preserva
-preferencias compatibles.
+El escenario V7 comienza el `2025-01-01` y crece hasta ayer en
+`Europe/Madrid`. La misma semilla y ancla producen el mismo checksum.
+`GuestDemoState V15` conserva las entidades y preferencias de V14, y solo
+anexa IDs deterministas ausentes.
 
 Distribución:
 
-- 32 personas, 6 equipos y cuatro modalidades contractuales;
-- 10 proyectos y 120 tareas, 90 de ellas completadas;
-- 104 solicitudes de vacaciones y 60 incidencias;
-- 360 movimientos de tesorería y 18 ciclos de nómina agregada;
-- 72 ejecuciones de integraciones con resultados variables.
+- 266 entidades de persona, 6 equipos y cuatro modalidades contractuales;
+- 10 proyectos y 982 tareas con 85–90 % de histórico completado;
+- 138 solicitudes de vacaciones y 65 incidencias;
+- 396 movimientos de tesorería y 19 ciclos de nómina agregada;
+- 76 ejecuciones de integraciones con resultados variables.
 
 Reglas de dominio:
 
@@ -272,7 +275,8 @@ Las migraciones append-only cubren:
 3. aprovisionamiento y ciclo de vida del escenario público;
 4. proyectos, perfil, integraciones y analítica;
 5. endurecimiento de RLS, consultas y Storage privado;
-6. compatibilidad de escenarios V2 a V6 y GuestDemoState hasta V14.
+6. compatibilidad de escenarios V2 a V7 y GuestDemoState hasta V15;
+7. dimensiones estables de servicio y auditoría de evolución incremental.
 
 Los índices priorizan `organization_id` en lecturas acotadas y añaden índices
 parciales para registros activos. Los constraints verifican estados,
@@ -361,6 +365,7 @@ Configuración actualiza de forma explícita el ancla y registra la operación.
 | v1.2.1 | Gráficos, diálogos y consistencia temporal |
 | v1.2.2 | OAuth final, V5, participantes y organigrama |
 | Mantenimiento v1.2.2 | V6, contratos, tareas, proyectos y documentación |
+| v1.3.0 | Tema completo, V7 incremental, contratos analíticos y seguridad |
 
 Las fechas editoriales se muestran en Novedades. Git y Vercel conservan sus
 timestamps técnicos reales.

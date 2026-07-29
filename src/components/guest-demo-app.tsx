@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
+import { ThemePreferencesSync } from "@/components/theme-provider";
 import { Dashboard } from "@/components/dashboard";
 import { ControlCenter } from "@/components/control-center";
 import { IntegrationsCenter } from "@/components/integrations-center";
@@ -139,6 +140,14 @@ export function GuestDemoApp() {
     const stored = readStoredState();
     queueMicrotask(() => {
       dispatch({ type: "hydrate", state: stored.state });
+      try {
+        window.sessionStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(stored.state),
+        );
+      } catch {
+        setStorageAvailable(false);
+      }
       if (stored.warning) {
         setNotice(stored.warning);
         setStorageAvailable(false);
@@ -383,6 +392,7 @@ export function GuestDemoApp() {
           treasuryEntries={state.treasuryEntries}
           payrollRuns={state.payrollRuns}
           integrationRuns={state.integrationRuns}
+          integrationConnectors={state.integrationConnectors}
           savedViews={state.savedAnalyticsViews}
           onSaveView={saveAnalyticsView}
           referenceDate={summaryAnchor}
@@ -477,6 +487,12 @@ export function GuestDemoApp() {
 
   return (
     <div data-demo-ready={ready}>
+      <ThemePreferencesSync
+        theme={state.preferences.theme}
+        density={state.preferences.density}
+        reducedMotion={false}
+        highContrast={false}
+      />
       <a className="sr-only" href="#main-content">
         Saltar al contenido
       </a>

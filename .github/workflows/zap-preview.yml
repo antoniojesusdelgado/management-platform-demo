@@ -1,0 +1,102 @@
+name: ZAP Preview Baseline
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      preview_url:
+        description: Validated HTTPS Preview URL
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  deployments: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Resolve validated Preview
+        id: preview
+        uses: actions/github-script@v7
+        env:
+          MANUAL_PREVIEW_URL: ${{ github.event.inputs.preview_url || '' }}
+        with:
+          script: |
+            let value = process.env.MANUAL_PREVIEW_URL;
+            const headSha =
+              context.payload.pull_request?.head.sha ?? context.sha;
+
+            for (let attempt = 0; !value && attempt < 30; attempt += 1) {
+              const deployments = await github.paginate(
+                github.rest.repos.listDeployments,
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  sha: headSha,
+                  environment: "Preview",
+                  per_page: 100,
+                },
+              );
+
+              for (const deployment of deployments) {
+                const statuses = await github.rest.repos.listDeploymentStatuses({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  deployment_id: deployment.id,
+                  per_page: 100,
+                });
+                const ready = statuses.data.find(
+                  (status) =>
+                    status.state === "success" && status.environment_url,
+                );
+                if (ready?.environment_url) {
+                  value = ready.environment_url;
+                  break;
+                }
+              }
+
+              if (!value) {
+                await new Promise((resolve) => setTimeout(resolve, 10_000));
+              }
+            }
+
+            if (!value) {
+              core.setFailed("No successful Preview deployment was found");
+              return;
+            }
+
+            const url = new URL(value);
+            if (
+              url.protocol !== "https:" ||
+              url.pathname !== "/" ||
+              url.search ||
+              url.hash ||
+              !url.hostname.endsWith(".vercel.app")
+            ) {
+              core.setFailed("Only a root HTTPS vercel.app Preview is allowed");
+              return;
+            }
+
+            core.setOutput("url", url.origin);
+            core.setOutput("host", url.hostname);
+
+      - name: Run passive baseline against the validated host
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: ${{ steps.preview.outputs.url }}
+          cmd_options: >-
+            -a
+            -j
+            -z "-config spider.maxDuration=1
+            -config spider.maxDepth=3
+            -config spider.postform=false"
+          allow_issue_writing: false
+          artifact_name: zap-preview-report

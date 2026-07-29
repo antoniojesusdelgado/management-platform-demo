@@ -83,6 +83,7 @@ bun run security:public-data
 bun run demo:data:generate
 bun run demo:data:validate
 bun run demo:data:report
+bun audit --audit-level=high
 bun run build
 bun run e2e
 bun run e2e:a11y
@@ -99,6 +100,12 @@ bunx supabase db lint --local --level warning --fail-on error
 bunx supabase db advisors --local --type all
 bunx supabase gen types --lang typescript --local
 ```
+
+La versión `1.3.0` añade tema `light | dark | system`, preferencias de
+contraste, densidad y movimiento, códigos estables de servicio para Analítica
+y Scenario V7 incremental hasta ayer en `Europe/Madrid`. La RPC autenticada
+solo anexa el intervalo pendiente, usa bloqueo por organización y conserva
+filas operativas existentes.
 
 ## Variables
 

@@ -34,6 +34,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_service_dimensions: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          kind: string
+          label: string
+          organization_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          kind: string
+          label: string
+          organization_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          label?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_service_dimensions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_events: {
         Row: {
           actor_profile_id: string | null
@@ -339,6 +374,7 @@ export type Database = {
       incidents: {
         Row: {
           affected_service: string
+          analytics_service_code: string | null
           assignee_person_id: string | null
           assignee_profile_id: string | null
           category: Database["public"]["Enums"]["incident_category"]
@@ -364,6 +400,7 @@ export type Database = {
         }
         Insert: {
           affected_service?: string
+          analytics_service_code?: string | null
           assignee_person_id?: string | null
           assignee_profile_id?: string | null
           category?: Database["public"]["Enums"]["incident_category"]
@@ -389,6 +426,7 @@ export type Database = {
         }
         Update: {
           affected_service?: string
+          analytics_service_code?: string | null
           assignee_person_id?: string | null
           assignee_profile_id?: string | null
           category?: Database["public"]["Enums"]["incident_category"]
@@ -413,6 +451,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "incidents_analytics_service_dimension_fkey"
+            columns: ["organization_id", "analytics_service_code"]
+            isOneToOne: false
+            referencedRelation: "analytics_service_dimensions"
+            referencedColumns: ["organization_id", "code"]
+          },
           {
             foreignKeyName: "incidents_assignee_person_id_fkey"
             columns: ["assignee_person_id"]
@@ -1045,6 +1090,7 @@ export type Database = {
           last_active_at: string
           name: string
           scenario_anchor_date: string
+          scenario_generated_through_date: string
           scenario_version: number | null
           slug: string
           updated_at: string
@@ -1055,6 +1101,7 @@ export type Database = {
           last_active_at?: string
           name: string
           scenario_anchor_date?: string
+          scenario_generated_through_date?: string
           scenario_version?: number | null
           slug: string
           updated_at?: string
@@ -1065,6 +1112,7 @@ export type Database = {
           last_active_at?: string
           name?: string
           scenario_anchor_date?: string
+          scenario_generated_through_date?: string
           scenario_version?: number | null
           slug?: string
           updated_at?: string
@@ -1345,6 +1393,8 @@ export type Database = {
           created_at: string
           display_name: string
           employment_contract_type: string
+          employment_end_date: string | null
+          employment_start_date: string
           id: string
           manager_person_id: string | null
           organization_id: string
@@ -1359,6 +1409,8 @@ export type Database = {
           created_at?: string
           display_name: string
           employment_contract_type?: string
+          employment_end_date?: string | null
+          employment_start_date?: string
           id?: string
           manager_person_id?: string | null
           organization_id: string
@@ -1373,6 +1425,8 @@ export type Database = {
           created_at?: string
           display_name?: string
           employment_contract_type?: string
+          employment_end_date?: string | null
+          employment_start_date?: string
           id?: string
           manager_person_id?: string | null
           organization_id?: string
@@ -1837,6 +1891,47 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scenario_evolution_events: {
+        Row: {
+          created_at: string
+          event_date: string
+          event_type: string
+          from_date: string | null
+          generated_counts: Json
+          id: string
+          organization_id: string
+          through_date: string
+        }
+        Insert: {
+          created_at?: string
+          event_date: string
+          event_type: string
+          from_date?: string | null
+          generated_counts?: Json
+          id: string
+          organization_id: string
+          through_date: string
+        }
+        Update: {
+          created_at?: string
+          event_date?: string
+          event_type?: string
+          from_date?: string | null
+          generated_counts?: Json
+          id?: string
+          organization_id?: string
+          through_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scenario_evolution_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -2307,7 +2402,24 @@ export type Database = {
         }
         Returns: string
       }
+      ensure_demo_scenario_current: {
+        Args: { expected_organization_id: string }
+        Returns: Json
+      }
       ensure_public_demo_workspace: { Args: never; Returns: string }
+      get_analytics_snapshot: {
+        Args: {
+          expected_organization_id: string
+          filter_owner_id?: string
+          filter_period: string
+          filter_project_id?: string
+          filter_service?: string
+          filter_status?: string
+          filter_team?: string
+          target_view?: string
+        }
+        Returns: Json
+      }
       get_demo_workspace_status: {
         Args: { expected_organization_id: string }
         Returns: {

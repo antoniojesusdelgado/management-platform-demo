@@ -27,6 +27,7 @@ import {
   parseWorkspaceConfiguration,
   type WorkspaceConfiguration,
 } from "@/domain/workspace-configuration";
+import type { AnalyticsServiceDimension } from "@/domain/analytics";
 
 export default async function AppModulePage({
   params,
@@ -92,14 +93,25 @@ export default async function AppModulePage({
   }
 
   const profileClient = await createClient();
+  const { error: scenarioError } = await profileClient.rpc(
+    "ensure_demo_scenario_current",
+    { expected_organization_id: access.organizationId },
+  );
+  if (scenarioError) {
+    throw new Error(
+      `No se pudo actualizar el escenario sintético: ${scenarioError.message}`,
+    );
+  }
   const { data: currentProfile } = await profileClient
     .from("profiles")
-    .select("display_name,alias,avatar_path")
+    .select(
+      "display_name,alias,avatar_path,theme,density,reduced_motion,high_contrast",
+    )
     .eq("id", access.userId)
     .single();
   const { data: currentOrganization } = await profileClient
     .from("organizations")
-    .select("scenario_anchor_date")
+    .select("scenario_anchor_date,scenario_generated_through_date")
     .eq("id", access.organizationId)
     .single();
   const signedAvatar = currentProfile?.avatar_path
@@ -147,6 +159,7 @@ export default async function AppModulePage({
   let dataQualityIssues: DataQualityIssue[] = [];
   let canManageIntegrations = false;
   let savedAnalyticsViews: SavedAnalyticsView[] = [];
+  let analyticsServiceDimensions: AnalyticsServiceDimension[] = [];
   let moduleSettings: ModuleSetting[] = [];
   let roles: ConfigurableRole[] = [];
   let memberships: WorkspaceMembership[] = [];
@@ -159,8 +172,7 @@ export default async function AppModulePage({
 
   if (
     module === "vacaciones" ||
-    module === "personal" ||
-    module === "analitica"
+    module === "personal"
   ) {
     const supabase = await createClient();
     const [requestsResult, eventsResult] = await Promise.all([
@@ -218,25 +230,38 @@ export default async function AppModulePage({
 
   if (module === "analitica") {
     const supabase = await createClient();
-    const { data } = await supabase
-      .from("saved_analytics_views")
-      .select("id,name,module_id,filters")
-      .eq("organization_id", access.organizationId)
-      .eq("profile_id", access.userId)
-      .eq("module_id", "analitica")
-      .order("updated_at", { ascending: false });
-    savedAnalyticsViews = (data ?? []).map((view) => ({
+    const [viewsResult, dimensionsResult] = await Promise.all([
+      supabase
+        .from("saved_analytics_views")
+        .select("id,name,module_id,filters")
+        .eq("organization_id", access.organizationId)
+        .eq("profile_id", access.userId)
+        .eq("module_id", "analitica")
+        .order("updated_at", { ascending: false }),
+      supabase
+        .from("analytics_service_dimensions")
+        .select("code,label,kind")
+        .eq("organization_id", access.organizationId)
+        .order("label"),
+    ]);
+    savedAnalyticsViews = (viewsResult.data ?? []).map((view) => ({
       id: view.id,
       name: view.name,
       moduleId: view.module_id,
       filters: view.filters as Record<string, string | null>,
     }));
+    analyticsServiceDimensions = (dimensionsResult.data ?? []).map(
+      (dimension) => ({
+        code: dimension.code,
+        label: dimension.label,
+        kind: dimension.kind as AnalyticsServiceDimension["kind"],
+      }),
+    );
   }
 
   if (
     module === "incidencias" ||
-    module === "proyectos" ||
-    module === "analitica"
+    module === "proyectos"
   ) {
     const supabase = await createClient();
     const [incidentsResult, eventsResult, membersResult] = await Promise.all([
@@ -257,7 +282,7 @@ export default async function AppModulePage({
   ) {
     const supabase = await createClient();
     const [peopleResult, eventsResult] = await Promise.all([
-      supabase.from("people").select("id,display_name,team,position_title,status,role_code,manager_person_id,employment_contract_type,created_at,updated_at").eq("organization_id", access.organizationId).order("display_name"),
+      supabase.from("people").select("id,display_name,team,position_title,status,role_code,manager_person_id,employment_contract_type,employment_start_date,employment_end_date,created_at,updated_at").eq("organization_id", access.organizationId).order("display_name"),
       supabase.from("people_events").select("id,person_id,kind,note,created_at,actor:profiles!people_events_actor_profile_id_fkey(display_name)").eq("organization_id", access.organizationId).order("created_at", { ascending: false }).limit(100),
     ]);
     if (peopleResult.error || eventsResult.error) peopleLoadError = "Vuelve a intentarlo. Si el problema continúa, revisa la conexión local.";
@@ -271,6 +296,8 @@ export default async function AppModulePage({
       managerPersonId: person.manager_person_id,
       employmentContractType:
         person.employment_contract_type as Person["employmentContractType"],
+      employmentStartDate: person.employment_start_date,
+      employmentEndDate: person.employment_end_date,
       createdAt: person.created_at,
       updatedAt: person.updated_at,
     }));
@@ -313,7 +340,7 @@ export default async function AppModulePage({
     );
   }
 
-  if (module === "tesoreria" || module === "analitica") {
+  if (module === "tesoreria") {
     canManageTreasury = await hasWorkspacePermission("treasury.entries.manage");
     const supabase = await createClient();
     const [entriesResult, eventsResult] = await Promise.all([
@@ -405,14 +432,14 @@ export default async function AppModulePage({
         .select("id,connector_id,effective_date,status,trigger_kind,source_sequence,processed_count,imported_count,duplicate_count,error_count,safe_summary,started_at,finished_at")
         .eq("organization_id", access.organizationId)
         .order("created_at", { ascending: false })
-        .limit(50),
+        .limit(module === "analitica" ? 0 : 50),
       supabase
         .from("data_quality_issues")
         .select("id,run_id,severity,code,safe_message,resolved_at,created_at")
         .eq("organization_id", access.organizationId)
         .is("resolved_at", null)
         .order("created_at", { ascending: false })
-        .limit(50),
+        .limit(module === "analitica" ? 0 : 50),
     ]);
     integrationConnectors = (connectorsResult.data ?? []).map((connector) => ({
       id: connector.id,
@@ -518,45 +545,56 @@ export default async function AppModulePage({
 
   if (
     module === "tareas" ||
-    module === "proyectos" ||
-    module === "analitica"
+    module === "proyectos"
   ) {
     const supabase = await createClient();
-    const [
-      tasksResult,
-      dependenciesResult,
-      commentsResult,
-      eventsResult,
-      membersResult,
-    ] = await Promise.all([
+    const [tasksResult, membersResult] = await Promise.all([
       supabase
         .from("tasks")
         .select(
           "id,title,description,status,priority,project_id,assignee_person_id,due_date,created_at,updated_at,project:projects(name),assignee:people!tasks_assignee_person_id_fkey(display_name),creator:profiles!tasks_created_by_fkey(display_name)",
         )
         .eq("organization_id", access.organizationId)
-        .order("updated_at", { ascending: false }),
-      supabase
-        .from("task_dependencies")
-        .select("id,task_id,depends_on_task_id,created_at")
-        .eq("organization_id", access.organizationId),
-      supabase
-        .from("task_comments")
-        .select("id,task_id,body,created_at,author:profiles!task_comments_author_profile_id_fkey(display_name)")
-        .eq("organization_id", access.organizationId)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("task_events")
-        .select("id,task_id,kind,from_status,to_status,note,created_at,actor:profiles!task_events_actor_profile_id_fkey(display_name)")
-        .eq("organization_id", access.organizationId)
         .order("created_at", { ascending: false })
-        .limit(100),
+        .limit(50),
       supabase
         .from("people")
         .select("id,profile_id,display_name")
         .eq("organization_id", access.organizationId)
         .eq("status", "active"),
     ]);
+    const visibleTaskIds = (tasksResult.data ?? []).map((task) => task.id);
+    const [dependenciesResult, commentsResult, eventsResult] =
+      visibleTaskIds.length
+        ? await Promise.all([
+            supabase
+              .from("task_dependencies")
+              .select("id,task_id,depends_on_task_id,created_at")
+              .eq("organization_id", access.organizationId)
+              .in("task_id", visibleTaskIds),
+            supabase
+              .from("task_comments")
+              .select(
+                "id,task_id,body,created_at,author:profiles!task_comments_author_profile_id_fkey(display_name)",
+              )
+              .eq("organization_id", access.organizationId)
+              .in("task_id", visibleTaskIds)
+              .order("created_at", { ascending: false }),
+            supabase
+              .from("task_events")
+              .select(
+                "id,task_id,kind,from_status,to_status,note,created_at,actor:profiles!task_events_actor_profile_id_fkey(display_name)",
+              )
+              .eq("organization_id", access.organizationId)
+              .in("task_id", visibleTaskIds)
+              .order("created_at", { ascending: false })
+              .limit(100),
+          ])
+        : [
+            { data: [], error: null },
+            { data: [], error: null },
+            { data: [], error: null },
+          ];
 
     if (
       tasksResult.error ||
@@ -629,11 +667,24 @@ export default async function AppModulePage({
       activeModule={module}
       organizationName={access.organizationName}
       scenarioAnchorDate={
+        currentOrganization?.scenario_generated_through_date ??
         currentOrganization?.scenario_anchor_date ??
         new Date().toISOString().slice(0, 10)
       }
       avatarUrl={signedAvatar?.data?.signedUrl ?? null}
       displayName={currentProfile?.alias ?? currentProfile?.display_name}
+      theme={
+        currentProfile?.theme === "light" ||
+        currentProfile?.theme === "dark" ||
+        currentProfile?.theme === "system"
+          ? currentProfile.theme
+          : "system"
+      }
+      density={
+        currentProfile?.density === "compact" ? "compact" : "comfortable"
+      }
+      reducedMotion={currentProfile?.reduced_motion ?? false}
+      highContrast={currentProfile?.high_contrast ?? false}
       leaveRequests={leaveRequests}
       leaveEvents={leaveEvents}
       leaveLoadError={leaveLoadError}
@@ -673,6 +724,7 @@ export default async function AppModulePage({
       dataQualityIssues={dataQualityIssues}
       canManageIntegrations={canManageIntegrations}
       savedAnalyticsViews={savedAnalyticsViews}
+      analyticsServiceDimensions={analyticsServiceDimensions}
       moduleSettings={moduleSettings}
       roles={roles}
       memberships={memberships}

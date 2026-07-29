@@ -42,8 +42,8 @@ export async function AuthLanding({ errorCode }: AuthLandingProps) {
               en un solo lugar
             </h1>
             <p>
-              Gestiona proyectos, tareas, vacaciones e incidencias desde una
-              plataforma centralizada.
+              Centraliza personas, proyectos, tareas, vacaciones, incidencias,
+              finanzas e integraciones en una sola plataforma.
             </p>
             <p>
               Mantén el control operativo y la información organizada para

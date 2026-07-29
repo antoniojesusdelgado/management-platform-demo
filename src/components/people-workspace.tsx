@@ -36,7 +36,17 @@ type Props = {
 const statusLabels: Record<PersonStatus, string> = { invited: "Invitada", active: "Activa", suspended: "Suspendida", inactive: "Inactiva" };
 const roleLabels: Record<PersonRoleCode, string> = { admin: "Administración", manager: "Responsable", collaborator: "Colaboración", viewer: "Consulta" };
 const availabilityLabels = { available: "Disponible", on_leave: "Ausente", unavailable: "No disponible" };
-const emptyInput = (): PersonInput => ({ displayName: "", team: "", positionTitle: "", status: "invited", roleCode: "collaborator", managerPersonId: null, employmentContractType: "indefinite_ordinary" });
+const emptyInput = (): PersonInput => ({
+  displayName: "",
+  team: "",
+  positionTitle: "",
+  status: "invited",
+  roleCode: "collaborator",
+  managerPersonId: null,
+  employmentContractType: "indefinite_ordinary",
+  employmentStartDate: "2025-01-01",
+  employmentEndDate: null,
+});
 
 export function PeopleWorkspace({ people, events, leaveRequests, referenceDate = new Date().toISOString().slice(0, 10), pending = false, loadError, onCreate, onUpdate }: Props) {
   const [status, setStatus] = useState<"all" | PersonStatus>("all");
@@ -70,7 +80,7 @@ export function PeopleWorkspace({ people, events, leaveRequests, referenceDate =
   }), [people, teams]);
 
   function openCreate() { setEditingId(null); setInput(emptyInput()); setError(""); setFormOpen(true); }
-  function openEdit(person: Person) { setEditingId(person.id); setInput({ displayName: person.displayName, team: person.team, positionTitle: person.positionTitle, status: person.status, roleCode: person.roleCode, managerPersonId: person.managerPersonId ?? null, employmentContractType: person.employmentContractType }); setSelectedId(null); setError(""); setFormOpen(true); }
+  function openEdit(person: Person) { setEditingId(person.id); setInput({ displayName: person.displayName, team: person.team, positionTitle: person.positionTitle, status: person.status, roleCode: person.roleCode, managerPersonId: person.managerPersonId ?? null, employmentContractType: person.employmentContractType, employmentStartDate: person.employmentStartDate, employmentEndDate: person.employmentEndDate }); setSelectedId(null); setError(""); setFormOpen(true); }
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     const parsed = personInputSchema.safeParse(input);

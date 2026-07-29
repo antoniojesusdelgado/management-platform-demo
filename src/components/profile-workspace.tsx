@@ -22,6 +22,7 @@ import {
 } from "@/domain/profile";
 import { personRoleCodes, type PersonRoleCode } from "@/domain/people";
 import { AvatarUploader } from "@/components/avatar-uploader";
+import { useTheme } from "@/components/theme-provider";
 import { formatDateTime } from "@/lib/format";
 
 type WorkspaceStatus = {
@@ -70,6 +71,7 @@ export function ProfileWorkspace({
     simulatedRole: profile.simulatedRole,
   });
   const [pending, startTransition] = useTransition();
+  const { setPreference, setExperiencePreferences } = useTheme();
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -217,12 +219,12 @@ export function ProfileWorkspace({
               Tema
               <select
                 value={input.theme}
-                onChange={(event) =>
-                  setInput({
-                    ...input,
-                    theme: event.target.value as ProfilePreferencesInput["theme"],
-                  })
-                }
+                onChange={(event) => {
+                  const theme =
+                    event.target.value as ProfilePreferencesInput["theme"];
+                  setInput({ ...input, theme });
+                  setPreference(theme);
+                }}
               >
                 {profileThemes.map((theme) => (
                   <option key={theme} value={theme}>
@@ -239,13 +241,12 @@ export function ProfileWorkspace({
               Densidad
               <select
                 value={input.density}
-                onChange={(event) =>
-                  setInput({
-                    ...input,
-                    density:
-                      event.target.value as ProfilePreferencesInput["density"],
-                  })
-                }
+                onChange={(event) => {
+                  const density =
+                    event.target.value as ProfilePreferencesInput["density"];
+                  setInput({ ...input, density });
+                  setExperiencePreferences({ density });
+                }}
               >
                 {profileDensities.map((density) => (
                   <option key={density} value={density}>
@@ -260,9 +261,11 @@ export function ProfileWorkspace({
               <input
                 type="checkbox"
                 checked={input.reducedMotion}
-                onChange={(event) =>
-                  setInput({ ...input, reducedMotion: event.target.checked })
-                }
+                onChange={(event) => {
+                  const reducedMotion = event.target.checked;
+                  setInput({ ...input, reducedMotion });
+                  setExperiencePreferences({ reducedMotion });
+                }}
               />
               Reducir movimiento
             </label>
@@ -270,9 +273,11 @@ export function ProfileWorkspace({
               <input
                 type="checkbox"
                 checked={input.highContrast}
-                onChange={(event) =>
-                  setInput({ ...input, highContrast: event.target.checked })
-                }
+                onChange={(event) => {
+                  const highContrast = event.target.checked;
+                  setInput({ ...input, highContrast });
+                  setExperiencePreferences({ highContrast });
+                }}
               />
               Contraste reforzado
             </label>

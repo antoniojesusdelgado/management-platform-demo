@@ -121,12 +121,18 @@ import {
   type LeaveRequestInput,
   type LeaveRequestStatus,
 } from "@/domain/vacations";
-import { generateDemoScenario } from "@/demo-data/scenario";
+import {
+  generateDemoScenario,
+  getScenarioGeneratedThroughDate,
+  SCENARIO_START_DATE,
+} from "@/demo-data/scenario";
 
 export type GuestDemoState = {
-  version: 14;
-  scenarioVersion: 6;
+  version: 15;
+  scenarioVersion: 7;
   scenarioAnchorDate: string;
+  scenarioStartDate: string;
+  scenarioGeneratedThroughDate: string;
   activeModule: ModuleId;
   organizationName: string;
   leaveRequests: LeaveRequest[];
@@ -287,6 +293,8 @@ const personSchema = z.object({
   employmentContractType: z
     .enum(employmentContractTypes)
     .default("indefinite_ordinary"),
+  employmentStartDate: z.iso.date().default(SCENARIO_START_DATE),
+  employmentEndDate: z.iso.date().nullable().default(null),
   status: z.enum(personStatuses),
   roleCode: z.enum(personRoleCodes),
   createdAt: z.iso.datetime(),
@@ -448,9 +456,16 @@ const guestDemoStateV13Schema = guestDemoStateV12Schema.extend({
   payrollParticipants: z.array(payrollParticipantSchema),
 });
 
-export const guestDemoStateSchema = guestDemoStateV13Schema.extend({
+const guestDemoStateV14Schema = guestDemoStateV13Schema.extend({
   version: z.literal(14),
   scenarioVersion: z.literal(6),
+});
+
+export const guestDemoStateSchema = guestDemoStateV14Schema.extend({
+  version: z.literal(15),
+  scenarioVersion: z.literal(7),
+  scenarioStartDate: z.iso.date(),
+  scenarioGeneratedThroughDate: z.iso.date(),
 });
 
 function normalizeLegacyAnalyticsModule(value: unknown): unknown {
@@ -504,6 +519,9 @@ export function parseGuestDemoState(value: unknown): GuestDemoState | null {
   const normalized = normalizeLegacyAnalyticsModule(value);
   const result = guestDemoStateSchema.safeParse(normalized);
   if (result.success) return result.data;
+
+  const version14 = guestDemoStateV14Schema.safeParse(normalized);
+  if (version14.success) return migrateVersion14(version14.data);
 
   const version13 = guestDemoStateV13Schema.safeParse(normalized);
   if (version13.success) return migrateVersion13(version13.data);
@@ -753,6 +771,8 @@ function createInitialIncidentPeopleState(): Pick<
         team: "Operaciones",
         positionTitle: "Responsable de operaciones",
         employmentContractType: "indefinite_ordinary",
+        employmentStartDate: "2025-01-01",
+        employmentEndDate: null,
         status: "active",
         roleCode: "manager",
         createdAt: "2026-07-01T08:00:00.000Z",
@@ -764,6 +784,8 @@ function createInitialIncidentPeopleState(): Pick<
         team: "Producto",
         positionTitle: "Especialista de producto",
         employmentContractType: "indefinite_ordinary",
+        employmentStartDate: "2025-01-01",
+        employmentEndDate: null,
         status: "active",
         roleCode: "collaborator",
         createdAt: "2026-07-02T08:00:00.000Z",
@@ -775,6 +797,8 @@ function createInitialIncidentPeopleState(): Pick<
         team: "Tecnología",
         positionTitle: "Desarrolladora",
         employmentContractType: "temporary_production",
+        employmentStartDate: "2026-06-01",
+        employmentEndDate: null,
         status: "invited",
         roleCode: "collaborator",
         createdAt: "2026-07-20T08:00:00.000Z",
@@ -1125,10 +1149,82 @@ function migrateVersion13(
   );
 }
 
+function migrateVersion14(
+  state: z.infer<typeof guestDemoStateV14Schema>,
+): GuestDemoState {
+  const generated = addStandardScenario({
+    ...state,
+    version: 15,
+    scenarioVersion: 7,
+    scenarioStartDate: SCENARIO_START_DATE,
+    scenarioGeneratedThroughDate: state.scenarioAnchorDate,
+  });
+  const mergeById = <T extends { id: string }>(
+    existing: T[],
+    additions: T[],
+  ) => [
+    ...existing,
+    ...additions.filter(
+      (addition) => !existing.some((item) => item.id === addition.id),
+    ),
+  ];
+
+  return guestDemoStateSchema.parse({
+    ...generated,
+    organizationName: state.organizationName,
+    activeModule: state.activeModule,
+    preferences: state.preferences,
+    savedAnalyticsViews: state.savedAnalyticsViews,
+    workspaceConfiguration: state.workspaceConfiguration,
+    people: mergeById(state.people, generated.people),
+    peopleEvents: mergeById(state.peopleEvents, generated.peopleEvents),
+    projects: mergeById(state.projects, generated.projects),
+    projectEvents: mergeById(state.projectEvents, generated.projectEvents),
+    tasks: mergeById(state.tasks, generated.tasks),
+    taskDependencies: mergeById(
+      state.taskDependencies,
+      generated.taskDependencies,
+    ),
+    taskComments: mergeById(state.taskComments, generated.taskComments),
+    taskEvents: mergeById(state.taskEvents, generated.taskEvents),
+    leaveRequests: mergeById(state.leaveRequests, generated.leaveRequests),
+    leaveEvents: mergeById(state.leaveEvents, generated.leaveEvents),
+    incidents: mergeById(state.incidents, generated.incidents),
+    incidentEvents: mergeById(state.incidentEvents, generated.incidentEvents),
+    treasuryEntries: mergeById(
+      state.treasuryEntries,
+      generated.treasuryEntries,
+    ),
+    treasuryEvents: mergeById(state.treasuryEvents, generated.treasuryEvents),
+    payrollRuns: mergeById(state.payrollRuns, generated.payrollRuns),
+    payrollParticipants: mergeById(
+      state.payrollParticipants,
+      generated.payrollParticipants,
+    ),
+    payrollEvents: mergeById(state.payrollEvents, generated.payrollEvents),
+    integrationConnectors: mergeById(
+      state.integrationConnectors,
+      generated.integrationConnectors,
+    ),
+    integrationRuns: mergeById(
+      state.integrationRuns,
+      generated.integrationRuns,
+    ),
+    dataQualityIssues: mergeById(
+      state.dataQualityIssues,
+      generated.dataQualityIssues,
+    ),
+    changelogEntries: state.changelogEntries,
+    changelogEvents: state.changelogEvents,
+  });
+}
+
 const initialGuestDemoStateBase: GuestDemoState = {
-  version: 14,
-  scenarioVersion: 6,
-  scenarioAnchorDate: new Date().toISOString().slice(0, 10),
+  version: 15,
+  scenarioVersion: 7,
+  scenarioAnchorDate: getScenarioGeneratedThroughDate(),
+  scenarioStartDate: SCENARIO_START_DATE,
+  scenarioGeneratedThroughDate: getScenarioGeneratedThroughDate(),
   activeModule: "inicio",
   organizationName: "Organización Aurora",
   integrationConnectors: createDefaultIntegrationConnectors(),
@@ -1211,8 +1307,8 @@ const initialGuestDemoStateBase: GuestDemoState = {
 
 function addStandardScenario(base: GuestDemoState): GuestDemoState {
   const scenario = generateDemoScenario(
-    "management-platform-standard-v6",
-    base.scenarioAnchorDate,
+    "management-platform-standard-v7",
+    base.scenarioGeneratedThroughDate,
   );
   const peopleById = new Map(
     scenario.people.map((person) => [person.id, person]),
@@ -1245,6 +1341,11 @@ function addStandardScenario(base: GuestDemoState): GuestDemoState {
 
   return {
     ...base,
+    version: 15,
+    scenarioVersion: 7,
+    scenarioAnchorDate: scenario.scenarioGeneratedThroughDate,
+    scenarioStartDate: scenario.scenarioStartDate,
+    scenarioGeneratedThroughDate: scenario.scenarioGeneratedThroughDate,
     people: [
       ...scenario.people.map((person) => ({
         ...person,
@@ -1426,10 +1527,13 @@ function addStandardScenario(base: GuestDemoState): GuestDemoState {
   };
 }
 
-export function createInitialGuestDemoState(anchorDate = new Date().toISOString().slice(0, 10)) {
+export function createInitialGuestDemoState(
+  anchorDate = getScenarioGeneratedThroughDate(),
+) {
   return addStandardScenario({
     ...structuredClone(initialGuestDemoStateBase),
     scenarioAnchorDate: anchorDate,
+    scenarioGeneratedThroughDate: anchorDate,
   });
 }
 

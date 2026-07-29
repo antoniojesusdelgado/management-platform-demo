@@ -85,6 +85,9 @@ jobs:
       - name: Unit tests
         run: bun run test
 
+      - name: Audit high severity dependencies
+        run: bun audit --audit-level=high
+
       - name: Check public demo data boundaries
         run: bun run security:public-data
 

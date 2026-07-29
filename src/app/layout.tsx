@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Script from "next/script";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const metadataOrigin =
@@ -38,14 +40,49 @@ export const metadata: Metadata = {
   },
 };
 
+const themeBootstrap = `
+(() => {
+  try {
+    const key = "management-platform-theme";
+    const stored = sessionStorage.getItem(key);
+    const preference =
+      stored === "light" || stored === "dark" || stored === "system"
+        ? stored
+        : "system";
+    const theme =
+      preference === "system"
+        ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+        : preference;
+    const root = document.documentElement;
+    root.dataset.themePreference = preference;
+    root.dataset.theme = theme;
+    root.style.colorScheme = theme;
+    const themeColor = document.querySelector('meta[name="theme-color"]');
+    if (themeColor) {
+      themeColor.setAttribute("content", theme === "dark" ? "#071a2f" : "#f5f7fb");
+    }
+  } catch {}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
-      <body>{children}</body>
+    <html lang="es" suppressHydrationWarning>
+      <head>
+        <meta name="theme-color" content="#f5f7fb" />
+      </head>
+      <body>
+        <Script
+          id="theme-bootstrap"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeBootstrap }}
+        />
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }
