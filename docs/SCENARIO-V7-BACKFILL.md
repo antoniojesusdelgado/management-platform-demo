@@ -25,7 +25,7 @@ people at the current horizon.
 1. Record counts for `people`, `tasks`, `leave_requests`, `incidents`,
    `treasury_entries`, `payroll_runs`, `integration_runs` and
    `scenario_evolution_events`.
-2. Run `supabase db push --dry-run` and review only the v1.3.1 migration.
+2. Run `supabase db push --dry-run` and review the pending migration sequence.
 3. Apply the migration. It locks one organization at a time and automatically
    backfills organizations with an active membership.
 4. Re-read the counts, the `scenario_v7_backfilled_at` marker, the single
@@ -38,6 +38,18 @@ people at the current horizon.
 Do not invoke obsolete restoration RPCs and do not force the organization to
 an exact row count. Existing manual rows legitimately make total history larger
 than the canonical synthetic scenario.
+
+## v1.3.2 directory normalization
+
+Release v1.3.2 does not rerun the historical backfill. It maps the existing
+deterministic `person-v7` IDs to the same 266 unique fictional names used by
+the guest generator and updates only rows whose display name still starts with
+`Persona sint`. A private insert trigger applies the same mapping to later
+incremental V7 inserts.
+
+Before and after applying the migration, record total people, placeholder
+count, distinct names and duplicate names per organization. Totals and IDs must
+remain unchanged; placeholders and duplicate-name groups must both be zero.
 
 ## Rollback
 

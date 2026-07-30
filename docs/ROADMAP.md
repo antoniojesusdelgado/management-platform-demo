@@ -116,9 +116,9 @@
 - Vercel fallback: <https://management-platform-demo.vercel.app>
 - Stable branch Preview:
   <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Release candidate: `v1.3.0`
-- Remote database: 18 ordered migrations, including the release-hardening
-  migration `20260726142334_harden_rls_and_query_performance.sql`.
+- Current production release: `v1.3.2`
+- Repository database history: 32 ordered migrations, ending in
+  `20260730083225_release_v1_3_2_directory_editorial.sql`.
 - Google OAuth login, logout and protected-route redirects validated in
   Preview and Production.
 - Public guest flows validated in desktop and mobile with Playwright and Axe.
@@ -174,14 +174,17 @@ published tag. It adds employment contract modalities, increases the completed
 task baseline, enforces project progress/state consistency and replaces
 technical analytical definitions with user-facing explanations.
 
-Release v1.3.0 introduces the complete semantic theme, Scenario V7 growth
+Release v1.3.0 introduced the complete semantic theme, Scenario V7 growth
 through the previous Madrid day, stable analytics service contracts, bounded
-growing queries and separate security workflows. Publication still requires a
-validated Preview, passive ZAP, remote migration review and two-identity OAuth
-isolation before the candidate is marked ready.
+growing queries and separate security workflows.
 
 Release v1.3.1 is a patch that keeps v1.3.0 immutable. It fixes the one-column
 mobile Tasks contract, backfills legacy authenticated organizations
 additively, adds layered rate limiting and secret detection, centralizes
 server-side plain-text validation and applies nonce-based CSP to dynamic
 surfaces.
+
+Release v1.3.2 aligns authenticated and guest directory names without adding or
+deleting people, rewrites canonical Novedades copy for day-to-day users and
+publishes the patch on 30 July 2026. The migration is idempotent and targets
+only deterministic V7 placeholder IDs.

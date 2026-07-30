@@ -56,12 +56,13 @@ tax identifiers, receipts and documents. Collection edits and monotonic status
 changes run through privileged RPCs and append immutable events; authenticated
 roles receive no direct table writes.
 
-The guest state is currently version 17 and Scenario V7. Zod validates restored
+The guest state is currently version 18 and Scenario V7. Zod validates restored
 sessions before rendering. The V14 to V15 migration preserves operational
 changes and preferences while appending only missing deterministic entities;
 the V15 to V16 migration adds the v1.3.0 editorial release entry without
 regenerating the daily scenario. V16 to V17 appends v1.3.1 once and preserves
-the existing session graph.
+the existing session graph. V17 to V18 appends v1.3.2 and refreshes only
+canonical published copy, leaving non-canonical editorial entries unchanged.
 
 Theme selection is explicit: new and legacy workspaces resolve to `light` by
 default, while `dark` is enabled manually from the profile. The runtime does
@@ -73,6 +74,11 @@ for the active organization. The UI exposes those values as a closed selector,
 and the authenticated Server Action repeats the organization-scoped existence
 check before persisting the profile. Professional start and end dates are
 written together with the remaining employment fields.
+
+Scenario V7 people share one deterministic natural-name contract across the
+guest generator and PostgreSQL. A private insert trigger replaces only the
+known numbered V7 placeholders; the v1.3.2 migration updates matching existing
+IDs in place and never inserts, deletes or renames user-authored profiles.
 
 Authenticated workspaces call `ensure_demo_scenario_current` before module
 queries. PostgreSQL locks the organization row, generates only the missing

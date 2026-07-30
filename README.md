@@ -1,55 +1,56 @@
 # Plataforma de gestión
 
 [![CI](https://github.com/antoniojesusdelgado/management-platform-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/antoniojesusdelgado/management-platform-demo/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/antoniojesusdelgado/management-platform-demo)](https://github.com/antoniojesusdelgado/management-platform-demo/releases/latest)
 
-Aplicación SaaS modular de demostración para organizar proyectos, tareas,
-vacaciones, incidencias, tesorería, nóminas agregadas, personas y analítica.
+Una demostración SaaS de gestión interna que reúne personas, proyectos, tareas,
+vacaciones, incidencias, tesorería, nóminas y analítica en un mismo espacio.
 
 **Demo pública:** [plataformagestion.app](https://plataformagestion.app)
 
-> **English summary:** Independent full-stack management platform demo with a
-> session-only guest mode, isolated Google OAuth workspaces, PostgreSQL Row
-> Level Security, deterministic fictitious data and end-to-end validation.
+La plataforma puede recorrerse sin registro o mediante Google OAuth. En ambos
+casos utiliza exclusivamente datos ficticios; cada cuenta autenticada recibe un
+espacio independiente.
 
-## Funciones principales
+## Qué se puede explorar
 
-- Inicio con prioridades, agenda y actividad reciente.
-- Vacaciones con solicitudes, aprobación, calendario y solapamientos.
-- Analítica dinámica por periodo, proyecto, equipo, responsable y servicio.
-- Proyectos con responsables, progreso, salud e historial.
-- Tareas en Kanban, lista y bandeja, con dependencias y comentarios.
-- Incidencias con prioridad, SLA, causa, resolución y acciones correctivas.
-- Tesorería con importaciones, conciliación y excepciones.
-- Nóminas exclusivamente agregadas y participantes sin importes individuales.
-- Personal con directorio, selector de equipos persistidos, modalidades contractuales y organigrama.
-- Novedades como cronología pública y Configuración parametrizable.
+- Un panel de inicio con prioridades, agenda y actividad reciente.
+- Solicitudes y aprobaciones de vacaciones con calendario de ausencias.
+- Proyectos y tareas en vistas Kanban, lista y bandeja personal.
+- Incidencias con prioridad, compromisos de atención y seguimiento.
+- Tesorería, conciliación y ciclos de nómina con información agregada.
+- Directorio de personal, equipos y organigrama.
+- Analítica con filtros, comparaciones y vistas guardadas.
+- Tema claro por defecto y tema oscuro opcional.
 
-## Arquitectura resumida
+La versión estable actual es
+[v1.3.2](https://github.com/antoniojesusdelgado/management-platform-demo/releases/tag/v1.3.2).
+
+## Cómo está construida
 
 ```mermaid
 flowchart LR
-  guest["Demo invitada"] --> session["Zod + sessionStorage"]
-  user["Google OAuth"] --> next["Next.js"]
-  next --> auth["Supabase Auth PKCE"]
-  next --> db["PostgreSQL + RLS"]
-  next --> storage["Storage privado"]
+  guest["Demo sin registro"] --> session["Estado validado en el navegador"]
+  user["Google OAuth"] --> app["Next.js"]
+  app --> auth["Supabase Auth"]
+  app --> db["PostgreSQL + RLS"]
   github["GitHub Actions"] --> preview["Vercel Preview"]
   preview --> production["Vercel Production"]
 ```
 
-La experiencia invitada y la autenticada mantienen repositorios de datos
-independientes. Las lecturas autenticadas usan Server Components; las
-mutaciones usan Server Actions/RPC y RLS como última barrera.
+La aplicación usa Next.js, React, TypeScript, Supabase y PostgreSQL. Las pruebas
+de navegador se ejecutan con Playwright y Axe. El acceso a datos autenticados
+se protege con políticas RLS, validación en servidor y permisos por
+organización.
 
-## Datos ficticios
+## Datos de demostración
 
-Todo el contenido operativo se genera localmente de forma determinista. No se
-incluyen datos, documentos, contactos, cuentas, salarios individuales,
-pantallas ni procesos internos de organizaciones reales. Los conectores son
-neutrales y no contactan servicios bancarios, laborales o de terceros.
+Los registros se generan de forma determinista y no proceden de una empresa
+real. El repositorio no contiene contactos, cuentas bancarias, documentos,
+salarios individuales ni credenciales de terceros.
 
-Consulta [Procedencia de los datos](docs/DATA-PROVENANCE.md) y el
-[caso de estudio técnico](docs/TECHNICAL-CASE-STUDY.md).
+La metodología y los límites del conjunto de datos están documentados en
+[Procedencia de los datos](docs/DATA-PROVENANCE.md).
 
 ## Desarrollo local
 
@@ -63,16 +64,16 @@ Copy-Item .env.example .env.local
 bun run dev
 ```
 
-Rutas:
+Rutas principales:
 
 - `http://localhost:3000/` — acceso público.
-- `http://localhost:3000/demo/embed` — demo invitada.
+- `http://localhost:3000/demo/embed` — demo sin registro.
 - `http://localhost:3000/app/inicio` — aplicación autenticada.
 
-Google OAuth requiere un proyecto Supabase independiente configurado según la
-[guía de despliegue](docs/DEPLOYMENT.md).
+Google OAuth requiere un proyecto Supabase propio. La configuración completa se
+explica en la [guía de despliegue](docs/DEPLOYMENT.md).
 
-## Validación
+## Comprobaciones
 
 ```powershell
 bun run lint
@@ -81,9 +82,7 @@ bun run test
 bun run content:validate
 bun run security:public-data
 bun run security:secrets
-bun run demo:data:generate
 bun run demo:data:validate
-bun run demo:data:report
 bun audit --audit-level=high
 bun run build
 bun run e2e
@@ -91,41 +90,30 @@ bun run e2e:a11y
 git diff --check
 ```
 
-Con Docker:
+La validación de base de datos necesita Docker:
 
 ```powershell
 bunx supabase start
 bunx supabase db reset
 bunx supabase test db
 bunx supabase db lint --local --level warning --fail-on error
-bunx supabase inspect db index-stats --local
 bunx supabase gen types --lang typescript --local
 ```
 
-La versión `1.3.0` añade tema claro predeterminado y cambio manual a oscuro, preferencias de
-contraste, densidad y movimiento, códigos estables de servicio para Analítica
-y Scenario V7 incremental hasta ayer en `Europe/Madrid`. La RPC autenticada
-solo anexa el intervalo pendiente, usa bloqueo por organización y conserva
-filas operativas existentes.
-
-La versión patch `1.3.1` corrige el Kanban móvil para renderizar una sola
-columna entre 320 y 390 px, completa de forma aditiva el histórico V7 de
-organizaciones autenticadas antiguas y refuerza validación de texto, CSP con
-nonce, rate limiting de la API y detección de secretos. El backfill no elimina
-ni sobrescribe registros del usuario.
-
-## Variables
+## Variables de entorno
 
 | Variable | Exposición | Uso |
 | --- | --- | --- |
 | `NEXT_PUBLIC_APP_URL` | Navegador | Origen canónico |
-| `NEXT_PUBLIC_VERCEL_URL` | Navegador | Origen Preview |
+| `NEXT_PUBLIC_VERCEL_URL` | Navegador | Origen de Preview |
 | `NEXT_PUBLIC_SUPABASE_URL` | Navegador | Proyecto Supabase |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Navegador | Clave publicable |
-| `PORTFOLIO_ORIGIN` | Servidor/build | Origen permitido para iframe |
+| `PORTFOLIO_ORIGIN` | Servidor | Origen autorizado para el iframe |
 | `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL` | Navegador | Contacto legal público |
 
-No se necesita una clave de OpenAI en runtime.
+El proyecto no necesita una clave de OpenAI en tiempo de ejecución. Los secretos
+de Google y Supabase no deben almacenarse en el repositorio ni exponerse con el
+prefijo `NEXT_PUBLIC_`.
 
 ## Documentación
 
@@ -135,11 +123,11 @@ No se necesita una clave de OpenAI en runtime.
 - [Permisos y RLS](docs/PERMISSIONS.md)
 - [Procedencia de los datos](docs/DATA-PROVENANCE.md)
 - [Despliegue](docs/DEPLOYMENT.md)
-- [Runbook de backfill V7](docs/SCENARIO-V7-BACKFILL.md)
 - [Seguridad](SECURITY.md)
-- [Licencias de dependencias](docs/THIRD-PARTY-LICENSES.md)
+- [Licencias de terceros](docs/THIRD-PARTY-LICENSES.md)
 
 ## Licencia
 
-Copyright © 2026 Antonio Jesús Delgado Briones. Todos los derechos reservados.
-Consulta [LICENSE](LICENSE). Las dependencias conservan sus licencias propias.
+El código, la documentación y la identidad visual son de uso propietario.
+Consulta [LICENSE](LICENSE) antes de copiar, modificar o redistribuir cualquier
+parte del proyecto. Las dependencias conservan sus licencias originales.

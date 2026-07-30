@@ -22,6 +22,8 @@ unnecessary technical terminology.
   Spanish copy.
 - Repeated reminders that operational records are synthetic. The access screen
   and the global `Datos ficticios` indicator provide that context.
+- Internal release terms such as `Scenario`, `backfill` or `responsive` in
+  Novedades. Explain the visible benefit instead.
 
 ## Preferred alternatives
 
@@ -36,5 +38,12 @@ unnecessary technical terminology.
 | Headcount | Personas activas |
 | Backlog | Incidencias pendientes |
 | vs. anterior | respecto al periodo anterior |
+| Responsive | Cómoda desde distintos dispositivos |
+| Backfill | Información histórica disponible |
+| Scenario | Datos de demostración actualizados |
+
+Canonical Novedades entries use a short benefit-led title and one sentence that
+describes what changes for the person using the platform. Technical detail
+belongs in the release documentation, not in the published card.
 
 Run `bun run content:validate` before reviewing a release.

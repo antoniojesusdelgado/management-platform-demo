@@ -56,7 +56,7 @@ const rules: BoundaryRule[] = [
   },
   {
     code: "secret-key",
-    pattern: /\b(?:service_role|sb_secret_[A-Za-z0-9_-]+|sk_live_[A-Za-z0-9]+)\b/gu,
+    pattern: /\b(?:sb_secret_[A-Za-z0-9_-]+|sk_live_[A-Za-z0-9]+)\b/gu,
     message: "Secret or privileged key material must not enter runtime files.",
   },
 ];

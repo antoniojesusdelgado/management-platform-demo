@@ -79,7 +79,7 @@ describe("guest demo", () => {
     };
     const migrated = parseGuestDemoState(legacy);
 
-    expect(migrated?.version).toBe(17);
+    expect(migrated?.version).toBe(18);
     expect(migrated?.leaveRequests).toEqual(legacy.leaveRequests);
     expect(migrated?.tasks.length).toBeGreaterThan(0);
     expect(migrated?.incidents.length).toBeGreaterThan(0);
@@ -102,7 +102,7 @@ describe("guest demo", () => {
       taskEvents: initialGuestDemoState.taskEvents,
     };
     const migrated = parseGuestDemoState(legacy);
-    expect(migrated?.version).toBe(17);
+    expect(migrated?.version).toBe(18);
     expect(migrated?.tasks).toEqual(legacy.tasks);
   });
 
@@ -123,7 +123,7 @@ describe("guest demo", () => {
       peopleEvents: initialGuestDemoState.peopleEvents,
     };
     const migrated = parseGuestDemoState(legacy);
-    expect(migrated?.version).toBe(17);
+    expect(migrated?.version).toBe(18);
     expect(migrated?.incidents).toEqual(legacy.incidents);
     expect(migrated?.roles.length).toBeGreaterThan(0);
   });
@@ -135,7 +135,7 @@ describe("guest demo", () => {
     void payrollRuns;
     void payrollEvents;
     const migrated = parseGuestDemoState({ ...legacyState, version: 4 });
-    expect(migrated?.version).toBe(17);
+    expect(migrated?.version).toBe(18);
     expect(migrated?.roles).toEqual(legacyState.roles);
     expect(migrated?.treasuryEntries.length).toBeGreaterThan(0);
   });
@@ -145,7 +145,7 @@ describe("guest demo", () => {
     void payrollRuns;
     void payrollEvents;
     const migrated = parseGuestDemoState({ ...legacyState, version: 5 });
-    expect(migrated?.version).toBe(17);
+    expect(migrated?.version).toBe(18);
     expect(migrated?.treasuryEntries).toEqual(legacyState.treasuryEntries);
     expect(migrated?.payrollRuns.length).toBeGreaterThan(0);
   });
@@ -171,7 +171,7 @@ describe("guest demo", () => {
       scenarioVersion: 1,
     });
 
-    expect(migrated?.version).toBe(17);
+    expect(migrated?.version).toBe(18);
     expect(migrated?.integrationConnectors).toHaveLength(4);
     expect(migrated?.integrationRuns.length).toBeGreaterThan(0);
   });
@@ -188,7 +188,7 @@ describe("guest demo", () => {
       scenarioVersion: 1,
     });
 
-    expect(migrated?.version).toBe(17);
+    expect(migrated?.version).toBe(18);
     expect(migrated?.preferences.simulatedRole).toBeNull();
     expect(migrated?.savedAnalyticsViews).toEqual([]);
   });
@@ -200,7 +200,7 @@ describe("guest demo", () => {
       scenarioVersion: 2,
     });
 
-    expect(migrated?.version).toBe(17);
+    expect(migrated?.version).toBe(18);
     expect(migrated?.scenarioVersion).toBe(7);
     expect(migrated?.projects).toHaveLength(10);
     expect(migrated?.tasks).toHaveLength(initialGuestDemoState.tasks.length);
@@ -217,10 +217,10 @@ describe("guest demo", () => {
       scenarioVersion: 3,
     });
 
-    expect(migrated?.version).toBe(17);
+    expect(migrated?.version).toBe(18);
     expect(migrated?.scenarioVersion).toBe(7);
     expect(migrated?.payrollRuns.length).toBeGreaterThan(0);
-    expect(migrated?.changelogEntries.at(-1)?.version).toBe("1.3.1");
+    expect(migrated?.changelogEntries.at(-1)?.version).toBe("1.3.2");
   });
 
   test("extends version 14 sessions without overwriting operational changes", () => {
@@ -238,14 +238,14 @@ describe("guest demo", () => {
       changelogEvents: initialGuestDemoState.changelogEvents.slice(0, 2),
     });
 
-    expect(migrated?.version).toBe(17);
+    expect(migrated?.version).toBe(18);
     expect(migrated?.tasks.find((task) => task.id === changedTask.id)).toEqual(
       changedTask,
     );
     expect(migrated!.tasks.length).toBeGreaterThan(25);
-    expect(migrated?.changelogEntries).toHaveLength(4);
-    expect(migrated?.changelogEntries.at(-1)?.version).toBe("1.3.1");
-    expect(migrated?.changelogEvents).toHaveLength(4);
+    expect(migrated?.changelogEntries).toHaveLength(5);
+    expect(migrated?.changelogEntries.at(-1)?.version).toBe("1.3.2");
+    expect(migrated?.changelogEvents).toHaveLength(5);
   });
 
   test("adds patch releases once to existing version 15 sessions", () => {
@@ -264,7 +264,7 @@ describe("guest demo", () => {
       changelogEvents: [],
     });
 
-    expect(migrated?.version).toBe(17);
+    expect(migrated?.version).toBe(18);
     expect(migrated?.preferences.theme).toBe("light");
     expect(migrated?.changelogEntries[0]).toEqual(retainedEntry);
     expect(
@@ -298,10 +298,36 @@ describe("guest demo", () => {
       ),
     });
 
-    expect(migrated?.version).toBe(17);
+    expect(migrated?.version).toBe(18);
     expect(
       migrated?.changelogEntries.filter((entry) => entry.version === "1.3.1"),
     ).toHaveLength(1);
+  });
+
+  test("adds v1.3.2 and refreshes canonical copy in version 17 sessions", () => {
+    const legacyEntry = {
+      ...initialGuestDemoState.changelogEntries.find(
+        (entry) => entry.version === "1.3.1",
+      )!,
+      title: "Corrección responsive y seguridad",
+      summary: "Tareas móviles, backfill aditivo y controles reforzados.",
+    };
+    const migrated = parseGuestDemoState({
+      ...initialGuestDemoState,
+      version: 17,
+      changelogEntries: [legacyEntry],
+      changelogEvents: [],
+    });
+
+    expect(migrated?.version).toBe(18);
+    expect(
+      migrated?.changelogEntries.filter((entry) => entry.version === "1.3.2"),
+    ).toHaveLength(1);
+    expect(
+      migrated?.changelogEntries.find((entry) => entry.version === "1.3.1")
+        ?.title,
+    ).toBe("Más cómoda en móvil y más segura");
+    expect(parseGuestDemoState(migrated)?.version).toBe(18);
   });
 
   test("simulates an idempotent neutral integration inside the session", () => {

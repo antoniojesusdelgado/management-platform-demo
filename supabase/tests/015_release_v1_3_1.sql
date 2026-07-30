@@ -1,5 +1,5 @@
 begin;
-select plan(21);
+select plan(23);
 
 insert into auth.users (
   id, aud, role, email, raw_app_meta_data, raw_user_meta_data,
@@ -208,8 +208,18 @@ select is(
     'public.check_management_request_rate_limit()',
     'EXECUTE'
   ),
-  false,
-  'application users cannot invoke the rate-limit pre-request function'
+  true,
+  'authenticated Data API requests can execute the pre-request function'
+);
+
+select is(
+  has_function_privilege(
+    'anon',
+    'public.check_management_request_rate_limit()',
+    'EXECUTE'
+  ),
+  true,
+  'anonymous Data API requests can execute the pre-request function'
 );
 
 select is(
@@ -220,6 +230,21 @@ select is(
   ),
   true,
   'PostgREST can invoke the guarded rate-limit pre-request function'
+);
+
+select set_config('request.method', 'POST', true);
+select set_config(
+  'request.path',
+  '/rpc/check_management_request_rate_limit',
+  true
+);
+select set_config('request.headers', '{"x-forwarded-for":"192.0.2.30"}', true);
+
+select throws_ok(
+  'select public.check_management_request_rate_limit()',
+  'PGRST',
+  null,
+  'the pre-request guard cannot be invoked as a direct public RPC'
 );
 
 select set_config('request.method', 'POST', true);
