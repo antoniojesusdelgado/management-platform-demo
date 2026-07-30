@@ -1,190 +1,186 @@
-# Roadmap
+# Hoja de ruta
 
-## Foundation
+## Base
 
-- [x] Independent repository and protected development branch
-- [x] Selected light visual system and responsive shell
-- [x] Nine navigable modules
-- [x] Guest repository with session-only persistence
-- [x] Public Google OAuth boundary with isolated synthetic workspaces
-- [x] Multi-organization schema and RLS baseline
+- [x] Repositorio independiente y rama de desarrollo protegida
+- [x] Sistema visual claro y estructura adaptable
+- [x] Nueve módulos navegables
+- [x] Repositorio invitado con persistencia limitada a la sesión
+- [x] Google OAuth público con espacios ficticios aislados
+- [x] Esquema multiorganización y base de RLS
 
-## First vertical slice: Leave
+## Primer recorrido completo: Vacaciones
 
-- [x] Request creation and validation
-- [x] Pending, approved, rejected and cancelled states
-- [x] Approval and rejection actions
-- [x] History and calendar summary
-- [x] Server Actions and database transition function
-- [x] Decision confirmations with required notes
-- [x] Monthly coverage calendar and overlap indicators
-- [x] Validated session persistence with in-memory fallback
-- [x] Validate pgTAP against local Supabase
-- [ ] Complete the manual Google OAuth acceptance run with two test accounts
+- [x] Creación y validación de solicitudes
+- [x] Estados pendiente, aprobada, rechazada y cancelada
+- [x] Acciones de aprobación y rechazo
+- [x] Histórico y resumen de calendario
+- [x] Server Actions y función de transición en base de datos
+- [x] Confirmaciones con notas obligatorias
+- [x] Calendario mensual de cobertura y solapamientos
+- [x] Persistencia validada en sesión con alternativa en memoria
+- [x] Validación pgTAP contra Supabase local
+- [ ] Completar la aceptación manual de Google OAuth con dos cuentas de prueba
 
-## Local security validation
+## Validación local de seguridad
 
-- [x] Multi-organization pgTAP scenarios prepared
-- [x] Draft submission aligned across domain, Server Actions and SQL
-- [x] Install or enable a Docker-compatible runtime
-- [x] Reset the local database and execute pgTAP
-- [x] Generate TypeScript database types from the validated local schema
-- [x] Add the database validation job to CI after local reproducibility is proven
+- [x] Casos pgTAP multiorganización
+- [x] Envío de borradores alineado entre dominio, Server Actions y SQL
+- [x] Entorno compatible con Docker
+- [x] Restauración local y ejecución de pgTAP
+- [x] Tipos TypeScript generados desde el esquema local validado
+- [x] Trabajo de validación de base de datos incorporado a CI
 
-## Next module depth
+## Profundidad de módulos
 
-1. [x] Tasks: ownership, due dates, dependencies and activity history.
-2. [x] Incidents: priority, assignment, synthetic SLA and resolution trail.
-3. [x] People: safe profile directory and organization lifecycle.
-4. [x] Changelog and Settings: draft, review, publication and auditable administration.
-5. [x] Treasury: aggregated synthetic movements with strict permissions and traceability.
-6. [x] Payroll: synthetic-only aggregated cycles with stricter permissions.
+1. [x] Tareas: responsables, fechas, dependencias e historial.
+2. [x] Incidencias: prioridad, asignación, SLA ficticio y resolución.
+3. [x] Personal: directorio seguro y ciclo de vida en la organización.
+4. [x] Novedades y Configuración: borrador, revisión, publicación y auditoría.
+5. [x] Tesorería: movimientos agregados ficticios, permisos y trazabilidad.
+6. [x] Nóminas: ciclos agregados ficticios con permisos más restrictivos.
 
-## Tasks vertical
+## Recorrido de Tareas
 
-- [x] Independent task status and priority domains
-- [x] Personal inbox, filters, creation, assignment and editing
-- [x] Blocking, review and completion workflow
-- [x] Directed dependencies with cycle prevention
-- [x] Comments and immutable activity events
-- [x] Version 1 to version 2 guest session migration
-- [x] Authenticated reads, Server Actions and typed Supabase clients
-- [x] Multi-organization RLS and pgTAP coverage
+- [x] Dominios independientes de estado y prioridad
+- [x] Bandeja personal, filtros, creación, asignación y edición
+- [x] Flujo de bloqueo, revisión y finalización
+- [x] Dependencias dirigidas sin ciclos
+- [x] Comentarios y eventos de actividad inmutables
+- [x] Migración del estado invitado V1 a V2
+- [x] Lecturas autenticadas, Server Actions y clientes Supabase tipados
+- [x] RLS multiorganización y cobertura pgTAP
 
-## Incidents and People vertical
+## Recorrido de Incidencias y Personal
 
-- [x] Independent incident lifecycle, priorities, categories and synthetic SLA
-- [x] Filterable guest inbox, creation, assignment and transition history
-- [x] Safe People directory without contact, identity or compensation data
-- [x] Membership state and stable role-code management
-- [x] Availability derived from approved Leave records
-- [x] Version 2 to version 3 guest session migration
-- [x] Authenticated reads and normalized Server Actions
-- [x] Immutable incident and People events
-- [x] Multi-organization RLS, privileged transition and pgTAP coverage
+- [x] Ciclo de incidencias, prioridades, categorías y SLA ficticio
+- [x] Bandeja filtrable, creación, asignación e historial de transiciones
+- [x] Directorio sin contacto, identidad ni retribución
+- [x] Estados de pertenencia y códigos estables de rol
+- [x] Disponibilidad derivada de vacaciones aprobadas
+- [x] Migración del estado invitado V2 a V3
+- [x] Lecturas autenticadas y Server Actions normalizadas
+- [x] Eventos inmutables de incidencias y personal
+- [x] RLS, transición con privilegios y cobertura pgTAP
 
-## Changelog and Settings vertical
+## Recorrido de Novedades y Configuración
 
-- [x] Draft, review and publication workflow with immutable history
-- [x] Published-only internal public view
-- [x] Organization identity and module activation/order
-- [x] Editable role metadata separated from stable permission assignments
-- [x] Membership lifecycle and invitation preparation without external delivery
-- [x] Administrative audit trail for roles, permissions, modules and access
-- [x] Version 3 to version 4 guest session migration
-- [x] Authenticated reads, Server Actions and privileged database functions
-- [x] Multi-organization RLS and pgTAP coverage
+- [x] Flujo de borrador, revisión y publicación con historial inmutable
+- [x] Vista pública interna limitada a entradas publicadas
+- [x] Identidad de organización y activación u orden de módulos
+- [x] Metadatos editables de rol separados de los permisos estables
+- [x] Ciclo de pertenencias e invitaciones sin envío externo
+- [x] Auditoría administrativa de roles, permisos, módulos y accesos
+- [x] Migración del estado invitado V3 a V4
+- [x] Lecturas autenticadas, Server Actions y funciones con privilegios
+- [x] RLS multiorganización y cobertura pgTAP
 
-## Treasury vertical
+## Recorrido de Tesorería
 
-- [x] Aggregated synthetic concepts, dates, amounts and currencies
-- [x] Monotonic draft, registration, reconciliation, validation and closure workflow
-- [x] Immutable activity events for creation, draft edits and status controls
-- [x] Separate read and manage permissions with no direct table writes
-- [x] Version 4 to version 5 guest session migration
-- [x] Authenticated reads and normalized Server Actions through privileged RPCs
-- [x] Multi-organization RLS and pgTAP coverage
-- [x] Responsive filters, explicit synthetic-data notice and accessible dialogs
+- [x] Conceptos, fechas, importes y monedas agregados y ficticios
+- [x] Flujo monótono de borrador, registro, conciliación, validación y cierre
+- [x] Eventos inmutables de creación, edición y transición
+- [x] Permisos separados de lectura y gestión sin escritura directa
+- [x] Migración del estado invitado V4 a V5
+- [x] Lecturas autenticadas y Server Actions mediante RPC con privilegios
+- [x] RLS multiorganización y cobertura pgTAP
+- [x] Filtros adaptables, aviso de datos ficticios y diálogos accesibles
 
-## Payroll vertical
+## Recorrido de Nóminas
 
-- [x] Aggregated synthetic periods, people counts and gross, deduction and net totals
-- [x] Monotonic collection, validation, calculation, review and closure workflow
-- [x] Immutable activity events for creation, collection edits and status controls
-- [x] Separate read and manage permissions with no direct table writes
-- [x] Version 5 to version 6 guest session migration
-- [x] Authenticated reads and normalized Server Actions through privileged RPCs
-- [x] Multi-organization RLS and pgTAP scenarios authored
-- [x] Re-run database reset, lint and pgTAP in CI, then regenerate local schema types
-- [x] Responsive filters, explicit aggregate-data notice and accessible dialogs
+- [x] Periodos agregados, recuentos y totales de bruto, deducciones y neto
+- [x] Flujo monótono de recopilación, validación, cálculo, revisión y cierre
+- [x] Eventos inmutables de creación, edición y transición
+- [x] Permisos separados de lectura y gestión sin escritura directa
+- [x] Migración del estado invitado V5 a V6
+- [x] Lecturas autenticadas y Server Actions mediante RPC con privilegios
+- [x] Casos RLS multiorganización y pgTAP
+- [x] Restauración, lint y pgTAP en CI y regeneración de tipos
+- [x] Filtros adaptables, aviso de datos agregados y diálogos accesibles
 
-## External gates
+## Dependencias externas
 
-- [x] Authorize external provisioning, Preview and production deployment
-- [x] Confirm the target Supabase organization and exact cost (Free plan, $0)
-- [x] Create an independent Supabase project in
-  `eu-central-1`
-- [x] Configure Google OAuth and redirect URLs
-- [x] Create and validate the first Vercel Preview
-- [x] Set exact `PORTFOLIO_ORIGIN` and `NEXT_PUBLIC_APP_URL`
-- [x] Re-run CSP, RLS, accessibility and visual QA on the final Preview
-- [x] Promote the validated Vercel artifact to production
+- [x] Aprovisionamiento, Preview y producción autorizados
+- [x] Organización de Supabase y coste confirmados (plan Free, 0 USD)
+- [x] Proyecto independiente de Supabase en `eu-central-1`
+- [x] Google OAuth y redirecciones configurados
+- [x] Primera Vercel Preview creada y validada
+- [x] `PORTFOLIO_ORIGIN` y `NEXT_PUBLIC_APP_URL` exactos
+- [x] CSP, RLS, accesibilidad y QA visual repetidos en la Preview final
+- [x] Artefacto validado promovido a producción
 
-## Release status
+## Estado de publicación
 
-- Production and canonical origin: <https://plataformagestion.app>
-- Vercel fallback: <https://management-platform-demo.vercel.app>
-- Stable branch Preview:
+- Origen canónico: <https://plataformagestion.app>
+- Alternativa de Vercel: <https://management-platform-demo.vercel.app>
+- Preview estable:
   <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Current production release: `v1.3.2`
-- Repository database history: 32 ordered migrations, ending in
+- Versión actual: `v1.3.2`
+- Historial de base de datos: 32 migraciones ordenadas, hasta
   `20260730083225_release_v1_3_2_directory_editorial.sql`.
-- Google OAuth login, logout and protected-route redirects validated in
-  Preview and Production.
-- Public guest flows validated in desktop and mobile with Playwright and Axe.
-- Live provisioning was validated with one Google identity. Isolation between
-  two identities remains a manual acceptance check; database isolation is
-  covered by multi-organization pgTAP scenarios.
+- Acceso, cierre de sesión y redirecciones protegidas de Google OAuth validados
+  en Preview y producción.
+- Flujos públicos validados en escritorio y móvil con Playwright y Axe.
+- Aprovisionamiento real validado con una identidad de Google. La prueba con dos
+  identidades sigue siendo manual; pgTAP cubre el aislamiento en base de datos.
 
-## Advanced evolution
+## Evolución avanzada
 
-- [x] Separate `profiles`, `people`, `memberships` and `auth.users`
-- [x] Safe role simulation that cannot elevate real permissions
-- [x] Projects portfolio with health, ownership, members and activity
-- [x] Project references in Tasks and Incidents
-- [x] Deterministic V5 scenario with 32 people, 10 projects, 120 tasks,
-  104 leave requests, 60 incidents and 360 Treasury entries
-- [x] Offline aggregate adapters and documented data provenance
-- [x] SaaS OAuth screen, original visual assets and self-service profile
-- [x] Accessible Kanban, keyboard/list alternative, swimlanes, WIP and
-  pagination
-- [x] Neutral Financial, Payroll and People integration simulations
-- [x] Scheduled nightly integration worker with idempotent run sequences
-- [x] Centralized Analítica workspace with five business perspectives and saved views
-- [x] Editorial Changelog presentation and configurable workspace policies
-- [x] Guest state migrations through V15 with session-only persistence
-- [x] Scenario V7 proportional growth and authenticated incremental RPC
-- [x] Stable analytics service codes and saved-filter migration
-- [x] Default light and manually selected dark themes with experience preferences
-- [x] CodeQL, Dependency Review, dependency audit and gated ZAP baseline
-- [x] Remote Supabase migrations and validated Vercel Preview
-- [x] Production promotion from the validated Preview artifact
-- [x] RLS init-plan optimization and explicit mutation policies
-- [x] Supporting indexes for every public foreign key
-- [x] Privileged RPC allowlist and structural pgTAP coverage
-- [x] CI detector for real identifiers, contacts, providers and secret keys
+- [x] Separación de `profiles`, `people`, `memberships` y `auth.users`
+- [x] Simulación de roles sin posibilidad de elevar permisos reales
+- [x] Cartera de proyectos con salud, responsables, participantes y actividad
+- [x] Referencias de proyecto en Tareas e Incidencias
+- [x] Scenario V5 determinista con 32 personas, 10 proyectos, 120 tareas,
+  104 solicitudes, 60 incidencias y 360 movimientos de Tesorería
+- [x] Adaptadores agregados sin conexión y procedencia documentada
+- [x] Pantalla OAuth SaaS, recursos originales y perfil autogestionado
+- [x] Kanban accesible, alternativa de lista, carriles, WIP y paginación
+- [x] Simulaciones neutrales de integraciones financieras, nómina y personal
+- [x] Ejecución nocturna idempotente de integraciones
+- [x] Analítica centralizada con cinco perspectivas y vistas guardadas
+- [x] Novedades editoriales y políticas configurables
+- [x] Migraciones del estado invitado hasta V15
+- [x] Crecimiento proporcional Scenario V7 y RPC incremental autenticada
+- [x] Códigos estables de servicio y migración de filtros guardados
+- [x] Tema claro predeterminado y oscuro manual con preferencias de experiencia
+- [x] CodeQL, revisión de dependencias, auditoría y ZAP Baseline controlado
+- [x] Migraciones remotas de Supabase y Vercel Preview validada
+- [x] Promoción a producción del artefacto validado
+- [x] Optimización de RLS y políticas explícitas de mutación
+- [x] Índices para todas las claves foráneas públicas
+- [x] Lista autorizada de RPC y cobertura pgTAP estructural
+- [x] Detector CI de identificadores, contactos, proveedores y secretos reales
 
-Release v1.2.0 adds the stable application viewport, dynamic analytical
-comparisons, shared Spanish formatters and the balanced V3 scenario. Remote
-publication follows the validated Preview workflow documented in
-`docs/DEPLOYMENT.md`.
+## Historial
 
-Release v1.2.1 aligns the access screen with the approved composition, selects
-line or horizontal bar charts according to the data, standardizes dialogs and
-introduces Scenario V4 with a fixed public timeline from January through
-23 June 2026.
+`v1.2.0` añadió el área estable de aplicación, comparaciones analíticas
+dinámicas, formatos españoles compartidos y Scenario V3 equilibrado. Su
+publicación siguió el flujo de Preview validada de `docs/DEPLOYMENT.md`.
 
-Release v1.2.2 extends the operating history from January 2025 through
-17 June 2026, introduces payroll participants without individual amounts,
-adds the team organization chart and improves the responsive Analytics,
-Tasks and Incidents experiences.
+`v1.2.1` alineó el acceso con la composición aprobada, eligió gráficos de línea
+o barras horizontales según los datos, normalizó los diálogos e introdujo
+Scenario V4 con una cronología pública fija entre enero y el 23 de junio de
+2026.
 
-The post-release v1.2.2 maintenance introduces Scenario V6 without moving the
-published tag. It adds employment contract modalities, increases the completed
-task baseline, enforces project progress/state consistency and replaces
-technical analytical definitions with user-facing explanations.
+`v1.2.2` amplió el histórico desde enero de 2025 hasta el 17 de junio de 2026,
+añadió participantes de nómina sin importes individuales y el organigrama, y
+mejoró Analítica, Tareas e Incidencias en móvil.
 
-Release v1.3.0 introduced the complete semantic theme, Scenario V7 growth
-through the previous Madrid day, stable analytics service contracts, bounded
-growing queries and separate security workflows.
+El mantenimiento posterior de `v1.2.2` introdujo Scenario V6 sin mover la
+etiqueta publicada. Añadió modalidades contractuales, aumentó las tareas
+completadas, aseguró la coherencia entre progreso y estado de proyecto y
+sustituyó definiciones técnicas por explicaciones orientadas a usuario.
 
-Release v1.3.1 is a patch that keeps v1.3.0 immutable. It fixes the one-column
-mobile Tasks contract, backfills legacy authenticated organizations
-additively, adds layered rate limiting and secret detection, centralizes
-server-side plain-text validation and applies nonce-based CSP to dynamic
-surfaces.
+`v1.3.0` incorporó el sistema completo de temas, el crecimiento de Scenario V7
+hasta el día anterior en Madrid, contratos estables para servicios analíticos,
+consultas acotadas y flujos de seguridad independientes.
 
-Release v1.3.2 aligns authenticated and guest directory names without adding or
-deleting people, rewrites canonical Novedades copy for day-to-day users and
-publishes the patch on 30 July 2026. The migration is idempotent and targets
-only deterministic V7 placeholder IDs.
+`v1.3.1` mantuvo inmutable v1.3.0 y corrigió Tareas en móvil, completó de forma
+aditiva organizaciones autenticadas antiguas, añadió límites de peticiones y
+escaneo de secretos, centralizó la validación de texto en servidor y aplicó CSP
+con nonce en superficies dinámicas.
+
+`v1.3.2` alineó los nombres del directorio autenticado y la demo sin registro
+sin añadir ni eliminar personas, mejoró la redacción de Novedades y publicó la
+corrección el 30 de julio de 2026. La migración es idempotente y solo modifica
+marcadores V7 deterministas.

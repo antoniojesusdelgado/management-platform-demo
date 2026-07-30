@@ -1,4 +1,4 @@
-name: ZAP Preview Baseline
+name: Revisión ZAP de Preview
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       preview_url:
-        description: Validated HTTPS Preview URL
+        description: URL HTTPS de la Preview validada
         required: true
         type: string
 
@@ -16,14 +16,15 @@ permissions:
 
 jobs:
   baseline:
+    name: Análisis pasivo
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
-      - name: Check out repository
+      - name: Descargar el repositorio
         uses: actions/checkout@v4
 
-      - name: Resolve validated Preview
+      - name: Localizar la Preview validada
         id: preview
         uses: actions/github-script@v7
         env:
@@ -69,7 +70,7 @@ jobs:
             }
 
             if (!value) {
-              core.setFailed("No successful Preview deployment was found");
+              core.setFailed("No se encontró un despliegue Preview correcto");
               return;
             }
 
@@ -81,14 +82,14 @@ jobs:
               url.hash ||
               !url.hostname.endsWith(".vercel.app")
             ) {
-              core.setFailed("Only a root HTTPS vercel.app Preview is allowed");
+              core.setFailed("Solo se permite la raíz HTTPS de una Preview vercel.app");
               return;
             }
 
             core.setOutput("url", url.origin);
             core.setOutput("host", url.hostname);
 
-      - name: Run passive baseline against the validated host
+      - name: Ejecutar el análisis pasivo contra el host validado
         uses: zaproxy/action-baseline@v0.14.0
         with:
           target: ${{ steps.preview.outputs.url }}

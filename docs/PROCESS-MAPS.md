@@ -1,8 +1,9 @@
-# Process maps
+# Mapas de procesos
 
-All maps describe the neutral demonstration, not internal employer workflows.
+Todos los diagramas describen la demostración neutral, no procesos internos de
+una organización real.
 
-## Leave
+## Vacaciones
 
 ```mermaid
 flowchart LR
@@ -15,7 +16,7 @@ flowchart LR
   Review --> History["Immutable event history"]
 ```
 
-## Tasks
+## Tareas
 
 ```mermaid
 flowchart LR
@@ -24,7 +25,7 @@ flowchart LR
   InProgress --> Blocked
 ```
 
-## Incidents
+## Incidencias
 
 ```mermaid
 flowchart LR
@@ -32,7 +33,7 @@ flowchart LR
   Resolved -->|Reopen| Investigating
 ```
 
-## Treasury
+## Tesorería
 
 ```mermaid
 flowchart LR
@@ -44,18 +45,19 @@ flowchart LR
   Closed --> History
 ```
 
-## Payroll
+## Nóminas
 
 ```mermaid
 flowchart LR
   Collect["Collect changes"] --> Validate --> Calculate --> Review --> Close
 ```
 
-Only collection-stage cycles can be edited. Every transition requires a
-decision note and appends an immutable event. Values are synthetic aggregates;
-individual payroll records remain outside the demo boundary.
+Solo pueden editarse los ciclos que están en fase de recopilación. Cada
+transición exige una nota de decisión y añade un evento inmutable. Los valores
+son agregados ficticios; los registros individuales de nómina quedan fuera de
+los límites de la demo.
 
-## People
+## Personal
 
 ```mermaid
 flowchart LR
@@ -64,21 +66,21 @@ flowchart LR
   Active --> Inactive
 ```
 
-## Changelog
+## Novedades
 
 ```mermaid
 flowchart LR
   Draft --> Review --> Publish --> Notify
 ```
 
-## Settings
+## Configuración
 
 ```mermaid
 flowchart LR
   Define --> ValidatePermissions["Validate permissions"] --> Apply --> Audit
 ```
 
-## Incremental demo scenario
+## Escenario incremental de demostración
 
 ```mermaid
 flowchart LR

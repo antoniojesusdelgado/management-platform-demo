@@ -1,33 +1,36 @@
-# Content guide
+# Guía de contenidos
 
-The interface uses direct, natural Spanish. Product copy should explain what a
-person can see or do without promotional labels, internal design directions or
-unnecessary technical terminology.
+La interfaz utiliza un español directo y natural. Los textos deben explicar qué
+puede ver o hacer una persona sin recurrir a mensajes promocionales,
+indicaciones internas de diseño ni terminología técnica innecesaria.
 
-## Voice
+## Voz
 
-- Use short headings: `Resumen`, `Asuntos pendientes`, `Personas activas`.
-- Prefer actions in the infinitive or imperative: `Guardar cambios`,
+- Utilizar encabezados breves: `Resumen`, `Asuntos pendientes`,
+  `Personas activas`.
+- Preferir acciones en infinitivo o imperativo: `Guardar cambios`,
   `Revisar solicitudes`, `Entrar sin cuenta`.
-- Explain errors with a cause when known and a concrete next step.
-- Keep `OAuth`, `SLA`, `CSV` and `Kanban` when they are the established term.
-- Refer to `organización`, `aplicación` or `espacio personal` according to the
-  actual scope.
+- Explicar los errores con su causa, cuando se conozca, y un siguiente paso
+  concreto.
+- Mantener `OAuth`, `SLA`, `CSV` y `Kanban` cuando sean los términos
+  establecidos.
+- Hablar de `organización`, `aplicación` o `espacio personal` según el alcance
+  real.
 
-## Terms to avoid
+## Términos que deben evitarse
 
-- Promotional or internal labels such as `Operaciones premium`.
-- `Business Intelligence`, `Reporting ejecutivo` and `Resumen ejecutivo`.
-- `portfolio`, `workspace`, `throughput`, `headcount` and `backlog` in visible
-  Spanish copy.
-- Repeated reminders that operational records are synthetic. The access screen
-  and the global `Datos ficticios` indicator provide that context.
-- Internal release terms such as `Scenario`, `backfill` or `responsive` in
-  Novedades. Explain the visible benefit instead.
+- Etiquetas promocionales o internas como `Operaciones premium`.
+- `Business Intelligence`, `Reporting ejecutivo` y `Resumen ejecutivo`.
+- `portfolio`, `workspace`, `throughput`, `headcount` y `backlog` en textos
+  visibles en español.
+- Recordatorios repetidos de que los registros son ficticios. La pantalla de
+  acceso y el indicador global `Datos ficticios` ya ofrecen ese contexto.
+- Términos internos de una versión, como `Scenario`, `backfill` o `responsive`,
+  dentro de Novedades. Debe explicarse el beneficio visible.
 
-## Preferred alternatives
+## Alternativas recomendadas
 
-| Avoid | Use |
+| Evitar | Utilizar |
 | --- | --- |
 | Resumen ejecutivo | Resumen |
 | Proyectos y trabajo | Proyectos y tareas |
@@ -42,8 +45,9 @@ unnecessary technical terminology.
 | Backfill | Información histórica disponible |
 | Scenario | Datos de demostración actualizados |
 
-Canonical Novedades entries use a short benefit-led title and one sentence that
-describes what changes for the person using the platform. Technical detail
-belongs in the release documentation, not in the published card.
+Las entradas canónicas de Novedades utilizan un título breve centrado en el
+beneficio y una sola frase que explica qué cambia para quien usa la plataforma.
+El detalle técnico pertenece a la documentación de la versión, no a la tarjeta
+publicada.
 
-Run `bun run content:validate` before reviewing a release.
+Ejecutar `bun run content:validate` antes de revisar una versión.

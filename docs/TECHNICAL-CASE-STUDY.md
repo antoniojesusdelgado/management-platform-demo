@@ -1,12 +1,13 @@
 # Caso de estudio técnico
 
-## English summary
+## Resumen
 
-This repository is an independent, full-stack demonstration of a modular
-management platform. It combines a session-only guest experience with an
-isolated OAuth workspace backed by PostgreSQL and Row Level Security. All
-operational records are deterministic and fictitious; the project contains no
-third-party internal code, datasets, screens, brands or procedures.
+Este repositorio es una demostración full-stack independiente de una plataforma
+de gestión modular. Combina una experiencia sin registro, limitada a la sesión,
+con un espacio OAuth aislado respaldado por PostgreSQL y Row Level Security.
+Todos los registros operativos son deterministas y ficticios; el proyecto no
+contiene código interno, conjuntos de datos, pantallas, marcas ni procedimientos
+de terceros.
 
 ## 1. Objetivo, alcance y restricciones
 
@@ -273,7 +274,7 @@ distinguen recuentos, porcentajes, duraciones y moneda.
 
 ## 12. Migraciones, índices y constraints
 
-Las migraciones append-only cubren:
+Las migraciones exclusivamente aditivas cubren:
 
 1. organizaciones, roles, membresías, auditoría y vacaciones;
 2. tareas, incidencias, personas, novedades, configuración, tesorería y

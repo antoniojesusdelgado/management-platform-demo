@@ -1,7 +1,7 @@
 # Plataforma de gestión
 
 [![CI](https://github.com/antoniojesusdelgado/management-platform-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/antoniojesusdelgado/management-platform-demo/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/antoniojesusdelgado/management-platform-demo)](https://github.com/antoniojesusdelgado/management-platform-demo/releases/latest)
+[![Versión](https://img.shields.io/github/v/release/antoniojesusdelgado/management-platform-demo)](https://github.com/antoniojesusdelgado/management-platform-demo/releases/latest)
 
 Una demostración SaaS de gestión interna que reúne personas, proyectos, tareas,
 vacaciones, incidencias, tesorería, nóminas y analítica en un mismo espacio.

@@ -1,15 +1,15 @@
-# Agent-assisted development workflow
+# Flujo de desarrollo asistido
 
-This demo is developed with supervised agent workflows using ChatGPT Codex and
-Claude Code. These tools support repository inspection, implementation,
-documentation and validation.
+Esta demostración se desarrolla mediante flujos supervisados con ChatGPT Codex
+y Claude Code. Estas herramientas ayudan a revisar el repositorio, implementar
+cambios, documentar y ejecutar validaciones.
 
-They are not runtime product technologies:
+No forman parte de las tecnologías del producto en ejecución:
 
-- the application does not call an AI model;
-- no `OPENAI_API_KEY` or equivalent is required;
-- user-facing data and decisions are deterministic;
-- all generated changes remain subject to human review, tests and Git history.
+- la aplicación no llama a ningún modelo de inteligencia artificial;
+- no necesita `OPENAI_API_KEY` ni una variable equivalente;
+- los datos y las decisiones visibles son deterministas;
+- todo cambio generado queda sujeto a revisión humana, pruebas e historial Git.
 
-The workflow must not be presented as evidence of business results or as a
-replacement for product, security or legal review.
+Este flujo no debe presentarse como prueba de resultados empresariales ni como
+sustituto de una revisión de producto, seguridad o cumplimiento legal.

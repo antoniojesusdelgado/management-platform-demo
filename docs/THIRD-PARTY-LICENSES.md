@@ -1,26 +1,27 @@
-# Third-party licenses
+# Licencias de terceros
 
-The original application code, documentation and visual identity are
-proprietary and covered by the repository `LICENSE`. Dependencies remain under
-their own licenses.
+El código original de la aplicación, la documentación y la identidad visual son
+propietarios y están cubiertos por `LICENSE`. Las dependencias conservan sus
+propias licencias.
 
-| Component | Purpose | License |
+| Componente | Finalidad | Licencia |
 | --- | --- | --- |
-| Next.js, React, TypeScript | Application runtime and language | MIT / Apache-2.0 |
-| Tailwind CSS | Styling toolchain | MIT |
-| Bun | Package manager and test runtime | MIT |
-| Supabase clients and CLI | Auth, database and local development | MIT / Apache-2.0 |
-| PostgreSQL and pgTAP | Database and database tests | PostgreSQL |
-| Playwright and Axe | Browser and accessibility testing | Apache-2.0 / MPL-2.0 |
-| Radix UI | Accessible primitives | MIT |
-| Tabler Icons | Interface icons | MIT |
-| Recharts | Charts | MIT |
-| dnd-kit | Accessible drag and drop | MIT |
-| Zod | Runtime schemas | MIT |
-| date-fns, Sonner, clsx | UI support | MIT |
+| Next.js, React, TypeScript | Ejecución y lenguaje de la aplicación | MIT / Apache-2.0 |
+| Tailwind CSS | Herramientas de estilos | MIT |
+| Bun | Gestor de paquetes y entorno de pruebas | MIT |
+| Clientes y CLI de Supabase | Autenticación, base de datos y desarrollo local | MIT / Apache-2.0 |
+| PostgreSQL y pgTAP | Base de datos y pruebas de base de datos | PostgreSQL |
+| Playwright y Axe | Pruebas de navegador y accesibilidad | Apache-2.0 / MPL-2.0 |
+| Radix UI | Primitivas accesibles | MIT |
+| Tabler Icons | Iconos de interfaz | MIT |
+| Recharts | Gráficos | MIT |
+| dnd-kit | Arrastrar y soltar accesible | MIT |
+| Zod | Esquemas de validación en ejecución | MIT |
+| date-fns, Sonner, clsx | Utilidades de interfaz | MIT |
 
-The exact transitive dependency versions are fixed by `bun.lock`. Before
-redistribution, regenerate a machine-readable notice from that lockfile and
-review all transitive licenses. AdventureWorks (MIT) and INE aggregate
-statistics (CC BY 4.0) are references documented in `DATA-PROVENANCE.md`; no
-source rows are shipped in the product dataset.
+Las versiones exactas de las dependencias transitivas quedan fijadas en
+`bun.lock`. Antes de redistribuir el proyecto debe generarse un aviso legible
+por máquina a partir de ese archivo y revisarse cada licencia transitiva.
+AdventureWorks (MIT) y las estadísticas agregadas del INE (CC BY 4.0) son
+referencias documentadas en `DATA-PROVENANCE.md`; el conjunto de datos del
+producto no incorpora filas de esas fuentes.
