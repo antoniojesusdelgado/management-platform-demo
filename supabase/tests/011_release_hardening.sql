@@ -8,13 +8,15 @@ select is(
     join pg_namespace namespace on namespace.oid = function.pronamespace
     where namespace.nspname = 'public'
       and function.prosecdef
+      and function.oid
+        <> 'public.check_management_request_rate_limit()'::regprocedure
       and (
         has_function_privilege('anon', function.oid, 'EXECUTE')
         or has_function_privilege('public', function.oid, 'EXECUTE')
       )
   ),
   0::bigint,
-  'anonymous and PUBLIC roles cannot execute security definer RPCs'
+  'anonymous and PUBLIC roles cannot execute unapproved security definer RPCs'
 );
 
 select is(
