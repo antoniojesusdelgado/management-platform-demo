@@ -1,23 +1,25 @@
-# ADR 0003: Embedded guest demo
+# ADR 0003: Demo sin registro integrada
 
-- Status: Accepted
-- Date: 2026-07-20
+- Estado: Aceptada
+- Fecha: 2026-07-20
 
-## Decision
+## Decisión
 
-Expose a guest application at `/demo/embed`. It uses synthetic seed data,
-persists mutations only in `sessionStorage` and provides a reset action.
+Publicar una aplicación sin registro en `/demo/embed`. Utiliza datos ficticios
+iniciales, conserva los cambios únicamente en `sessionStorage` y permite
+restaurarlos desde la interfaz.
 
-Only this path may be framed. Its `frame-ancestors` CSP accepts the exact
-`PORTFOLIO_ORIGIN`; every other route uses `frame-ancestors 'none'` and
-`X-Frame-Options: DENY`.
+Solo esta ruta puede mostrarse dentro de un iframe. Su CSP `frame-ancestors`
+acepta el origen exacto `PORTFOLIO_ORIGIN`; el resto de rutas usa
+`frame-ancestors 'none'` y `X-Frame-Options: DENY`.
 
-## Rationale
+## Motivo
 
-Recruiters can explore a working flow without authentication, while the
-authenticated product remains protected and isolated.
+Las personas que evalúan el proyecto pueden recorrer un flujo funcional sin
+autenticarse, mientras la aplicación autenticada permanece protegida y aislada.
 
-## Limitations
+## Limitaciones
 
-The exact portfolio and SaaS origins are unknown until the first reviewed
-Preview. Framing must be verified again when those origins become stable.
+El origen exacto del portfolio y de la aplicación no se conoce hasta la primera
+Preview revisada. La integración debe comprobarse de nuevo cuando los orígenes
+sean estables.

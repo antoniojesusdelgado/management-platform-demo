@@ -1,26 +1,27 @@
-# ADR 0002: Invite-only authentication and RLS
+# ADR 0002: Autenticación y RLS
 
-- Status: Accepted
-- Date: 2026-07-20
+- Estado: Aceptada
+- Fecha: 2026-07-20
 
-## Decision
+## Decisión
 
-Use Google OAuth through Supabase Auth with PKCE and SSR cookies. Require an
-active membership after login. Enforce organization isolation and permission
-checks in both server code and PostgreSQL RLS.
+Utilizar Google OAuth mediante Supabase Auth con PKCE y cookies SSR. Después del
+acceso se exige una pertenencia activa. El aislamiento por organización y los
+permisos se aplican tanto en el servidor como en PostgreSQL RLS.
 
-## Security controls
+## Controles de seguridad
 
-- No public sign-up UI.
-- No authorization based on `user_metadata`.
-- Stable permission codes independent from editable role names and colors.
-- Server Actions revalidate identity, membership and permission.
-- Privileged SQL functions use `security definer`, explicit object names, an
-  empty `search_path` and restricted `EXECUTE`.
-- RLS is enabled for every application table.
+- No existe una interfaz pública de registro.
+- La autorización no depende de `user_metadata`.
+- Los códigos de permiso son estables e independientes de los nombres y colores
+  editables de los roles.
+- Las Server Actions vuelven a validar identidad, pertenencia y permiso.
+- Las funciones SQL con privilegios usan `security definer`, nombres de objeto
+  explícitos, un `search_path` vacío y permisos `EXECUTE` restringidos.
+- RLS está activado en todas las tablas de aplicación.
 
-## Residual risks
+## Riesgos residuales
 
-Serverless rate limits, invitation delivery and OAuth-provider configuration
-must be validated after provisioning. RLS tests require local Docker or an
-isolated database.
+Los límites de peticiones, la entrega de invitaciones y la configuración del
+proveedor OAuth deben validarse tras el aprovisionamiento. Las pruebas RLS
+necesitan Docker local o una base de datos aislada.

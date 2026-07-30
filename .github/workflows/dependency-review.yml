@@ -1,4 +1,4 @@
-name: Dependency Review
+name: Revisión de dependencias
 
 on:
   pull_request:
@@ -9,14 +9,15 @@ permissions:
 
 jobs:
   review:
+    name: Revisar dependencias
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - name: Check out repository
+      - name: Descargar el repositorio
         uses: actions/checkout@v4
 
-      - name: Review dependency changes
+      - name: Revisar cambios de dependencias
         uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high

@@ -41,8 +41,8 @@ Antes de publicar una versión:
 2. Ejecuta `bun run security:public-data` para comprobar los límites de la demo.
 3. Revisa `bun audit --audit-level=high`, CodeQL y Dependency Review.
 4. Comprueba los avisos de Security Advisor y Database Linter en Supabase.
-5. Confirma que Preview y Production usan variables separadas.
-6. Revisa el informe pasivo de ZAP generado contra la Preview validada.
+5. Confirma que previsualización y producción usan variables separadas.
+6. Revisa el informe pasivo de ZAP generado contra el despliegue validado.
 
 Las excepciones de seguridad necesarias para las RPC están justificadas y
 probadas en [docs/SECURITY-ADVISOR.md](docs/SECURITY-ADVISOR.md).

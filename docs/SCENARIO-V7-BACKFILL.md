@@ -1,13 +1,14 @@
-# Scenario V7 backfill runbook
+# Procedimiento de actualización histórica de Scenario V7
 
-## Objective
+## Objetivo
 
-Complete missing V7 history in legacy authenticated organizations without
-deleting or overwriting user records. `scenario_generated_through_date` tracks
-the daily horizon; `scenario_v7_backfilled_at` independently proves that the
-historical backfill completed.
+Completar el histórico V7 que falte en organizaciones autenticadas antiguas sin
+eliminar ni sobrescribir registros del usuario.
+`scenario_generated_through_date` controla el horizonte diario y
+`scenario_v7_backfilled_at` confirma de forma independiente que la carga
+histórica se completó.
 
-## Local validation
+## Validación local
 
 ```powershell
 bunx supabase db reset --local
@@ -16,45 +17,49 @@ bunx supabase db lint --local --level warning --fail-on error
 bunx supabase gen types --lang typescript --local
 ```
 
-The required acceptance cases are a legacy organization, a new organization,
-a second idempotent call, preservation of an edited row and 245–255 active
-people at the current horizon.
+Los casos de aceptación obligatorios son: una organización antigua, una
+organización nueva, una segunda llamada idempotente, la conservación de una fila
+editada y entre 245 y 255 personas activas en el horizonte actual.
 
-## Remote procedure
+## Procedimiento remoto
 
-1. Record counts for `people`, `tasks`, `leave_requests`, `incidents`,
-   `treasury_entries`, `payroll_runs`, `integration_runs` and
+1. Registrar los recuentos de `people`, `tasks`, `leave_requests`, `incidents`,
+   `treasury_entries`, `payroll_runs`, `integration_runs` y
    `scenario_evolution_events`.
-2. Run `supabase db push --dry-run` and review the pending migration sequence.
-3. Apply the migration. It locks one organization at a time and automatically
-   backfills organizations with an active membership.
-4. Re-read the counts, the `scenario_v7_backfilled_at` marker, the single
-   `backfilled` event and the audit event.
-5. Sign in with the existing Google identity and call the guarded
-   `ensure_demo_scenario_current` path through normal application entry.
-6. Confirm edited user rows remain unchanged and a second call generates no
-   duplicate event.
+2. Ejecutar `supabase db push --dry-run` y revisar la secuencia de migraciones
+   pendiente.
+3. Aplicar la migración. Bloquea una organización cada vez y completa
+   automáticamente las organizaciones con una pertenencia activa.
+4. Volver a consultar los recuentos, la marca
+   `scenario_v7_backfilled_at`, el único evento `backfilled` y el evento de
+   auditoría.
+5. Iniciar sesión con la identidad de Google existente y recorrer la ruta
+   protegida `ensure_demo_scenario_current` mediante la entrada normal de la
+   aplicación.
+6. Confirmar que las filas editadas no cambian y que una segunda llamada no
+   genera eventos duplicados.
 
-Do not invoke obsolete restoration RPCs and do not force the organization to
-an exact row count. Existing manual rows legitimately make total history larger
-than the canonical synthetic scenario.
+No deben invocarse RPC antiguas de restauración ni forzarse un número exacto de
+filas. Los registros manuales existentes pueden hacer que el histórico total
+supere el escenario ficticio de referencia.
 
-## v1.3.2 directory normalization
+## Normalización del directorio en v1.3.2
 
-Release v1.3.2 does not rerun the historical backfill. It maps the existing
-deterministic `person-v7` IDs to the same 266 unique fictional names used by
-the guest generator and updates only rows whose display name still starts with
-`Persona sint`. A private insert trigger applies the same mapping to later
-incremental V7 inserts.
+La versión v1.3.2 no repite la actualización histórica. Relaciona los
+identificadores deterministas `person-v7` existentes con los mismos 266 nombres
+ficticios únicos del generador invitado y modifica únicamente las filas cuyo
+nombre visible todavía empieza por `Persona sint`. Un trigger privado aplica la
+misma correspondencia a futuras inserciones incrementales de V7.
 
-Before and after applying the migration, record total people, placeholder
-count, distinct names and duplicate names per organization. Totals and IDs must
-remain unchanged; placeholders and duplicate-name groups must both be zero.
+Antes y después de aplicar la migración deben registrarse, por organización, el
+total de personas, los nombres provisionales, los nombres distintos y los
+duplicados. El total y los identificadores deben permanecer sin cambios; los
+nombres provisionales y los grupos duplicados deben quedar a cero.
 
-## Rollback
+## Reversión
 
-The migration is additive and its generated IDs are deterministic. Do not
-delete generated rows as an automatic rollback because they may already have
-been edited. If an application rollback is required, restore the prior
-deployment while leaving the compatible schema in place and investigate by
-organization using audit and evolution events.
+La migración es aditiva y sus identificadores son deterministas. No deben
+eliminarse automáticamente las filas generadas durante una reversión porque
+pueden haber sido editadas. Si es necesario volver a una versión anterior de la
+aplicación, se restaura el despliegue previo, se conserva el esquema compatible
+y se investiga cada organización mediante los eventos de auditoría y evolución.

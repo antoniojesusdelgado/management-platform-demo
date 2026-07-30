@@ -1,34 +1,36 @@
-# Vercel Firewall v1.3.1
+# Vercel Firewall en v1.3.1
 
-## Current state
+## Estado actual
 
-The OAuth callback rule was reviewed and published from the Vercel dashboard:
+La regla del callback OAuth se revisó y publicó desde el panel de Vercel:
 
-- `Observe OAuth callback bursts`
-- exact path `/auth/callback`
-- 20 requests per 300 seconds by IP
-- action `log`
+- `Observe OAuth callback bursts`;
+- ruta exacta `/auth/callback`;
+- 20 solicitudes cada 300 segundos por IP;
+- acción `log`.
 
-The project plan returned `Rate limiting is not available for this plan (401)`
-when the remaining rules were staged. Those rules therefore remain documented
-recommendations rather than active controls.
+El plan del proyecto devolvió
+`Rate limiting is not available for this plan (401)` al preparar las reglas
+restantes. Por tanto, se mantienen como recomendaciones documentadas y no como
+controles activos.
 
-## Remaining reviewed rules
+## Reglas revisadas pendientes
 
-When the plan supports rate limiting, stage these in log mode:
+Cuando el plan permita rate limiting, deben prepararse en modo de registro:
 
-1. Header `next-action` exists: 120 requests per 60 seconds by IP.
-2. `POST` requests to `/app/configuracion` or `/app/integraciones`: 10 requests
-   per 60 seconds by IP.
+1. Cabecera `next-action` presente: 120 solicitudes cada 60 segundos por IP.
+2. Solicitudes `POST` a `/app/configuracion` o `/app/integraciones`: 10
+   solicitudes cada 60 segundos por IP.
 
-After staging, run:
+Después de prepararlas:
 
 ```powershell
 npx --yes vercel@latest firewall diff --no-color
 npx --yes vercel@latest firewall rules list --expand --no-color
 ```
 
-Review Preview and production logs before changing an observation rule to an
-enforcing action. Independently of the outer Firewall, the PostgREST
-pre-request hook enforces 120 mutations per minute and 10 expensive RPC calls
-per minute, returning HTTP `429` with `Retry-After`.
+Los registros de Preview y producción deben revisarse antes de convertir una
+regla de observación en una regla de bloqueo. Con independencia del Firewall
+exterior, la comprobación previa de PostgREST limita las mutaciones a 120 por
+minuto y las RPC costosas a 10 por minuto, y devuelve HTTP `429` con
+`Retry-After`.

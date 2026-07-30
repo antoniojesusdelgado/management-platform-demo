@@ -1,6 +1,6 @@
-# Architecture
+# Arquitectura
 
-## System boundaries
+## Límites del sistema
 
 ```mermaid
 flowchart LR
@@ -14,98 +14,109 @@ flowchart LR
   DAL --> RLS["Supabase PostgreSQL + RLS"]
 ```
 
-The guest and authenticated paths share domain types and visual components but
-use separate repositories. Guest code cannot obtain database credentials or
-write to Supabase.
+Las rutas sin registro y autenticada comparten tipos de dominio y componentes
+visuales, pero utilizan repositorios de datos separados. El código de la demo
+sin registro no puede obtener credenciales de base de datos ni escribir en
+Supabase.
 
-Google OAuth is a public demonstration entry point, not a shared tenancy
-boundary. A privileged, idempotent database function creates one isolated
-organization per Google identity and assigns a system role containing every
-stable demo permission. The application profile uses a synthetic alias and
-does not copy the provider name, email or avatar.
+Google OAuth es una entrada pública a la demostración, no un límite de tenencia
+compartida. Una función de base de datos idempotente y con privilegios crea una
+organización aislada por identidad de Google y asigna un rol del sistema con
+todos los permisos estables de la demo. El perfil de aplicación utiliza un alias
+ficticio y no copia el nombre, el correo ni el avatar del proveedor.
 
-## Runtime layers
+## Capas de ejecución
 
-1. **UI:** Next.js App Router, React, Tailwind CSS and Radix primitives.
-2. **Domain:** typed modules, stable permission codes and explicit Leave,
-   Task, Incident, Changelog, Treasury and Payroll transitions.
-3. **Application:** client demo reducer and server-side authenticated actions.
-4. **Data access:** Supabase clients scoped to browser, server and proxy needs.
-5. **Database:** multi-organization PostgreSQL schema with RLS and immutable
-   transition events.
+1. **Interfaz:** Next.js App Router, React, Tailwind CSS y primitivas de Radix.
+2. **Dominio:** módulos tipados, códigos estables de permiso y transiciones
+   explícitas para Vacaciones, Tareas, Incidencias, Novedades, Tesorería y
+   Nóminas.
+3. **Aplicación:** reducer de la demo en cliente y acciones autenticadas en
+   servidor.
+4. **Acceso a datos:** clientes de Supabase adaptados al navegador, servidor y
+   proxy.
+5. **Base de datos:** esquema PostgreSQL multiorganización con RLS y eventos de
+   transición inmutables.
 
-## Multi-organization model
+## Modelo multiorganización
 
-Every operational record carries `organization_id`. Memberships connect a
-profile, organization and role. Role names and colors are editable metadata;
-permission codes remain stable application contracts.
+Cada registro operativo incluye `organization_id`. Las pertenencias relacionan
+un perfil, una organización y un rol. Los nombres y colores de los roles son
+metadatos editables; los códigos de permiso permanecen como contratos estables
+de la aplicación.
 
-Role metadata and permission assignments use separate mutations. Administrative
-changes to organization identity, modules, roles, invitations and memberships
-produce immutable audit events.
+Los metadatos de rol y la asignación de permisos utilizan mutaciones separadas.
+Los cambios administrativos de identidad, módulos, roles, invitaciones y
+pertenencias producen eventos de auditoría inmutables.
 
-Treasury stores only aggregated synthetic concepts, dates, integer minor-unit
-amounts and ISO currency codes. Its monotonic status workflow is executed by
-privileged RPCs that repeat authentication, organization and permission checks;
-authenticated roles receive no direct insert or update privileges on Treasury
-tables. Creation, draft edits and transitions append immutable events.
+Tesorería almacena únicamente conceptos agregados ficticios, fechas, importes
+enteros en unidades menores y códigos de moneda ISO. Su flujo de estados
+monótono se ejecuta mediante RPC con privilegios que repiten las comprobaciones
+de autenticación, organización y permiso. Los roles autenticados no reciben
+permisos directos de inserción o actualización en las tablas de Tesorería. La
+creación, edición de borradores y transición de estados añade eventos
+inmutables.
 
-Payroll stores only periods, synthetic people counts and aggregate gross,
-deduction and database-derived net totals. It excludes individual compensation,
-tax identifiers, receipts and documents. Collection edits and monotonic status
-changes run through privileged RPCs and append immutable events; authenticated
-roles receive no direct table writes.
+Nóminas almacena solo periodos, recuentos ficticios de personas y totales
+agregados de bruto, deducciones y neto calculado por la base de datos. Excluye
+retribuciones individuales, identificadores fiscales, recibos y documentos.
+Las ediciones y transiciones se ejecutan mediante RPC con privilegios y añaden
+eventos inmutables; los roles autenticados no escriben directamente en sus
+tablas.
 
-The guest state is currently version 18 and Scenario V7. Zod validates restored
-sessions before rendering. The V14 to V15 migration preserves operational
-changes and preferences while appending only missing deterministic entities;
-the V15 to V16 migration adds the v1.3.0 editorial release entry without
-regenerating the daily scenario. V16 to V17 appends v1.3.1 once and preserves
-the existing session graph. V17 to V18 appends v1.3.2 and refreshes only
-canonical published copy, leaving non-canonical editorial entries unchanged.
+El estado invitado está en la versión 18 y utiliza Scenario V7. Zod valida las
+sesiones restauradas antes de mostrarlas. La migración V14 a V15 conserva los
+cambios operativos y preferencias y añade solo las entidades deterministas que
+faltan. V15 a V16 incorpora la entrada editorial v1.3.0 sin regenerar el
+escenario diario. V16 a V17 añade v1.3.1 una sola vez y conserva el grafo de la
+sesión. V17 a V18 incorpora v1.3.2 y actualiza únicamente el texto canónico
+publicado, sin modificar entradas editoriales personalizadas.
 
-Theme selection is explicit: new and legacy workspaces resolve to `light` by
-default, while `dark` is enabled manually from the profile. The runtime does
-not follow operating-system color-scheme changes; legacy `system` values are
-normalized to `light` in session state and in the compatible SQL migration.
+La elección de tema es explícita: los espacios nuevos y antiguos utilizan
+`light` de forma predeterminada y `dark` se activa manualmente desde el perfil.
+La aplicación no sigue cambios de color del sistema operativo; los valores
+históricos `system` se normalizan a `light` tanto en la sesión como en la
+migración SQL compatible.
 
-People creation and editing reuse the distinct team values already persisted
-for the active organization. The UI exposes those values as a closed selector,
-and the authenticated Server Action repeats the organization-scoped existence
-check before persisting the profile. Professional start and end dates are
-written together with the remaining employment fields.
+La creación y edición de personas reutiliza los equipos distintos ya
+almacenados en la organización activa. La interfaz los presenta en un selector
+cerrado y la Server Action autenticada vuelve a comprobar su existencia dentro
+de la organización antes de guardar el perfil. Las fechas profesionales de
+inicio y fin se almacenan junto al resto de datos laborales.
 
-Scenario V7 people share one deterministic natural-name contract across the
-guest generator and PostgreSQL. A private insert trigger replaces only the
-known numbered V7 placeholders; the v1.3.2 migration updates matching existing
-IDs in place and never inserts, deletes or renames user-authored profiles.
+Las personas de Scenario V7 comparten un único contrato de nombres naturales
+deterministas entre el generador invitado y PostgreSQL. Un trigger privado
+sustituye únicamente los marcadores numerados conocidos. La migración v1.3.2
+actualiza esos identificadores existentes sin insertar, eliminar ni cambiar
+perfiles editados por el usuario.
 
-Authenticated workspaces call `ensure_demo_scenario_current` before module
-queries. PostgreSQL locks the organization row, generates only the missing
-interval through yesterday in `Europe/Madrid`, inserts deterministic IDs with
-`ON CONFLICT DO NOTHING`, appends an evolution/audit event and advances the
-horizon atomically.
+Los espacios autenticados llaman a `ensure_demo_scenario_current` antes de
+consultar los módulos. PostgreSQL bloquea la fila de la organización, genera
+solo el intervalo que falte hasta ayer en `Europe/Madrid`, inserta
+identificadores deterministas con `ON CONFLICT DO NOTHING`, añade los eventos de
+evolución y auditoría y avanza el horizonte de forma atómica.
 
-For legacy organizations, `scenario_v7_backfilled_at` is independent from the
-daily generated-through date. The RPC checks that marker before its early
-return, fills only missing deterministic rows, preserves existing records and
-records one `backfilled` evolution event in the same transaction.
+En organizaciones antiguas, `scenario_v7_backfilled_at` es independiente de la
+fecha diaria generada. La RPC comprueba esa marca antes de finalizar, completa
+solo las filas deterministas ausentes, conserva los registros existentes y
+registra un único evento `backfilled` en la misma transacción.
 
-Dynamic `/app`, `/auth` and `/login` surfaces receive a per-request script
-nonce in `proxy.ts`; public static routes retain the cache-compatible baseline
-CSP. PostgREST uses a database pre-request guard for mutation bursts, while
-Vercel Firewall remains the outer IP-based observation layer.
+Las superficies dinámicas `/app`, `/auth` y `/login` reciben un nonce de script
+por solicitud en `proxy.ts`; las rutas públicas estáticas conservan una CSP
+compatible con caché. PostgREST utiliza una comprobación previa en la base de
+datos para ráfagas de mutaciones y Vercel Firewall actúa como capa exterior de
+observación por IP.
 
-Analytics exposes `AnalyticsServiceDimension { code, label, kind }`. Connector
-UUIDs and historical incident labels remain internal bindings. Saved filters,
-KPIs, comparisons, alerts, drill-down and accessible tables all use the same
-stable service code.
+Analítica expone `AnalyticsServiceDimension { code, label, kind }`. Los UUID de
+conectores y las etiquetas históricas de incidencias quedan como relaciones
+internas. Los filtros guardados, indicadores, comparaciones, alertas, detalle y
+tablas accesibles utilizan el mismo código estable de servicio.
 
-The server checks authorization close to the write and RLS repeats the boundary
-inside PostgreSQL. The organization identifier sent by the client is never
-trusted on its own.
+El servidor comprueba la autorización cerca de cada escritura y RLS repite el
+límite dentro de PostgreSQL. El identificador de organización enviado por el
+cliente nunca se considera suficiente por sí solo.
 
-## Scenario V7 data path
+## Recorrido de datos de Scenario V7
 
 ```mermaid
 flowchart LR

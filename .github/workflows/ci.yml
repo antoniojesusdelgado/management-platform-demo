@@ -1,4 +1,4 @@
-name: CI
+name: Integración continua
 
 on:
   pull_request:
@@ -17,59 +17,61 @@ concurrency:
 
 jobs:
   database:
+    name: Base de datos
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
-      - name: Check out repository
+      - name: Descargar el repositorio
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Bun
+      - name: Configurar Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.14
 
-      - name: Install dependencies
+      - name: Instalar dependencias
         run: bun install --frozen-lockfile
 
-      - name: Start local database
+      - name: Iniciar la base de datos local
         run: bunx supabase start
 
-      - name: Apply migrations and seed data
+      - name: Aplicar migraciones y datos iniciales
         run: bunx supabase db reset
 
-      - name: Run database tests
+      - name: Ejecutar pruebas de base de datos
         run: bunx supabase test db
 
-      - name: Lint database schemas
+      - name: Revisar los esquemas de base de datos
         run: bunx supabase db lint --level warning --fail-on error
 
-      - name: Inspect local database index usage
+      - name: Revisar el uso local de índices
         run: bunx supabase inspect db index-stats --local
 
-      - name: Verify generated database types
+      - name: Verificar los tipos generados de la base de datos
         run: |
           bunx supabase gen types --lang typescript --local > /tmp/database.types.ts
           diff --strip-trailing-cr --ignore-blank-lines src/lib/supabase/database.types.ts /tmp/database.types.ts
 
   validate:
+    name: Validación
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
-      - name: Check out repository
+      - name: Descargar el repositorio
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Bun
+      - name: Configurar Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.14
 
-      - name: Cache Bun packages
+      - name: Guardar paquetes de Bun en caché
         uses: actions/cache@v4
         with:
           path: ~/.bun/install/cache
@@ -77,35 +79,35 @@ jobs:
           restore-keys: |
             bun-${{ runner.os }}-
 
-      - name: Install dependencies
+      - name: Instalar dependencias
         run: bun install --frozen-lockfile
 
-      - name: Lint
+      - name: Revisar el código
         run: bun run lint
 
-      - name: Typecheck
+      - name: Comprobar los tipos
         run: bun run typecheck
 
-      - name: Unit tests
+      - name: Ejecutar pruebas unitarias
         run: bun run test
 
-      - name: Audit high severity dependencies
+      - name: Auditar dependencias de severidad alta
         run: bun audit --audit-level=high
 
-      - name: Check public demo data boundaries
+      - name: Comprobar los límites de datos públicos
         run: bun run security:public-data
 
-      - name: Check tracked files and history for secrets
+      - name: Buscar secretos en archivos e historial
         run: bun run security:secrets
 
-      - name: Check interface language
+      - name: Comprobar el idioma de la interfaz
         run: bun run content:validate
 
-      - name: Build
+      - name: Compilar
         run: bun run build
 
-      - name: Install Chromium
+      - name: Instalar Chromium
         run: bunx playwright install --with-deps chromium
 
-      - name: End-to-end and accessibility tests
+      - name: Ejecutar pruebas de extremo a extremo y accesibilidad
         run: bun run e2e

@@ -64,4 +64,4 @@ Interacciones primarias verificadas en navegador: carga de `/`, presencia de
 Google, enlace de acceso invitado y enlaces legales. La consola no mostró
 errores de aplicación durante la captura.
 
-final result: passed
+resultado final: correcto
