@@ -81,13 +81,18 @@ The current standard scenario contains:
 - 396 imported treasury entries with positive monthly cash flow
 - 19 aggregate payroll cycles and 3,263 non-monetary participant records
 - 76 integration runs with proportional, traceable outcomes
-- 14 published product milestones, including `v1.3.1`
-- 7,606 related records including immutable activity and trace data
+- 15 published product milestones, including `v1.3.2`
+- 7,608 related records including immutable activity and trace data
 
 Names are natural fictional combinations from the local synthetic catalog. Connector labels are
 `Financial Source A`, `Financial Source B`, `Payroll Master` and
 `People Master`. None refers to an employer, bank, payroll product or real
 provider.
+
+Authenticated Scenario V7 organizations use the same 266-name deterministic
+mapping as the guest scenario. Release v1.3.2 replaces only unchanged numbered
+placeholders whose organization-scoped IDs match that mapping; existing natural
+or manually edited names are outside the migration predicate.
 
 ## Product assets
 

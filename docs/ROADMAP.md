@@ -185,3 +185,8 @@ mobile Tasks contract, backfills legacy authenticated organizations
 additively, adds layered rate limiting and secret detection, centralizes
 server-side plain-text validation and applies nonce-based CSP to dynamic
 surfaces.
+
+Release v1.3.2 aligns authenticated and guest directory names without adding or
+deleting people, rewrites canonical Novedades copy for day-to-day users and
+publishes the patch on 30 July 2026. The migration is idempotent and targets
+only deterministic V7 placeholder IDs.

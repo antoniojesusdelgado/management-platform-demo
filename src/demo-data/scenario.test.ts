@@ -164,11 +164,12 @@ describe("synthetic demo scenario", () => {
       scenario.changelogEntries.map((entry) => [
         entry.version,
         entry.publishedAt?.slice(0, 10),
-      ]).slice(-3),
+      ]).slice(-4),
     ).toEqual([
       ["1.2.2", "2026-06-17"],
       ["1.3.0", "2026-06-23"],
       ["1.3.1", "2026-07-29"],
+      ["1.3.2", "2026-07-30"],
     ]);
   });
 
@@ -184,6 +185,35 @@ describe("synthetic demo scenario", () => {
     expect(countActivePeopleOnDate(scenario.people, "2026-03-31")).toBe(215);
     expect(countActivePeopleOnDate(scenario.people, "2026-04-30")).toBe(212);
     expect(countActivePeopleOnDate(scenario.people, "2026-06-30")).toBe(250);
+  });
+
+  test("keeps the TypeScript and SQL directory name mappings identical", async () => {
+    const sql = await Bun.file(
+      "supabase/migrations/20260730083225_release_v1_3_2_directory_editorial.sql",
+    ).text();
+    const readSqlArray = (name: string) => {
+      const match = sql.match(
+        new RegExp(`${name} constant text\\[\\] := array\\[(.*?)\\];`, "s"),
+      );
+      expect(match).not.toBeNull();
+      return [...match![1]!.matchAll(/'([^']+)'/g)].map((item) => item[1]!);
+    };
+    const firstNames = readSqlArray("first_names");
+    const surnames = readSqlArray("surnames");
+    const scenario = generateDemoScenario(
+      "management-platform-standard-v7",
+      "2026-07-29",
+    );
+
+    expect(firstNames).toHaveLength(32);
+    expect(surnames).toHaveLength(32);
+    expect(
+      scenario.people.map((person, index) => {
+        const surnameIndex =
+          index < 32 ? index : (index + Math.floor(index / 32) * 7) % 32;
+        return `${firstNames[index % 32]} ${surnames[surnameIndex]}`;
+      }),
+    ).toEqual(scenario.people.map((person) => person.displayName));
   });
 });
 

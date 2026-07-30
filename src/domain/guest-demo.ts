@@ -128,7 +128,7 @@ import {
 } from "@/demo-data/scenario";
 
 export type GuestDemoState = {
-  version: 17;
+  version: 18;
   scenarioVersion: 7;
   scenarioAnchorDate: string;
   scenarioStartDate: string;
@@ -472,8 +472,12 @@ const guestDemoStateV16Schema = guestDemoStateV15Schema.extend({
   version: z.literal(16),
 });
 
-export const guestDemoStateSchema = guestDemoStateV16Schema.extend({
+const guestDemoStateV17Schema = guestDemoStateV16Schema.extend({
   version: z.literal(17),
+});
+
+export const guestDemoStateSchema = guestDemoStateV17Schema.extend({
+  version: z.literal(18),
 });
 
 function normalizeLegacyAnalyticsModule(value: unknown): unknown {
@@ -530,6 +534,9 @@ export function parseGuestDemoState(value: unknown): GuestDemoState | null {
   const normalized = normalizeLegacyAnalyticsModule(value);
   const result = guestDemoStateSchema.safeParse(normalized);
   if (result.success) return result.data;
+
+  const version17 = guestDemoStateV17Schema.safeParse(normalized);
+  if (version17.success) return migrateVersion17(version17.data);
 
   const version16 = guestDemoStateV16Schema.safeParse(normalized);
   if (version16.success) return migrateVersion16(version16.data);
@@ -1171,7 +1178,7 @@ function migrateVersion14(
 ): GuestDemoState {
   const generated = addStandardScenario({
     ...state,
-    version: 17,
+    version: 18,
     scenarioVersion: 7,
     scenarioStartDate: SCENARIO_START_DATE,
     scenarioGeneratedThroughDate: state.scenarioAnchorDate,
@@ -1283,7 +1290,7 @@ function migrateVersion16(
     ? generated.changelogEvents.find((event) => event.entryId === release.id)
     : null;
 
-  return guestDemoStateSchema.parse({
+  return migrateVersion17(guestDemoStateV17Schema.parse({
     ...state,
     version: 17,
     changelogEntries:
@@ -1296,11 +1303,72 @@ function migrateVersion16(
       !state.changelogEvents.some((event) => event.id === releaseEvent.id)
         ? [...state.changelogEvents, releaseEvent]
         : state.changelogEvents,
+  }));
+}
+
+function migrateVersion17(
+  state: z.infer<typeof guestDemoStateV17Schema>,
+): GuestDemoState {
+  const generated = addStandardScenario({
+    ...initialGuestDemoStateBase,
+    scenarioAnchorDate: state.scenarioAnchorDate,
+    scenarioGeneratedThroughDate: state.scenarioGeneratedThroughDate,
+  });
+  const canonicalEntries = new Map(
+    generated.changelogEntries.map((entry) => [entry.version, entry]),
+  );
+  const legacyCanonicalTitles = new Map([
+    ["0.1.0", "Base de la plataforma"],
+    ["0.2.0", "Gestión de vacaciones"],
+    ["0.3.0", "Proyectos y tareas"],
+    ["0.4.0", "Incidencias y personal"],
+    ["0.5.0", "Tesorería y nóminas"],
+    ["0.6.0", "Integraciones y automatización"],
+    ["0.7.0", "Migración de datos"],
+    ["1.0.0", "Primera versión estable"],
+    ["1.1.0", "Analítica y experiencia de uso"],
+    ["1.2.0", "Datos equilibrados y análisis dinámico"],
+    ["1.2.1", "Ajustes finales de presentación"],
+    ["1.2.2", "Interfaz y datos revisados"],
+    ["1.3.0", "Tema y experiencia responsive"],
+    ["1.3.1", "Corrección responsive y seguridad"],
+  ]);
+  const release = canonicalEntries.get("1.3.2");
+  const releaseEvent = release
+    ? generated.changelogEvents.find((event) => event.entryId === release.id)
+    : null;
+
+  return guestDemoStateSchema.parse({
+    ...state,
+    version: 18,
+    changelogEntries: [
+      ...state.changelogEntries.map((entry) => {
+        const canonical = canonicalEntries.get(entry.version);
+        const legacyTitle = legacyCanonicalTitles.get(entry.version);
+        return canonical &&
+          (entry.title === canonical.title || entry.title === legacyTitle)
+          ? {
+              ...entry,
+              title: canonical.title,
+              summary: canonical.summary,
+            }
+          : entry;
+      }),
+      ...(release &&
+      !state.changelogEntries.some((entry) => entry.version === release.version)
+        ? [release]
+        : []),
+    ],
+    changelogEvents:
+      releaseEvent &&
+      !state.changelogEvents.some((event) => event.id === releaseEvent.id)
+        ? [...state.changelogEvents, releaseEvent]
+        : state.changelogEvents,
   });
 }
 
 const initialGuestDemoStateBase: GuestDemoState = {
-  version: 17,
+  version: 18,
   scenarioVersion: 7,
   scenarioAnchorDate: getScenarioGeneratedThroughDate(),
   scenarioStartDate: SCENARIO_START_DATE,
@@ -1421,7 +1489,7 @@ function addStandardScenario(base: GuestDemoState): GuestDemoState {
 
   return {
     ...base,
-    version: 17,
+    version: 18,
     scenarioVersion: 7,
     scenarioAnchorDate: scenario.scenarioGeneratedThroughDate,
     scenarioStartDate: scenario.scenarioStartDate,

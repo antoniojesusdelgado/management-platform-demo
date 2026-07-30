@@ -42,4 +42,21 @@ describe("public data boundary detector", () => {
       violations.filter((violation) => violation.code === "restricted-provider"),
     ).toHaveLength(3);
   });
+
+  test("distinguishes the service_role role name from secret material", () => {
+    expect(
+      findPublicDataViolations(
+        "grant execute on function private.guard() to service_role;",
+        "fixture.sql",
+      ),
+    ).toEqual([]);
+
+    const violations = findPublicDataViolations(
+      "SUPABASE_SECRET_KEY=sb_secret_example123",
+      "fixture.env",
+    );
+    expect(violations.map((violation) => violation.code)).toContain(
+      "secret-key",
+    );
+  });
 });

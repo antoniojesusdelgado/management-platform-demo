@@ -114,6 +114,12 @@ organizaciones autenticadas antiguas y refuerza validación de texto, CSP con
 nonce, rate limiting de la API y detección de secretos. El backfill no elimina
 ni sobrescribe registros del usuario.
 
+La versión patch `1.3.2` alinea el directorio autenticado con los nombres
+ficticios naturales del modo invitado y presenta Novedades con una redacción
+clara para usuarios no técnicos. La migración actualiza únicamente marcadores
+deterministas de Scenario V7, no crea perfiles duplicados y conserva cualquier
+nombre editado.
+
 ## Variables
 
 | Variable | Exposición | Uso |

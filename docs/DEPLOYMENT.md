@@ -119,7 +119,7 @@ environment values. After promotion:
 - Vercel fallback: <https://management-platform-demo.vercel.app>
 - Stable branch Preview:
   <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Release candidate: `v1.3.1`
+- Release candidate: `v1.3.2`
 - Supabase region and plan: `eu-central-1`, Free
 - Production and Preview use environment-specific application and portfolio
   origins.
@@ -135,6 +135,28 @@ environment values. After promotion:
   the database advisors.
 - Live isolation with a second Google identity remains a manual acceptance
   check. Multi-organization access isolation is covered by pgTAP.
+
+## Release v1.3.2
+
+Release `v1.3.2` is delivered from
+`codex/management-platform-v1-3-2` as an additive content and directory patch:
+
+1. Record people totals, placeholder names, distinct names and duplicate-name
+   groups for every authenticated organization.
+2. Run `bunx supabase db push --dry-run` and review only the pending v1.3.2
+   migration.
+3. Reset the local database, run pgTAP and confirm the SQL name mapping matches
+   the TypeScript guest generator.
+4. Apply the migration and verify that people totals and IDs are unchanged,
+   while placeholder and duplicate-name counts are zero.
+5. Push the release branch, validate its Vercel Preview and then promote that
+   exact deployment to production.
+6. Smoke-test guest and Google access, Personal and Novedades. Confirm v1.3.2
+   is dated 30 July 2026 and canonical entries use non-technical language.
+
+The migration does not insert or delete people. It renames only deterministic
+V7 IDs that still carry the generated placeholder, and installs the same
+mapping for later incremental inserts.
 
 ## Release v1.3.1
 
