@@ -2,10 +2,14 @@ Copyright (c) 2026 Antonio Jesús Delgado Briones
 
 ALL RIGHTS RESERVED
 
-This software, its source code, documentation, visual identity, and original
-assets are proprietary. No permission is granted to copy, modify, distribute,
-sublicense, publish, sell, or create derivative works from any part of this
-repository without prior written authorization from the copyright holder.
+This repository is publicly available for evaluation and demonstration
+purposes. Its original source code, documentation, visual identity and assets
+remain proprietary.
 
-Third-party dependencies remain subject to their respective licenses. Their
-inclusion does not alter the proprietary status of the original work.
+No permission is granted to copy, modify, distribute, sublicense, publish,
+sell, or create derivative works without prior written authorization from the
+copyright holder.
+
+Third-party libraries and referenced materials remain subject to their own
+licenses. Their inclusion does not grant additional rights over the original
+work in this repository.

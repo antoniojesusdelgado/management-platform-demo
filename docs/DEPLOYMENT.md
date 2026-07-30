@@ -119,15 +119,14 @@ environment values. After promotion:
 - Vercel fallback: <https://management-platform-demo.vercel.app>
 - Stable branch Preview:
   <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Release candidate: `v1.3.2`
+- Current production release: `v1.3.2`
 - Supabase region and plan: `eu-central-1`, Free
 - Production and Preview use environment-specific application and portfolio
   origins.
-- The final local build and Preview passed the Playwright suite:
-  43 tests passed and one desktop-only duplicate scenario was intentionally
-  skipped.
-- The deployed remote database contains 18 ordered migrations. The latest is
-  `20260726142334_harden_rls_and_query_performance.sql`.
+- The final local build and Preview passed 64 end-to-end checks; 6
+  project/device combinations were intentionally skipped.
+- The repository contains 32 ordered migrations. The latest is
+  `20260730083225_release_v1_3_2_directory_editorial.sql`.
 - The remote schema includes RLS policies, deterministic scenario provisioning
   and the neutral nightly integration schedule at 02:15 UTC.
 - Release hardening removed all missing foreign-key indexes, unoptimized
@@ -138,7 +137,7 @@ environment values. After promotion:
 
 ## Release v1.3.2
 
-Release `v1.3.2` is delivered from
+Release `v1.3.2` was prepared on
 `codex/management-platform-v1-3-2` as an additive content and directory patch:
 
 1. Record people totals, placeholder names, distinct names and duplicate-name

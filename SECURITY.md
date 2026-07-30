@@ -1,63 +1,57 @@
-# Security
+# Seguridad
 
-## Public demonstration
+## Alcance
 
-The guest route uses synthetic data and does not connect to Supabase. Its state
-is stored in `sessionStorage` and can be reset from the interface.
+Este repositorio es una demostración pública construida con datos ficticios. La
+ruta sin registro guarda su estado en `sessionStorage` y no consulta Supabase.
+La aplicación autenticada crea un espacio sintético independiente para cada
+identidad de Google.
 
-## Authenticated application
+## Controles principales
 
-- Authentication uses Supabase Auth with Google OAuth, PKCE and secure cookies.
-- Google sign-in is public. The first sign-in provisions one isolated,
-  synthetic organization and a full-access demo role for that identity.
-- The application profile stores a generated alias. Google name, email and
-  avatar are not copied into public application tables.
-- Users never share a workspace by default, which limits cross-user vandalism
-  while retaining multi-organization RLS as the final authorization boundary.
-- Proxy session refresh is not an authorization boundary.
-- Server Actions and data access functions revalidate the user, membership,
-  organization and stable permission code.
-- PostgreSQL RLS is enabled on every application table.
-- Authorization does not rely on editable user metadata.
-- Privileged database helpers use an empty `search_path` and minimum execution
-  grants.
+- Google OAuth utiliza PKCE y cookies seguras.
+- Las sesiones, la pertenencia a la organización y los permisos se comprueban
+  de nuevo en el servidor.
+- Todas las tablas de aplicación tienen Row Level Security (RLS).
+- Las funciones con privilegios elevados usan permisos mínimos y un
+  `search_path` vacío.
+- Las consultas se realizan con parámetros; no se construye SQL a partir de
+  texto introducido por el usuario.
+- Los esquemas Zod normalizan el texto, limitan su longitud y rechazan
+  caracteres de control o marcado ejecutable.
+- La política CSP usa nonces en las superficies dinámicas. Ningún dato de
+  usuario llega a `dangerouslySetInnerHTML`.
+- PostgREST aplica límites por minuto a las mutaciones y a las operaciones más
+  costosas. Vercel aporta la protección de red y las reglas de Firewall
+  configuradas para el proyecto.
 
-## Secrets
+El nombre, el correo y la imagen de Google no se copian a las tablas públicas de
+la aplicación. El perfil visible usa una identidad ficticia.
 
-Only variables prefixed with `NEXT_PUBLIC_` may reach the browser. Do not expose
-the Google client secret, Supabase secret keys or database credentials. Google
-credentials belong in the provider configuration, not in the application
-environment.
+## Secretos y variables
 
-Before a release:
+Solo las variables expresamente publicables pueden usar el prefijo
+`NEXT_PUBLIC_`. El secreto de Google, las claves privadas de Supabase, los
+tokens y las credenciales de base de datos deben permanecer en sus respectivos
+gestores de secretos.
 
-1. Run secret scanning against the complete Git history and build output.
-2. Verify Preview and Production have separate variables.
-3. Rotate any secret that may have appeared in logs or local screenshots.
-4. Review dependency advisories and Supabase Security Advisor results.
-5. Run `bun run security:public-data` against runtime files and fixtures.
-6. Run `bun run security:secrets`; CI checks tracked files and full Git history
-   and rejects server-secret names under `NEXT_PUBLIC_*`.
+Antes de publicar una versión:
 
-## Request and input protection
+1. Ejecuta `bun run security:secrets` para revisar archivos e historial Git.
+2. Ejecuta `bun run security:public-data` para comprobar los límites de la demo.
+3. Revisa `bun audit --audit-level=high`, CodeQL y Dependency Review.
+4. Comprueba los avisos de Security Advisor y Database Linter en Supabase.
+5. Confirma que Preview y Production usan variables separadas.
+6. Revisa el informe pasivo de ZAP generado contra la Preview validada.
 
-- Vercel Firewall rules are prepared in log mode for OAuth callback, Server
-  Actions and expensive operations; enforcement is enabled manually only after
-  reviewing Preview and production traffic.
-- PostgREST mutations pass through a database pre-request rate limiter. Normal
-  mutations allow 120 requests per minute and expensive scenario/integration
-  RPCs allow 10; the next request returns HTTP `429` with `Retry-After`.
-- Reusable Zod schemas normalize Unicode, bound lengths and reject control
-  characters or executable markup on the server. SQL punctuation remains plain
-  data and Supabase queries remain parameterized.
-- Authenticated dynamic surfaces use a per-request script nonce. The only
-  `dangerouslySetInnerHTML` payload is the repository-owned static theme
-  bootstrap; user input never reaches that API.
+Las excepciones de seguridad necesarias para las RPC están justificadas y
+probadas en [docs/SECURITY-ADVISOR.md](docs/SECURITY-ADVISOR.md).
 
-The rationale and testable invariants for intentionally exposed privileged
-RPCs are maintained in [docs/SECURITY-ADVISOR.md](docs/SECURITY-ADVISOR.md).
+## Comunicar una vulnerabilidad
 
-## Reporting
+No publiques credenciales, datos personales ni instrucciones de explotación en
+un issue. Envía el hallazgo de forma privada al propietario del repositorio e
+incluye únicamente la información necesaria para reproducirlo.
 
-Do not include personal data, credentials or exploit details in public issues.
-Report findings privately to the repository owner.
+Al informar, indica la ruta afectada, el impacto estimado y los pasos de
+reproducción. No pruebes el hallazgo contra datos o cuentas de terceros.
