@@ -2,19 +2,27 @@
 
 ## Resumen
 
-Este repositorio es una demostración full-stack independiente de una plataforma
-de gestión modular. Combina una experiencia sin registro, limitada a la sesión,
-con un espacio OAuth aislado respaldado por PostgreSQL y Row Level Security.
-Todos los registros operativos son deterministas y ficticios; el proyecto no
-contiene código interno, conjuntos de datos, pantallas, marcas ni procedimientos
-de terceros.
+El proyecto original respondió a una necesidad operativa de Fundación
+Cibervoluntarios: centralizar procesos, seguimiento y datos que estaban
+repartidos entre hojas de cálculo y herramientas externas. Antonio Delgado
+realizó el análisis de procesos, la toma de requisitos, la definición
+funcional, el desarrollo, las pruebas, la implantación y el despliegue de la
+solución utilizada por la organización.
+
+Este repositorio es una réplica full-stack posterior y técnicamente aislada.
+Combina una experiencia sin registro, limitada a la sesión, con un espacio
+OAuth aislado respaldado por PostgreSQL y Row Level Security. Todos los
+registros operativos son deterministas y ficticios; no contiene código, datos,
+documentos, credenciales, reglas internas, pantallas ni conexiones del sistema
+de Fundación Cibervoluntarios.
 
 ## 1. Objetivo, alcance y restricciones
 
-La aplicación demuestra cómo organizar proyectos, tareas, vacaciones,
+La réplica demuestra cómo organizar proyectos, tareas, vacaciones,
 incidencias, tesorería, nóminas agregadas, personas, novedades, configuración
-y analítica en una única interfaz. Se desarrolló como reconstrucción técnica
-independiente y neutral.
+y analítica en una única interfaz. Su independencia se refiere al aislamiento
+de infraestructura, identidad y datos de la demostración pública, no al origen
+funcional del proyecto.
 
 Requisitos funcionales:
 
@@ -360,7 +368,7 @@ Configuración actualiza de forma explícita el ancla y registra la operación.
 
 | Hito | Resultado |
 | --- | --- |
-| Requisitos y base | Arquitectura independiente, límites de datos y CI |
+| Necesidad y requisitos | Análisis de procesos, definición funcional y límites de datos |
 | Vacaciones | Cálculo, revisión, calendario y auditoría |
 | Tareas | Kanban, dependencias, comentarios y WIP |
 | Incidencias y Personal | SLA, directorio, disponibilidad, equipos cerrados y organigrama |
@@ -375,6 +383,7 @@ Configuración actualiza de forma explícita el ancla y registra la operación.
 | v1.3.0 | Tema completo, V7 incremental, contratos analíticos, equipos cerrados y seguridad |
 | v1.3.1 | Tareas móviles, backfill V7 aditivo, rate limiting, CSP y escaneo de secretos |
 | v1.3.2 | Nombres naturales compartidos, Novedades orientadas a usuarios y migración idempotente |
+| v1.4.0 | Acceso inicial seguro para la demo y procedencia profesional documentada |
 
 Las fechas editoriales se muestran en Novedades; v1.3.0 utiliza el 23 de junio
 de 2026, v1.3.1 el 29 de julio de 2026 y v1.3.2 el 30 de julio de 2026. Git,

@@ -3,12 +3,25 @@
 [![CI](https://github.com/antoniojesusdelgado/management-platform-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/antoniojesusdelgado/management-platform-demo/actions/workflows/ci.yml)
 [![Versión](https://img.shields.io/github/v/release/antoniojesusdelgado/management-platform-demo)](https://github.com/antoniojesusdelgado/management-platform-demo/releases/latest)
 
-Una demostración SaaS de gestión interna que reúne personas, proyectos, tareas,
-vacaciones, incidencias, tesorería, nóminas y analítica en un mismo espacio.
+Una réplica técnica pública de una plataforma de gestión interna que reúne
+personas, proyectos, tareas, vacaciones, incidencias, tesorería, nóminas y
+analítica en un mismo espacio.
+
+El proyecto original nació de una necesidad operativa de Fundación
+Cibervoluntarios: centralizar procesos que estaban repartidos entre hojas de
+cálculo y herramientas externas. Antonio Delgado realizó el análisis de
+procesos, la toma de requisitos, el desarrollo, las pruebas, la implantación y
+el despliegue de la solución utilizada por la Fundación.
+
+Este repositorio contiene una réplica posterior y técnicamente aislada. No es
+el sistema interno de la Fundación y no incluye su código, datos, documentos,
+credenciales, reglas internas ni conexiones. La mención de la organización
+explica el origen funcional del proyecto y no implica patrocinio o respaldo del
+repositorio público.
 
 **Demo pública:** [plataformagestion.app](https://plataformagestion.app)
 
-La plataforma puede recorrerse sin registro o mediante Google OAuth. En ambos
+La réplica puede recorrerse sin registro o mediante Google OAuth. En ambos
 casos utiliza exclusivamente datos ficticios; cada cuenta autenticada recibe un
 espacio independiente.
 
@@ -23,8 +36,8 @@ espacio independiente.
 - Analítica con filtros, comparaciones y vistas guardadas.
 - Tema claro por defecto y tema oscuro opcional.
 
-La versión estable actual es
-[v1.3.2](https://github.com/antoniojesusdelgado/management-platform-demo/releases/tag/v1.3.2).
+La versión preparada por esta rama es `v1.4.0`. La última versión publicada se
+mantiene disponible en la sección de releases hasta completar la publicación.
 
 ## Cómo está construida
 
@@ -45,9 +58,10 @@ organización.
 
 ## Datos de demostración
 
-Los registros se generan de forma determinista y no proceden de una empresa
-real. El repositorio no contiene contactos, cuentas bancarias, documentos,
-salarios individuales ni credenciales de terceros.
+Los registros de la réplica se generan de forma determinista y no proceden de
+la Fundación ni de otra empresa real. El repositorio no contiene contactos,
+cuentas bancarias, documentos, salarios individuales ni credenciales de
+terceros.
 
 La metodología y los límites del conjunto de datos están documentados en
 [Procedencia de los datos](docs/DATA-PROVENANCE.md).

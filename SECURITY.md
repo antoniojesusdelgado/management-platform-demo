@@ -7,6 +7,11 @@ ruta sin registro guarda su estado en `sessionStorage` y no consulta Supabase.
 La aplicación autenticada crea un espacio sintético independiente para cada
 identidad de Google.
 
+No existe un modelo de lenguaje, agente ni entrada conectada a herramientas, por
+lo que la inyección de prompts no forma parte de la superficie de ataque actual.
+Las entradas de texto se tratan como datos y se protegen frente a XSS, marcado
+ejecutable, inyección SQL y abuso de recursos.
+
 ## Controles principales
 
 - Google OAuth utiliza PKCE y cookies seguras.
@@ -21,6 +26,8 @@ identidad de Google.
   caracteres de control o marcado ejecutable.
 - La política CSP usa nonces en las superficies dinámicas. Ningún dato de
   usuario llega a `dangerouslySetInnerHTML`.
+- `/demo/embed` también usa nonce y solo admite como ancestro el origen exacto
+  configurado mediante `PORTFOLIO_ORIGIN`.
 - PostgREST aplica límites por minuto a las mutaciones y a las operaciones más
   costosas. Vercel aporta la protección de red y las reglas de Firewall
   configuradas para el proyecto.

@@ -8,10 +8,10 @@ export default function LegalNoticePage() {
         <p className="eyebrow">Información legal</p>
         <h1>Aviso legal y propiedad intelectual</h1>
         <p>
-          Antonio Jesús Delgado Briones es autor y titular de esta reconstrucción
-          técnica independiente, de su código original, documentación, identidad
-          visual y materiales propios, salvo los componentes de terceros
-          identificados en el inventario de licencias.
+          Antonio Jesús Delgado Briones es autor y titular de esta réplica técnica
+          pública, de su código original, documentación, identidad visual y
+          materiales propios, salvo los componentes de terceros identificados en
+          el inventario de licencias.
         </p>
         <p>
           El repositorio se distribuye bajo una licencia propietaria de todos los
@@ -20,10 +20,11 @@ export default function LegalNoticePage() {
           autorización expresa y por escrito del titular.
         </p>
         <p>
-          Esta demostración no contiene ni representa código, datos, marcas,
-          pantallas, documentación, encargos, formatos o procesos internos de
-          terceros. Los nombres de tecnologías conservan las marcas de sus
-          respectivos titulares y su mención no implica afiliación ni respaldo.
+          El proyecto original fue realizado e implantado en Fundación
+          Cibervoluntarios. Esta réplica posterior no contiene código, datos,
+          documentos, credenciales, reglas internas, pantallas ni conexiones del
+          sistema de la Fundación. Su mención explica el origen funcional y no
+          implica patrocinio, afiliación o respaldo del repositorio público.
         </p>
         <p>
           El servicio se facilita con fines de demostración técnica. Aunque se han
