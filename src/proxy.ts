@@ -12,7 +12,11 @@ export async function proxy(request: NextRequest) {
   }
 
   const nonce = createNonce();
-  const contentSecurityPolicy = createNonceContentSecurityPolicy(nonce);
+  const frameAncestors =
+    request.nextUrl.pathname === "/demo/embed"
+      ? getPortfolioFrameAncestor()
+      : "'none'";
+  const contentSecurityPolicy = createNonceContentSecurityPolicy(nonce, frameAncestors);
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", contentSecurityPolicy);
@@ -20,6 +24,18 @@ export async function proxy(request: NextRequest) {
   const response = await updateSession(request, requestHeaders);
   response.headers.set("Content-Security-Policy", contentSecurityPolicy);
   return response;
+}
+
+function getPortfolioFrameAncestor() {
+  const value = process.env.PORTFOLIO_ORIGIN;
+  if (!value) return "'none'";
+
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.origin === value ? url.origin : "'none'";
+  } catch {
+    return "'none'";
+  }
 }
 
 export const config = {

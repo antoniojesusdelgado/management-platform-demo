@@ -22,6 +22,16 @@ const modules = [
   "Configuración",
 ] as const;
 
+async function enterGuestDemo(page: Page) {
+  await page.getByRole("button", { name: "Explorar demo sin registro" }).click();
+  await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+}
+
+async function openGuestDemo(page: Page) {
+  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
+  await enterGuestDemo(page);
+}
+
 async function expectNoGlobalHorizontalOverflow(page: Page) {
   const dimensions = await page.evaluate(() => ({
     clientWidth: document.documentElement.clientWidth,
@@ -117,8 +127,7 @@ test("light and dark resolve before content at every release width", async ({
   test.setTimeout(180_000);
 
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
-  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
-  await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+  await openGuestDemo(page);
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await expect(page.locator("html")).toHaveAttribute(
     "data-theme-preference",
@@ -132,8 +141,7 @@ test("light and dark resolve before content at every release width", async ({
     });
     for (const viewport of viewports) {
       await page.setViewportSize(viewport);
-      await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
-      await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+      await openGuestDemo(page);
       await expect
         .poll(() =>
           page.evaluate(() =>
@@ -153,7 +161,7 @@ test("light and dark resolve before content at every release width", async ({
         window.sessionStorage.setItem("management-platform-theme", preference);
       }, theme);
       await page.reload({ waitUntil: "domcontentloaded" });
-      await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+      await enterGuestDemo(page);
 
       const experience = await page.evaluate(() => ({
         preference: document.documentElement.dataset.themePreference,
@@ -204,8 +212,7 @@ test("access and every module avoid global horizontal overflow at release sizes"
     await expect(page.getByRole("link", { name: "Probar sin iniciar sesión" })).toBeVisible();
     await expectNoGlobalHorizontalOverflow(page);
 
-    await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
-    await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+    await openGuestDemo(page);
     await expectNoGlobalHorizontalOverflow(page);
 
     for (const moduleName of modules) {
@@ -221,8 +228,7 @@ test("desktop sidebar keeps its geometry while a scrolled detail dialog is open"
 ) => {
   test.skip(testInfo.project.name !== "chromium");
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
-  await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+  await openGuestDemo(page);
   await openModule(page, "Vacaciones");
 
   const sidebar = page.locator(".sidebar");
@@ -245,8 +251,7 @@ test("mobile filters, tables, Kanban and dialogs stay inside their panels", asyn
 ) => {
   test.skip(testInfo.project.name !== "chromium");
   await page.setViewportSize({ width: 320, height: 768 });
-  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
-  await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+  await openGuestDemo(page);
 
   await openModule(page, "Vacaciones");
   const tableContainer = page.locator(".data-table-wrap").first();

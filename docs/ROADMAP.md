@@ -2,7 +2,7 @@
 
 ## Base
 
-- [x] Repositorio independiente y rama de desarrollo protegida
+- [x] Réplica pública aislada y rama de desarrollo protegida
 - [x] Sistema visual claro y estructura adaptable
 - [x] Nueve módulos navegables
 - [x] Repositorio invitado con persistencia limitada a la sesión
@@ -115,7 +115,7 @@
 - Alternativa de Vercel: <https://management-platform-demo.vercel.app>
 - Preview estable:
   <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Versión actual: `v1.3.2`
+- Versión preparada: `v1.4.0`
 - Historial de base de datos: 32 migraciones ordenadas, hasta
   `20260730083225_release_v1_3_2_directory_editorial.sql`.
 - Acceso, cierre de sesión y redirecciones protegidas de Google OAuth validados
@@ -184,3 +184,8 @@ con nonce en superficies dinámicas.
 sin añadir ni eliminar personas, mejoró la redacción de Novedades y publicó la
 corrección el 30 de julio de 2026. La migración es idempotente y solo modifica
 marcadores V7 deterministas.
+
+`v1.4.0` documenta el origen funcional del proyecto implantado en Fundación
+Cibervoluntarios, mantiene la réplica pública completamente aislada y añade una
+pantalla inicial para elegir de forma explícita entre el modo invitado y Google
+OAuth.

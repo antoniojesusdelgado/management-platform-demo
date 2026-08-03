@@ -1,11 +1,16 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+async function openGuestDemo(page: Page) {
+  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: "Explorar demo sin registro" }).click();
+  await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+}
 
 test("guest dashboard has no detectable WCAG A/AA violations", async ({
   page,
 }) => {
-  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
-  await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+  await openGuestDemo(page);
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
     .analyze();
@@ -16,8 +21,7 @@ test("leave dialog has no detectable WCAG A/AA violations", async (
   { page },
   testInfo,
 ) => {
-  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
-  await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+  await openGuestDemo(page);
   if (testInfo.project.name === "mobile") {
     await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
   }
@@ -39,8 +43,7 @@ test("leave detail has no detectable WCAG A/AA violations", async (
   { page },
   testInfo,
 ) => {
-  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
-  await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+  await openGuestDemo(page);
   if (testInfo.project.name === "mobile") {
     await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
   }
@@ -62,8 +65,7 @@ test("leave transition confirmation has no detectable WCAG A/AA violations", asy
   { page },
   testInfo,
 ) => {
-  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
-  await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+  await openGuestDemo(page);
   if (testInfo.project.name === "mobile") {
     await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
   }
@@ -96,8 +98,7 @@ test("task detail has no detectable WCAG A/AA violations", async (
   { page },
   testInfo,
 ) => {
-  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
-  await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+  await openGuestDemo(page);
   if (testInfo.project.name === "mobile") {
     await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
   }
@@ -120,8 +121,7 @@ test("task detail has no detectable WCAG A/AA violations", async (
 });
 
 test("incident detail has no detectable WCAG A/AA violations", async ({ page }, testInfo) => {
-  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
-  await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+  await openGuestDemo(page);
   if (testInfo.project.name === "mobile") await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
   const navigation = page.getByRole("navigation", { name: "Módulos de la plataforma" }).filter({ visible: true });
   await navigation.getByRole("button", { name: "Incidencias", exact: true }).click();
@@ -132,8 +132,7 @@ test("incident detail has no detectable WCAG A/AA violations", async ({ page }, 
 });
 
 test("settings permission matrix has no detectable WCAG A/AA violations", async ({ page }, testInfo) => {
-  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
-  await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+  await openGuestDemo(page);
   if (testInfo.project.name === "mobile") await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
   const navigation = page.getByRole("navigation", { name: "Módulos de la plataforma" }).filter({ visible: true });
   await navigation.getByRole("button", { name: "Configuración", exact: true }).click();
@@ -144,8 +143,7 @@ test("settings permission matrix has no detectable WCAG A/AA violations", async 
 
 test("Treasury creation has no detectable WCAG A/AA violations", async ({ page }, testInfo) => {
   test.setTimeout(90_000);
-  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
-  await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+  await openGuestDemo(page);
   if (testInfo.project.name === "mobile") await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
   const navigation = page.getByRole("navigation", { name: "Módulos de la plataforma" }).filter({ visible: true });
   await navigation.getByRole("button", { name: "Tesorería", exact: true }).click();
@@ -157,8 +155,7 @@ test("Treasury creation has no detectable WCAG A/AA violations", async ({ page }
 
 test("Payroll creation has no detectable WCAG A/AA violations", async ({ page }, testInfo) => {
   test.setTimeout(90_000);
-  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
-  await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+  await openGuestDemo(page);
   if (testInfo.project.name === "mobile") await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
   const navigation = page.getByRole("navigation", { name: "Módulos de la plataforma" }).filter({ visible: true });
   await navigation.getByRole("button", { name: "Nóminas", exact: true }).click();

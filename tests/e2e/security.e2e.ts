@@ -28,6 +28,12 @@ test("the embed route is the only frameable public surface", async ({
   expect(headers["x-frame-options"]).toBeUndefined();
   expect(headers["content-security-policy"]).toContain("frame-ancestors");
   expect(headers["content-security-policy"]).toContain("object-src 'none'");
+  expect(headers["content-security-policy"]).toMatch(
+    /script-src 'self' 'nonce-[^']+' 'strict-dynamic'/,
+  );
+  expect(headers["content-security-policy"]).not.toContain(
+    "script-src 'self' 'unsafe-inline'",
+  );
 });
 
 test("dynamic authentication surfaces use a nonce-based script policy", async ({
@@ -83,6 +89,7 @@ test("anonymous demo access does not issue marketing cookies", async ({
   context,
 }) => {
   await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: "Explorar demo sin registro" }).click();
   await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
   const cookies = await context.cookies();
 

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { GuestDemoApp } from "@/components/guest-demo-app";
+import { EmbedDemoEntry } from "@/components/embed-demo-entry";
 
 export const metadata: Metadata = {
   title: "Demo interactiva",
@@ -7,6 +7,8 @@ export const metadata: Metadata = {
     "Acceso sin cuenta a la Plataforma de gestión con datos ficticios.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function GuestDemoPage() {
-  return <GuestDemoApp />;
+  return <EmbedDemoEntry />;
 }
