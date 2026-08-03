@@ -36,7 +36,7 @@ espacio independiente.
 - Analítica con filtros, comparaciones y vistas guardadas.
 - Tema claro por defecto y tema oscuro opcional.
 
-La versión preparada por esta rama es `v1.4.0`. La última versión publicada se
+La versión preparada por esta rama es `v1.4.1`. La última versión publicada se
 mantiene disponible en la sección de releases hasta completar la publicación.
 
 ## Cómo está construida
@@ -81,6 +81,7 @@ bun run dev
 Rutas principales:
 
 - `http://localhost:3000/` — acceso público.
+- `http://localhost:3000/login` — acceso embebible desde el portfolio.
 - `http://localhost:3000/demo/embed` — demo sin registro.
 - `http://localhost:3000/app/inicio` — aplicación autenticada.
 
