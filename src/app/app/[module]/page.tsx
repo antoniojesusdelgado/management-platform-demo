@@ -97,19 +97,14 @@ export default async function AppModulePage({
     "ensure_demo_scenario_current",
     { expected_organization_id: access.organizationId },
   );
-  if (scenarioError) {
-    throw new Error(
-      `No se pudo actualizar el escenario sintético: ${scenarioError.message}`,
-    );
-  }
-  const { data: currentProfile } = await profileClient
+  const { data: currentProfile, error: profileError } = await profileClient
     .from("profiles")
     .select(
       "display_name,alias,avatar_path,theme,density,reduced_motion,high_contrast",
     )
     .eq("id", access.userId)
     .single();
-  const { data: currentOrganization } = await profileClient
+  const { data: currentOrganization, error: organizationError } = await profileClient
     .from("organizations")
     .select("scenario_anchor_date,scenario_generated_through_date")
     .eq("id", access.organizationId)
@@ -732,6 +727,11 @@ export default async function AppModulePage({
       settingsLoadError={settingsLoadError}
       canManageSettings={canManageSettings}
       workspaceConfiguration={workspaceConfiguration}
+      workspaceLoadError={
+        scenarioError || profileError || organizationError
+          ? "No se pudo actualizar toda la información. Puedes continuar con los datos disponibles y reintentar más tarde."
+          : undefined
+      }
     />
   );
 }

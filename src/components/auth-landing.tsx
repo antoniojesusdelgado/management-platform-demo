@@ -1,7 +1,6 @@
 import { IconInfoCircle, IconLock } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
-import { LoginButton } from "@/app/login/login-button";
 import { getWorkspaceAccess } from "@/lib/auth";
 import { LegalFooter } from "@/components/legal-footer";
 
@@ -75,15 +74,25 @@ export async function AuthLanding({ errorCode }: AuthLandingProps) {
           ) : null}
 
           {access.status === "active" ? (
-            <Link
+            <a
               className="button google-oauth-button"
               href="/app/inicio"
+              target="_blank"
+              rel="noopener noreferrer"
             >
               <Image src="/google-g.svg" alt="" width={20} height={20} />
               Continuar con Google
-            </Link>
+            </a>
           ) : (
-            <LoginButton />
+            <a
+              className="button google-oauth-button"
+              href="/auth/google"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Image src="/google-g.svg" alt="" width={20} height={20} />
+              Continuar con Google
+            </a>
           )}
 
           <div className="oauth-divider">

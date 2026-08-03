@@ -21,7 +21,7 @@ describe("dynamic CSP", () => {
     expect(policy).not.toContain("script-src 'self' 'unsafe-inline'");
   });
 
-  test("allows only the configured portfolio to frame the embed route", () => {
+  test("allows only the configured portfolio to frame trusted entry routes", () => {
     const policy = createNonceContentSecurityPolicy(
       "trusted-nonce",
       "https://antoniodelgado.tech",

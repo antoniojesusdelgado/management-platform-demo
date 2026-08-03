@@ -18,22 +18,33 @@ test("public responses expose the release security headers", async ({
   );
 });
 
-test("the embed route is the only frameable public surface", async ({
+test("only the login and embed routes are frameable public surfaces", async ({
   request,
 }) => {
-  const response = await request.get("/demo/embed");
-  const headers = response.headers();
+  for (const pathname of ["/login", "/demo/embed"]) {
+    const response = await request.get(pathname);
+    const headers = response.headers();
 
-  expect(response.ok()).toBe(true);
-  expect(headers["x-frame-options"]).toBeUndefined();
-  expect(headers["content-security-policy"]).toContain("frame-ancestors");
-  expect(headers["content-security-policy"]).toContain("object-src 'none'");
-  expect(headers["content-security-policy"]).toMatch(
-    /script-src 'self' 'nonce-[^']+' 'strict-dynamic'/,
-  );
-  expect(headers["content-security-policy"]).not.toContain(
-    "script-src 'self' 'unsafe-inline'",
-  );
+    expect(response.ok()).toBe(true);
+    expect(headers["x-frame-options"]).toBeUndefined();
+    expect(headers["content-security-policy"]).toContain("frame-ancestors");
+    expect(headers["content-security-policy"]).toContain("object-src 'none'");
+    expect(headers["content-security-policy"]).toMatch(
+      /script-src 'self' 'nonce-[^']+' 'strict-dynamic'/,
+    );
+    expect(headers["content-security-policy"]).not.toContain(
+      "script-src 'self' 'unsafe-inline'",
+    );
+  }
+});
+
+test("Google access always leaves the embedded context", async ({ page }) => {
+  await page.goto("/login", { waitUntil: "domcontentloaded" });
+  const googleAccess = page.getByRole("link", { name: "Continuar con Google" });
+
+  await expect(googleAccess).toHaveAttribute("target", "_blank");
+  await expect(googleAccess).toHaveAttribute("rel", /noopener/);
+  await expect(googleAccess).toHaveAttribute("href", /\/(auth\/google|app\/inicio)$/);
 });
 
 test("dynamic authentication surfaces use a nonce-based script policy", async ({
