@@ -138,6 +138,7 @@ type AuthenticatedAppProps = {
   settingsLoadError?: string;
   canManageSettings?: boolean;
   workspaceConfiguration?: WorkspaceConfiguration;
+  workspaceLoadError?: string;
 };
 
 export function AuthenticatedApp({
@@ -198,6 +199,7 @@ export function AuthenticatedApp({
   settingsLoadError,
   canManageSettings = false,
   workspaceConfiguration = defaultWorkspaceConfiguration,
+  workspaceLoadError,
 }: AuthenticatedAppProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -451,6 +453,12 @@ export function AuthenticatedApp({
         displayName={displayName}
       >
         <div aria-busy={pending}>
+          {workspaceLoadError ? (
+            <div className="inline-alert" role="status">
+              <strong>Los datos disponibles se han cargado.</strong>
+              <span>{workspaceLoadError}</span>
+            </div>
+          ) : null}
           {content}
         </div>
       </AppShell>

@@ -115,7 +115,7 @@
 - Alternativa de Vercel: <https://management-platform-demo.vercel.app>
 - Preview estable:
   <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Versión preparada: `v1.4.0`
+- Versión preparada: `v1.4.1`
 - Historial de base de datos: 32 migraciones ordenadas, hasta
   `20260730083225_release_v1_3_2_directory_editorial.sql`.
 - Acceso, cierre de sesión y redirecciones protegidas de Google OAuth validados
@@ -189,3 +189,7 @@ marcadores V7 deterministas.
 Cibervoluntarios, mantiene la réplica pública completamente aislada y añade una
 pantalla inicial para elegir de forma explícita entre el modo invitado y Google
 OAuth.
+
+`v1.4.1` corrige la actualización incremental del escenario autenticado, abre
+Google OAuth fuera del iframe y autoriza la pantalla de acceso exclusivamente
+para el portfolio.
