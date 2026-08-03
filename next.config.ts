@@ -58,20 +58,26 @@ const nextConfig: NextConfig = {
     root: process.cwd(),
   },
   async headers() {
+    const frameableHeaders = [
+      ...securityHeaders,
+      {
+        key: "Content-Security-Policy",
+        value: contentSecurityPolicy(portfolioOrigin),
+      },
+      { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+    ];
+
     return [
       {
         source: "/demo/embed",
-        headers: [
-          ...securityHeaders,
-          {
-            key: "Content-Security-Policy",
-            value: contentSecurityPolicy(portfolioOrigin),
-          },
-          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
-        ],
+        headers: frameableHeaders,
       },
       {
-        source: "/((?!demo/embed).*)",
+        source: "/login",
+        headers: frameableHeaders,
+      },
+      {
+        source: "/((?!demo/embed|login).*)",
         headers: [
           ...securityHeaders,
           {
