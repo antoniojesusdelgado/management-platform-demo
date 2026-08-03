@@ -1,4 +1,4 @@
-const dynamicSurfacePrefixes = ["/app", "/auth", "/login"];
+const dynamicSurfacePrefixes = ["/app", "/auth", "/login", "/demo/embed"];
 
 export function isDynamicSurface(pathname: string) {
   return dynamicSurfacePrefixes.some(
@@ -10,7 +10,10 @@ export function createNonce() {
   return Buffer.from(crypto.randomUUID()).toString("base64");
 }
 
-export function createNonceContentSecurityPolicy(nonce: string) {
+export function createNonceContentSecurityPolicy(
+  nonce: string,
+  frameAncestors = "'none'",
+) {
   const devScriptPolicy =
     process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";
 
@@ -18,7 +21,7 @@ export function createNonceContentSecurityPolicy(nonce: string) {
     "default-src 'self'",
     "base-uri 'self'",
     "object-src 'none'",
-    "frame-ancestors 'none'",
+    `frame-ancestors ${frameAncestors}`,
     "form-action 'self'",
     "img-src 'self' data: blob: https://*.supabase.co",
     "font-src 'self' data:",
