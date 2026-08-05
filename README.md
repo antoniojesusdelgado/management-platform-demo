@@ -36,7 +36,7 @@ espacio independiente.
 - Analítica con filtros, comparaciones y vistas guardadas.
 - Tema claro por defecto y tema oscuro opcional.
 
-La versión preparada por esta rama es `v1.4.1`. La última versión publicada se
+La versión preparada por esta rama es `v1.5.0`. La última versión publicada se
 mantiene disponible en la sección de releases hasta completar la publicación.
 
 ## Cómo está construida
@@ -117,14 +117,14 @@ bunx supabase gen types --lang typescript --local
 
 ## Variables de entorno
 
-| Variable | Exposición | Uso |
-| --- | --- | --- |
-| `NEXT_PUBLIC_APP_URL` | Navegador | Origen canónico |
-| `NEXT_PUBLIC_VERCEL_URL` | Navegador | Origen de Preview |
-| `NEXT_PUBLIC_SUPABASE_URL` | Navegador | Proyecto Supabase |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Navegador | Clave publicable |
-| `PORTFOLIO_ORIGIN` | Servidor | Origen autorizado para el iframe |
-| `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL` | Navegador | Contacto legal público |
+| Variable                               | Exposición | Uso                              |
+| -------------------------------------- | ---------- | -------------------------------- |
+| `NEXT_PUBLIC_APP_URL`                  | Navegador  | Origen canónico                  |
+| `NEXT_PUBLIC_VERCEL_URL`               | Navegador  | Origen de Preview                |
+| `NEXT_PUBLIC_SUPABASE_URL`             | Navegador  | Proyecto Supabase                |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Navegador  | Clave publicable                 |
+| `PORTFOLIO_ORIGIN`                     | Servidor   | Origen autorizado para el iframe |
+| `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL`    | Navegador  | Contacto legal público           |
 
 El proyecto no necesita una clave de OpenAI en tiempo de ejecución. Los secretos
 de Google y Supabase no deben almacenarse en el repositorio ni exponerse con el

@@ -47,6 +47,12 @@ Los avisos no deben descartarse de forma global. Cualquier nueva RPC con
 privilegios necesita una revisión individual, el permiso mínimo, una
 comprobación de identidad y cobertura pgTAP antes de entrar en esta lista.
 
+Desde `v1.5.0`, los privilegios por defecto de PostgreSQL no conceden ejecución
+de nuevas funciones públicas a `PUBLIC`, `anon` o `authenticated`. Cada nueva
+RPC debe declarar sus permisos de forma explícita en su propia migración. La
+suite `018_release_v1_5.sql` comprueba este cierre preventivo y que la excepción
+de rate limiting necesaria para PostgREST continúa disponible.
+
 CI ejecuta `bun audit --audit-level=high`, CodeQL y la revisión de dependencias.
 El flujo ZAP Baseline es manual, acepta únicamente la raíz HTTPS validada de una
 Preview `*.vercel.app` y conserva el informe pasivo como artefacto.
@@ -57,6 +63,11 @@ permiso `EXECUTE` para utilizarla como comprobación previa. La propia función
 rechaza cualquier llamada directa por la ruta RPC pública, almacena solo un hash
 unidireccional del sujeto y una ruta acotada. Las RPC históricas de restauración
 V3–V6 y la marca de restauración V2 están revocadas expresamente.
+
+Los avisos informativos restantes del linter se revisan contra esta lista antes
+de cada publicación. No se abren políticas RLS ni se revocan permisos necesarios
+solo para ocultar un aviso: cualquier cambio debe mantener las pruebas de
+autorización y el funcionamiento de PostgREST.
 
 ## Revisión de autenticación
 

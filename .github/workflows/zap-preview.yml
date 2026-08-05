@@ -22,11 +22,11 @@ jobs:
 
     steps:
       - name: Descargar el repositorio
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Localizar la Preview validada
         id: preview
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         env:
           MANUAL_PREVIEW_URL: ${{ github.event.inputs.preview_url || '' }}
         with:
@@ -90,7 +90,7 @@ jobs:
             core.setOutput("host", url.hostname);
 
       - name: Ejecutar el análisis pasivo contra el host validado
-        uses: zaproxy/action-baseline@v0.14.0
+        uses: zaproxy/action-baseline@2b5fc7f98d837319798ab7f128ea50b7d40563b6 # v0.14.0
         with:
           target: ${{ steps.preview.outputs.url }}
           cmd_options: >-
