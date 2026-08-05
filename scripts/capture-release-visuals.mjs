@@ -4,7 +4,7 @@ import { chromium } from "@playwright/test";
 
 const externalOrigin = process.env.PRODUCT_CAPTURE_ORIGIN;
 const baseUrl = externalOrigin ?? "http://127.0.0.1:3210";
-const outputDirectory = ".artifacts/release-v1.3.1";
+const outputDirectory = ".artifacts/release-v1.5.0";
 const themes = ["light", "dark"];
 const viewports = [
   { name: "desktop", width: 1440, height: 900 },
@@ -49,9 +49,7 @@ if (server) {
 
 async function openModule(page, viewport, label) {
   if (viewport.name === "mobile") {
-    await page
-      .getByRole("button", { name: "Abrir menú de módulos" })
-      .click();
+    await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
   }
   await page
     .getByRole("navigation", { name: "Módulos de la plataforma" })
@@ -71,10 +69,7 @@ try {
         reducedMotion: "reduce",
       });
       await page.addInitScript((preference) => {
-        window.sessionStorage.setItem(
-          "management-platform-theme",
-          preference,
-        );
+        window.sessionStorage.setItem("management-platform-theme", preference);
       }, theme);
 
       const suffix = `${theme}-${viewport.name}`;
@@ -88,23 +83,31 @@ try {
       await page.goto(`${baseUrl}/demo/embed`, {
         waitUntil: "domcontentloaded",
       });
+      const guestAccess = page.getByRole("button", {
+        name: "Explorar demo sin registro",
+      });
+      await guestAccess.waitFor();
+      await guestAccess.click();
       await page.locator("[data-demo-ready='true']").waitFor();
       await page.waitForFunction(
         () =>
-          window.sessionStorage.getItem("management-platform-demo:v1") !==
-          null,
+          window.sessionStorage.getItem("management-platform-demo:v1") !== null,
       );
       await page.evaluate((preference) => {
         const key = "management-platform-demo:v1";
         const state = JSON.parse(window.sessionStorage.getItem(key));
         state.preferences.theme = preference;
         window.sessionStorage.setItem(key, JSON.stringify(state));
-        window.sessionStorage.setItem(
-          "management-platform-theme",
-          preference,
-        );
+        window.sessionStorage.setItem("management-platform-theme", preference);
       }, theme);
       await page.reload({ waitUntil: "domcontentloaded" });
+      const reloadedGuestAccess = page.getByRole("button", {
+        name: "Explorar demo sin registro",
+      });
+      if (await reloadedGuestAccess.isVisible()) {
+        await reloadedGuestAccess.click();
+      }
+
       await page.locator("[data-demo-ready='true']").waitFor();
 
       await page.screenshot({
@@ -119,7 +122,10 @@ try {
         animations: "disabled",
         fullPage: true,
       });
-      await page.getByRole("button", { name: /Ver detalle/ }).first().click();
+      await page
+        .getByRole("button", { name: /Ver detalle/ })
+        .first()
+        .click();
       await page.locator('[role="dialog"]:visible').waitFor();
       await page.screenshot({
         path: `${outputDirectory}/vacaciones-dialogo-${suffix}.png`,
