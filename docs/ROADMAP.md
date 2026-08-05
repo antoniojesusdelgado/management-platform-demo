@@ -115,7 +115,7 @@
 - Alternativa de Vercel: <https://management-platform-demo.vercel.app>
 - Preview estable:
   <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Versión preparada: `v1.4.1`
+- Versión preparada: `v1.5.0`
 - Historial de base de datos: 32 migraciones ordenadas, hasta
   `20260730083225_release_v1_3_2_directory_editorial.sql`.
 - Acceso, cierre de sesión y redirecciones protegidas de Google OAuth validados
@@ -131,7 +131,7 @@
 - [x] Cartera de proyectos con salud, responsables, participantes y actividad
 - [x] Referencias de proyecto en Tareas e Incidencias
 - [x] Scenario V5 determinista con 32 personas, 10 proyectos, 120 tareas,
-  104 solicitudes, 60 incidencias y 360 movimientos de Tesorería
+      104 solicitudes, 60 incidencias y 360 movimientos de Tesorería
 - [x] Adaptadores agregados sin conexión y procedencia documentada
 - [x] Pantalla OAuth SaaS, recursos originales y perfil autogestionado
 - [x] Kanban accesible, alternativa de lista, carriles, WIP y paginación
@@ -159,8 +159,7 @@ publicación siguió el flujo de Preview validada de `docs/DEPLOYMENT.md`.
 
 `v1.2.1` alineó el acceso con la composición aprobada, eligió gráficos de línea
 o barras horizontales según los datos, normalizó los diálogos e introdujo
-Scenario V4 con una cronología pública fija entre enero y el 23 de junio de
-2026.
+Scenario V4 con una cronología pública fija entre enero y el 23 de junio de 2026.
 
 `v1.2.2` amplió el histórico desde enero de 2025 hasta el 17 de junio de 2026,
 añadió participantes de nómina sin importes individuales y el organigrama, y
