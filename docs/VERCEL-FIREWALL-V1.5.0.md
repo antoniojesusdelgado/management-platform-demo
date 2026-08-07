@@ -1,35 +1,38 @@
-# Vercel firewall review for v1.5.0
+# Revisión de Vercel Firewall para v1.5.0
 
-## Purpose
+## Finalidad
 
-This review complements Vercel's automatic DDoS protection. It does not claim
-to prevent all scraping or automated traffic. The application protects private
-data and authenticated operations instead of blocking legitimate indexing.
+Esta revisión complementa la protección DDoS automática de Vercel. No pretende
+impedir todo el rastreo ni el tráfico automatizado. La aplicación protege los
+datos privados y las operaciones autenticadas sin bloquear la indexación
+legítima.
 
-## Staged rules
+## Reglas preparadas
 
-Any custom rule must start in log mode. Suggested candidates are:
+Toda regla personalizada debe comenzar en modo de registro. Las candidatas son:
 
-1. Record unusually high request volume against `/auth/google` and
-   `/auth/callback` without blocking the OAuth flow.
-2. Record repeated requests to authenticated application routes that do not
-   carry the expected session context.
-3. Record automated bursts against expensive scenario reset operations while
-   retaining the database pre-request limiter as the enforcement boundary.
+1. Registrar un volumen inusualmente alto contra `/auth/google` y
+   `/auth/callback` sin bloquear el flujo OAuth.
+2. Registrar solicitudes repetidas a rutas autenticadas que no lleven el
+   contexto de sesión esperado.
+3. Registrar ráfagas automatizadas contra las operaciones costosas de
+   restauración, manteniendo el límite previo de base de datos como control
+   efectivo.
 
-Do not publish a blocking rule until its traffic sample has been reviewed and
-the repository owner has explicitly confirmed activation.
+No se publicará una regla de bloqueo hasta revisar una muestra de tráfico y
+recibir la confirmación expresa del propietario del repositorio.
 
-## False-positive checks
+## Comprobaciones de falsos positivos
 
-Before changing a log rule to block or challenge, confirm that it does not
-affect:
+Antes de cambiar una regla de registro a bloqueo o desafío, se confirmará que no
+afecta a:
 
-- Google OAuth redirects and callbacks;
-- the portfolio iframe from `https://antoniodelgado.tech`;
-- Googlebot and social preview crawlers on public pages;
-- Preview deployments used by CI and browser validation;
-- authenticated users restoring their isolated demonstration workspace.
+- las redirecciones y callbacks de Google OAuth;
+- el iframe del portfolio desde `https://antoniodelgado.tech`;
+- Googlebot y los rastreadores de vistas previas sociales en páginas públicas;
+- los despliegues Preview utilizados por CI y las pruebas de navegador;
+- las personas autenticadas que restauren su espacio aislado de demostración.
 
-Keep a rollback path and review Vercel logs after every rule change. Firewall
-configuration is operational state and is not activated by this document.
+Se conservará una vía de reversión y se revisarán los registros de Vercel tras
+cada cambio. La configuración del firewall es estado operativo y este documento
+no la activa.

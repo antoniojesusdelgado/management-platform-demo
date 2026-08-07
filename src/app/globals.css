@@ -383,6 +383,13 @@ button {
   font-size: 0.62rem;
 }
 
+.sidebar-footer > span {
+  display: block;
+  margin-top: 0.35rem;
+  color: #93c5fd;
+  font-weight: 700;
+}
+
 .legal-footer {
   display: grid;
   gap: 0.5rem;

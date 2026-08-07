@@ -25,6 +25,10 @@ organización aislada por identidad de Google y asigna un rol del sistema con
 todos los permisos estables de la demo. El perfil de aplicación utiliza un alias
 ficticio y no copia el nombre, el correo ni el avatar del proveedor.
 
+ChatGPT Codex interviene únicamente en el proceso supervisado de desarrollo. No
+es un contenedor, servicio ni dependencia del sistema desplegado, no recibe
+datos de ejecución y no necesita credenciales en Vercel o Supabase.
+
 ## Capas de ejecución
 
 1. **Interfaz:** Next.js App Router, React, Tailwind CSS y primitivas de Radix.
@@ -37,6 +41,10 @@ ficticio y no copia el nombre, el correo ni el avatar del proveedor.
    proxy.
 5. **Base de datos:** esquema PostgreSQL multiorganización con RLS y eventos de
    transición inmutables.
+
+El catálogo TypeScript de versiones alimenta el escenario invitado y la versión
+visible. Una prueba lo compara con `package.json` y con la copia SQL que se
+inserta de forma aditiva en las organizaciones autenticadas.
 
 ## Modelo multiorganización
 

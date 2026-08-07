@@ -31,6 +31,13 @@ export default function LegalNoticePage() {
           aplicado medidas de calidad y seguridad, no sustituye a un sistema de
           producción ni constituye asesoramiento laboral, financiero o jurídico.
         </p>
+        <h2>Desarrollo asistido</h2>
+        <p>
+          Esta réplica se ha desarrollado mediante programación asistida con
+          ChatGPT Codex, bajo dirección, revisión y validación humana. ChatGPT
+          Codex no forma parte del producto en ejecución: la aplicación no llama
+          a modelos de inteligencia artificial ni necesita claves de OpenAI.
+        </p>
         <Link className="button button-secondary" href="/login">
           Volver al acceso
         </Link>

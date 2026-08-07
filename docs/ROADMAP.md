@@ -115,9 +115,9 @@
 - Alternativa de Vercel: <https://management-platform-demo.vercel.app>
 - Preview estable:
   <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Versión preparada: `v1.5.0`
-- Historial de base de datos: 32 migraciones ordenadas, hasta
-  `20260730083225_release_v1_3_2_directory_editorial.sql`.
+- Versión preparada: `v1.5.1`
+- Historial de base de datos: 35 migraciones ordenadas, hasta
+  `20260807100254_release_v1_5_1_changelog_alignment.sql`.
 - Acceso, cierre de sesión y redirecciones protegidas de Google OAuth validados
   en Preview y producción.
 - Flujos públicos validados en escritorio y móvil con Playwright y Axe.
@@ -150,6 +150,17 @@
 - [x] Índices para todas las claves foráneas públicas
 - [x] Lista autorizada de RPC y cobertura pgTAP estructural
 - [x] Detector CI de identificadores, contactos, proveedores y secretos reales
+- [x] Catálogo único de versiones y migración invitada `GuestDemoState V19`
+- [x] Atribución pública del desarrollo asistido con ChatGPT Codex
+
+## Próxima evolución v1.6.0
+
+- [ ] Buscador global accesible para personas, proyectos, tareas e incidencias
+- [ ] Acceso mediante botón y atajo `Ctrl/Cmd+K`
+- [ ] Resultados paginados y limitados por organización y permisos
+- [ ] Bandeja unificada de tareas, aprobaciones, SLA y avisos operativos
+- [ ] Elementos derivados de los módulos originales, sin duplicar estados
+- [ ] Validación responsive, accesibilidad, rendimiento y aislamiento RLS
 
 ## Historial
 
@@ -192,3 +203,10 @@ OAuth.
 `v1.4.1` corrige la actualización incremental del escenario autenticado, abre
 Google OAuth fuera del iframe y autoriza la pantalla de acceso exclusivamente
 para el portfolio.
+
+`v1.5.0` refuerza los privilegios de las funciones de base de datos, fija las
+acciones externas de CI y amplía las comprobaciones de seguridad y despliegue.
+
+`v1.5.1` alinea la versión visible con GitHub y Vercel, completa Novedades en
+sesiones invitadas y organizaciones OAuth, y documenta el desarrollo asistido
+con ChatGPT Codex.

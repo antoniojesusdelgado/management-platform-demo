@@ -122,15 +122,15 @@ variables del entorno de producción. Después de la promoción:
 - Alternativa de Vercel: <https://management-platform-demo.vercel.app>
 - Preview estable de la rama:
   <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Versión actual de producción: `v1.3.2`
+- Versión actual de producción: `v1.5.1`
 - Región y plan de Supabase: `eu-central-1`, Free
 - Producción y Preview utilizan variables separadas para los orígenes de la
   aplicación y del portfolio.
 - La compilación local y la Preview superaron 64 comprobaciones de extremo a
   extremo; 6 combinaciones de proyecto o dispositivo se omitieron de forma
   intencionada.
-- El repositorio contiene 32 migraciones ordenadas. La última es
-  `20260730083225_release_v1_3_2_directory_editorial.sql`.
+- El repositorio contiene 35 migraciones ordenadas. La última es
+  `20260807100254_release_v1_5_1_changelog_alignment.sql`.
 - El esquema remoto incluye políticas RLS, aprovisionamiento determinista y la
   integración nocturna neutral programada a las 02:15 UTC.
 - El refuerzo eliminó los índices de claves foráneas ausentes, las políticas de
@@ -138,6 +138,23 @@ variables del entorno de producción. Después de la promoción:
   por los asesores.
 - El aislamiento con una segunda identidad de Google sigue siendo una
   comprobación manual. pgTAP cubre el aislamiento multiorganización.
+
+## Versión v1.5.1
+
+`v1.5.1` corrige la diferencia entre la versión publicada y la mostrada en
+Novedades:
+
+1. `package.json`, el catálogo de producto y la interfaz deben informar la
+   misma versión.
+2. `GuestDemoState V19` añade únicamente las novedades ausentes y conserva
+   cualquier contenido modificado en la sesión.
+3. La migración SQL inserta `v1.4.0`, `v1.4.1`, `v1.5.0` y `v1.5.1` mediante
+   identificadores deterministas y `ON CONFLICT DO NOTHING`.
+4. `bunx supabase db push --dry-run` debe mostrar solo la migración de
+   alineación antes de aplicarla al proyecto remoto.
+5. La Preview debe validarse en modo invitado y OAuth antes de promover el
+   mismo artefacto a producción.
+6. GitHub, Vercel y Novedades deben terminar apuntando a `v1.5.1`.
 
 ## Versión v1.3.2
 

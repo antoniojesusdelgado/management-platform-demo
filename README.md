@@ -36,8 +36,8 @@ espacio independiente.
 - Analítica con filtros, comparaciones y vistas guardadas.
 - Tema claro por defecto y tema oscuro opcional.
 
-La versión preparada por esta rama es `v1.5.0`. La última versión publicada se
-mantiene disponible en la sección de releases hasta completar la publicación.
+La versión actual del proyecto es `v1.5.1`. El historial de publicaciones y
+sus notas están disponibles en la sección de releases.
 
 ## Cómo está construida
 
@@ -55,6 +55,17 @@ La aplicación usa Next.js, React, TypeScript, Supabase y PostgreSQL. Las prueba
 de navegador se ejecutan con Playwright y Axe. El acceso a datos autenticados
 se protege con políticas RLS, validación en servidor y permisos por
 organización.
+
+## Desarrollo asistido con inteligencia artificial
+
+Esta réplica se ha desarrollado mediante programación asistida con ChatGPT
+Codex, bajo dirección, revisión y validación humana. La herramienta se ha
+utilizado para analizar el repositorio, implementar cambios, documentar y
+ejecutar comprobaciones reproducibles.
+
+ChatGPT Codex no forma parte de la aplicación en ejecución: el producto no
+llama a modelos de inteligencia artificial, no necesita una clave de OpenAI y
+sus datos de demostración se generan de forma determinista.
 
 ## Datos de demostración
 

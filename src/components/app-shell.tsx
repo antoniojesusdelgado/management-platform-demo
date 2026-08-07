@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { InitialsAvatar } from "@/components/initials-avatar";
 import { ModuleIcon } from "@/components/module-icon";
 import { modules, type ModuleId } from "@/domain/modules";
+import { PRODUCT_VERSION } from "@/config/product-releases";
 import { createClient } from "@/lib/supabase/client";
 
 type AppShellProps = {
@@ -112,6 +113,7 @@ export function AppShell({
           <strong>Plataforma de gestión</strong>
           <br />
           {mode === "guest" ? "Sesión local" : organizationName}
+          <span>Versión {PRODUCT_VERSION}</span>
           <small>© 2026 Antonio Jesús Delgado Briones.</small>
         </div>
       </aside>

@@ -13,13 +13,13 @@ semilla y fecha de referencia producen siempre el mismo grafo de entidades
 ficticias. La configuración de referencia es:
 
 - Versión del escenario: `7`
-- Contrato de estado invitado: `GuestDemoState V18`
+- Contrato de estado invitado: `GuestDemoState V19`
 - Semilla: `management-platform-standard-v7`
-- Intervalo visible: `2025-01-01` a `2026-07-29`
-- Fecha de referencia: `2026-07-29`
+- Intervalo visible: `2025-01-01` a `2026-08-06`
+- Fecha de referencia: `2026-08-06`
 - SHA-256 del contenido generado:
-  `434bead9a67f674bcc9ef11a937905a786e587c7b1da2791bcbe413961e660bc`
-- Verificado el: `2026-07-29`
+  `3e12a2fb2cebeb63bfb0400fa0a894f2a6fa2f0c39b03d68c63209bcccb4d73e`
+- Verificado el: `2026-08-07`
 
 ## Fuentes de referencia
 
@@ -77,15 +77,16 @@ El escenario actual contiene:
   contractuales españolas ficticias;
 - 10 proyectos con nombres naturales y estados activo, completado, previsto y
   pausado;
-- 982 tareas con trabajo reciente acotado, dependencias y comentarios;
-- 138 solicitudes de vacaciones con estacionalidad controlada en verano y
+- 1.057 tareas con trabajo reciente acotado, dependencias y comentarios;
+- 156 solicitudes de vacaciones con estacionalidad controlada en verano y
   Navidad;
-- 65 incidencias con contexto estable de servicio, alcance y detección;
-- 396 movimientos de tesorería importados y saldo mensual positivo;
-- 19 ciclos agregados de nómina y 3.263 participantes sin importes individuales;
-- 76 ejecuciones de integración proporcionales y trazables;
-- 15 hitos de producto publicados, incluida `v1.3.2`;
-- 7.608 registros relacionados, incluidos eventos inmutables de actividad y
+- 70 incidencias con contexto estable de servicio, alcance y detección;
+- 421 movimientos de tesorería importados y saldo mensual positivo;
+- 20 ciclos agregados de nómina y 3.514 participantes sin importes individuales;
+- 80 ejecuciones de integración proporcionales y trazables;
+- 19 novedades publicadas con una versión canónica compartida, incluida
+  `v1.5.1`;
+- 8.175 registros relacionados, incluidos eventos inmutables de actividad y
   trazabilidad.
 
 Los nombres son combinaciones ficticias naturales del catálogo local. Las
