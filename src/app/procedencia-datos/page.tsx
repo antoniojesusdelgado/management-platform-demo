@@ -15,7 +15,7 @@ export default function DataProvenancePage() {
         </p>
         <h2>Escenario y periodo</h2>
         <p>
-          La versión actual del escenario es la 5. El histórico
+          La versión actual del escenario es la 7. El histórico
           comienza el 1 de enero de 2025 y termina en el ancla guardada al crear
           o restaurar cada espacio. La misma semilla y la misma ancla producen el
           mismo catálogo y checksum.

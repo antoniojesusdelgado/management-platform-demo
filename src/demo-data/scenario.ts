@@ -6,6 +6,7 @@ import {
   syntheticTaskActions,
   syntheticTreasuryConcepts,
 } from "@/demo-data/catalog";
+import { PRODUCT_RELEASES } from "@/config/product-releases";
 
 export const SCENARIO_START_DATE = "2025-01-01";
 export const SCENARIO_TIME_ZONE = "Europe/Madrid";
@@ -37,7 +38,7 @@ export const STANDARD_SCENARIO_COUNTS = {
   treasuryEntriesPerActivePerson: 0.1,
   minimumTreasuryEntriesPerMonth: 20,
   integrationRunsPerMonth: 4,
-  changelogEntries: 15,
+  changelogEntries: PRODUCT_RELEASES.length,
 } as const;
 
 function dateFromOffset(startDate: string, offset: number) {
@@ -1072,25 +1073,8 @@ export function generateDemoScenario(
       };
       },
     );
-  const changelogTimeline = [
-    ["0.1.0", "Todo el trabajo, en un solo lugar", "Una base común para consultar los módulos y acceder a cada función según el perfil.", "2026-02-02"],
-    ["0.2.0", "Vacaciones más fáciles de gestionar", "Solicitudes, aprobaciones y calendario de ausencias reunidos en un mismo espacio.", "2026-02-16"],
-    ["0.3.0", "Proyectos y tareas bajo control", "Seguimiento claro de responsables, fechas, dependencias y trabajo pendiente.", "2026-03-02"],
-    ["0.4.0", "Mejor atención y visión del equipo", "Incidencias y directorio de personal conectados para facilitar la coordinación diaria.", "2026-03-16"],
-    ["0.5.0", "Finanzas y nóminas más claras", "Movimientos revisados y ciclos de nómina resumidos para una consulta más sencilla.", "2026-03-30"],
-    ["0.6.0", "Procesos conectados y menos trabajo manual", "Importaciones programadas y controles que ayudan a mantener la información al día.", "2026-04-20"],
-    ["0.7.0", "Información histórica lista para consultar", "La actividad anterior queda organizada y validada para poder revisarla con confianza.", "2026-04-30"],
-    ["1.0.0", "Una plataforma preparada para el día a día", "Acceso seguro con Google y espacios separados para cada organización.", "2026-05-24"],
-    ["1.1.0", "Más claridad para decidir", "Nuevos indicadores, filtros y mejoras de accesibilidad para trabajar con mayor comodidad.", "2026-06-01"],
-    ["1.2.0", "Una visión más completa de la actividad", "Datos mejor equilibrados y comparaciones más útiles para entender la evolución del trabajo.", "2026-06-15"],
-    ["1.2.1", "Una experiencia más cuidada", "Mejoras en el acceso, los gráficos, los proyectos y la navegación desde distintos dispositivos.", "2026-06-16"],
-    ["1.2.2", "Mejoras en toda la plataforma", "Una experiencia más fluida en analítica, trabajo móvil, nóminas y equipos.", "2026-06-17"],
-    ["1.3.0", "Elige cómo quieres trabajar", "Tema claro por defecto, modo oscuro opcional y una visión de la actividad siempre actualizada.", "2026-06-23"],
-    ["1.3.1", "Más cómoda en móvil y más segura", "Las tareas se consultan mejor desde el teléfono y la protección de los datos se ha reforzado.", "2026-07-29"],
-    ["1.3.2", "Un directorio más cercano y claro", "Todos los perfiles muestran nombres completos y las novedades son ahora más fáciles de entender.", "2026-07-30"],
-  ] as const;
-  const changelogEntries: DemoScenarioDefinition["changelogEntries"] = changelogTimeline.map(
-    ([version, title, summary, publishedDate], index) => ({
+  const changelogEntries: DemoScenarioDefinition["changelogEntries"] = PRODUCT_RELEASES.map(
+    ({ version, title, summary, publishedDate }, index) => ({
       id: deterministicUuid(seed, "changelog", index),
       version,
       title,

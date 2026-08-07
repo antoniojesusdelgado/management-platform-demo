@@ -128,7 +128,7 @@ import {
 } from "@/demo-data/scenario";
 
 export type GuestDemoState = {
-  version: 18;
+  version: 19;
   scenarioVersion: 7;
   scenarioAnchorDate: string;
   scenarioStartDate: string;
@@ -476,8 +476,12 @@ const guestDemoStateV17Schema = guestDemoStateV16Schema.extend({
   version: z.literal(17),
 });
 
-export const guestDemoStateSchema = guestDemoStateV17Schema.extend({
+const guestDemoStateV18Schema = guestDemoStateV17Schema.extend({
   version: z.literal(18),
+});
+
+export const guestDemoStateSchema = guestDemoStateV18Schema.extend({
+  version: z.literal(19),
 });
 
 function normalizeLegacyAnalyticsModule(value: unknown): unknown {
@@ -534,6 +538,9 @@ export function parseGuestDemoState(value: unknown): GuestDemoState | null {
   const normalized = normalizeLegacyAnalyticsModule(value);
   const result = guestDemoStateSchema.safeParse(normalized);
   if (result.success) return result.data;
+
+  const version18 = guestDemoStateV18Schema.safeParse(normalized);
+  if (version18.success) return migrateVersion18(version18.data);
 
   const version17 = guestDemoStateV17Schema.safeParse(normalized);
   if (version17.success) return migrateVersion17(version17.data);
@@ -1178,7 +1185,7 @@ function migrateVersion14(
 ): GuestDemoState {
   const generated = addStandardScenario({
     ...state,
-    version: 18,
+    version: 19,
     scenarioVersion: 7,
     scenarioStartDate: SCENARIO_START_DATE,
     scenarioGeneratedThroughDate: state.scenarioAnchorDate,
@@ -1338,7 +1345,7 @@ function migrateVersion17(
     ? generated.changelogEvents.find((event) => event.entryId === release.id)
     : null;
 
-  return guestDemoStateSchema.parse({
+  return migrateVersion18(guestDemoStateV18Schema.parse({
     ...state,
     version: 18,
     changelogEntries: [
@@ -1364,11 +1371,40 @@ function migrateVersion17(
       !state.changelogEvents.some((event) => event.id === releaseEvent.id)
         ? [...state.changelogEvents, releaseEvent]
         : state.changelogEvents,
+  }));
+}
+
+function migrateVersion18(
+  state: z.infer<typeof guestDemoStateV18Schema>,
+): GuestDemoState {
+  const generated = addStandardScenario({
+    ...initialGuestDemoStateBase,
+    scenarioAnchorDate: state.scenarioAnchorDate,
+    scenarioGeneratedThroughDate: state.scenarioGeneratedThroughDate,
+  });
+  const pendingVersions = new Set(["1.4.0", "1.4.1", "1.5.0", "1.5.1"]);
+  const missingEntries = generated.changelogEntries.filter(
+    (entry) =>
+      pendingVersions.has(entry.version) &&
+      !state.changelogEntries.some((current) => current.version === entry.version),
+  );
+  const missingEntryIds = new Set(missingEntries.map((entry) => entry.id));
+  const missingEvents = generated.changelogEvents.filter(
+    (event) =>
+      missingEntryIds.has(event.entryId) &&
+      !state.changelogEvents.some((current) => current.id === event.id),
+  );
+
+  return guestDemoStateSchema.parse({
+    ...state,
+    version: 19,
+    changelogEntries: [...state.changelogEntries, ...missingEntries],
+    changelogEvents: [...state.changelogEvents, ...missingEvents],
   });
 }
 
 const initialGuestDemoStateBase: GuestDemoState = {
-  version: 18,
+  version: 19,
   scenarioVersion: 7,
   scenarioAnchorDate: getScenarioGeneratedThroughDate(),
   scenarioStartDate: SCENARIO_START_DATE,
@@ -1489,7 +1525,7 @@ function addStandardScenario(base: GuestDemoState): GuestDemoState {
 
   return {
     ...base,
-    version: 18,
+    version: 19,
     scenarioVersion: 7,
     scenarioAnchorDate: scenario.scenarioGeneratedThroughDate,
     scenarioStartDate: scenario.scenarioStartDate,

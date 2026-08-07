@@ -57,6 +57,12 @@ Requisitos no funcionales:
 | Navegador | Playwright, Axe | Recorridos E2E, responsive y accesibilidad |
 | Entrega | Bun, GitHub Actions, Vercel | Dependencias, CI, Preview y producción |
 
+El desarrollo de esta réplica se ha realizado mediante programación asistida
+con ChatGPT Codex, bajo dirección y revisión humana. Esta herramienta forma
+parte del proceso de ingeniería, no del producto en ejecución: no recibe datos
+del sistema, no interviene en las decisiones visibles y no requiere claves de
+OpenAI en producción.
+
 ## 3. Contexto del sistema
 
 ```mermaid
@@ -80,7 +86,7 @@ flowchart TB
   subgraph next["Aplicación Next.js"]
     routes["App Router y Server Components"]
     actions["Server Actions"]
-    guest["Reducer invitado y GuestDemoState V16"]
+    guest["Reducer invitado y GuestDemoState V19"]
     analytics["Motor analítico puro"]
     ui["Módulos React responsive"]
   end
@@ -241,10 +247,10 @@ credenciales ni payloads sensibles.
 
 El escenario V7 comienza el `2025-01-01` y crece hasta ayer en
 `Europe/Madrid`. La misma semilla y ancla producen el mismo checksum.
-`GuestDemoState V16` conserva las entidades y preferencias de V15 y añade la
-entrada editorial de v1.3.0 sin regenerar el escenario ni sobrescribir cambios
-operativos. La migración V14 a V15 continúa anexando únicamente IDs
-deterministas ausentes.
+`GuestDemoState V19` conserva las entidades y preferencias de versiones
+anteriores y añade únicamente las novedades ausentes hasta v1.5.1, sin
+regenerar el escenario ni sobrescribir cambios operativos. La migración V14 a
+V15 continúa anexando únicamente IDs deterministas ausentes.
 
 La corrección operativa final eleva de forma aditiva `scenario_version` a 7
 cuando una organización ya estaba generada hasta ayer. Así se evita que la RPC
@@ -253,10 +259,10 @@ salga sin trabajo pendiente y conserve por error la marca histórica V6.
 Distribución:
 
 - 266 entidades de persona, 6 equipos y cuatro modalidades contractuales;
-- 10 proyectos y 982 tareas con 85–90 % de histórico completado;
-- 138 solicitudes de vacaciones y 65 incidencias;
-- 396 movimientos de tesorería y 19 ciclos de nómina agregada;
-- 76 ejecuciones de integraciones con resultados variables.
+- 10 proyectos y 1.057 tareas con 85–90 % de histórico completado;
+- 156 solicitudes de vacaciones y 70 incidencias;
+- 421 movimientos de tesorería y 20 ciclos de nómina agregada;
+- 80 ejecuciones de integraciones y 19 novedades publicadas.
 
 Reglas de dominio:
 
@@ -384,10 +390,14 @@ Configuración actualiza de forma explícita el ancla y registra la operación.
 | v1.3.1 | Tareas móviles, backfill V7 aditivo, rate limiting, CSP y escaneo de secretos |
 | v1.3.2 | Nombres naturales compartidos, Novedades orientadas a usuarios y migración idempotente |
 | v1.4.0 | Acceso inicial seguro para la demo y procedencia profesional documentada |
+| v1.4.1 | Recuperación del acceso OAuth, móvil e iframe autorizado |
+| v1.5.0 | Privilegios de base de datos y cadena de entrega reforzados |
+| v1.5.1 | Catálogo de versiones alineado y desarrollo asistido documentado |
 
 Las fechas editoriales se muestran en Novedades; v1.3.0 utiliza el 23 de junio
-de 2026, v1.3.1 el 29 de julio de 2026 y v1.3.2 el 30 de julio de 2026. Git,
-PostgreSQL y Vercel conservan sus timestamps técnicos reales.
+de 2026, v1.3.1 el 29 de julio, v1.3.2 el 30 de julio, v1.4.0 y v1.4.1 el 3 de
+agosto, v1.5.0 el 5 de agosto y v1.5.1 el 7 de agosto de 2026. Git, PostgreSQL
+y Vercel conservan sus timestamps técnicos reales.
 
 El tema claro es el valor inicial y el modo oscuro se activa manualmente desde
 Perfil. La compatibilidad migra cualquier preferencia histórica `system` a
