@@ -29,6 +29,7 @@ type Props = {
   referenceDate?: string;
   pending?: boolean;
   loadError?: string;
+  initialFocusId?: string | null;
   onCreate: (input: PersonInput) => boolean | Promise<boolean>;
   onUpdate: (id: string, input: PersonInput) => boolean | Promise<boolean>;
 };
@@ -48,13 +49,13 @@ const emptyInput = (): PersonInput => ({
   employmentEndDate: null,
 });
 
-export function PeopleWorkspace({ people, events, leaveRequests, referenceDate = new Date().toISOString().slice(0, 10), pending = false, loadError, onCreate, onUpdate }: Props) {
+export function PeopleWorkspace({ people, events, leaveRequests, referenceDate = new Date().toISOString().slice(0, 10), pending = false, loadError, initialFocusId, onCreate, onUpdate }: Props) {
   const [status, setStatus] = useState<"all" | PersonStatus>("all");
   const [role, setRole] = useState<"all" | PersonRoleCode>("all");
   const [team, setTeam] = useState("all");
   const [contractType, setContractType] = useState<"all" | EmploymentContractType>("all");
   const [view, setView] = useState<"directory" | "organization">("directory");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(() => initialFocusId ?? null);
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [input, setInput] = useState<PersonInput>(emptyInput());

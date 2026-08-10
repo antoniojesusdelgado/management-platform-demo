@@ -42,6 +42,13 @@ datos de ejecución y no necesita credenciales en Vercel o Supabase.
 5. **Base de datos:** esquema PostgreSQL multiorganización con RLS y eventos de
    transición inmutables.
 
+El centro de trabajo es una capacidad transversal del shell. En la demo sin
+registro deriva búsqueda y bandeja del estado local ya validado; en el acceso
+OAuth utiliza Server Actions autenticadas, consultas acotadas y RLS. Los
+resultados solo contienen una proyección mínima y sus enlaces abren la entidad
+concreta. La bandeja no crea otro estado: ordena tareas, solicitudes,
+incidencias y avisos que siguen perteneciendo a sus módulos de origen.
+
 El catálogo TypeScript de versiones alimenta el escenario invitado y la versión
 visible. Una prueba lo compara con `package.json` y con la copia SQL que se
 inserta de forma aditiva en las organizaciones autenticadas.
@@ -72,13 +79,15 @@ Las ediciones y transiciones se ejecutan mediante RPC con privilegios y añaden
 eventos inmutables; los roles autenticados no escriben directamente en sus
 tablas.
 
-El estado invitado está en la versión 18 y utiliza Scenario V7. Zod valida las
+El estado invitado está en la versión 20 y utiliza Scenario V7. Zod valida las
 sesiones restauradas antes de mostrarlas. La migración V14 a V15 conserva los
 cambios operativos y preferencias y añade solo las entidades deterministas que
 faltan. V15 a V16 incorpora la entrada editorial v1.3.0 sin regenerar el
 escenario diario. V16 a V17 añade v1.3.1 una sola vez y conserva el grafo de la
 sesión. V17 a V18 incorpora v1.3.2 y actualiza únicamente el texto canónico
-publicado, sin modificar entradas editoriales personalizadas.
+publicado, sin modificar entradas editoriales personalizadas. V18 a V19 añade
+las publicaciones hasta v1.5.1 y V19 a V20 incorpora v1.6.0 sin reconstruir el
+resto de la sesión.
 
 La elección de tema es explícita: los espacios nuevos y antiguos utilizan
 `light` de forma predeterminada y `dark` se activa manualmente desde el perfil.

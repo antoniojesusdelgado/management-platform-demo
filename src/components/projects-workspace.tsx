@@ -36,6 +36,7 @@ type ProjectsWorkspaceProps = {
   pending?: boolean;
   loadError?: string;
   canManage?: boolean;
+  initialFocusId?: string | null;
   onCreate: (input: ProjectInput) => boolean | Promise<boolean>;
   onUpdate: (
     projectId: string,
@@ -81,12 +82,13 @@ export function ProjectsWorkspace({
   pending = false,
   loadError,
   canManage = true,
+  initialFocusId,
   onCreate,
   onUpdate,
 }: ProjectsWorkspaceProps) {
   const [status, setStatus] = useState<"all" | ProjectStatus>("all");
   const [health, setHealth] = useState<"all" | ProjectHealth>("all");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(() => initialFocusId ?? null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [input, setInput] = useState<ProjectInput>(emptyInput());

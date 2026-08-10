@@ -25,6 +25,7 @@ export const PRODUCT_RELEASES = [
   { version: "1.4.1", title: "Acceso más fiable desde cualquier dispositivo", summary: "El inicio con Google y la recuperación de la sesión funcionan mejor dentro y fuera del móvil.", publishedDate: "2026-08-03" },
   { version: "1.5.0", title: "Seguridad reforzada de principio a fin", summary: "Se han revisado los permisos, las validaciones y los controles que protegen cada publicación.", publishedDate: "2026-08-05" },
   { version: "1.5.1", title: "Novedades siempre al día", summary: "La versión visible coincide ahora con la publicación disponible y se explica cómo se ha desarrollado el proyecto.", publishedDate: "2026-08-07" },
+  { version: "1.6.0", title: "Encuentra y prioriza tu trabajo", summary: "Una búsqueda global y una bandeja personal reúnen personas, proyectos, tareas, solicitudes e incidencias que requieren atención.", publishedDate: "2026-08-10" },
 ] as const satisfies readonly ProductRelease[];
 
 export const LATEST_PRODUCT_RELEASE = PRODUCT_RELEASES.at(-1)!;

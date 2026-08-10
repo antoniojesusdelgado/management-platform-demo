@@ -34,9 +34,11 @@ espacio independiente.
 - Tesorería, conciliación y ciclos de nómina con información agregada.
 - Directorio de personal, equipos y organigrama.
 - Analítica con filtros, comparaciones y vistas guardadas.
+- Búsqueda global de personas, proyectos, tareas e incidencias con `Ctrl/Cmd+K`.
+- Bandeja personal con tareas, aprobaciones, compromisos de atención y avisos operativos.
 - Tema claro por defecto y tema oscuro opcional.
 
-La versión actual del proyecto es `v1.5.1`. El historial de publicaciones y
+La versión preparada en esta rama es `v1.6.0`. El historial de publicaciones y
 sus notas están disponibles en la sección de releases.
 
 ## Cómo está construida
@@ -66,6 +68,11 @@ ejecutar comprobaciones reproducibles.
 ChatGPT Codex no forma parte de la aplicación en ejecución: el producto no
 llama a modelos de inteligencia artificial, no necesita una clave de OpenAI y
 sus datos de demostración se generan de forma determinista.
+
+El desarrollo asistido comenzó con GPT-5.3 Codex y continuó con GPT-5.4,
+GPT-5.5 y GPT-5.6 Sol. La herramienta ha cambiado a lo largo del proyecto, pero
+la responsabilidad sobre requisitos, decisiones, revisión y publicación ha
+permanecido bajo supervisión humana.
 
 ## Datos de demostración
 

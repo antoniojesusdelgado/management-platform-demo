@@ -32,6 +32,7 @@ type VacationsWorkspaceProps = {
   events: LeaveRequestEvent[];
   pending?: boolean;
   loadError?: string;
+  initialFocusId?: string | null;
   onCreate: (input: LeaveRequestInput) => boolean | Promise<boolean>;
   onTransition: (
     requestId: string,
@@ -59,12 +60,13 @@ export function VacationsWorkspace({
   events,
   pending = false,
   loadError,
+  initialFocusId,
   onCreate,
   onTransition,
 }: VacationsWorkspaceProps) {
   const [filter, setFilter] = useState<"all" | LeaveRequestStatus>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(() => initialFocusId ?? null);
   const [transitionIntent, setTransitionIntent] =
     useState<TransitionIntent | null>(null);
   const filtered = useMemo(

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { Fragment, useState, useTransition } from "react";
 import { toast, Toaster } from "sonner";
 import {
   createLeaveRequestAction,
@@ -29,6 +29,7 @@ import {
   loadAnalyticsSnapshotAction,
   saveAnalyticsViewAction,
 } from "@/app/app/analytics-actions";
+import { loadWorkspaceInboxAction, searchWorkspaceAction } from "@/app/app/workspace-productivity-actions";
 import { AppShell } from "@/components/app-shell";
 import { Dashboard } from "@/components/dashboard";
 import { ControlCenter } from "@/components/control-center";
@@ -139,6 +140,7 @@ type AuthenticatedAppProps = {
   canManageSettings?: boolean;
   workspaceConfiguration?: WorkspaceConfiguration;
   workspaceLoadError?: string;
+  focusedEntityId?: string | null;
 };
 
 export function AuthenticatedApp({
@@ -200,6 +202,7 @@ export function AuthenticatedApp({
   canManageSettings = false,
   workspaceConfiguration = defaultWorkspaceConfiguration,
   workspaceLoadError,
+  focusedEntityId,
 }: AuthenticatedAppProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -312,10 +315,12 @@ export function AuthenticatedApp({
   } else if (activeModule === "vacaciones") {
     content = (
       <VacationsWorkspace
+        key={focusedEntityId ?? "vacaciones"}
         requests={leaveRequests}
         events={leaveEvents}
         pending={pending}
         loadError={leaveLoadError}
+        initialFocusId={focusedEntityId}
         onCreate={(input: LeaveRequestInput) => {
           return performAction(
             () => createLeaveRequestAction(input),
@@ -353,6 +358,7 @@ export function AuthenticatedApp({
   } else if (activeModule === "tareas") {
     content = (
       <TasksWorkspace
+        key={focusedEntityId ?? "tareas"}
         tasks={tasks}
         dependencies={taskDependencies}
         comments={taskComments}
@@ -363,6 +369,7 @@ export function AuthenticatedApp({
         referenceDate={scenarioAnchorDate}
         pending={pending}
         loadError={taskLoadError}
+        initialFocusId={focusedEntityId}
         onCreate={(input: TaskInput) =>
           performAction(() => createTaskAction(input), "Tarea creada")
         }
@@ -393,13 +400,13 @@ export function AuthenticatedApp({
       />
     );
   } else if (activeModule === "incidencias") {
-    content = <IncidentsWorkspace incidents={incidents} events={incidentEvents} assigneeOptions={incidentAssignees} projectOptions={projects.map(({ id, name }) => ({ id, name }))} referenceDate={`${scenarioAnchorDate}T12:00:00.000Z`} pending={pending} loadError={incidentLoadError} onCreate={(input: IncidentInput) => performAction(() => createIncidentAction(input), "Incidencia registrada")} onUpdate={(id: string, input: IncidentInput) => performAction(() => updateIncidentAction(id, input), "Incidencia actualizada")} onTransition={(id: string, status: IncidentStatus, note: string) => performAction(() => transitionIncidentAction({ incidentId: id, status, note }), "Estado actualizado")} />;
+    content = <IncidentsWorkspace incidents={incidents} events={incidentEvents} assigneeOptions={incidentAssignees} projectOptions={projects.map(({ id, name }) => ({ id, name }))} referenceDate={`${scenarioAnchorDate}T12:00:00.000Z`} pending={pending} loadError={incidentLoadError} initialFocusId={focusedEntityId} onCreate={(input: IncidentInput) => performAction(() => createIncidentAction(input), "Incidencia registrada")} onUpdate={(id: string, input: IncidentInput) => performAction(() => updateIncidentAction(id, input), "Incidencia actualizada")} onTransition={(id: string, status: IncidentStatus, note: string) => performAction(() => transitionIncidentAction({ incidentId: id, status, note }), "Estado actualizado")} />;
   } else if (activeModule === "proyectos") {
-    content = <ProjectsWorkspace projects={projects} events={projectEvents} people={people} tasks={tasks} incidents={incidents} pending={pending} loadError={projectsLoadError} canManage={canManageProjects} onCreate={(input: ProjectInput) => performAction(() => createProjectAction(input), "Proyecto creado")} onUpdate={(id: string, input: ProjectInput) => performAction(() => updateProjectAction(id, input), "Proyecto actualizado")} />;
+    content = <ProjectsWorkspace projects={projects} events={projectEvents} people={people} tasks={tasks} incidents={incidents} pending={pending} loadError={projectsLoadError} canManage={canManageProjects} initialFocusId={focusedEntityId} onCreate={(input: ProjectInput) => performAction(() => createProjectAction(input), "Proyecto creado")} onUpdate={(id: string, input: ProjectInput) => performAction(() => updateProjectAction(id, input), "Proyecto actualizado")} />;
   } else if (activeModule === "personal") {
     content = (
       <>
-        <PeopleWorkspace people={people} events={peopleEvents} leaveRequests={leaveRequests} referenceDate={scenarioAnchorDate} pending={pending} loadError={peopleLoadError} onCreate={(input: PersonInput) => performAction(() => createPersonAction(input), "Perfil añadido")} onUpdate={(id: string, input: PersonInput) => performAction(() => updatePersonAction(id, input), "Perfil actualizado")} />
+        <PeopleWorkspace people={people} events={peopleEvents} leaveRequests={leaveRequests} referenceDate={scenarioAnchorDate} pending={pending} loadError={peopleLoadError} initialFocusId={focusedEntityId} onCreate={(input: PersonInput) => performAction(() => createPersonAction(input), "Perfil añadido")} onUpdate={(id: string, input: PersonInput) => performAction(() => updatePersonAction(id, input), "Perfil actualizado")} />
         <IntegrationsCenter connectors={integrationConnectors} runs={integrationRuns} issues={dataQualityIssues} kind="people" pending={pending} canManage={canManageIntegrations} onSimulate={(connectorId) => performAction(() => simulateIntegrationAction(connectorId), "Sincronización completada")} />
       </>
     );
@@ -451,6 +458,8 @@ export function AuthenticatedApp({
         onNavigate={navigate}
         avatarUrl={avatarUrl}
         displayName={displayName}
+        workspaceSearch={searchWorkspaceAction}
+        workspaceInbox={loadWorkspaceInboxAction}
       >
         <div aria-busy={pending}>
           {workspaceLoadError ? (
@@ -459,7 +468,7 @@ export function AuthenticatedApp({
               <span>{workspaceLoadError}</span>
             </div>
           ) : null}
-          {content}
+          <Fragment key={focusedEntityId ?? activeModule}>{content}</Fragment>
         </div>
       </AppShell>
       <Toaster position="bottom-right" richColors />

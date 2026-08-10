@@ -13,13 +13,13 @@ semilla y fecha de referencia producen siempre el mismo grafo de entidades
 ficticias. La configuración de referencia es:
 
 - Versión del escenario: `7`
-- Contrato de estado invitado: `GuestDemoState V19`
+- Contrato de estado invitado: `GuestDemoState V20`
 - Semilla: `management-platform-standard-v7`
-- Intervalo visible: `2025-01-01` a `2026-08-06`
-- Fecha de referencia: `2026-08-06`
+- Intervalo visible: `2025-01-01` a `2026-08-09`
+- Fecha de referencia: `2026-08-09`
 - SHA-256 del contenido generado:
-  `3e12a2fb2cebeb63bfb0400fa0a894f2a6fa2f0c39b03d68c63209bcccb4d73e`
-- Verificado el: `2026-08-07`
+  `8939cc4ed28afe5c2543117ef47f29ccdc279862697a15413d22ef3d664e181b`
+- Verificado el: `2026-08-10`
 
 ## Fuentes de referencia
 
@@ -84,9 +84,9 @@ El escenario actual contiene:
 - 421 movimientos de tesorería importados y saldo mensual positivo;
 - 20 ciclos agregados de nómina y 3.514 participantes sin importes individuales;
 - 80 ejecuciones de integración proporcionales y trazables;
-- 19 novedades publicadas con una versión canónica compartida, incluida
-  `v1.5.1`;
-- 8.175 registros relacionados, incluidos eventos inmutables de actividad y
+- 20 novedades publicadas con una versión canónica compartida, incluida
+  `v1.6.0`;
+- 8.177 registros relacionados, incluidos eventos inmutables de actividad y
   trazabilidad.
 
 Los nombres son combinaciones ficticias naturales del catálogo local. Las
