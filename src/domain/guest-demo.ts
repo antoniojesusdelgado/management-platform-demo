@@ -126,9 +126,23 @@ import {
   getScenarioGeneratedThroughDate,
   SCENARIO_START_DATE,
 } from "@/demo-data/scenario";
+import {
+  automationRuleInputSchema,
+  capacityAllocationSchema,
+  createDefaultOperationsState,
+  exportTargets,
+  operationsStateSchema,
+  type AutomationAction,
+  type AutomationTrigger,
+  type CapacityAllocation,
+  type ExportTarget,
+  type NotificationStatus,
+  type OperationsState,
+  type WorkspaceProvider,
+} from "@/domain/operations";
 
-export type GuestDemoState = {
-  version: 20;
+export type GuestDemoState = OperationsState & {
+  version: 21;
   scenarioVersion: 7;
   scenarioAnchorDate: string;
   scenarioStartDate: string;
@@ -484,8 +498,13 @@ const guestDemoStateV19Schema = guestDemoStateV18Schema.extend({
   version: z.literal(19),
 });
 
-export const guestDemoStateSchema = guestDemoStateV19Schema.extend({
+const guestDemoStateV20Schema = guestDemoStateV19Schema.extend({
   version: z.literal(20),
+});
+
+export const guestDemoStateSchema = guestDemoStateV20Schema.extend({
+  version: z.literal(21),
+  ...operationsStateSchema.shape,
 });
 
 function normalizeLegacyAnalyticsModule(value: unknown): unknown {
@@ -542,6 +561,9 @@ export function parseGuestDemoState(value: unknown): GuestDemoState | null {
   const normalized = normalizeLegacyAnalyticsModule(value);
   const result = guestDemoStateSchema.safeParse(normalized);
   if (result.success) return result.data;
+
+  const version20 = guestDemoStateV20Schema.safeParse(normalized);
+  if (version20.success) return migrateVersion20(version20.data);
 
   const version19 = guestDemoStateV19Schema.safeParse(normalized);
   if (version19.success) return migrateVersion19(version19.data);
@@ -615,7 +637,7 @@ export type GuestDemoAction =
   | { type: "create-task"; input: TaskInput }
   | { type: "update-task"; taskId: string; input: TaskInput }
   | { type: "transition-task"; taskId: string; status: TaskStatus; note: string }
-  | { type: "add-task-comment"; taskId: string; body: string }
+  | { type: "add-task-comment"; taskId: string; body: string; mentionedPersonId?: string }
   | { type: "add-task-dependency"; taskId: string; dependsOnTaskId: string }
   | { type: "create-incident"; input: IncidentInput }
   | { type: "update-incident"; incidentId: string; input: IncidentInput }
@@ -642,6 +664,14 @@ export type GuestDemoAction =
   | { type: "simulate-integration"; connectorId: string }
   | { type: "update-preferences"; preferences: GuestPreferences }
   | { type: "save-analytics-view"; view: SavedAnalyticsView }
+  | { type: "create-automation-rule"; input: { name: string; trigger: AutomationTrigger; action: AutomationAction } }
+  | { type: "toggle-automation-rule"; ruleId: string; enabled: boolean }
+  | { type: "run-automation-rule"; ruleId: string }
+  | { type: "apply-project-template"; templateId: string }
+  | { type: "add-capacity-allocation"; input: Omit<CapacityAllocation, "id" | "personName" | "projectName"> }
+  | { type: "mark-notification"; notificationId: string; status: NotificationStatus }
+  | { type: "create-export-job"; input: { name: string; moduleId: string; target: ExportTarget } }
+  | { type: "disconnect-workspace"; provider: WorkspaceProvider }
   | {
       type: "update-workspace-configuration";
       configuration: WorkspaceConfiguration;
@@ -1192,10 +1222,11 @@ function migrateVersion14(
 ): GuestDemoState {
   const generated = addStandardScenario({
     ...state,
-    version: 20,
+    version: 21,
     scenarioVersion: 7,
     scenarioStartDate: SCENARIO_START_DATE,
     scenarioGeneratedThroughDate: state.scenarioAnchorDate,
+    ...createDefaultOperationsState(state.scenarioAnchorDate),
   });
   const mergeById = <T extends { id: string }>(
     existing: T[],
@@ -1422,7 +1453,7 @@ function migrateVersion19(
   const releaseEvent = release
     ? generated.changelogEvents.find((event) => event.entryId === release.id)
     : null;
-  return guestDemoStateSchema.parse({
+  return migrateVersion20(guestDemoStateV20Schema.parse({
     ...state,
     version: 20,
     changelogEntries: release && !state.changelogEntries.some((entry) => entry.version === release.version)
@@ -1431,11 +1462,37 @@ function migrateVersion19(
     changelogEvents: releaseEvent && !state.changelogEvents.some((event) => event.id === releaseEvent.id)
       ? [...state.changelogEvents, releaseEvent]
       : state.changelogEvents,
+  }));
+}
+
+function migrateVersion20(
+  state: z.infer<typeof guestDemoStateV20Schema>,
+): GuestDemoState {
+  const generated = addStandardScenario({
+    ...initialGuestDemoStateBase,
+    scenarioAnchorDate: state.scenarioAnchorDate,
+    scenarioGeneratedThroughDate: state.scenarioGeneratedThroughDate,
+  });
+  const release = generated.changelogEntries.find((entry) => entry.version === "1.7.0");
+  const releaseEvent = release
+    ? generated.changelogEvents.find((event) => event.entryId === release.id)
+    : null;
+
+  return guestDemoStateSchema.parse({
+    ...state,
+    version: 21,
+    changelogEntries: release && !state.changelogEntries.some((entry) => entry.version === release.version)
+      ? [...state.changelogEntries, release]
+      : state.changelogEntries,
+    changelogEvents: releaseEvent && !state.changelogEvents.some((event) => event.id === releaseEvent.id)
+      ? [...state.changelogEvents, releaseEvent]
+      : state.changelogEvents,
+    ...createDefaultOperationsState(state.scenarioAnchorDate),
   });
 }
 
 const initialGuestDemoStateBase: GuestDemoState = {
-  version: 20,
+  version: 21,
   scenarioVersion: 7,
   scenarioAnchorDate: getScenarioGeneratedThroughDate(),
   scenarioStartDate: SCENARIO_START_DATE,
@@ -1454,6 +1511,7 @@ const initialGuestDemoStateBase: GuestDemoState = {
   },
   savedAnalyticsViews: [],
   workspaceConfiguration: structuredClone(defaultWorkspaceConfiguration),
+  ...createDefaultOperationsState(getScenarioGeneratedThroughDate()),
   leaveRequests: [
     {
       id: "leave-001",
@@ -1556,7 +1614,7 @@ function addStandardScenario(base: GuestDemoState): GuestDemoState {
 
   return {
     ...base,
-    version: 20,
+    version: 21,
     scenarioVersion: 7,
     scenarioAnchorDate: scenario.scenarioGeneratedThroughDate,
     scenarioStartDate: scenario.scenarioStartDate,
@@ -2087,6 +2145,9 @@ export function guestDemoReducer(
       const body = action.body.trim();
       if (body.length < 2 || body.length > 1_000) return state;
       const createdAt = new Date().toISOString();
+      const mentionedPerson = action.mentionedPersonId
+        ? state.people.find((person) => person.id === action.mentionedPersonId)
+        : null;
       return {
         ...state,
         taskComments: [
@@ -2112,6 +2173,16 @@ export function guestDemoReducer(
           },
           ...state.taskEvents,
         ],
+        operationalNotifications: mentionedPerson ? [{
+          id: stableId("mention-notification", state),
+          title: `Mención para ${mentionedPerson.displayName}`,
+          description: state.tasks.find((task) => task.id === action.taskId)?.title ?? "Tarea",
+          priority: "medium",
+          status: "unread",
+          source: "mention",
+          href: `/app/tareas?focus=${action.taskId}`,
+          createdAt,
+        }, ...state.operationalNotifications] : state.operationalNotifications,
       };
     }
     case "add-task-dependency": {
@@ -2520,6 +2591,66 @@ export function guestDemoReducer(
           ),
         ],
       };
+    case "create-automation-rule": {
+      const parsed = automationRuleInputSchema.safeParse(action.input);
+      if (!parsed.success) return state;
+      return {
+        ...state,
+        automationRules: [{ id: stableId("automation-rule", state), ...parsed.data, enabled: true, lastRunAt: null }, ...state.automationRules],
+      };
+    }
+    case "toggle-automation-rule":
+      return { ...state, automationRules: state.automationRules.map((rule) => rule.id === action.ruleId ? { ...rule, enabled: action.enabled } : rule) };
+    case "run-automation-rule": {
+      const rule = state.automationRules.find((item) => item.id === action.ruleId && item.enabled);
+      if (!rule) return state;
+      const createdAt = new Date().toISOString();
+      return {
+        ...state,
+        automationRules: state.automationRules.map((item) => item.id === rule.id ? { ...item, lastRunAt: createdAt } : item),
+        automationRuns: [{ id: `${rule.id}-${createdAt}`, ruleId: rule.id, status: "succeeded", summary: `Acción preparada: ${rule.name}.`, createdAt }, ...state.automationRuns],
+        operationalNotifications: [{ id: `notification-${rule.id}-${createdAt}`, title: "Automatización preparada", description: rule.name, priority: "medium", status: "unread", source: "automation", href: "/app/operaciones", createdAt }, ...state.operationalNotifications],
+      };
+    }
+    case "apply-project-template": {
+      const template = state.projectTemplates.find((item) => item.id === action.templateId);
+      if (!template) return state;
+      const createdAt = new Date().toISOString();
+      const projectId = `template-project-${template.id}-${state.projects.length + 1}`;
+      const code = `TPL-${String(state.projects.length + 1).padStart(3, "0")}`;
+      const project = {
+        id: projectId, code, name: template.name, summary: template.description,
+        status: "active" as const, health: "on_track" as const,
+        ownerPersonId: null, ownerName: null, startDate: createdAt.slice(0, 10),
+        targetDate: new Date(Date.parse(createdAt) + template.durationDays * 86_400_000).toISOString().slice(0, 10),
+        color: "#2563eb", memberIds: [], createdAt, updatedAt: createdAt,
+      };
+      const tasks = Array.from({ length: template.taskCount }, (_, index) => ({
+        id: `${projectId}-task-${index + 1}`, title: `${template.name}: paso ${index + 1}`,
+        description: "Tarea generada desde una plantilla operativa.", status: "pending" as const,
+        priority: "medium" as const, projectId, projectName: template.name,
+        assigneePersonId: null, assigneeName: null,
+        dueDate: new Date(Date.parse(createdAt) + (index + 1) * 86_400_000).toISOString().slice(0, 10),
+        createdBy: "Usuario invitado", createdAt, updatedAt: createdAt,
+      }));
+      return { ...state, projects: [project, ...state.projects], tasks: [...tasks, ...state.tasks] };
+    }
+    case "add-capacity-allocation": {
+      const person = state.people.find((item) => item.id === action.input.personId);
+      const project = state.projects.find((item) => item.id === action.input.projectId);
+      if (!person || !project) return state;
+      const parsed = capacityAllocationSchema.safeParse({ id: stableId("capacity", state), ...action.input, personName: person.displayName, projectName: project.name });
+      return parsed.success ? { ...state, capacityAllocations: [parsed.data, ...state.capacityAllocations] } : state;
+    }
+    case "mark-notification":
+      return { ...state, operationalNotifications: state.operationalNotifications.map((notification) => notification.id === action.notificationId ? { ...notification, status: action.status } : notification) };
+    case "create-export-job": {
+      if (!exportTargets.includes(action.input.target) || action.input.name.trim().length < 3) return state;
+      const createdAt = new Date().toISOString();
+      return { ...state, exportJobs: [{ id: `export-${state.exportJobs.length + 1}-${createdAt}`, name: action.input.name.trim(), moduleId: action.input.moduleId, target: action.input.target, status: action.input.target === "csv" || action.input.target === "xlsx" ? "ready" : "pending", rowCount: 48, createdAt, externalUrl: null }, ...state.exportJobs] };
+    }
+    case "disconnect-workspace":
+      return { ...state, workspaceConnections: state.workspaceConnections.map((connection) => connection.provider === action.provider ? { ...connection, status: "simulated", connectedAt: null } : connection) };
     case "update-workspace-configuration": {
       const parsed = workspaceConfigurationSchema.safeParse(
         action.configuration,

@@ -79,15 +79,29 @@ Las ediciones y transiciones se ejecutan mediante RPC con privilegios y añaden
 eventos inmutables; los roles autenticados no escriben directamente en sus
 tablas.
 
-El estado invitado está en la versión 20 y utiliza Scenario V7. Zod valida las
+El estado invitado está en la versión 21 y utiliza Scenario V7. Zod valida las
 sesiones restauradas antes de mostrarlas. La migración V14 a V15 conserva los
 cambios operativos y preferencias y añade solo las entidades deterministas que
 faltan. V15 a V16 incorpora la entrada editorial v1.3.0 sin regenerar el
 escenario diario. V16 a V17 añade v1.3.1 una sola vez y conserva el grafo de la
 sesión. V17 a V18 incorpora v1.3.2 y actualiza únicamente el texto canónico
 publicado, sin modificar entradas editoriales personalizadas. V18 a V19 añade
-las publicaciones hasta v1.5.1 y V19 a V20 incorpora v1.6.0 sin reconstruir el
-resto de la sesión.
+las publicaciones hasta v1.5.1, V19 a V20 incorpora v1.6.0 y V20 a V21 añade
+operaciones, capacidad, notificaciones y exportaciones sin reconstruir el resto
+de la sesión.
+
+## Centro operativo e integraciones
+
+`operaciones` agrupa reglas cerradas, plantillas, recurrencias, capacidad,
+notificaciones y trabajos de exportación. Las Server Actions vuelven a validar
+los datos y permisos; el cliente no puede enviar SQL, JavaScript, URLs ni nombres
+de tablas. Las recurrencias se procesan en una función privada programada y
+utilizan identificadores deterministas por serie y periodo.
+
+Los proveedores externos implementan el mismo contrato de capacidades. OAuth
+usa PKCE y estado firmado; los tokens quedan cifrados en Vault y solo el servidor
+puede recuperarlos. La descarga local y los compositores de correo funcionan sin
+conceder acceso a archivos o buzones externos.
 
 La elección de tema es explícita: los espacios nuevos y antiguos utilizan
 `light` de forma predeterminada y `dark` se activa manualmente desde el perfil.

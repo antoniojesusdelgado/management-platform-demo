@@ -32,6 +32,9 @@ export type UserProfile = {
     inApp: boolean;
     assignments: boolean;
     reviews: boolean;
+    mentions: boolean;
+    automations: boolean;
+    exports: boolean;
   };
   simulatedRole: PersonRoleCode | null;
   avatarPath: string | null;
@@ -59,6 +62,9 @@ export const profilePreferencesSchema = z.object({
     inApp: z.boolean(),
     assignments: z.boolean(),
     reviews: z.boolean(),
+    mentions: z.boolean(),
+    automations: z.boolean(),
+    exports: z.boolean(),
   }),
   simulatedRole: z.enum(personRoleCodes).nullable(),
 });

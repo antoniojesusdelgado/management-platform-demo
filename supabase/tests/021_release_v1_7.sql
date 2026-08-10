@@ -1,0 +1,33 @@
+begin;
+select plan(27);
+
+select has_table('public','workspace_connections','workspace connections exist');
+select has_table('public','automation_rules','automation rules exist');
+select has_table('public','automation_runs','automation runs exist');
+select has_table('public','project_templates','project templates exist');
+select has_table('public','task_recurrences','task recurrences exist');
+select has_table('public','capacity_allocations','capacity allocations exist');
+select has_table('public','operational_notifications','operational notifications exist');
+select has_table('public','export_jobs','export jobs exist');
+select has_column('public','automation_rules','condition_config','automation conditions use a validated JSON contract');
+select col_not_null('public','automation_rules','condition_config','automation conditions cannot be null');
+select is((select bool_and(relrowsecurity) from pg_class where oid = any(array['public.workspace_connections'::regclass,'public.automation_rules'::regclass,'public.automation_runs'::regclass,'public.project_templates'::regclass,'public.task_recurrences'::regclass,'public.capacity_allocations'::regclass,'public.operational_notifications'::regclass,'public.export_jobs'::regclass])),true,'all v1.7 public tables use RLS');
+select is((select count(*)::integer from public.permissions where code like 'operations.%'),6,'the stable operations permissions exist');
+select is(has_table_privilege('anon','public.workspace_connections','SELECT'),false,'anonymous users cannot read workspace connections');
+select is(has_table_privilege('anon','public.automation_rules','SELECT'),false,'anonymous users cannot read automation rules');
+select is(has_table_privilege('anon','public.operational_notifications','SELECT'),false,'anonymous users cannot read notifications');
+select is(has_table_privilege('anon','public.export_jobs','SELECT'),false,'anonymous users cannot read export jobs');
+select function_privs_are('public','save_workspace_connection',array['uuid','uuid','text','text','text[]','text','text','timestamp with time zone'],'anon',array[]::text[],'anonymous users cannot store OAuth tokens');
+select function_privs_are('public','get_workspace_connection_secret',array['uuid'],'authenticated',array[]::text[],'authenticated clients cannot retrieve OAuth tokens');
+select function_privs_are('public','get_workspace_connection_secret',array['uuid'],'service_role',array['EXECUTE'],'only the server role can retrieve OAuth tokens');
+select function_privs_are('private','seed_v1_7_operations',array['uuid','uuid'],'authenticated',array[]::text[],'the seed helper is private');
+select is((select p.proconfig @> array['search_path=""'] from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='private' and p.proname='save_workspace_connection_secret'),true,'the token writer has an empty search path');
+select is((select count(*)::integer from public.changelog_entries where version='1.7.0'),(select count(*)::integer from public.organizations where exists(select 1 from public.memberships where organization_id=organizations.id and status='active')),'v1.7 release is seeded once per active workspace');
+select is((select count(*)::integer from public.module_settings where module_id='operaciones'),(select count(*)::integer from public.organizations where exists(select 1 from public.memberships where organization_id=organizations.id and status='active')),'operations module is enabled once per active workspace');
+select ok(not exists(select 1 from public.workspace_connections where token_secret_id is not null and status <> 'connected'),'only connected providers can reference a token');
+select function_privs_are('private','process_due_recurrences',array['date'],'authenticated',array[]::text[],'the recurrence processor is private');
+select is((select count(*)::integer from cron.job where jobname='daily-v1-7-recurrences'),1,'the daily recurrence job is scheduled once');
+select ok(not exists(select 1 from public.profiles where not (notification_preferences ?& array['mentions','automations','exports'])),'v1.7 notification preferences are present');
+
+select * from finish();
+rollback;

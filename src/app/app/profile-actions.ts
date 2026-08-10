@@ -39,6 +39,9 @@ export async function updateOwnProfileAction(
         in_app: parsed.data.notificationPreferences.inApp,
         assignments: parsed.data.notificationPreferences.assignments,
         reviews: parsed.data.notificationPreferences.reviews,
+        mentions: parsed.data.notificationPreferences.mentions,
+        automations: parsed.data.notificationPreferences.automations,
+        exports: parsed.data.notificationPreferences.exports,
       },
       target_simulated_role: parsed.data.simulatedRole as
         | "admin"

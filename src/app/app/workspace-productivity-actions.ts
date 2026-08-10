@@ -5,6 +5,7 @@ import {
   workspaceSearchQuerySchema,
   workspaceSearchResultSchema,
   type WorkspaceSearchResult,
+  type WorkspacePriority,
   type WorkspaceWorkItem,
 } from "@/domain/workspace-productivity";
 import { getWorkspaceAccess } from "@/lib/auth";
@@ -87,15 +88,16 @@ export async function loadWorkspaceInboxAction(): Promise<ActionResult<Workspace
   if (access.status !== "active") {
     return actionFailure("authentication_required", "Inicia sesión para consultar tu bandeja.");
   }
-  const [canSeeTasks, canSeeIncidents, canApproveLeave, canManageQuality] = await Promise.all([
+  const [canSeeTasks, canSeeIncidents, canApproveLeave, canManageQuality, canSeeNotifications] = await Promise.all([
     hasWorkspacePermission("tasks.items.view"),
     hasWorkspacePermission("incidents.tickets.view"),
     hasWorkspacePermission("vacations.requests.approve"),
     hasWorkspacePermission("integrations.runs.manage"),
+    hasWorkspacePermission("operations.notifications.view"),
   ]);
   const supabase = await createClient();
   const { data: person } = await supabase.from("people").select("id").eq("organization_id", access.organizationId).eq("profile_id", access.userId).maybeSingle();
-  const [tasksResult, incidentsResult, leaveResult, qualityResult] = await Promise.all([
+  const [tasksResult, incidentsResult, leaveResult, qualityResult, notificationsResult] = await Promise.all([
     canSeeTasks && person
       ? supabase.from("tasks").select("id,title,priority,due_date,project:projects(name)").eq("organization_id", access.organizationId).eq("assignee_person_id", person.id).neq("status", "completed").order("due_date", { ascending: true, nullsFirst: false }).limit(15)
       : Promise.resolve({ data: [], error: null }),
@@ -108,8 +110,11 @@ export async function loadWorkspaceInboxAction(): Promise<ActionResult<Workspace
     canManageQuality
       ? supabase.from("data_quality_issues").select("id,severity,code,safe_message,created_at").eq("organization_id", access.organizationId).is("resolved_at", null).order("created_at", { ascending: false }).limit(15)
       : Promise.resolve({ data: [], error: null }),
+    canSeeNotifications
+      ? supabase.from("operational_notifications").select("id,title,description,priority,href,created_at").eq("organization_id", access.organizationId).eq("recipient_profile_id", access.userId).eq("status", "unread").order("created_at", { ascending: false }).limit(15)
+      : Promise.resolve({ data: [], error: null }),
   ]);
-  if (tasksResult.error || incidentsResult.error || leaveResult.error || qualityResult.error) {
+  if (tasksResult.error || incidentsResult.error || leaveResult.error || qualityResult.error || notificationsResult.error) {
     return actionFailure("unexpected_error", "No se pudo cargar la bandeja de trabajo.");
   }
   const items: WorkspaceWorkItem[] = [
@@ -137,6 +142,16 @@ export async function loadWorkspaceInboxAction(): Promise<ActionResult<Workspace
       href: href("nominas", issue.id),
       priority: issue.severity === "error" ? "critical" as const : issue.severity === "warning" ? "high" as const : "low" as const,
       dueAt: null,
+    })),
+    ...(notificationsResult.data ?? []).map((notification) => ({
+      id: notification.id,
+      kind: "notification" as const,
+      title: notification.title,
+      description: notification.description,
+      moduleId: "operaciones" as const,
+      href: notification.href,
+      priority: (notification.priority === "critical" || notification.priority === "high" || notification.priority === "low" ? notification.priority : "medium") as WorkspacePriority,
+      dueAt: notification.created_at,
     })),
   ];
   const order = { critical: 0, high: 1, medium: 2, low: 3 };

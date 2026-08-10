@@ -120,6 +120,18 @@ variables del entorno de producción. Después de la promoción:
 4. Confirmar que Google OAuth utiliza el origen de producción.
 5. Conservar el despliegue anterior como opción de reversión.
 
+## Candidata v1.7.0
+
+La publicación requiere añadir en Preview y Producción las variables descritas
+en `WORKSPACE-INTEGRATIONS.md`. `WORKSPACE_OAUTH_STATE_SECRET`,
+`SUPABASE_SECRET_KEY` y los secretos de cliente son variables exclusivas del
+servidor. Después de configurarlas se deben registrar exactamente los callbacks
+de Google Workspace y Microsoft Entra para cada dominio autorizado.
+
+Antes de promover la Preview se comprueban por separado: OAuth válido, estado
+manipulado, revocación, permisos incompletos, exportación local, confirmación de
+escritura externa y ausencia de OAuth en el modo invitado.
+
 ## Versión actual
 
 - Origen canónico de producción: <https://plataformagestion.app>
@@ -127,15 +139,16 @@ variables del entorno de producción. Después de la promoción:
 - Preview estable de la rama:
   <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
 - Versión actual de producción: `v1.5.1`
-- Candidata en validación: `v1.6.0`
+- Candidata en validación: `v1.7.0`
 - Región y plan de Supabase: `eu-central-1`, Free
 - Producción y Preview utilizan variables separadas para los orígenes de la
   aplicación y del portfolio.
 - La compilación local y la Preview superaron 64 comprobaciones de extremo a
   extremo; 6 combinaciones de proyecto o dispositivo se omitieron de forma
   intencionada.
-- El repositorio contiene 35 migraciones ordenadas. La última es
-  `20260807100254_release_v1_5_1_changelog_alignment.sql`.
+- La migración más reciente es
+  `20260810185850_release_v1_7_operations.sql` y
+  `20260810190106_harden_v1_7_operation_policies.sql`.
 - El esquema remoto incluye políticas RLS, aprovisionamiento determinista y la
   integración nocturna neutral programada a las 02:15 UTC.
 - El refuerzo eliminó los índices de claves foráneas ausentes, las políticas de

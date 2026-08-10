@@ -36,9 +36,12 @@ espacio independiente.
 - Analítica con filtros, comparaciones y vistas guardadas.
 - Búsqueda global de personas, proyectos, tareas e incidencias con `Ctrl/Cmd+K`.
 - Bandeja personal con tareas, aprobaciones, compromisos de atención y avisos operativos.
+- Automatizaciones controladas, plantillas y recurrencias sin código arbitrario.
+- Planificación semanal de capacidad con avisos de sobreasignación.
+- Informes CSV/XLSX y conexiones opcionales con Google Workspace o Microsoft 365.
 - Tema claro por defecto y tema oscuro opcional.
 
-La versión preparada en esta rama es `v1.6.0`. El historial de publicaciones y
+La versión preparada en esta rama es `v1.7.0`. El historial de publicaciones y
 sus notas están disponibles en la sección de releases.
 
 ## Cómo está construida
@@ -57,6 +60,11 @@ La aplicación usa Next.js, React, TypeScript, Supabase y PostgreSQL. Las prueba
 de navegador se ejecutan con Playwright y Axe. El acceso a datos autenticados
 se protege con políticas RLS, validación en servidor y permisos por
 organización.
+
+Los tokens de las integraciones de productividad se procesan solo en servidor
+y se almacenan cifrados mediante Supabase Vault. El modo invitado utiliza
+adaptadores simulados y no abre conexiones externas. La configuración se
+describe en [Integraciones de productividad](docs/WORKSPACE-INTEGRATIONS.md).
 
 ## Desarrollo asistido con inteligencia artificial
 

@@ -405,6 +405,9 @@ export function ProfileWorkspace({
                 ["inApp", "Actividad general"],
                 ["assignments", "Asignaciones"],
                 ["reviews", "Revisiones y decisiones"],
+                ["mentions", "Menciones"],
+                ["automations", "Automatizaciones"],
+                ["exports", "Informes y exportaciones"],
               ] as const
             ).map(([key, label]) => (
               <label key={key}>

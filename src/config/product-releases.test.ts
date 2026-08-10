@@ -15,12 +15,12 @@ describe("product release catalog", () => {
     );
   });
 
-  test("keeps releases ordered and publishes v1.6.0 on 10 August 2026", () => {
+  test("keeps releases ordered and publishes v1.7.0 on 10 August 2026", () => {
     expect(PRODUCT_RELEASES.at(-1)).toEqual({
-      version: "1.6.0",
-      title: "Encuentra y prioriza tu trabajo",
+      version: "1.7.0",
+      title: "Menos tareas repetitivas, más control",
       summary:
-        "Una búsqueda global y una bandeja personal reúnen personas, proyectos, tareas, solicitudes e incidencias que requieren atención.",
+        "Automatizaciones, plantillas, planificación de capacidad e informes conectados reúnen el trabajo operativo en un mismo lugar.",
       publishedDate: "2026-08-10",
     });
   });
@@ -30,6 +30,8 @@ describe("product release catalog", () => {
       "supabase/migrations/20260807100254_release_v1_5_1_changelog_alignment.sql",
     ).text()}\n${await Bun.file(
       "supabase/migrations/20260810121210_release_v1_6_0_productivity.sql",
+    ).text()}\n${await Bun.file(
+      "supabase/migrations/20260810185850_release_v1_7_operations.sql",
     ).text()}`;
 
     for (const release of PRODUCT_RELEASES.slice(-4)) {
