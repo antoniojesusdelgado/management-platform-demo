@@ -31,10 +31,16 @@ import type { AnalyticsServiceDimension } from "@/domain/analytics";
 
 export default async function AppModulePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ module: string }>;
+  searchParams: Promise<{ focus?: string | string[] }>;
 }) {
   const { module } = await params;
+  const requestedFocus = (await searchParams).focus;
+  const focusedEntityId = typeof requestedFocus === "string" && /^[a-z0-9-]{1,160}$/i.test(requestedFocus)
+    ? requestedFocus
+    : null;
   if (!isModuleId(module)) notFound();
 
   const access = await getWorkspaceAccess();
@@ -727,6 +733,7 @@ export default async function AppModulePage({
       settingsLoadError={settingsLoadError}
       canManageSettings={canManageSettings}
       workspaceConfiguration={workspaceConfiguration}
+      focusedEntityId={focusedEntityId}
       workspaceLoadError={
         scenarioError || profileError || organizationError
           ? "No se pudo actualizar toda la información. Puedes continuar con los datos disponibles y reintentar más tarde."

@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ThemePreferencesSync } from "@/components/theme-provider";
 import { Dashboard } from "@/components/dashboard";
@@ -14,6 +14,7 @@ import {
   type GuestDemoState,
 } from "@/domain/guest-demo";
 import type { ModuleId } from "@/domain/modules";
+import { buildGuestWorkItems, searchGuestWorkspace, type WorkspaceSearchResult, type WorkspaceWorkItem } from "@/domain/workspace-productivity";
 import { canTransitionChangelog, type ChangelogInput, type ChangelogStatus } from "@/domain/changelog";
 import type { PermissionCode } from "@/domain/permissions";
 import type { WorkspaceMembershipStatus } from "@/domain/settings";
@@ -131,10 +132,23 @@ export function GuestDemoApp() {
   const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState("");
   const [storageAvailable, setStorageAvailable] = useState(true);
+  const [focusedEntityId, setFocusedEntityId] = useState<string | null>(null);
   const summaryAnchor = useMemo(
     () => new Date(`${state.scenarioAnchorDate}T12:00:00.000Z`),
     [state.scenarioAnchorDate],
   );
+  const searchWorkspace = useCallback(async (query: string) => ({
+    ok: true as const,
+    data: searchGuestWorkspace(state, query),
+  }), [state]);
+  const loadWorkspaceInbox = useCallback(async () => ({
+    ok: true as const,
+    data: buildGuestWorkItems(state),
+  }), [state]);
+  const openWorkspaceItem = useCallback((item: WorkspaceSearchResult | WorkspaceWorkItem) => {
+    setFocusedEntityId(item.id);
+    dispatch({ type: "navigate", module: item.moduleId });
+  }, []);
 
   useEffect(() => {
     const stored = readStoredState();
@@ -403,8 +417,10 @@ export function GuestDemoApp() {
     if (state.activeModule === "vacaciones") {
       return (
         <VacationsWorkspace
+          key={focusedEntityId ?? "vacaciones"}
           requests={state.leaveRequests}
           events={state.leaveEvents}
+          initialFocusId={focusedEntityId}
           onCreate={createLeave}
           onTransition={transitionLeave}
         />
@@ -414,12 +430,14 @@ export function GuestDemoApp() {
     if (state.activeModule === "tareas") {
       return (
         <TasksWorkspace
+          key={focusedEntityId ?? "tareas"}
           tasks={state.tasks}
           dependencies={state.taskDependencies}
           comments={state.taskComments}
           events={state.taskEvents}
           projectOptions={state.projects.map(({ id, name }) => ({ id, name }))}
           referenceDate={state.scenarioAnchorDate}
+          initialFocusId={focusedEntityId}
           onCreate={createTask}
           onUpdate={updateTask}
           onTransition={transitionTask}
@@ -432,11 +450,13 @@ export function GuestDemoApp() {
     if (state.activeModule === "proyectos") {
       return (
         <ProjectsWorkspace
+          key={focusedEntityId ?? "proyectos"}
           projects={state.projects}
           events={state.projectEvents}
           people={state.people}
           tasks={state.tasks}
           incidents={state.incidents}
+          initialFocusId={focusedEntityId}
           onCreate={createProject}
           onUpdate={updateProject}
         />
@@ -444,13 +464,13 @@ export function GuestDemoApp() {
     }
 
     if (state.activeModule === "incidencias") {
-      return <IncidentsWorkspace incidents={state.incidents} events={state.incidentEvents} assigneeOptions={state.people.filter((person) => person.status === "active").map((person) => person.displayName)} projectOptions={state.projects.map(({ id, name }) => ({ id, name }))} referenceDate={`${state.scenarioAnchorDate}T12:00:00.000Z`} onCreate={createIncident} onUpdate={updateIncident} onTransition={transitionIncident} />;
+      return <IncidentsWorkspace incidents={state.incidents} events={state.incidentEvents} assigneeOptions={state.people.filter((person) => person.status === "active").map((person) => person.displayName)} projectOptions={state.projects.map(({ id, name }) => ({ id, name }))} referenceDate={`${state.scenarioAnchorDate}T12:00:00.000Z`} initialFocusId={focusedEntityId} onCreate={createIncident} onUpdate={updateIncident} onTransition={transitionIncident} />;
     }
 
     if (state.activeModule === "personal") {
       return (
         <>
-          <PeopleWorkspace people={state.people} events={state.peopleEvents} leaveRequests={state.leaveRequests} referenceDate={state.scenarioAnchorDate} onCreate={createPerson} onUpdate={updatePerson} />
+          <PeopleWorkspace people={state.people} events={state.peopleEvents} leaveRequests={state.leaveRequests} referenceDate={state.scenarioAnchorDate} initialFocusId={focusedEntityId} onCreate={createPerson} onUpdate={updatePerson} />
           <IntegrationsCenter connectors={state.integrationConnectors} runs={state.integrationRuns} issues={state.dataQualityIssues} kind="people" onSimulate={simulateIntegration} />
         </>
       );
@@ -501,6 +521,9 @@ export function GuestDemoApp() {
         organizationName={state.organizationName}
         mode="guest"
         onNavigate={navigate}
+        workspaceSearch={searchWorkspace}
+        workspaceInbox={loadWorkspaceInbox}
+        onOpenWorkspaceItem={openWorkspaceItem}
         onReset={() => {
           dispatch({ type: "reset" });
           if (storageAvailable) {
@@ -513,7 +536,7 @@ export function GuestDemoApp() {
           notify("Datos iniciales restaurados");
         }}
       >
-        {content()}
+        <Fragment key={focusedEntityId ?? state.activeModule}>{content()}</Fragment>
       </AppShell>
       <div
         className="local-toast"

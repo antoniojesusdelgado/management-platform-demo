@@ -15,20 +15,22 @@ describe("product release catalog", () => {
     );
   });
 
-  test("keeps releases ordered and publishes v1.5.1 on 7 August 2026", () => {
+  test("keeps releases ordered and publishes v1.6.0 on 10 August 2026", () => {
     expect(PRODUCT_RELEASES.at(-1)).toEqual({
-      version: "1.5.1",
-      title: "Novedades siempre al día",
+      version: "1.6.0",
+      title: "Encuentra y prioriza tu trabajo",
       summary:
-        "La versión visible coincide ahora con la publicación disponible y se explica cómo se ha desarrollado el proyecto.",
-      publishedDate: "2026-08-07",
+        "Una búsqueda global y una bandeja personal reúnen personas, proyectos, tareas, solicitudes e incidencias que requieren atención.",
+      publishedDate: "2026-08-10",
     });
   });
 
   test("keeps the TypeScript and SQL release copy aligned", async () => {
-    const sql = await Bun.file(
+    const sql = `${await Bun.file(
       "supabase/migrations/20260807100254_release_v1_5_1_changelog_alignment.sql",
-    ).text();
+    ).text()}\n${await Bun.file(
+      "supabase/migrations/20260810121210_release_v1_6_0_productivity.sql",
+    ).text()}`;
 
     for (const release of PRODUCT_RELEASES.slice(-4)) {
       expect(sql).toContain(`'${release.version}'`);

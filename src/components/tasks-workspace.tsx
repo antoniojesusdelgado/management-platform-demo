@@ -41,6 +41,7 @@ type TasksWorkspaceProps = {
   projectOptions?: Array<{ id: string; name: string }>;
   currentUserName?: string;
   referenceDate?: string;
+  initialFocusId?: string | null;
   onCreate: (input: TaskInput) => boolean | Promise<boolean>;
   onUpdate: (taskId: string, input: TaskInput) => boolean | Promise<boolean>;
   onTransition: (
@@ -94,6 +95,7 @@ export function TasksWorkspace({
   projectOptions = [],
   currentUserName = "Usuario invitado",
   referenceDate = new Date().toISOString().slice(0, 10),
+  initialFocusId,
   onCreate,
   onUpdate,
   onTransition,
@@ -124,7 +126,7 @@ export function TasksWorkspace({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formValue, setFormValue] = useState<TaskInput>(emptyInput());
   const [formError, setFormError] = useState("");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(() => initialFocusId ?? null);
   const [transitionNote, setTransitionNote] = useState("");
   const [commentBody, setCommentBody] = useState("");
   const [dependencyId, setDependencyId] = useState("");

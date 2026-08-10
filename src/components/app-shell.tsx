@@ -19,7 +19,10 @@ import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { InitialsAvatar } from "@/components/initials-avatar";
 import { ModuleIcon } from "@/components/module-icon";
+import { WorkspaceCommandCenter } from "@/components/workspace-command-center";
+import type { ActionResult } from "@/domain/action-result";
 import { modules, type ModuleId } from "@/domain/modules";
+import type { WorkspaceSearchResult, WorkspaceWorkItem } from "@/domain/workspace-productivity";
 import { PRODUCT_VERSION } from "@/config/product-releases";
 import { createClient } from "@/lib/supabase/client";
 
@@ -31,6 +34,9 @@ type AppShellProps = {
   onReset?: () => void;
   avatarUrl?: string | null;
   displayName?: string;
+  workspaceSearch?: (query: string) => Promise<ActionResult<WorkspaceSearchResult[]>>;
+  workspaceInbox?: () => Promise<ActionResult<WorkspaceWorkItem[]>>;
+  onOpenWorkspaceItem?: (item: WorkspaceSearchResult | WorkspaceWorkItem) => void;
   children: ReactNode;
 };
 
@@ -79,6 +85,9 @@ export function AppShell({
   onReset,
   avatarUrl,
   displayName,
+  workspaceSearch,
+  workspaceInbox,
+  onOpenWorkspaceItem,
   children,
 }: AppShellProps) {
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
@@ -160,6 +169,9 @@ export function AppShell({
           </div>
 
           <div className="topbar-actions">
+            {workspaceSearch && workspaceInbox ? (
+              <WorkspaceCommandCenter search={workspaceSearch} loadInbox={workspaceInbox} onOpenItem={onOpenWorkspaceItem} />
+            ) : null}
             {onReset ? (
               <button
                 type="button"

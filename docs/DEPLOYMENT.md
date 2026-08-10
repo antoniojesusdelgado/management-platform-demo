@@ -30,6 +30,10 @@ bun run e2e
 git diff --check
 ```
 
+Los servicios locales usan el rango `56420–56429`, elegido para evitar los
+rangos dinámicos que Windows puede reservar para Hyper-V y Docker. Este ajuste
+solo afecta al entorno local; las URLs de Preview y producción no cambian.
+
 El resultado generado debe coincidir con
 `src/lib/supabase/database.types.ts`.
 
@@ -123,6 +127,7 @@ variables del entorno de producción. Después de la promoción:
 - Preview estable de la rama:
   <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
 - Versión actual de producción: `v1.5.1`
+- Candidata en validación: `v1.6.0`
 - Región y plan de Supabase: `eu-central-1`, Free
 - Producción y Preview utilizan variables separadas para los orígenes de la
   aplicación y del portfolio.

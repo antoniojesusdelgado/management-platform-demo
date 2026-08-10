@@ -17,6 +17,18 @@ test("guest dashboard has no detectable WCAG A/AA violations", async ({
   expect(results.violations).toEqual([]);
 });
 
+test("workspace command center has no detectable WCAG A/AA violations", async ({ page }) => {
+  await openGuestDemo(page);
+  await page.keyboard.press("Control+k");
+  const dialog = page.getByRole("dialog", { name: "Centro de trabajo" });
+  await dialog.getByRole("searchbox").fill("soporte");
+  await expect(dialog.locator(".workspace-command-item").first()).toBeVisible();
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(results.violations).toEqual([]);
+});
+
 test("leave dialog has no detectable WCAG A/AA violations", async (
   { page },
   testInfo,

@@ -45,6 +45,30 @@ test("navigates through every module", async ({ page }, testInfo) => {
   }
 });
 
+test("searches globally and opens the selected entity", async ({ page }) => {
+  await page.keyboard.press("Control+k");
+  const commandCenter = page.getByRole("dialog", { name: "Centro de trabajo" });
+  await expect(commandCenter).toBeVisible();
+  await commandCenter.getByRole("searchbox").fill("soporte");
+  const project = commandCenter
+    .locator(".workspace-command-item")
+    .filter({ hasText: "Experiencia de soporte" })
+    .first();
+  await expect(project).toBeVisible();
+  await project.click();
+  await expect(page.getByRole("dialog").filter({ hasText: "Experiencia de soporte" })).toBeVisible();
+});
+
+test("derives a unified inbox and opens its source record", async ({ page }) => {
+  await page.getByRole("button", { name: "Bandeja", exact: true }).click();
+  const commandCenter = page.getByRole("dialog", { name: "Centro de trabajo" });
+  await expect(commandCenter.getByRole("tab", { name: "Mi bandeja" })).toHaveAttribute("aria-selected", "true");
+  const firstItem = commandCenter.locator(".workspace-command-item").first();
+  await expect(firstItem).toBeVisible();
+  await firstItem.click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+});
+
 test("creates, approves and restores a leave request", async ({ page }, testInfo) => {
   await navigateToModule(
     page,

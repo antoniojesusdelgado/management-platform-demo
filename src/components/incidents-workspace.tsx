@@ -33,6 +33,7 @@ type Props = {
   referenceDate?: string;
   pending?: boolean;
   loadError?: string;
+  initialFocusId?: string | null;
   onCreate: (input: IncidentInput) => boolean | Promise<boolean>;
   onUpdate: (id: string, input: IncidentInput) => boolean | Promise<boolean>;
   onTransition: (
@@ -84,6 +85,7 @@ export function IncidentsWorkspace({
   referenceDate = new Date().toISOString(),
   pending = false,
   loadError,
+  initialFocusId,
   onCreate,
   onUpdate,
   onTransition,
@@ -92,7 +94,7 @@ export function IncidentsWorkspace({
   const [priority, setPriority] = useState<"all" | IncidentPriority>("all");
   const [category, setCategory] = useState<"all" | IncidentCategory>("all");
   const [page, setPage] = useState(1);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(() => initialFocusId ?? null);
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [input, setInput] = useState<IncidentInput>(emptyInput());

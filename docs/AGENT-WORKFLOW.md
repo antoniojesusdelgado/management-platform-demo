@@ -14,6 +14,8 @@ No forman parte de las tecnologías del producto en ejecución:
 Este flujo no debe presentarse como prueba de resultados empresariales ni como
 sustituto de una revisión de producto, seguridad o cumplimiento legal.
 
-El historial no conserva un identificador único y verificable del modelo usado
-en todas las sesiones. Por ese motivo, la atribución pública utiliza la
-denominación del producto `ChatGPT Codex` y no afirma un número de modelo.
+Según el registro de trabajo del responsable del proyecto, el desarrollo
+asistido comenzó con GPT-5.3 Codex y continuó con GPT-5.4, GPT-5.5 y GPT-5.6
+Sol. La etapa actual utiliza GPT-5.6 Sol. Esta trazabilidad describe las
+herramientas de desarrollo; no convierte ningún modelo en una dependencia del
+producto ni sustituye la revisión humana de código, seguridad y publicación.
