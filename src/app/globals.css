@@ -4271,6 +4271,75 @@ h3 {
   padding-inline: 0.5rem;
 }
 
+/* v1.7 operations */
+.operations-workspace { min-width: 0; }
+.operations-tabs {
+  display: flex;
+  gap: .5rem;
+  margin: 1.25rem 0;
+  padding-bottom: .25rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.operations-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  min-height: 42px;
+  padding: .65rem .85rem;
+  border: 1px solid var(--border);
+  border-radius: .75rem;
+  color: var(--text-muted);
+  background: var(--surface);
+  white-space: nowrap;
+}
+.operations-tabs button.active {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.operations-panel { display: grid; gap: 1rem; min-width: 0; }
+.operations-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(280px, .8fr); gap: 1rem; }
+.operations-list { display: grid; gap: .75rem; }
+.operation-item, .notification-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.operation-item p, .notification-item p { margin: .35rem 0 0; }
+.operation-actions { display: flex; align-items: center; justify-content: flex-end; gap: .65rem; flex-wrap: wrap; }
+.operations-form, .capacity-form, .export-form, .mail-composer { display: grid; gap: .85rem; align-content: start; }
+.operations-form label, .capacity-form label, .export-form label, .mail-composer label { display: grid; gap: .35rem; }
+.switch-label { display: inline-flex; align-items: center; gap: .45rem; }
+.notification-list { display: grid; gap: .75rem; }
+.notification-item { padding: .8rem 0 .8rem .85rem; border-left: 3px solid var(--border); }
+.notification-item.priority-critical { border-left-color: var(--danger); }
+.notification-item.priority-high { border-left-color: var(--warning); }
+.capacity-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.capacity-card { display: grid; gap: .7rem; }
+.capacity-percentage { font-size: 1.5rem; }
+.capacity-track { height: .55rem; overflow: hidden; border-radius: 999px; background: var(--surface-subtle); }
+.capacity-track span { display: block; height: 100%; background: var(--success); border-radius: inherit; }
+.capacity-risk .capacity-track span { background: var(--warning); }
+.capacity-over .capacity-track span { background: var(--danger); }
+.capability-list { display: flex; gap: .4rem; flex-wrap: wrap; margin: .75rem 0; }
+.demo-note-compact { padding: .75rem; border-left: 3px solid var(--accent); color: var(--text-muted); background: var(--surface-subtle); }
+.export-form { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; align-items: end; }
+
+@media (max-width: 900px) {
+  .operations-grid, .capacity-grid { grid-template-columns: 1fr; }
+  .export-form { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 600px) {
+  .operations-summary { grid-template-columns: 1fr; }
+  .operations-tabs { margin-inline: -.25rem; padding-inline: .25rem; }
+  .operation-item, .notification-item { align-items: flex-start; flex-direction: column; }
+  .operation-actions { width: 100%; justify-content: flex-start; }
+  .export-form { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 760px) {
   .workspace-command-dialog {
     width: calc(100vw - 1rem);

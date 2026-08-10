@@ -22,6 +22,7 @@ import { canTransitionIncident, type IncidentInput, type IncidentStatus } from "
 import type { PersonInput } from "@/domain/people";
 import type { ProjectInput } from "@/domain/projects";
 import type { SavedAnalyticsView } from "@/domain/integrations";
+import type { AutomationRule, CapacityAllocation, ExportTarget, NotificationStatus, WorkspaceProvider } from "@/domain/operations";
 import { canTransitionPayroll, type PayrollInput, type PayrollStatus } from "@/domain/payroll";
 import { canTransitionTreasury, type TreasuryInput, type TreasuryStatus } from "@/domain/treasury";
 import {
@@ -79,6 +80,10 @@ const ProjectsWorkspace = dynamic(
     import("@/components/projects-workspace").then(
       (module) => module.ProjectsWorkspace,
     ),
+  { loading: () => <WorkspaceLoading /> },
+);
+const OperationsWorkspace = dynamic(
+  () => import("@/components/operations-workspace").then((module) => module.OperationsWorkspace),
   { loading: () => <WorkspaceLoading /> },
 );
 
@@ -252,9 +257,9 @@ export function GuestDemoApp() {
     return true;
   }
 
-  function addTaskComment(taskId: string, body: string) {
+  function addTaskComment(taskId: string, body: string, mentionedPersonId?: string) {
     if (!ready || body.trim().length < 2) return false;
-    dispatch({ type: "add-task-comment", taskId, body });
+    dispatch({ type: "add-task-comment", taskId, body, mentionedPersonId });
     notify("Comentario añadido");
     return true;
   }
@@ -356,6 +361,14 @@ export function GuestDemoApp() {
     notify("Vista analítica guardada en esta sesión");
     return true;
   }
+  function createAutomationRule(input: Pick<AutomationRule, "name" | "trigger" | "action">) { if (!ready) return false; dispatch({ type: "create-automation-rule", input }); notify("Regla creada"); return true; }
+  function toggleAutomationRule(ruleId: string, enabled: boolean) { if (!ready) return false; dispatch({ type: "toggle-automation-rule", ruleId, enabled }); notify(enabled ? "Regla activada" : "Regla pausada"); return true; }
+  function runAutomationRule(ruleId: string) { if (!ready) return false; dispatch({ type: "run-automation-rule", ruleId }); notify("Acción preparada para revisión"); return true; }
+  function applyProjectTemplate(templateId: string) { if (!ready) return false; dispatch({ type: "apply-project-template", templateId }); notify("Proyecto y tareas creados desde la plantilla"); return true; }
+  function addCapacityAllocation(input: Omit<CapacityAllocation, "id" | "personName" | "projectName">) { if (!ready) return false; dispatch({ type: "add-capacity-allocation", input }); notify("Asignación guardada"); return true; }
+  function markNotification(notificationId: string, status: NotificationStatus) { if (!ready) return false; dispatch({ type: "mark-notification", notificationId, status }); return true; }
+  function createExportJob(input: { name: string; moduleId: string; target: ExportTarget }) { if (!ready) return false; dispatch({ type: "create-export-job", input }); notify("Exportación preparada en modo invitado"); return true; }
+  function disconnectWorkspace(provider: WorkspaceProvider) { if (!ready) return false; dispatch({ type: "disconnect-workspace", provider }); notify("Conector simulado restablecido"); return true; }
 
   function content() {
     if (!ready) return <WorkspaceLoading />;
@@ -435,6 +448,7 @@ export function GuestDemoApp() {
           dependencies={state.taskDependencies}
           comments={state.taskComments}
           events={state.taskEvents}
+          mentionOptions={state.people.filter((person) => person.status === "active").map((person) => ({ id: person.id, label: person.displayName }))}
           projectOptions={state.projects.map(({ id, name }) => ({ id, name }))}
           referenceDate={state.scenarioAnchorDate}
           initialFocusId={focusedEntityId}
@@ -496,6 +510,10 @@ export function GuestDemoApp() {
           <IntegrationsCenter connectors={state.integrationConnectors} runs={state.integrationRuns} issues={state.dataQualityIssues} kind="payroll" onSimulate={simulateIntegration} />
         </>
       );
+    }
+
+    if (state.activeModule === "operaciones") {
+      return <OperationsWorkspace {...state} mode="guest" people={state.people} projects={state.projects} canManage pending={false} onCreateRule={createAutomationRule} onToggleRule={toggleAutomationRule} onRunRule={runAutomationRule} onApplyTemplate={applyProjectTemplate} onAddAllocation={addCapacityAllocation} onMarkNotification={markNotification} onCreateExport={createExportJob} onDisconnect={disconnectWorkspace} />;
     }
 
     if (state.activeModule === "configuracion") {

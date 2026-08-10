@@ -13,7 +13,7 @@ semilla y fecha de referencia producen siempre el mismo grafo de entidades
 ficticias. La configuración de referencia es:
 
 - Versión del escenario: `7`
-- Contrato de estado invitado: `GuestDemoState V20`
+- Contrato de estado invitado: `GuestDemoState V21`
 - Semilla: `management-platform-standard-v7`
 - Intervalo visible: `2025-01-01` a `2026-08-09`
 - Fecha de referencia: `2026-08-09`
@@ -85,7 +85,13 @@ El escenario actual contiene:
 - 20 ciclos agregados de nómina y 3.514 participantes sin importes individuales;
 - 80 ejecuciones de integración proporcionales y trazables;
 - 20 novedades publicadas con una versión canónica compartida, incluida
-  `v1.6.0`;
+  `v1.7.0`;
+
+Las entidades operativas de v1.7.0 son también ficticias. Las reglas,
+plantillas, asignaciones, notificaciones y exportaciones de la demo invitada se
+crean de forma determinista. Las conexiones externas del invitado son
+simulaciones: no representan cuentas, archivos, calendarios ni direcciones de
+correo reales.
 - 8.177 registros relacionados, incluidos eventos inmutables de actividad y
   trazabilidad.
 

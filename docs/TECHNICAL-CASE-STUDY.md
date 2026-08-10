@@ -86,7 +86,7 @@ flowchart TB
   subgraph next["Aplicación Next.js"]
     routes["App Router y Server Components"]
     actions["Server Actions"]
-    guest["Reducer invitado y GuestDemoState V20"]
+    guest["Reducer invitado y GuestDemoState V21"]
     analytics["Motor analítico puro"]
     ui["Módulos React responsive"]
   end
@@ -247,8 +247,8 @@ credenciales ni payloads sensibles.
 
 El escenario V7 comienza el `2025-01-01` y crece hasta ayer en
 `Europe/Madrid`. La misma semilla y ancla producen el mismo checksum.
-`GuestDemoState V20` conserva las entidades y preferencias de versiones
-anteriores y añade únicamente las novedades ausentes hasta v1.6.0, sin
+`GuestDemoState V21` conserva las entidades y preferencias de versiones
+anteriores y añade únicamente las novedades ausentes hasta v1.7.0, sin
 regenerar el escenario ni sobrescribir cambios operativos. La migración V14 a
 V15 continúa anexando únicamente IDs deterministas ausentes.
 
@@ -394,6 +394,21 @@ Configuración actualiza de forma explícita el ancla y registra la operación.
 | v1.5.0 | Privilegios de base de datos y cadena de entrega reforzados |
 | v1.5.1 | Catálogo de versiones alineado y desarrollo asistido documentado |
 | v1.6.0 | Búsqueda global, bandeja unificada y enlaces directos a entidades |
+| v1.7.0 | Automatizaciones, capacidad, notificaciones e integraciones de productividad |
+
+### Operaciones e integraciones
+
+El diseño de v1.7.0 separa la identidad de la plataforma de la autorización de
+Google Workspace o Microsoft 365. Los contratos de proveedor comparten las
+capacidades de archivos, hojas de cálculo, correo y calendario, pero cada token
+pertenece a una persona y una organización. PKCE y el estado firmado protegen el
+retorno OAuth; Vault mantiene los tokens fuera de los esquemas expuestos.
+
+El centro operativo conecta reglas cerradas, plantillas, recurrencias,
+asignaciones semanales y notificaciones. Las advertencias de capacidad orientan
+la planificación sin bloquearla. Las exportaciones reconstruyen en servidor la
+vista autorizada, imponen un límite de filas y requieren confirmación antes de
+crear un archivo o evento externo.
 
 Las fechas editoriales se muestran en Novedades; v1.3.0 utiliza el 23 de junio
 de 2026, v1.3.1 el 29 de julio, v1.3.2 el 30 de julio, v1.4.0 y v1.4.1 el 3 de

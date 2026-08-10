@@ -27,6 +27,16 @@ Los códigos de permiso siguen el contrato `module.resource.action`.
 | `integrations.runs.view` | Consultar el estado de conectores y su historial ficticio |
 | `integrations.runs.manage` | Simular y configurar integraciones neutrales |
 | `settings.workspace.manage` | Gestionar ajustes, roles e invitaciones |
+| `operations.automations.view` | Consultar reglas, plantillas y recurrencias |
+| `operations.automations.manage` | Administrar reglas, plantillas y recurrencias |
+| `operations.capacity.view` | Consultar la planificación semanal |
+| `operations.capacity.manage` | Administrar asignaciones de capacidad |
+| `operations.notifications.view` | Consultar y actualizar notificaciones propias |
+| `operations.notifications.manage` | Crear notificaciones operativas autorizadas |
+
+Las conexiones de Google Workspace y Microsoft 365 se autorizan además por
+propietario mediante RLS. Una persona no puede consultar ni revocar la conexión
+de otra, aunque ambas pertenezcan a la misma organización.
 
 Las etiquetas, los colores y las descripciones de los roles pueden cambiar. Los
 códigos de permiso no pueden reutilizarse con otra finalidad; cualquier cambio

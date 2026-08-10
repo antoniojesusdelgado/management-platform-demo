@@ -1,5 +1,35 @@
 # Mapas de procesos
 
+## Exportación conectada v1.7.0
+
+```mermaid
+flowchart LR
+  user["Persona autorizada"] --> request["Solicita una exportación"]
+  request --> validate["Servidor reconstruye permisos y filtros"]
+  validate --> local["CSV o XLSX local"]
+  validate --> pending["Trabajo externo pendiente"]
+  pending --> confirm["Confirmación explícita"]
+  confirm --> provider["Google Sheets o Microsoft Excel"]
+  provider --> notify["Resultado en el centro operativo"]
+```
+
+## Conexión de productividad
+
+```mermaid
+sequenceDiagram
+  participant U as Persona
+  participant A as Aplicación
+  participant P as Google o Microsoft
+  participant V as Supabase Vault
+  U->>A: Conectar proveedor
+  A->>P: Authorization Code + PKCE + state cifrado y autenticado
+  P-->>A: Código autorizado
+  A->>A: Validar state, identidad y organización
+  A->>P: Intercambiar código en servidor
+  A->>V: Cifrar tokens
+  A-->>U: Mostrar capacidades y estado
+```
+
 Todos los diagramas describen la demostración neutral, no procesos internos de
 una organización real.
 

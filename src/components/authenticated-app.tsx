@@ -30,6 +30,7 @@ import {
   saveAnalyticsViewAction,
 } from "@/app/app/analytics-actions";
 import { loadWorkspaceInboxAction, searchWorkspaceAction } from "@/app/app/workspace-productivity-actions";
+import { addCapacityAllocationAction, applyProjectTemplateAction, createAutomationRuleAction, createExportJobAction, disconnectWorkspaceAction, markOperationalNotificationAction, runAutomationRuleAction, toggleAutomationRuleAction } from "@/app/app/operations-actions";
 import { AppShell } from "@/components/app-shell";
 import { Dashboard } from "@/components/dashboard";
 import { ControlCenter } from "@/components/control-center";
@@ -43,6 +44,7 @@ import { SettingsWorkspace } from "@/components/settings-workspace";
 import { TasksWorkspace } from "@/components/tasks-workspace";
 import { TreasuryWorkspace } from "@/components/treasury-workspace";
 import { PayrollWorkspace } from "@/components/payroll-workspace";
+import { OperationsWorkspace } from "@/components/operations-workspace";
 import { VacationsWorkspace } from "@/components/vacations-workspace";
 import { ThemePreferencesSync } from "@/components/theme-provider";
 import type { ModuleId } from "@/domain/modules";
@@ -76,6 +78,7 @@ import type { TreasuryEntry, TreasuryEvent, TreasuryInput, TreasuryStatus } from
 import type { PayrollEvent, PayrollInput, PayrollParticipant, PayrollRun, PayrollStatus } from "@/domain/payroll";
 import type { DataQualityIssue, IntegrationConnector, IntegrationRun, SavedAnalyticsView } from "@/domain/integrations";
 import type { AnalyticsServiceDimension } from "@/domain/analytics";
+import type { AutomationRule, AutomationRun, CapacityAllocation, ExportJob, OperationalNotification, ProjectTemplate, RecurrenceRule, WorkspaceConnection } from "@/domain/operations";
 import {
   defaultWorkspaceConfiguration,
   type WorkspaceConfiguration,
@@ -99,6 +102,7 @@ type AuthenticatedAppProps = {
   taskComments?: TaskComment[];
   taskEvents?: TaskEvent[];
   taskAssignees?: string[];
+  taskMentionOptions?: Array<{ id: string; label: string }>;
   currentUserName?: string;
   taskLoadError?: string;
   incidents?: Incident[];
@@ -140,6 +144,16 @@ type AuthenticatedAppProps = {
   canManageSettings?: boolean;
   workspaceConfiguration?: WorkspaceConfiguration;
   workspaceLoadError?: string;
+  workspaceConnections?: WorkspaceConnection[];
+  automationRules?: AutomationRule[];
+  automationRuns?: AutomationRun[];
+  projectTemplates?: ProjectTemplate[];
+  recurrenceRules?: RecurrenceRule[];
+  capacityAllocations?: CapacityAllocation[];
+  operationalNotifications?: OperationalNotification[];
+  exportJobs?: ExportJob[];
+  operationsLoadError?: string;
+  canManageOperations?: boolean;
   focusedEntityId?: string | null;
 };
 
@@ -161,6 +175,7 @@ export function AuthenticatedApp({
   taskComments = [],
   taskEvents = [],
   taskAssignees = [],
+  taskMentionOptions = [],
   currentUserName,
   taskLoadError,
   incidents = [],
@@ -202,6 +217,16 @@ export function AuthenticatedApp({
   canManageSettings = false,
   workspaceConfiguration = defaultWorkspaceConfiguration,
   workspaceLoadError,
+  workspaceConnections = [],
+  automationRules = [],
+  automationRuns = [],
+  projectTemplates = [],
+  recurrenceRules = [],
+  capacityAllocations = [],
+  operationalNotifications = [],
+  exportJobs = [],
+  operationsLoadError,
+  canManageOperations = false,
   focusedEntityId,
 }: AuthenticatedAppProps) {
   const router = useRouter();
@@ -365,6 +390,7 @@ export function AuthenticatedApp({
         events={taskEvents}
         projectOptions={projects.map(({ id, name }) => ({ id, name }))}
         assigneeOptions={taskAssignees}
+        mentionOptions={taskMentionOptions}
         currentUserName={currentUserName}
         referenceDate={scenarioAnchorDate}
         pending={pending}
@@ -385,9 +411,9 @@ export function AuthenticatedApp({
             "Estado actualizado",
           )
         }
-        onComment={(taskId: string, body: string) =>
+        onComment={(taskId: string, body: string, mentionedProfileId?: string) =>
           performAction(
-            () => addTaskCommentAction({ taskId, body }),
+            () => addTaskCommentAction({ taskId, body, mentionedProfileId }),
             "Comentario añadido",
           )
         }
@@ -426,6 +452,8 @@ export function AuthenticatedApp({
         <IntegrationsCenter connectors={integrationConnectors} runs={integrationRuns} issues={dataQualityIssues} kind="payroll" pending={pending} canManage={canManageIntegrations} onSimulate={(connectorId) => performAction(() => simulateIntegrationAction(connectorId), "Sincronización agregada completada")} />
       </>
     );
+  } else if (activeModule === "operaciones") {
+    content = <OperationsWorkspace mode="authenticated" people={people} projects={projects} workspaceConnections={workspaceConnections} automationRules={automationRules} automationRuns={automationRuns} projectTemplates={projectTemplates} recurrenceRules={recurrenceRules} capacityAllocations={capacityAllocations} operationalNotifications={operationalNotifications} exportJobs={exportJobs} pending={pending} loadError={operationsLoadError} canManage={canManageOperations} onCreateRule={(input) => performAction(() => createAutomationRuleAction(input), "Regla creada")} onToggleRule={(id, enabled) => performAction(() => toggleAutomationRuleAction(id, enabled), enabled ? "Regla activada" : "Regla pausada")} onRunRule={(id) => performAction(() => runAutomationRuleAction(id), "Acción preparada para revisión")} onApplyTemplate={(id) => performAction(() => applyProjectTemplateAction(id), "Proyecto creado desde la plantilla")} onAddAllocation={(input) => performAction(() => addCapacityAllocationAction(input), "Asignación guardada")} onMarkNotification={(id, status) => performAction(() => markOperationalNotificationAction(id, status), "Notificación actualizada")} onCreateExport={(input) => performAction(() => createExportJobAction(input), "Exportación preparada")} onDisconnect={(provider) => performAction(() => disconnectWorkspaceAction(provider), "Proveedor desconectado")} />;
   } else if (activeModule === "configuracion") {
     content = canManageSettings ? <SettingsWorkspace organizationName={localName} configuration={workspaceConfiguration} moduleSettings={moduleSettings} roles={roles} memberships={memberships} invitations={invitations} auditEvents={adminAuditEvents} pending={pending} loadError={settingsLoadError} onRenameOrganization={(name: string) => performAction(() => renameOrganizationAction(name), "Identidad actualizada").then((ok) => { if (ok) setLocalName(name); return ok; })} onUpdateConfiguration={(configuration) => performAction(() => updateWorkspaceConfigurationAction(configuration), "Políticas actualizadas")} onUpdateModule={(moduleId: ModuleId, enabled: boolean, sortOrder: number) => performAction(() => updateModuleSettingAction({ moduleId, enabled, sortOrder }), "Módulo actualizado")} onUpdateRoleMetadata={(roleId: string, name: string, color: string) => performAction(() => updateRoleMetadataAction(roleId, name, color), "Rol actualizado")} onUpdateRolePermissions={(roleId: string, permissions: PermissionCode[]) => performAction(() => updateRolePermissionsAction(roleId, permissions), "Permisos actualizados")} onCreateInvitation={(email: string, roleId: string) => performAction(() => createInvitationAction(email, roleId), "Invitación creada sin envío externo")} onUpdateMembership={(membershipId: string, roleId: string, status: WorkspaceMembershipStatus) => performAction(() => updateMembershipAction(membershipId, roleId, status), "Acceso actualizado")} onRestoreDataset={() => performAction(() => restoreDemoScenarioV6Action(), "Datos restablecidos")} /> : <main className="workspace" id="main-content"><div className="page-heading"><div><p className="eyebrow">Administración</p><h1>Configuración</h1><p className="lede">Tu rol no permite realizar cambios administrativos en esta organización.</p></div></div><div className="inline-alert" role="status"><strong>Configuración en modo lectura.</strong><span>Solicita el permiso estable <code>settings.workspace.manage</code> a una persona administradora.</span></div></main>;
   } else {

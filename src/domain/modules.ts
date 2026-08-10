@@ -8,6 +8,7 @@ export const moduleIds = [
   "tesoreria",
   "nominas",
   "personal",
+  "operaciones",
   "novedades",
   "configuracion",
 ] as const;
@@ -75,6 +76,12 @@ export const modules: readonly ModuleDefinition[] = [
     label: "Personal",
     description: "Directorio, situación y documentación del equipo.",
     route: "/app/personal",
+  },
+  {
+    id: "operaciones",
+    label: "Operaciones",
+    description: "Automatizaciones, capacidad, integraciones e informes.",
+    route: "/app/operaciones",
   },
   {
     id: "novedades",

@@ -34,6 +34,9 @@ export default async function ProfilePage() {
     in_app?: boolean;
     assignments?: boolean;
     reviews?: boolean;
+    mentions?: boolean;
+    automations?: boolean;
+    exports?: boolean;
   };
   const signedAvatar = profileResult.data.avatar_path
     ? await supabase.storage
@@ -57,6 +60,9 @@ export default async function ProfilePage() {
       inApp: notifications.in_app ?? true,
       assignments: notifications.assignments ?? true,
       reviews: notifications.reviews ?? true,
+      mentions: notifications.mentions ?? true,
+      automations: notifications.automations ?? true,
+      exports: notifications.exports ?? true,
     },
     simulatedRole: profileResult.data.simulated_role,
   };

@@ -43,6 +43,19 @@ cubre la marca histórica, la correspondencia de hitos entre TypeScript y SQL,
 la idempotencia, la revocación de RPC antiguas y el rate limiting por debajo y
 por encima del límite de operaciones costosas.
 
+`supabase/tests/021_release_v1_7.sql` comprueba RLS en las nuevas tablas,
+ausencia de lectura anónima y la separación entre las RPC públicas y las
+funciones privadas que escriben secretos o procesan recurrencias. Los tokens de
+Google Workspace y Microsoft 365 se cifran en Supabase Vault. La Data API solo
+expone una referencia opaca; la lectura del secreto queda reservada al cliente
+de servidor y la revocación elimina también el registro cifrado.
+
+Los disparadores y acciones de automatización utilizan enumeraciones cerradas.
+Las exportaciones reconstruyen en servidor la organización, la consulta y las
+columnas permitidas; ninguna entrada acepta SQL, JavaScript, URLs o nombres de
+tabla arbitrarios. El correo se limita a enlaces de compositor y no solicita
+permisos de buzón.
+
 Los avisos no deben descartarse de forma global. Cualquier nueva RPC con
 privilegios necesita una revisión individual, el permiso mínimo, una
 comprobación de identidad y cobertura pgTAP antes de entrar en esta lista.

@@ -63,10 +63,30 @@ test("derives a unified inbox and opens its source record", async ({ page }) => 
   await page.getByRole("button", { name: "Bandeja", exact: true }).click();
   const commandCenter = page.getByRole("dialog", { name: "Centro de trabajo" });
   await expect(commandCenter.getByRole("tab", { name: "Mi bandeja" })).toHaveAttribute("aria-selected", "true");
-  const firstItem = commandCenter.locator(".workspace-command-item").first();
+  const firstItem = commandCenter.locator('.workspace-command-item[data-kind="leave"]').first();
   await expect(firstItem).toBeVisible();
   await firstItem.click();
   await expect(page.getByRole("dialog")).toBeVisible();
+});
+
+test("configures guest operations without contacting external providers", async ({ page }, testInfo) => {
+  await navigateToModule(page, "Operaciones", testInfo.project.name === "mobile");
+  await expect(page.getByRole("heading", { name: "Operaciones", exact: true })).toBeVisible();
+
+  await page.getByLabel("Nombre").fill("Avisar de tareas prioritarias");
+  await page.getByRole("button", { name: "Crear regla" }).click();
+  await expect(page.getByText("Avisar de tareas prioritarias", { exact: true })).toBeVisible();
+
+  await page.getByRole("tab", { name: "Integraciones" }).click();
+  await expect(page.getByText(/Conexión simulada: no se abre OAuth/).first()).toBeVisible();
+  await page.getByRole("button", { name: "Confirmar y crear evento" }).click();
+  await expect(page.getByText(/Evento simulado preparado/)).toBeVisible();
+
+  await page.getByRole("tab", { name: "Informes" }).click();
+  await page.getByLabel("Nombre").fill("Informe de prueba");
+  await page.getByLabel("Destino").selectOption("csv");
+  await page.getByRole("button", { name: "Preparar exportación" }).click();
+  await expect(page.getByText("Informe de prueba", { exact: true })).toBeVisible();
 });
 
 test("creates, approves and restores a leave request", async ({ page }, testInfo) => {

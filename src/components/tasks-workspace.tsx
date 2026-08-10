@@ -38,6 +38,7 @@ type TasksWorkspaceProps = {
   pending?: boolean;
   loadError?: string;
   assigneeOptions?: string[];
+  mentionOptions?: Array<{ id: string; label: string }>;
   projectOptions?: Array<{ id: string; name: string }>;
   currentUserName?: string;
   referenceDate?: string;
@@ -49,7 +50,7 @@ type TasksWorkspaceProps = {
     status: TaskStatus,
     note: string,
   ) => boolean | Promise<boolean>;
-  onComment: (taskId: string, body: string) => boolean | Promise<boolean>;
+  onComment: (taskId: string, body: string, mentionedProfileId?: string) => boolean | Promise<boolean>;
   onDependency: (
     taskId: string,
     dependsOnTaskId: string,
@@ -92,6 +93,7 @@ export function TasksWorkspace({
   pending = false,
   loadError,
   assigneeOptions = defaultAssignees,
+  mentionOptions = [],
   projectOptions = [],
   currentUserName = "Usuario invitado",
   referenceDate = new Date().toISOString().slice(0, 10),
@@ -129,6 +131,7 @@ export function TasksWorkspace({
   const [selectedId, setSelectedId] = useState<string | null>(() => initialFocusId ?? null);
   const [transitionNote, setTransitionNote] = useState("");
   const [commentBody, setCommentBody] = useState("");
+  const [mentionedProfileId, setMentionedProfileId] = useState("");
   const [dependencyId, setDependencyId] = useState("");
   const [page, setPage] = useState(1);
 
@@ -253,8 +256,8 @@ export function TasksWorkspace({
   async function addComment(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selected || commentBody.trim().length < 2) return;
-    const completed = await onComment(selected.id, commentBody.trim());
-    if (completed) setCommentBody("");
+    const completed = await onComment(selected.id, commentBody.trim(), mentionedProfileId || undefined);
+    if (completed) { setCommentBody(""); setMentionedProfileId(""); }
   }
 
   async function addDependency(event: React.FormEvent<HTMLFormElement>) {
@@ -423,7 +426,7 @@ export function TasksWorkspace({
             </div>
             <div className="task-detail-grid">
               <section><h3><IconRoute aria-hidden="true" size={19} /> Dependencias</h3><ul className="compact-list">{selectedDependencies.map((dependency) => <li key={dependency.id}>{tasks.find((task) => task.id === dependency.dependsOnTaskId)?.title ?? "Tarea no disponible"}</li>)}</ul><form onSubmit={addDependency} className="inline-form"><label className="sr-only" htmlFor="task-dependency">Nueva dependencia</label><select id="task-dependency" value={dependencyId} onChange={(event) => setDependencyId(event.target.value)}><option value="">Seleccionar tarea</option>{tasks.filter((task) => task.id !== selected.id).map((task) => <option value={task.id} key={task.id}>{task.title}</option>)}</select><button className="button button-secondary" type="submit" disabled={!dependencyId || pending}>Añadir</button></form></section>
-              <section><h3><IconMessage aria-hidden="true" size={19} /> Comentarios</h3><ul className="compact-list">{selectedComments.map((comment) => <li key={comment.id}><strong>{comment.authorName}</strong><br />{comment.body}</li>)}</ul><form onSubmit={addComment} className="inline-form"><label className="sr-only" htmlFor="task-comment">Nuevo comentario</label><input id="task-comment" value={commentBody} placeholder="Añadir comentario" maxLength={1000} onChange={(event) => setCommentBody(event.target.value)} /><button className="button button-secondary" type="submit" disabled={commentBody.trim().length < 2 || pending}>Comentar</button></form></section>
+              <section><h3><IconMessage aria-hidden="true" size={19} /> Comentarios</h3><ul className="compact-list">{selectedComments.map((comment) => <li key={comment.id}><strong>{comment.authorName}</strong><br />{comment.body}</li>)}</ul><form onSubmit={addComment} className="inline-form"><label className="sr-only" htmlFor="task-comment">Nuevo comentario</label><input id="task-comment" value={commentBody} placeholder="Añadir comentario" maxLength={1000} onChange={(event) => setCommentBody(event.target.value)} /><label className="sr-only" htmlFor="task-mention">Mencionar a una persona</label><select id="task-mention" value={mentionedProfileId} onChange={(event) => setMentionedProfileId(event.target.value)}><option value="">Sin mención</option>{mentionOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select><button className="button button-secondary" type="submit" disabled={commentBody.trim().length < 2 || pending}>Comentar</button></form></section>
             </div>
             <section><h3>Actividad</h3><ul className="activity-list">{selectedEvents.map((event) => <li className="activity-item" key={event.id}><span className="attention-icon"><IconArrowRight aria-hidden="true" size={18} /></span><span><strong>{event.note}</strong><br /><span className="muted">{event.actorName} · {formatDateTime(event.createdAt)}</span></span></li>)}</ul></section>
           </> : null}

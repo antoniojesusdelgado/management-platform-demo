@@ -28,6 +28,25 @@ import {
   type WorkspaceConfiguration,
 } from "@/domain/workspace-configuration";
 import type { AnalyticsServiceDimension } from "@/domain/analytics";
+import {
+  automationRuleSchema,
+  automationRunSchema,
+  capacityAllocationSchema,
+  createDefaultOperationsState,
+  exportJobSchema,
+  operationalNotificationSchema,
+  projectTemplateSchema,
+  recurrenceRuleSchema,
+  workspaceConnectionSchema,
+  type AutomationRule,
+  type AutomationRun,
+  type CapacityAllocation,
+  type ExportJob,
+  type OperationalNotification,
+  type ProjectTemplate,
+  type RecurrenceRule,
+  type WorkspaceConnection,
+} from "@/domain/operations";
 
 export default async function AppModulePage({
   params,
@@ -129,6 +148,7 @@ export default async function AppModulePage({
   let taskComments: TaskComment[] = [];
   let taskEvents: TaskEvent[] = [];
   let taskAssignees: string[] = [];
+  let taskMentionOptions: Array<{ id: string; label: string }> = [];
   let currentUserName: string | undefined;
   let taskLoadError: string | undefined;
   let incidents: Incident[] = [];
@@ -168,6 +188,16 @@ export default async function AppModulePage({
   let adminAuditEvents: AdminAuditEvent[] = [];
   let settingsLoadError: string | undefined;
   let canManageSettings = false;
+  let workspaceConnections: WorkspaceConnection[] = createDefaultOperationsState().workspaceConnections.map((connection) => ({ ...connection, status: "revoked", accountLabel: "Sin conexión" }));
+  let automationRules: AutomationRule[] = [];
+  let automationRuns: AutomationRun[] = [];
+  let projectTemplates: ProjectTemplate[] = [];
+  let recurrenceRules: RecurrenceRule[] = [];
+  let capacityAllocations: CapacityAllocation[] = [];
+  let operationalNotifications: OperationalNotification[] = [];
+  let exportJobs: ExportJob[] = [];
+  let operationsLoadError: string | undefined;
+  let canManageOperations = false;
   let workspaceConfiguration: WorkspaceConfiguration =
     defaultWorkspaceConfiguration;
 
@@ -279,7 +309,8 @@ export default async function AppModulePage({
   if (
     module === "personal" ||
     module === "proyectos" ||
-    module === "analitica"
+    module === "analitica" ||
+    module === "operaciones"
   ) {
     const supabase = await createClient();
     const [peopleResult, eventsResult] = await Promise.all([
@@ -481,7 +512,8 @@ export default async function AppModulePage({
     module === "proyectos" ||
     module === "tareas" ||
     module === "incidencias" ||
-    module === "analitica"
+    module === "analitica" ||
+    module === "operaciones"
   ) {
     canManageProjects = await hasWorkspacePermission("projects.items.manage");
     const supabase = await createClient();
@@ -656,11 +688,39 @@ export default async function AppModulePage({
     taskAssignees = (membersResult.data ?? []).map(
       (person) => person.display_name,
     );
+    taskMentionOptions = (membersResult.data ?? [])
+      .filter((person) => person.profile_id && person.profile_id !== access.userId)
+      .map((person) => ({ id: person.profile_id!, label: person.display_name }));
     currentUserName = (membersResult.data ?? [])
       .filter((person) => person.profile_id === access.userId)
       .map(
         (person) => person.display_name,
       )[0];
+  }
+
+  if (module === "operaciones") {
+    canManageOperations = await hasWorkspacePermission("operations.automations.manage");
+    const supabase = await createClient();
+    const [connectionsResult, rulesResult, runsResult, templatesResult, recurrencesResult, capacityResult, notificationsResult, exportsResult] = await Promise.all([
+      supabase.from("workspace_connections").select("id,provider,status,capabilities,account_label,connected_at").eq("organization_id", access.organizationId).eq("profile_id", access.userId).order("provider"),
+      supabase.from("automation_rules").select("id,name,trigger_code,action_code,condition_config,enabled,last_run_at").eq("organization_id", access.organizationId).order("created_at", { ascending: false }),
+      supabase.from("automation_runs").select("id,rule_id,status,summary,created_at").eq("organization_id", access.organizationId).order("created_at", { ascending: false }).limit(50),
+      supabase.from("project_templates").select("id,name,description,duration_days,tasks,role_codes").eq("organization_id", access.organizationId).order("name"),
+      supabase.from("task_recurrences").select("id,name,frequency,next_run_date,enabled").eq("organization_id", access.organizationId).order("next_run_date"),
+      supabase.from("capacity_allocations").select("id,person_id,project_id,week_start,allocated_hours,available_hours,person:people(display_name),project:projects(name)").eq("organization_id", access.organizationId).order("week_start", { ascending: false }).limit(100),
+      supabase.from("operational_notifications").select("id,title,description,priority,status,source,href,created_at").eq("organization_id", access.organizationId).eq("recipient_profile_id", access.userId).order("created_at", { ascending: false }).limit(100),
+      supabase.from("export_jobs").select("id,name,module_id,target,status,row_count,created_at,external_url").eq("organization_id", access.organizationId).eq("profile_id", access.userId).order("created_at", { ascending: false }).limit(100),
+    ]);
+    if ([connectionsResult, rulesResult, runsResult, templatesResult, recurrencesResult, capacityResult, notificationsResult, exportsResult].some((result) => result.error)) operationsLoadError = "No se pudo cargar toda la información operativa. Revisa la conexión y vuelve a intentarlo.";
+    const storedConnections = new Map((connectionsResult.data ?? []).map((connection) => [connection.provider, connection]));
+    workspaceConnections = workspaceConnectionSchema.array().parse(createDefaultOperationsState().workspaceConnections.map((fallback) => { const connection = storedConnections.get(fallback.provider); return connection ? { id: connection.id, provider: connection.provider, status: connection.status, capabilities: connection.capabilities, accountLabel: connection.account_label, connectedAt: connection.connected_at } : { ...fallback, status: "revoked", accountLabel: "Sin conexión" }; }));
+    automationRules = automationRuleSchema.array().parse((rulesResult.data ?? []).map((rule) => ({ id: rule.id, name: rule.name, trigger: rule.trigger_code, action: rule.action_code, condition: Object.keys(rule.condition_config ?? {}).length ? rule.condition_config : null, enabled: rule.enabled, lastRunAt: rule.last_run_at })));
+    automationRuns = automationRunSchema.array().parse((runsResult.data ?? []).map((run) => ({ id: run.id, ruleId: run.rule_id, status: run.status, summary: run.summary, createdAt: run.created_at })));
+    projectTemplates = projectTemplateSchema.array().parse((templatesResult.data ?? []).map((template) => ({ id: template.id, name: template.name, description: template.description, durationDays: template.duration_days, taskCount: Array.isArray(template.tasks) ? template.tasks.length : 0, roleCodes: template.role_codes })));
+    recurrenceRules = recurrenceRuleSchema.array().parse((recurrencesResult.data ?? []).map((rule) => ({ id: rule.id, name: rule.name, frequency: rule.frequency, nextRunDate: rule.next_run_date, enabled: rule.enabled })));
+    capacityAllocations = capacityAllocationSchema.array().parse((capacityResult.data ?? []).map((allocation) => ({ id: allocation.id, personId: allocation.person_id, projectId: allocation.project_id, personName: (allocation.person as unknown as { display_name: string }).display_name, projectName: (allocation.project as unknown as { name: string }).name, weekStart: allocation.week_start, allocatedHours: Number(allocation.allocated_hours), availableHours: Number(allocation.available_hours) })));
+    operationalNotifications = operationalNotificationSchema.array().parse((notificationsResult.data ?? []).map((notification) => ({ id: notification.id, title: notification.title, description: notification.description, priority: notification.priority, status: notification.status, source: notification.source, href: notification.href, createdAt: notification.created_at })));
+    exportJobs = exportJobSchema.array().parse((exportsResult.data ?? []).map((job) => ({ id: job.id, name: job.name, moduleId: job.module_id, target: job.target, status: job.status, rowCount: job.row_count, createdAt: job.created_at, externalUrl: job.external_url })));
   }
 
   return (
@@ -693,6 +753,7 @@ export default async function AppModulePage({
       taskComments={taskComments}
       taskEvents={taskEvents}
       taskAssignees={taskAssignees}
+      taskMentionOptions={taskMentionOptions}
       currentUserName={currentUserName}
       taskLoadError={taskLoadError}
       incidents={incidents}
@@ -733,6 +794,16 @@ export default async function AppModulePage({
       settingsLoadError={settingsLoadError}
       canManageSettings={canManageSettings}
       workspaceConfiguration={workspaceConfiguration}
+      workspaceConnections={workspaceConnections}
+      automationRules={automationRules}
+      automationRuns={automationRuns}
+      projectTemplates={projectTemplates}
+      recurrenceRules={recurrenceRules}
+      capacityAllocations={capacityAllocations}
+      operationalNotifications={operationalNotifications}
+      exportJobs={exportJobs}
+      operationsLoadError={operationsLoadError}
+      canManageOperations={canManageOperations}
       focusedEntityId={focusedEntityId}
       workspaceLoadError={
         scenarioError || profileError || organizationError

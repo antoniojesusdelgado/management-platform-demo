@@ -25,6 +25,7 @@ const transitionSchema = z.object({
 const commentSchema = z.object({
   taskId: taskIdSchema,
   body: plainTextSchema({ min: 2, max: 1_000 }),
+  mentionedProfileId: z.uuid().optional(),
 });
 const dependencySchema = z.object({
   taskId: taskIdSchema,
@@ -160,6 +161,7 @@ export async function transitionTaskAction(input: {
 export async function addTaskCommentAction(input: {
   taskId: string;
   body: string;
+  mentionedProfileId?: string;
 }): Promise<ActionResult> {
   try {
     const payload = commentSchema.parse(input);
@@ -172,6 +174,24 @@ export async function addTaskCommentAction(input: {
       body: payload.body,
     });
     if (error) return actionFailure("conflict", "No se pudo añadir el comentario.");
+    if (payload.mentionedProfileId && payload.mentionedProfileId !== access.userId) {
+      const [{ data: recipient }, { data: task }] = await Promise.all([
+        supabase.from("people").select("profile_id").eq("organization_id", access.organizationId).eq("profile_id", payload.mentionedProfileId).eq("status", "active").maybeSingle(),
+        supabase.from("tasks").select("title").eq("organization_id", access.organizationId).eq("id", payload.taskId).single(),
+      ]);
+      if (!recipient?.profile_id || !task) return actionFailure("validation_error", "La persona mencionada no pertenece a este espacio.");
+      const { error: notificationError } = await supabase.from("operational_notifications").insert({
+        organization_id: access.organizationId,
+        recipient_profile_id: recipient.profile_id,
+        title: "Te han mencionado en una tarea",
+        description: task.title,
+        priority: "medium",
+        status: "unread",
+        source: "mention",
+        href: `/app/tareas?focus=${payload.taskId}`,
+      });
+      if (notificationError) return actionFailure("conflict", "El comentario se guardó, pero no se pudo crear la mención.");
+    }
     revalidatePath("/app/tareas");
     return actionSuccess();
   } catch (error) {

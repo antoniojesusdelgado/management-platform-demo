@@ -28,7 +28,7 @@ export type WorkspaceSearchResult = {
 
 export type WorkspaceWorkItem = {
   id: string;
-  kind: "task" | "leave" | "incident" | "quality";
+  kind: "task" | "leave" | "incident" | "quality" | "notification";
   title: string;
   description: string;
   moduleId: ModuleId;
@@ -45,6 +45,7 @@ export const workspaceSearchResultSchema = z.object({
   moduleId: z.enum([
     "inicio", "analitica", "vacaciones", "proyectos", "tareas", "incidencias",
     "tesoreria", "nominas", "personal", "novedades", "configuracion",
+    "operaciones",
   ]),
   href: z.string().startsWith("/app/").max(240),
   status: plainTextSchema({ max: 80 }).optional(),
@@ -191,8 +192,20 @@ export function buildGuestWorkItems(
       priority: issue.severity === "error" ? "critical" : issue.severity === "warning" ? "high" : "low",
       dueAt: null,
     }));
+  const notifications: WorkspaceWorkItem[] = state.operationalNotifications
+    .filter((notification) => notification.status === "unread")
+    .map((notification) => ({
+      id: notification.id,
+      kind: "notification",
+      title: notification.title,
+      description: notification.description,
+      moduleId: "operaciones",
+      href: notification.href,
+      priority: notification.priority,
+      dueAt: notification.createdAt,
+    }));
 
-  return [...tasks, ...incidents, ...leave, ...quality]
+  return [...tasks, ...incidents, ...leave, ...quality, ...notifications]
     .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority] || (a.dueAt ?? "9999").localeCompare(b.dueAt ?? "9999"))
     .slice(0, 30);
 }

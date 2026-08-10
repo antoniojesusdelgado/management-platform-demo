@@ -10,6 +10,7 @@ import {
   IconAlertCircle,
   IconFolders,
   IconChartHistogram,
+  IconAutomation,
   type IconProps,
 } from "@tabler/icons-react";
 import type { ComponentType } from "react";
@@ -25,6 +26,7 @@ const icons: Record<ModuleId, ComponentType<IconProps>> = {
   tesoreria: IconBuildingBank,
   nominas: IconReceipt2,
   personal: IconUsersGroup,
+  operaciones: IconAutomation,
   novedades: IconHistory,
   configuracion: IconSettings,
 };

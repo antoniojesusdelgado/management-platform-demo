@@ -20,7 +20,8 @@ describe("workspace productivity", () => {
   test("derives work without creating a second source of truth", () => {
     const items = buildGuestWorkItems(initialGuestDemoState);
     expect(items.length).toBeLessThanOrEqual(30);
-    expect(items.every((item) => item.href.includes(`focus=${item.id}`))).toBe(true);
+    expect(items.filter((item) => item.kind !== "notification").every((item) => item.href.includes(`focus=${item.id}`))).toBe(true);
+    expect(items.some((item) => item.kind === "notification" && item.href.startsWith("/app/"))).toBe(true);
     const rank = { critical: 0, high: 1, medium: 2, low: 3 };
     expect(items.map((item) => rank[item.priority])).toEqual(
       [...items].map((item) => rank[item.priority]).sort((a, b) => a - b),

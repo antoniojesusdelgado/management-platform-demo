@@ -115,7 +115,7 @@
 - Alternativa de Vercel: <https://management-platform-demo.vercel.app>
 - Preview estable:
   <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Versión en validación: `v1.6.0`
+- Versión en validación: `v1.7.0`
 - Historial de base de datos: 36 migraciones ordenadas, hasta
   `20260807160000_release_v1_6_0_productivity.sql`.
 - Acceso, cierre de sesión y redirecciones protegidas de Google OAuth validados
@@ -151,6 +151,17 @@
 - [x] Lista autorizada de RPC y cobertura pgTAP estructural
 - [x] Detector CI de identificadores, contactos, proveedores y secretos reales
 - [x] Catálogo único de versiones y migración invitada `GuestDemoState V20`
+- [x] Migración aditiva `GuestDemoState V21` con operaciones e integraciones simuladas
+
+## Evolución v1.7.0
+
+- [x] Reglas controladas con historial e idempotencia.
+- [x] Plantillas de proyecto y recurrencias diarias, semanales y mensuales.
+- [x] Capacidad semanal con vacaciones, trabajo activo y avisos de sobrecarga.
+- [x] Centro operativo con notificaciones, preferencias y menciones por perfil.
+- [x] Contrato neutral para Google Workspace y Microsoft 365.
+- [x] CSV y XLSX local; Google Sheets y Excel conectado bajo confirmación.
+- [x] OAuth con PKCE, estado firmado y secretos cifrados en Vault.
 - [x] Atribución pública del desarrollo asistido con ChatGPT Codex
 
 ## Evolución v1.6.0

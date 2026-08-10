@@ -18,6 +18,7 @@ propias licencias.
 | dnd-kit | Arrastrar y soltar accesible | MIT |
 | Zod | Esquemas de validación en ejecución | MIT |
 | date-fns, Sonner, clsx | Utilidades de interfaz | MIT |
+| ExcelJS | Generación local de libros XLSX | MIT |
 
 Las versiones exactas de las dependencias transitivas quedan fijadas en
 `bun.lock`. Antes de redistribuir el proyecto debe generarse un aviso legible

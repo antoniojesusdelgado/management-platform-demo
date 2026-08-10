@@ -28,8 +28,8 @@ import {
 
 describe("management modules", () => {
   test("defines every planned module once", () => {
-    expect(modules).toHaveLength(11);
-    expect(new Set(modules.map((module) => module.id)).size).toBe(11);
+    expect(modules).toHaveLength(12);
+    expect(new Set(modules.map((module) => module.id)).size).toBe(12);
   });
 });
 
@@ -41,7 +41,7 @@ describe("guest demo", () => {
         startDate: "2026-10-05",
         endDate: "2026-10-07",
         type: "vacation",
-        reason: "Solicitud sintética para prueba.",
+        reason: "Solicitud sintÃ©tica para prueba.",
       },
     });
 
@@ -79,7 +79,7 @@ describe("guest demo", () => {
     };
     const migrated = parseGuestDemoState(legacy);
 
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(migrated?.leaveRequests).toEqual(legacy.leaveRequests);
     expect(migrated?.tasks.length).toBeGreaterThan(0);
     expect(migrated?.incidents.length).toBeGreaterThan(0);
@@ -102,7 +102,7 @@ describe("guest demo", () => {
       taskEvents: initialGuestDemoState.taskEvents,
     };
     const migrated = parseGuestDemoState(legacy);
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(migrated?.tasks).toEqual(legacy.tasks);
   });
 
@@ -123,7 +123,7 @@ describe("guest demo", () => {
       peopleEvents: initialGuestDemoState.peopleEvents,
     };
     const migrated = parseGuestDemoState(legacy);
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(migrated?.incidents).toEqual(legacy.incidents);
     expect(migrated?.roles.length).toBeGreaterThan(0);
   });
@@ -135,7 +135,7 @@ describe("guest demo", () => {
     void payrollRuns;
     void payrollEvents;
     const migrated = parseGuestDemoState({ ...legacyState, version: 4 });
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(migrated?.roles).toEqual(legacyState.roles);
     expect(migrated?.treasuryEntries.length).toBeGreaterThan(0);
   });
@@ -145,7 +145,7 @@ describe("guest demo", () => {
     void payrollRuns;
     void payrollEvents;
     const migrated = parseGuestDemoState({ ...legacyState, version: 5 });
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(migrated?.treasuryEntries).toEqual(legacyState.treasuryEntries);
     expect(migrated?.payrollRuns.length).toBeGreaterThan(0);
   });
@@ -171,7 +171,7 @@ describe("guest demo", () => {
       scenarioVersion: 1,
     });
 
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(migrated?.integrationConnectors).toHaveLength(4);
     expect(migrated?.integrationRuns.length).toBeGreaterThan(0);
   });
@@ -188,7 +188,7 @@ describe("guest demo", () => {
       scenarioVersion: 1,
     });
 
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(migrated?.preferences.simulatedRole).toBeNull();
     expect(migrated?.savedAnalyticsViews).toEqual([]);
   });
@@ -200,7 +200,7 @@ describe("guest demo", () => {
       scenarioVersion: 2,
     });
 
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(migrated?.scenarioVersion).toBe(7);
     expect(migrated?.projects).toHaveLength(10);
     expect(migrated?.tasks).toHaveLength(initialGuestDemoState.tasks.length);
@@ -217,10 +217,10 @@ describe("guest demo", () => {
       scenarioVersion: 3,
     });
 
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(migrated?.scenarioVersion).toBe(7);
     expect(migrated?.payrollRuns.length).toBeGreaterThan(0);
-    expect(migrated?.changelogEntries.at(-1)?.version).toBe("1.6.0");
+    expect(migrated?.changelogEntries.at(-1)?.version).toBe("1.7.0");
   });
 
   test("extends version 14 sessions without overwriting operational changes", () => {
@@ -238,14 +238,14 @@ describe("guest demo", () => {
       changelogEvents: initialGuestDemoState.changelogEvents.slice(0, 2),
     });
 
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(migrated?.tasks.find((task) => task.id === changedTask.id)).toEqual(
       changedTask,
     );
     expect(migrated!.tasks.length).toBeGreaterThan(25);
-    expect(migrated?.changelogEntries).toHaveLength(10);
-    expect(migrated?.changelogEntries.at(-1)?.version).toBe("1.6.0");
-    expect(migrated?.changelogEvents).toHaveLength(10);
+    expect(migrated?.changelogEntries).toHaveLength(11);
+    expect(migrated?.changelogEntries.at(-1)?.version).toBe("1.7.0");
+    expect(migrated?.changelogEvents).toHaveLength(11);
   });
 
   test("adds patch releases once to existing version 15 sessions", () => {
@@ -264,7 +264,7 @@ describe("guest demo", () => {
       changelogEvents: [],
     });
 
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(migrated?.preferences.theme).toBe("light");
     expect(migrated?.changelogEntries[0]).toEqual(retainedEntry);
     expect(
@@ -303,7 +303,7 @@ describe("guest demo", () => {
       ),
     });
 
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(
       migrated?.changelogEntries.filter((entry) => entry.version === "1.3.1"),
     ).toHaveLength(1);
@@ -324,7 +324,7 @@ describe("guest demo", () => {
       changelogEvents: [],
     });
 
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(
       migrated?.changelogEntries.filter((entry) => entry.version === "1.3.2"),
     ).toHaveLength(1);
@@ -332,7 +332,7 @@ describe("guest demo", () => {
       migrated?.changelogEntries.find((entry) => entry.version === "1.3.1")
         ?.title,
     ).toBe("Más cómoda en móvil y más segura");
-    expect(parseGuestDemoState(migrated)?.version).toBe(20);
+    expect(parseGuestDemoState(migrated)?.version).toBe(21);
   });
 
   test("adds releases through v1.5.1 once to version 18 sessions", () => {
@@ -340,7 +340,7 @@ describe("guest demo", () => {
       ...initialGuestDemoState.changelogEntries.find(
         (entry) => entry.version === "1.5.0",
       )!,
-      title: "Título editorial conservado",
+      title: "TÃ­tulo editorial conservado",
     };
     const migrated = parseGuestDemoState({
       ...initialGuestDemoState,
@@ -349,7 +349,7 @@ describe("guest demo", () => {
       changelogEvents: [],
     });
 
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(
       migrated?.changelogEntries.find((entry) => entry.version === "1.5.0"),
     ).toEqual(retainedEntry);
@@ -378,9 +378,28 @@ describe("guest demo", () => {
       ),
     });
 
-    expect(migrated?.version).toBe(20);
+    expect(migrated?.version).toBe(21);
     expect(migrated?.changelogEntries.filter((entry) => entry.version === "1.6.0")).toHaveLength(1);
     expect(parseGuestDemoState(migrated)?.changelogEntries.filter((entry) => entry.version === "1.6.0")).toHaveLength(1);
+  });
+
+  test("migrates version 20 sessions to the additive operations contract", () => {
+    const migrated = parseGuestDemoState({
+      ...initialGuestDemoState,
+      version: 20,
+      changelogEntries: initialGuestDemoState.changelogEntries.filter(
+        (entry) => entry.version !== "1.7.0",
+      ),
+      changelogEvents: initialGuestDemoState.changelogEvents.filter(
+        (event) => !event.id.includes("1-7-0"),
+      ),
+    });
+
+    expect(migrated?.version).toBe(21);
+    expect(migrated?.workspaceConnections).toHaveLength(2);
+    expect(migrated?.automationRules.length).toBeGreaterThan(0);
+    expect(migrated?.changelogEntries.filter((entry) => entry.version === "1.7.0")).toHaveLength(1);
+    expect(parseGuestDemoState(migrated)?.changelogEntries.filter((entry) => entry.version === "1.7.0")).toHaveLength(1);
   });
 
   test("simulates an idempotent neutral integration inside the session", () => {
@@ -405,7 +424,7 @@ describe("guest demo", () => {
       type: "transition-leave",
       requestId: "leave-002",
       status: "rejected",
-      note: "Transición no permitida.",
+      note: "TransiciÃ³n no permitida.",
     });
 
     expect(next).toBe(initialGuestDemoState);
@@ -418,7 +437,7 @@ describe("leave validation", () => {
       startDate: "2026-10-08",
       endDate: "2026-10-02",
       type: "vacation",
-      reason: "Solicitud con fechas no válidas.",
+      reason: "Solicitud con fechas no vÃ¡lidas.",
     });
 
     expect(result.success).toBe(false);
@@ -492,8 +511,8 @@ describe("task workflow", () => {
     const created = guestDemoReducer(initialGuestDemoState, {
       type: "create-task",
       input: {
-        title: "Preparar escenario sintético",
-        description: "Contenido de prueba sin información profesional real.",
+        title: "Preparar escenario sintÃ©tico",
+        description: "Contenido de prueba sin informaciÃ³n profesional real.",
         priority: "high",
         assigneeName: "Usuario invitado",
         dueDate: "2026-08-10",
@@ -504,7 +523,7 @@ describe("task workflow", () => {
       type: "transition-task",
       taskId: task.id,
       status: "in_progress",
-      note: "Trabajo iniciado en la sesión.",
+      note: "Trabajo iniciado en la sesiÃ³n.",
     });
 
     expect(taskInputSchema.safeParse(task).success).toBe(true);
@@ -523,7 +542,7 @@ describe("incident workflow", () => {
   test("creates an incident and records immutable activity", () => {
     const next = guestDemoReducer(initialGuestDemoState, {
       type: "create-incident",
-      input: { title: "Caso sintético", description: "Descripción totalmente sintética.", priority: "high", category: "software", assigneeName: null },
+      input: { title: "Caso sintÃ©tico", description: "DescripciÃ³n totalmente sintÃ©tica.", priority: "high", category: "software", assigneeName: null },
     });
     expect(incidentInputSchema.safeParse(next.incidents[0]).success).toBe(true);
     expect(next.incidents[0].status).toBe("registered");
@@ -565,10 +584,10 @@ describe("changelog workflow", () => {
   });
 
   test("creates and publishes a synthetic changelog entry with history", () => {
-    const created = guestDemoReducer(initialGuestDemoState, { type: "create-changelog", input: { version: "0.5.0", title: "Entrada sintética", summary: "Contenido demostrativo preparado para una revisión." } });
+    const created = guestDemoReducer(initialGuestDemoState, { type: "create-changelog", input: { version: "0.5.0", title: "Entrada sintÃ©tica", summary: "Contenido demostrativo preparado para una revisiÃ³n." } });
     const entry = created.changelogEntries[0];
     expect(changelogInputSchema.safeParse(entry).success).toBe(true);
-    const reviewed = guestDemoReducer(created, { type: "transition-changelog", entryId: entry.id, status: "in_review", note: "Enviada a revisión." });
+    const reviewed = guestDemoReducer(created, { type: "transition-changelog", entryId: entry.id, status: "in_review", note: "Enviada a revisiÃ³n." });
     const published = guestDemoReducer(reviewed, { type: "transition-changelog", entryId: entry.id, status: "published", note: "Contenido revisado." });
     expect(published.changelogEntries[0].publishedAt).not.toBeNull();
     expect(published.changelogEvents[0].toStatus).toBe("published");
@@ -578,9 +597,9 @@ describe("changelog workflow", () => {
 describe("guest settings", () => {
   test("keeps permissions unchanged when role metadata changes", () => {
     const role = initialGuestDemoState.roles.find((item) => item.code === "manager")!;
-    const next = guestDemoReducer(initialGuestDemoState, { type: "update-role-metadata", roleId: role.id, name: "Coordinación", color: "#123456" });
+    const next = guestDemoReducer(initialGuestDemoState, { type: "update-role-metadata", roleId: role.id, name: "CoordinaciÃ³n", color: "#123456" });
     const updated = next.roles.find((item) => item.id === role.id)!;
-    expect(updated.name).toBe("Coordinación");
+    expect(updated.name).toBe("CoordinaciÃ³n");
     expect(updated.permissionCodes).toEqual(role.permissionCodes);
     expect(next.adminAuditEvents[0].eventType).toBe("role.metadata_updated");
   });
@@ -616,7 +635,7 @@ describe("treasury workflow", () => {
       type: "transition-treasury",
       entryId: entry.id,
       status: "registered",
-      note: "Registro sintético comprobado.",
+      note: "Registro sintÃ©tico comprobado.",
     });
     expect(registered.treasuryEntries[0].status).toBe("registered");
     expect(registered.treasuryEvents[0].fromStatus).toBe("draft");

@@ -14,7 +14,7 @@ import { modules, type ModuleId } from "@/domain/modules";
 type ModuleWorkspaceProps = {
   moduleId: Exclude<
     ModuleId,
-    "inicio" | "analitica" | "vacaciones" | "proyectos"
+    "inicio" | "analitica" | "vacaciones" | "proyectos" | "operaciones"
   >;
   organizationName: string;
   onRenameOrganization: (name: string) => void;
