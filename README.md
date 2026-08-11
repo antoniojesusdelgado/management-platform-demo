@@ -1,5 +1,7 @@
 # Plataforma de gestión
 
+> v1.8.0 transforma la réplica en un MVP para pilotos: onboarding, varias empresas, acceso con Google o Microsoft y sincronización corporativa de solo lectura.
+
 [![CI](https://github.com/antoniojesusdelgado/management-platform-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/antoniojesusdelgado/management-platform-demo/actions/workflows/ci.yml)
 [![Versión](https://img.shields.io/github/v/release/antoniojesusdelgado/management-platform-demo)](https://github.com/antoniojesusdelgado/management-platform-demo/releases/latest)
 
@@ -21,9 +23,10 @@ repositorio público.
 
 **Demo pública:** [plataformagestion.app](https://plataformagestion.app)
 
-La réplica puede recorrerse sin registro o mediante Google OAuth. En ambos
-casos utiliza exclusivamente datos ficticios; cada cuenta autenticada recibe un
-espacio independiente.
+La réplica puede recorrerse sin registro o mediante Google o Microsoft OAuth.
+Las cuentas autenticadas pueden crear empresas, aceptar invitaciones y cambiar
+entre organizaciones aisladas. La demo pública utiliza exclusivamente datos
+ficticios.
 
 ## Qué se puede explorar
 
@@ -41,8 +44,8 @@ espacio independiente.
 - Informes CSV/XLSX y conexiones opcionales con Google Workspace o Microsoft 365.
 - Tema claro por defecto y tema oscuro opcional.
 
-La versión preparada en esta rama es `v1.7.0`. El historial de publicaciones y
-sus notas están disponibles en la sección de releases.
+La versión actual es `v1.8.0`. El historial de publicaciones y sus notas están
+disponibles en la sección de releases.
 
 ## Cómo está construida
 

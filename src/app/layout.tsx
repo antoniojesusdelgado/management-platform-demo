@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
@@ -68,13 +67,13 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#f5f7fb" />
-      </head>
-      <body>
-        <Script
+        <script
           id="theme-bootstrap"
-          strategy="beforeInteractive"
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{ __html: themeBootstrap }}
         />
+      </head>
+      <body>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

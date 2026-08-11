@@ -1,6 +1,16 @@
 # Integraciones de productividad
 
-## Alcance de v1.7.0
+## Alcance de v1.8.0
+
+La autorización de la suite es independiente del proveedor usado para iniciar
+sesión. Una persona puede entrar con Google y conectar Microsoft 365, o al
+revés. Cada conexión sigue perteneciendo a una persona y a una organización.
+
+La sincronización de directorio es de solo lectura hacia la plataforma. Google
+usa `admin.directory.user.readonly`; Microsoft usa `User.Read.All` y
+`users/delta`. Nombre, correo corporativo, equipo y estado proceden de la suite;
+los campos operativos permanecen bajo control local. Una baja externa desactiva
+el perfil vinculado sin eliminar su actividad.
 
 La plataforma ofrece un contrato común para `google_workspace` y
 `microsoft_365`. Cada conexión pertenece a una persona y a una organización;

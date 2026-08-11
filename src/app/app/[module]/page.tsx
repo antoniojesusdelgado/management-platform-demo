@@ -1,4 +1,4 @@
-import { IconLock, IconSettings } from "@tabler/icons-react";
+import { IconSettings } from "@tabler/icons-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AuthenticatedApp } from "@/components/authenticated-app";
@@ -95,26 +95,7 @@ export default async function AppModulePage({
   }
 
   if (access.status === "not-invited") {
-    return (
-      <main className="landing">
-        <section className="landing-card">
-          <div>
-            <p className="eyebrow" style={{ color: "#93c5fd" }}>
-              Espacio personal no disponible
-            </p>
-            <h1>No se pudo preparar tu espacio personal</h1>
-            <p>
-              La identidad se ha verificado, pero el aprovisionamiento
-              automático no se completó. Cierra sesión y vuelve a intentarlo.
-            </p>
-          </div>
-          <aside className="demo-note">
-            <IconLock aria-hidden="true" size={31} />
-            <h2 style={{ marginTop: "1rem" }}>Error recuperable</h2>
-          </aside>
-        </section>
-      </main>
-    );
+    redirect("/app/onboarding");
   }
 
   const profileClient = await createClient();
@@ -698,6 +679,8 @@ export default async function AppModulePage({
       )[0];
   }
 
+  if (!access.onboardingComplete) redirect("/app/onboarding");
+
   if (module === "operaciones") {
     canManageOperations = await hasWorkspacePermission("operations.automations.manage");
     const supabase = await createClient();
@@ -727,6 +710,7 @@ export default async function AppModulePage({
     <AuthenticatedApp
       activeModule={module}
       organizationName={access.organizationName}
+      organizations={access.organizations}
       scenarioAnchorDate={
         currentOrganization?.scenario_generated_through_date ??
         currentOrganization?.scenario_anchor_date ??

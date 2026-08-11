@@ -483,6 +483,163 @@ export type Database = {
           },
         ]
       }
+      directory_identity_links: {
+        Row: {
+          created_at: string
+          display_name: string
+          external_id: string
+          external_team: string | null
+          external_version: string | null
+          id: string
+          last_seen_at: string
+          organization_id: string
+          person_id: string | null
+          primary_email: string
+          provider: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          external_id: string
+          external_team?: string | null
+          external_version?: string | null
+          id?: string
+          last_seen_at?: string
+          organization_id: string
+          person_id?: string | null
+          primary_email: string
+          provider: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          external_id?: string
+          external_team?: string | null
+          external_version?: string | null
+          id?: string
+          last_seen_at?: string
+          organization_id?: string
+          person_id?: string | null
+          primary_email?: string
+          provider?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "directory_identity_links_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "directory_identity_links_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      directory_sync_cursors: {
+        Row: {
+          cursor_value: string | null
+          full_sync_completed: boolean
+          last_synced_at: string | null
+          organization_id: string
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          cursor_value?: string | null
+          full_sync_completed?: boolean
+          last_synced_at?: string | null
+          organization_id: string
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          cursor_value?: string | null
+          full_sync_completed?: boolean
+          last_synced_at?: string | null
+          organization_id?: string
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "directory_sync_cursors_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      directory_sync_jobs: {
+        Row: {
+          created_at: string
+          created_count: number
+          deactivated_count: number
+          error_code: string | null
+          finished_at: string | null
+          id: string
+          idempotency_key: string
+          organization_id: string
+          processed_count: number
+          provider: string
+          started_at: string | null
+          status: string
+          trigger_kind: string
+          updated_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_count?: number
+          deactivated_count?: number
+          error_code?: string | null
+          finished_at?: string | null
+          id?: string
+          idempotency_key: string
+          organization_id: string
+          processed_count?: number
+          provider: string
+          started_at?: string | null
+          status?: string
+          trigger_kind: string
+          updated_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_count?: number
+          deactivated_count?: number
+          error_code?: string | null
+          finished_at?: string | null
+          id?: string
+          idempotency_key?: string
+          organization_id?: string
+          processed_count?: number
+          provider?: string
+          started_at?: string | null
+          status?: string
+          trigger_kind?: string
+          updated_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "directory_sync_jobs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       export_jobs: {
         Row: {
           created_at: string
@@ -1338,6 +1495,82 @@ export type Database = {
           },
         ]
       }
+      organization_directory_settings: {
+        Row: {
+          last_error_code: string | null
+          last_synced_at: string | null
+          organization_id: string
+          provider: string
+          status: string
+          sync_interval_minutes: number
+          team_mapping: Json
+          updated_at: string
+        }
+        Insert: {
+          last_error_code?: string | null
+          last_synced_at?: string | null
+          organization_id: string
+          provider: string
+          status?: string
+          sync_interval_minutes?: number
+          team_mapping?: Json
+          updated_at?: string
+        }
+        Update: {
+          last_error_code?: string | null
+          last_synced_at?: string | null
+          organization_id?: string
+          provider?: string
+          status?: string
+          sync_interval_minutes?: number
+          team_mapping?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_directory_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_onboarding: {
+        Row: {
+          completed_at: string | null
+          current_step: string
+          organization_id: string
+          status: string
+          template_mode: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          current_step?: string
+          organization_id: string
+          status?: string
+          template_mode?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          current_step?: string
+          organization_id?: string
+          status?: string
+          template_mode?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_onboarding_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_settings: {
         Row: {
           locale: string
@@ -1826,6 +2059,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_organization_id: string | null
           alias: string | null
           avatar_path: string | null
           avatar_url: string | null
@@ -1838,6 +2072,7 @@ export type Database = {
           id: string
           locale: string
           notification_preferences: Json
+          onboarding_completed_at: string | null
           reduced_motion: boolean
           simulated_role: Database["public"]["Enums"]["person_role_code"] | null
           theme: string
@@ -1845,6 +2080,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          active_organization_id?: string | null
           alias?: string | null
           avatar_path?: string | null
           avatar_url?: string | null
@@ -1857,6 +2093,7 @@ export type Database = {
           id: string
           locale?: string
           notification_preferences?: Json
+          onboarding_completed_at?: string | null
           reduced_motion?: boolean
           simulated_role?:
             | Database["public"]["Enums"]["person_role_code"]
@@ -1866,6 +2103,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          active_organization_id?: string | null
           alias?: string | null
           avatar_path?: string | null
           avatar_url?: string | null
@@ -1878,6 +2116,7 @@ export type Database = {
           id?: string
           locale?: string
           notification_preferences?: Json
+          onboarding_completed_at?: string | null
           reduced_motion?: boolean
           simulated_role?:
             | Database["public"]["Enums"]["person_role_code"]
@@ -1886,7 +2125,15 @@ export type Database = {
           timezone?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_active_organization_id_fkey"
+            columns: ["active_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_events: {
         Row: {
@@ -2846,8 +3093,36 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_organization_invitation_v1_8: {
+        Args: { invitation_token: string }
+        Returns: string
+      }
+      apply_directory_sync_batch_v1_8: {
+        Args: {
+          target_cursor: string
+          target_full_sync_completed: boolean
+          target_idempotency_key: string
+          target_organization_id: string
+          target_provider: string
+          target_trigger: string
+          target_users: Json
+        }
+        Returns: string
+      }
       check_management_request_rate_limit: { Args: never; Returns: undefined }
       clear_own_avatar_path: { Args: never; Returns: undefined }
+      complete_organization_onboarding_v1_8: {
+        Args: { target_organization_id: string }
+        Returns: undefined
+      }
+      create_organization_v1_8: {
+        Args: {
+          target_name: string
+          target_slug: string
+          target_template_mode?: string
+        }
+        Returns: string
+      }
       create_payroll_run: {
         Args: {
           expected_organization_id: string
@@ -2914,6 +3189,15 @@ export type Database = {
         Args: { target_checksum: string; target_organization_id: string }
         Returns: undefined
       }
+      refresh_directory_connection_secret_v1_8: {
+        Args: {
+          target_access_token: string
+          target_connection_id: string
+          target_expires_at: string
+          target_refresh_token: string
+        }
+        Returns: undefined
+      }
       restore_demo_scenario: {
         Args: { expected_organization_id: string; target_module?: string }
         Returns: undefined
@@ -2942,6 +3226,10 @@ export type Database = {
           expected_organization_id: string
         }
         Returns: string
+      }
+      switch_active_organization_v1_8: {
+        Args: { target_organization_id: string }
+        Returns: undefined
       }
       touch_demo_workspace: {
         Args: { expected_organization_id: string }

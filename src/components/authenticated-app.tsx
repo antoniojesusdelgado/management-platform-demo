@@ -49,6 +49,7 @@ import { VacationsWorkspace } from "@/components/vacations-workspace";
 import { ThemePreferencesSync } from "@/components/theme-provider";
 import type { ModuleId } from "@/domain/modules";
 import type { UserProfile } from "@/domain/profile";
+import type { ActiveOrganization } from "@/domain/organizations";
 import type { ChangelogEntry, ChangelogEvent, ChangelogInput, ChangelogStatus } from "@/domain/changelog";
 import type { PermissionCode } from "@/domain/permissions";
 import type { AdminAuditEvent, ConfigurableRole, ModuleSetting, WorkspaceInvitation, WorkspaceMembership, WorkspaceMembershipStatus } from "@/domain/settings";
@@ -87,6 +88,7 @@ import {
 type AuthenticatedAppProps = {
   activeModule: ModuleId;
   organizationName: string;
+  organizations?: ActiveOrganization[];
   scenarioAnchorDate: string;
   theme?: UserProfile["theme"];
   density?: UserProfile["density"];
@@ -160,6 +162,7 @@ type AuthenticatedAppProps = {
 export function AuthenticatedApp({
   activeModule,
   organizationName,
+  organizations = [],
   scenarioAnchorDate,
   theme = "light",
   density = "comfortable",
@@ -482,6 +485,7 @@ export function AuthenticatedApp({
       <AppShell
         activeModule={activeModule}
         organizationName={localName}
+        organizations={organizations}
         mode="authenticated"
         onNavigate={navigate}
         avatarUrl={avatarUrl}

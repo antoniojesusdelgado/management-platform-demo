@@ -25,17 +25,20 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/login?error=oauth", url.origin));
   }
 
-  const { data: organizationId, error: provisioningError } = await supabase.rpc(
-    "ensure_public_demo_workspace",
-  );
-
-  if (!provisioningError && organizationId) {
-    await supabase.rpc("touch_demo_workspace", {
-      expected_organization_id: organizationId,
-    });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.redirect(new URL("/login?error=oauth", url.origin));
   }
 
+  const { data: membership } = await supabase
+    .from("memberships")
+    .select("organization_id")
+    .eq("profile_id", user.id)
+    .eq("status", "active")
+    .limit(1)
+    .maybeSingle();
+
   return NextResponse.redirect(
-    new URL(provisioningError ? "/login?error=workspace" : next, url.origin),
+    new URL(membership ? next : "/app/onboarding", url.origin),
   );
 }

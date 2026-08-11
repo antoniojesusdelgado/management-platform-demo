@@ -3,6 +3,7 @@ import { plainTextSchema } from "@/domain/validation";
 
 export const workspaceProviders = ["google_workspace", "microsoft_365"] as const;
 export const workspaceCapabilities = ["files", "spreadsheets", "mail", "calendar"] as const;
+export const directoryCapabilities = ["directory_users", "directory_teams"] as const;
 export const automationTriggers = [
   "task_assigned", "task_due", "task_status_changed", "leave_submitted",
   "leave_approved", "incident_sla_risk", "scheduled_report",
@@ -19,6 +20,7 @@ export const exportStatuses = ["pending", "ready", "failed", "cancelled"] as con
 
 export type WorkspaceProvider = (typeof workspaceProviders)[number];
 export type WorkspaceCapability = (typeof workspaceCapabilities)[number];
+export type DirectoryCapability = (typeof directoryCapabilities)[number];
 export type AutomationTrigger = (typeof automationTriggers)[number];
 export type AutomationAction = (typeof automationActions)[number];
 export type RecurrenceFrequency = (typeof recurrenceFrequencies)[number];
@@ -32,6 +34,7 @@ export type WorkspaceConnection = {
   capabilities: WorkspaceCapability[];
   accountLabel: string;
   connectedAt: string | null;
+  directoryCapabilities?: DirectoryCapability[];
 };
 
 export type AutomationRule = {

@@ -1,67 +1,38 @@
-# Design QA — acceso v1.2.2
+# QA de diseño v1.8.0
 
-## Evidencias
+## Alcance
 
-- Verdad visual: `C:\Users\anton\Downloads\OAuth Front-End.png`.
-- Implementación: `artifacts/release-v1.2.2/access-implementation-final.png`.
-- Comparación conjunta: `artifacts/release-v1.2.2/access-comparison.png`.
-- Ruta y estado: `/`, sesión sin autenticar y OAuth no configurado en local.
-- Viewport CSS: `1488 × 1058 px`.
-- Densidad: `1×`.
-- Imagen de referencia: `1488 × 1058 px`.
-- Captura de implementación: `1488 × 1058 px`.
-- Normalización: no fue necesario escalar para la comparación.
+- Referencia: `C:\Users\anton\.codex\generated_images\019fae5c-597d-7612-9946-bfbf8cf23fc0\exec-ce6f9017-41e9-4f3b-af61-4ea7d3382010.png`.
+- Superficie validada: acceso invitado directo y aplicación completa en Chrome.
+- Dirección evaluada: navegación superior flotante, fondo azul grisáceo, superficies translúcidas controladas, jerarquía operativa y navegación inferior móvil.
+- Evidencia principal: `artifacts/design-qa-v1.8-comparison-final.png`.
+- Evidencia móvil: `artifacts/design-qa-v1.8-mobile-390.png` y `artifacts/design-qa-v1.8-tasks-mobile-390.png`.
 
-## Superficies revisadas
+## Comparación visual
 
-- Tipografía: jerarquía, peso, saltos de línea, altura de línea y alineación de
-  marca, titular, texto descriptivo, botones y textos legales.
-- Espaciado: cabecera de 100 px, división 50/50, posición y dimensiones de la
-  tarjeta, ritmos verticales y márgenes del bloque izquierdo.
-- Color: navy de cabecera, blanco del bloque de presentación, gris del panel,
-  bordes neutrales y acento azul.
-- Assets: símbolo original del producto e icono oficial de Google, sin
-  sustituciones dibujadas en CSS.
-- Contenido: los textos y acciones coinciden con la referencia. El aviso legal
-  y el copyright amplían la referencia por un requisito explícito del cierre.
+La implementación conserva la jerarquía de la referencia sin copiar contenido ficticio específico: empresa y navegación ocupan una única cabecera flotante; la agenda es el foco principal; capacidad, colaboración y métricas quedan en un segundo nivel; la profundidad se limita a bordes, desenfoque y sombras suaves.
 
-## Comparación e iteraciones
+La densidad responde a los datos reales del escenario y a los componentes compartidos de la aplicación. Se mantuvieron los tokens de tema, foco, contraste y densidad existentes.
 
-### Iteración 1 — bloqueada
+## Responsive e interacción
 
-- [P1] El titular izquierdo y el título de la tarjeta tenían un peso demasiado
-  ligero.
-- [P2] La tarjeta estaba desplazada 30 px hacia la derecha.
-- [P2] La cabecera de la tarjeta estaba alineada a la izquierda y el ritmo
-  vertical no coincidía con la referencia.
+| Ancho | Navegación | Overflow horizontal | Resultado |
+| --- | --- | --- | --- |
+| 320 px | Inferior móvil | No | Aprobado |
+| 360 px | Inferior móvil | No | Aprobado |
+| 390 px | Inferior móvil | No | Aprobado |
+| 768 px | Inferior compacta | No | Aprobado |
+| 1024 px | Inferior compacta | No | Aprobado |
+| 1440 px | Superior | No | Aprobado |
 
-Correcciones: pesos de texto ajustados, tarjeta desplazada al eje de la
-referencia, contenido centrado y espaciado vertical normalizado.
+Se comprobó la apertura del menú `Más`, la navegación a Tareas y Configuración, la vista Kanban móvil de una sola columna y la ausencia de elementos ocultos fuera del viewport. La última carga en una pestaña limpia no produjo errores ni avisos de consola.
 
-Evidencia posterior: `artifacts/release-v1.2.2/access-implementation-02.png`.
+## Incidencias y correcciones
 
-### Iteración 2 — bloqueada
+1. **P0 — cabecera comprimida por la cuadrícula lateral heredada.** La nueva estructura seguía heredando las dos columnas de `.app-frame`. Se aisló `.app-frame-v18` como layout de bloque y se restauró el ancho completo de cabecera y contenido.
+2. **P1 — navegación ausente entre 761 y 1100 px.** Se alineó el cambio entre navegación superior e inferior en 1100 px para evitar solapes en tablet horizontal.
+3. **P2 — aviso de hidratación del bootstrap de tema.** Se mantuvo el script estático confiable en el `<head>` y se eliminó la discrepancia de `nonce` provocada por `next/script` en desarrollo.
 
-- [P2] El titular se repartía en tres líneas o incorporaba «en» en la primera
-  línea según el ancho disponible.
-- [P2] El borde de la acción invitada no utilizaba el acento azul aprobado.
+Tras las correcciones no quedan incidencias P0, P1 ni P2 abiertas.
 
-Correcciones: salto editorial explícito después de «Gestión diaria», tamaño y
-altura de línea ajustados, y borde azul en la acción secundaria.
-
-Evidencia posterior:
-`artifacts/release-v1.2.2/access-implementation-final.png`.
-
-### Iteración final — aprobada
-
-La composición conjunta confirma que no quedan diferencias P0, P1 o P2 en los
-cinco frentes obligatorios. El copyright y los enlaces legales permanecen fuera
-de la tarjeta, discretos y alineados al pie, por requisito funcional. No fue
-necesaria una comparación adicional por regiones: todos los elementos críticos
-son legibles a escala completa en la composición conjunta.
-
-Interacciones primarias verificadas en navegador: carga de `/`, presencia de
-Google, enlace de acceso invitado y enlaces legales. La consola no mostró
-errores de aplicación durante la captura.
-
-resultado final: correcto
+final result: passed

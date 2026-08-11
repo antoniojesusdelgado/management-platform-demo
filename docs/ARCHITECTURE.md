@@ -1,5 +1,18 @@
 # Arquitectura
 
+## Evolución v1.8.0
+
+La aplicación autenticada ya no crea automáticamente una demostración por
+identidad. Después de Google o Microsoft OAuth, la persona recupera su última
+empresa activa, acepta una invitación o completa el onboarding. La empresa
+activa se persiste en el perfil y en una cookie `httpOnly`; cada consulta sigue
+validando membresía, permiso y organización mediante RLS.
+
+Google Workspace y Microsoft 365 se autorizan después del login. Los tokens se
+mantienen en Vault y el directorio sincroniza únicamente identidad corporativa,
+equipo y estado. Roles, permisos, asignaciones e histórico pertenecen a la
+plataforma y nunca se sobrescriben desde el proveedor.
+
 ## Límites del sistema
 
 ```mermaid

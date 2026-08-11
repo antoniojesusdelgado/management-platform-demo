@@ -1,7 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
 async function enterGuestDemo(page: Page) {
-  await page.getByRole("button", { name: "Explorar demo sin registro" }).click();
   await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
 }
 
@@ -13,18 +12,36 @@ test.beforeEach(async ({ page }) => {
 async function navigateToModule(
   page: Page,
   label: string,
-  mobile: boolean,
+  _mobile: boolean,
 ) {
-  if (mobile) {
-    await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
+  void _mobile;
+  const mobileNavigation = page.getByRole("navigation", {
+    name: "Navegación móvil",
+  });
+  if (await mobileNavigation.isVisible()) {
+    const menuLabel = label === "Operaciones" ? "Centro operativo" : label;
+    const directLabel =
+      label === "Personal" ? "Personas" : ["Inicio", "Analítica"].includes(label) ? label : null;
+    if (directLabel) {
+      await mobileNavigation.getByRole("button", { name: directLabel, exact: true }).click();
+      return;
+    }
+    await mobileNavigation.getByRole("button", { name: "Más", exact: true }).click();
+    await page
+      .getByRole("dialog", { name: "Todos los módulos" })
+      .getByRole("button", { name: menuLabel, exact: true })
+      .click();
+    return;
   }
-  const navigation = page
-    .getByRole("navigation", { name: "Módulos de la plataforma" })
-    .filter({ visible: true });
-  await navigation.getByRole("button", { name: label, exact: true }).click();
-  if (mobile) {
-    await expect(page.getByRole("dialog", { name: "Módulos" })).toBeHidden();
+
+  if (["Personal", "Analítica", "Configuración", "Inicio"].includes(label)) {
+    const directLabel = label === "Personal" ? "Personas" : label;
+    await page.getByRole("button", { name: directLabel, exact: true }).click();
+    return;
   }
+  await page.getByRole("button", { name: /Trabajo/ }).click();
+  const menuLabel = label === "Operaciones" ? "Centro operativo" : label;
+  await page.getByRole("menuitem", { name: menuLabel, exact: true }).click();
 }
 
 test("navigates through every module", async ({ page }, testInfo) => {
@@ -41,7 +58,8 @@ test("navigates through every module", async ({ page }, testInfo) => {
     "Inicio",
   ]) {
     await navigateToModule(page, label, mobile);
-    await expect(page.getByRole("heading", { name: label, level: 1 })).toBeVisible();
+    const heading = label === "Inicio" ? "Buenos días" : label;
+    await expect(page.getByRole("heading", { name: heading, level: 1 })).toBeVisible();
   }
 });
 
@@ -106,7 +124,11 @@ test("creates, approves and restores a leave request", async ({ page }, testInfo
   await row.getByRole("button", { name: /Aprobar solicitud/ }).click();
   await expect(row).toContainText("Aprobada");
 
-  await page.getByRole("button", { name: "Restaurar datos" }).click();
+  const resetButton = page.getByRole("button", { name: "Restaurar datos" });
+  if (!(await resetButton.isVisible())) {
+    await page.getByRole("button", { name: "Más", exact: true }).click();
+  }
+  await resetButton.click();
   await expect(page.getByRole("row").filter({ hasText: "Usuario invitado" })).toHaveCount(0);
 });
 
@@ -477,9 +499,10 @@ test("configures modules and audits role metadata independently", async ({ page 
 
 test("mobile navigation opens and closes with Escape", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "mobile");
-  await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
-  await expect(page.getByRole("dialog")).toBeVisible();
+  const moreButton = page.getByRole("button", { name: "Más", exact: true });
+  await moreButton.click();
+  await expect(page.getByRole("dialog", { name: "Todos los módulos" })).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).toBeHidden();
-  await expect(page.getByRole("button", { name: "Abrir menú de módulos" })).toBeFocused();
+  await expect(page.getByRole("dialog", { name: "Todos los módulos" })).toBeHidden();
+  await expect(moreButton).toBeFocused();
 });

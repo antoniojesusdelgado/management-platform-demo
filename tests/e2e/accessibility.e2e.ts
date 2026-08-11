@@ -3,8 +3,35 @@ import { expect, test, type Page } from "@playwright/test";
 
 async function openGuestDemo(page: Page) {
   await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
-  await page.getByRole("button", { name: "Explorar demo sin registro" }).click();
   await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
+}
+
+async function openModule(page: Page, label: string) {
+  const mobileNavigation = page.getByRole("navigation", {
+    name: "Navegación móvil",
+  });
+  if (await mobileNavigation.isVisible()) {
+    const directLabel =
+      label === "Personal" ? "Personas" : label === "Analítica" ? "Analítica" : null;
+    if (directLabel) {
+      await mobileNavigation.getByRole("button", { name: directLabel, exact: true }).click();
+      return;
+    }
+    await mobileNavigation.getByRole("button", { name: "Más", exact: true }).click();
+    await page
+      .getByRole("dialog", { name: "Todos los módulos" })
+      .getByRole("button", { name: label, exact: true })
+      .click();
+    return;
+  }
+
+  if (["Personal", "Analítica", "Configuración", "Inicio"].includes(label)) {
+    const directLabel = label === "Personal" ? "Personas" : label;
+    await page.getByRole("button", { name: directLabel, exact: true }).click();
+    return;
+  }
+  await page.getByRole("button", { name: /Trabajo/ }).click();
+  await page.getByRole("menuitem", { name: label, exact: true }).click();
 }
 
 test("guest dashboard has no detectable WCAG A/AA violations", async ({
@@ -31,18 +58,9 @@ test("workspace command center has no detectable WCAG A/AA violations", async ({
 
 test("leave dialog has no detectable WCAG A/AA violations", async (
   { page },
-  testInfo,
 ) => {
   await openGuestDemo(page);
-  if (testInfo.project.name === "mobile") {
-    await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
-  }
-  const navigation = page
-    .getByRole("navigation", { name: "Módulos de la plataforma" })
-    .filter({ visible: true });
-  await navigation
-    .getByRole("button", { name: "Vacaciones", exact: true })
-    .click();
+  await openModule(page, "Vacaciones");
   await page.getByRole("button", { name: "Nueva solicitud" }).click();
   await expect(page.getByRole("dialog", { name: "Nueva solicitud" })).toBeVisible();
   const results = await new AxeBuilder({ page })
@@ -53,18 +71,9 @@ test("leave dialog has no detectable WCAG A/AA violations", async (
 
 test("leave detail has no detectable WCAG A/AA violations", async (
   { page },
-  testInfo,
 ) => {
   await openGuestDemo(page);
-  if (testInfo.project.name === "mobile") {
-    await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
-  }
-  const navigation = page
-    .getByRole("navigation", { name: "Módulos de la plataforma" })
-    .filter({ visible: true });
-  await navigation
-    .getByRole("button", { name: "Vacaciones", exact: true })
-    .click();
+  await openModule(page, "Vacaciones");
   await page.getByRole("button", { name: /Ver detalle/ }).first().click();
   await expect(page.locator('[role="dialog"]:visible')).toBeVisible();
   const results = await new AxeBuilder({ page })
@@ -75,18 +84,9 @@ test("leave detail has no detectable WCAG A/AA violations", async (
 
 test("leave transition confirmation has no detectable WCAG A/AA violations", async (
   { page },
-  testInfo,
 ) => {
   await openGuestDemo(page);
-  if (testInfo.project.name === "mobile") {
-    await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
-  }
-  const navigation = page
-    .getByRole("navigation", { name: "Módulos de la plataforma" })
-    .filter({ visible: true });
-  await navigation
-    .getByRole("button", { name: "Vacaciones", exact: true })
-    .click();
+  await openModule(page, "Vacaciones");
   await page.getByRole("button", { name: "Nueva solicitud" }).click();
   await page.getByLabel("Fecha inicial").fill("2026-10-05");
   await page.getByLabel("Fecha final").fill("2026-10-07");
@@ -108,19 +108,9 @@ test("leave transition confirmation has no detectable WCAG A/AA violations", asy
 
 test("task detail has no detectable WCAG A/AA violations", async (
   { page },
-  testInfo,
 ) => {
   await openGuestDemo(page);
-  if (testInfo.project.name === "mobile") {
-    await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
-  }
-  const navigation = page
-    .getByRole("navigation", { name: "Módulos de la plataforma" })
-    .filter({ visible: true });
-  await navigation.getByRole("button", { name: "Tareas", exact: true }).click();
-  if (testInfo.project.name === "mobile") {
-    await expect(page.getByRole("dialog", { name: "Módulos" })).toBeHidden();
-  }
+  await openModule(page, "Tareas");
   await page
     .getByRole("button", { name: "Lista", exact: true })
     .click({ force: true });
@@ -132,45 +122,37 @@ test("task detail has no detectable WCAG A/AA violations", async (
   expect(results.violations).toEqual([]);
 });
 
-test("incident detail has no detectable WCAG A/AA violations", async ({ page }, testInfo) => {
+test("incident detail has no detectable WCAG A/AA violations", async ({ page }) => {
   await openGuestDemo(page);
-  if (testInfo.project.name === "mobile") await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
-  const navigation = page.getByRole("navigation", { name: "Módulos de la plataforma" }).filter({ visible: true });
-  await navigation.getByRole("button", { name: "Incidencias", exact: true }).click();
+  await openModule(page, "Incidencias");
   await page.locator(".task-row").first().click();
   await expect(page.locator('[role="dialog"]:visible')).toBeVisible();
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
   expect(results.violations).toEqual([]);
 });
 
-test("settings permission matrix has no detectable WCAG A/AA violations", async ({ page }, testInfo) => {
+test("settings permission matrix has no detectable WCAG A/AA violations", async ({ page }) => {
   await openGuestDemo(page);
-  if (testInfo.project.name === "mobile") await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
-  const navigation = page.getByRole("navigation", { name: "Módulos de la plataforma" }).filter({ visible: true });
-  await navigation.getByRole("button", { name: "Configuración", exact: true }).click();
+  await openModule(page, "Configuración");
   await page.getByRole("button", { name: "Roles y permisos" }).click();
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
   expect(results.violations).toEqual([]);
 });
 
-test("Treasury creation has no detectable WCAG A/AA violations", async ({ page }, testInfo) => {
+test("Treasury creation has no detectable WCAG A/AA violations", async ({ page }) => {
   test.setTimeout(90_000);
   await openGuestDemo(page);
-  if (testInfo.project.name === "mobile") await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
-  const navigation = page.getByRole("navigation", { name: "Módulos de la plataforma" }).filter({ visible: true });
-  await navigation.getByRole("button", { name: "Tesorería", exact: true }).click();
+  await openModule(page, "Tesorería");
   await page.getByRole("button", { name: "Nuevo movimiento" }).click();
   await expect(page.getByRole("dialog", { name: "Nuevo movimiento" })).toBeVisible();
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
   expect(results.violations).toEqual([]);
 });
 
-test("Payroll creation has no detectable WCAG A/AA violations", async ({ page }, testInfo) => {
+test("Payroll creation has no detectable WCAG A/AA violations", async ({ page }) => {
   test.setTimeout(90_000);
   await openGuestDemo(page);
-  if (testInfo.project.name === "mobile") await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
-  const navigation = page.getByRole("navigation", { name: "Módulos de la plataforma" }).filter({ visible: true });
-  await navigation.getByRole("button", { name: "Nóminas", exact: true }).click();
+  await openModule(page, "Nóminas");
   await page.getByRole("button", { name: "Nuevo ciclo" }).click();
   await expect(page.getByRole("dialog", { name: "Nuevo ciclo" })).toBeVisible();
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
