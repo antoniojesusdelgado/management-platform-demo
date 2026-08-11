@@ -1,8 +1,10 @@
 import "server-only";
 
 import { cache } from "react";
+import { cookies } from "next/headers";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
+import type { ActiveOrganization } from "@/domain/organizations";
 
 export type WorkspaceAccess =
   | { status: "not-configured" }
@@ -16,6 +18,8 @@ export type WorkspaceAccess =
       organizationName: string;
       roleCode: string;
       simulatedRole: "admin" | "manager" | "collaborator" | "viewer" | null;
+      organizations: ActiveOrganization[];
+      onboardingComplete: boolean;
     };
 
 export const getWorkspaceAccess = cache(async (): Promise<WorkspaceAccess> => {
@@ -28,30 +32,56 @@ export const getWorkspaceAccess = cache(async (): Promise<WorkspaceAccess> => {
 
   if (!user) return { status: "signed-out" };
 
-  const { data: membership } = await supabase
+  const [{ data: memberships }, { data: profile }] = await Promise.all([
+    supabase
     .from("memberships")
     .select(
-      "organization_id, roles!inner(code), organizations!inner(name), profiles!inner(simulated_role)",
+      "organization_id, roles!inner(code), organizations!inner(name,slug)",
     )
     .eq("profile_id", user.id)
     .eq("status", "active")
-    .limit(1)
-    .maybeSingle();
+    .order("created_at"),
+    supabase
+      .from("profiles")
+      .select("active_organization_id,simulated_role")
+      .eq("id", user.id)
+      .maybeSingle(),
+  ]);
 
-  if (!membership) {
+  if (!memberships?.length) {
     return { status: "not-invited", email: user.email ?? null };
   }
 
+  const activeOrganizationCookie = (await cookies()).get("active-organization")?.value;
+  const membership = memberships.find(
+    (candidate) => candidate.organization_id === activeOrganizationCookie,
+  ) ?? memberships.find(
+    (candidate) => candidate.organization_id === profile?.active_organization_id,
+  ) ?? memberships[0];
   const role = membership.roles as unknown as { code: string };
-  const organization = membership.organizations as unknown as { name: string };
-  const profile = membership.profiles as unknown as {
-    simulated_role:
-      | "admin"
-      | "manager"
-      | "collaborator"
-      | "viewer"
-      | null;
+  const organization = membership.organizations as unknown as {
+    name: string;
+    slug: string;
   };
+  const organizations = memberships.map((candidate) => {
+    const candidateRole = candidate.roles as unknown as { code: string };
+    const candidateOrganization = candidate.organizations as unknown as {
+      name: string;
+      slug: string;
+    };
+    return {
+      id: candidate.organization_id,
+      name: candidateOrganization.name,
+      slug: candidateOrganization.slug,
+      roleCode: candidateRole.code,
+      active: candidate.organization_id === membership.organization_id,
+    };
+  });
+  const { data: onboarding } = await supabase
+    .from("organization_onboarding")
+    .select("status")
+    .eq("organization_id", membership.organization_id)
+    .maybeSingle();
 
   return {
     status: "active",
@@ -60,6 +90,8 @@ export const getWorkspaceAccess = cache(async (): Promise<WorkspaceAccess> => {
     organizationId: membership.organization_id,
     organizationName: organization.name,
     roleCode: role.code,
-    simulatedRole: profile.simulated_role,
+    simulatedRole: profile?.simulated_role ?? null,
+    organizations,
+    onboardingComplete: onboarding?.status === "completed",
   };
 });

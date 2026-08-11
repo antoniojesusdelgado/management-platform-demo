@@ -395,6 +395,7 @@ Configuración actualiza de forma explícita el ancla y registra la operación.
 | v1.5.1 | Catálogo de versiones alineado y desarrollo asistido documentado |
 | v1.6.0 | Búsqueda global, bandeja unificada y enlaces directos a entidades |
 | v1.7.0 | Automatizaciones, capacidad, notificaciones e integraciones de productividad |
+| v1.8.0 | Onboarding, multiempresa, directorio corporativo y nuevo sistema visual |
 
 ### Operaciones e integraciones
 

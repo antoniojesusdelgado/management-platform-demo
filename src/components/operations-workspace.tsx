@@ -103,6 +103,8 @@ export function OperationsWorkspace(props: OperationsWorkspaceProps) {
   const [calendarEndsAt, setCalendarEndsAt] = useState("2026-08-11T10:30");
   const [calendarMessage, setCalendarMessage] = useState("");
   const [executingExportId, setExecutingExportId] = useState<string | null>(null);
+  const [directorySyncing, setDirectorySyncing] = useState<WorkspaceProvider | null>(null);
+  const [directoryMessage, setDirectoryMessage] = useState("");
   const summary = useMemo(() => {
     const grouped = new Map<string, CapacityAllocation>();
     for (const allocation of props.capacityAllocations) {
@@ -153,6 +155,23 @@ export function OperationsWorkspace(props: OperationsWorkspaceProps) {
     if (response.ok && result.externalUrl) window.open(result.externalUrl, "_blank", "noopener,noreferrer");
   }
 
+  async function syncDirectory(provider: WorkspaceProvider) {
+    setDirectorySyncing(provider);
+    setDirectoryMessage("Sincronizando el directorio…");
+    try {
+      const response = await fetch("/api/directory/sync", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ provider }),
+      });
+      const result = await response.json() as { processed?: number; error?: string };
+      setDirectoryMessage(response.ok ? `${result.processed ?? 0} perfiles revisados correctamente.` : result.error ?? "No se pudo sincronizar el directorio.");
+      if (response.ok) router.refresh();
+    } finally {
+      setDirectorySyncing(null);
+    }
+  }
+
   return (
     <main className="workspace operations-workspace" id="main-content">
       <div className="page-heading">
@@ -198,7 +217,8 @@ export function OperationsWorkspace(props: OperationsWorkspaceProps) {
 
       {tab === "integrations" ? <section className="operations-panel" aria-labelledby="integrations-title">
         <div className="section-header"><div><p className="eyebrow">Ecosistema de trabajo</p><h2 id="integrations-title">Google Workspace y Microsoft 365</h2></div></div>
-        <div className="cards-grid">{props.workspaceConnections.map((connection) => { const google = connection.provider === "google_workspace"; return <article className="card integration-card" key={connection.provider}>{google ? <IconBrandGoogleDrive size={30} /> : <IconBrandOffice size={30} />}<h3>{google ? "Google Workspace" : "Microsoft 365"}</h3><p className="muted">{connection.accountLabel}</p><div className="capability-list">{connection.capabilities.map((capability) => <span className="status-chip" key={capability}>{capability}</span>)}</div>{props.mode === "guest" ? <p className="demo-note-compact">Conexión simulada: no se abre OAuth ni se escriben datos externos.</p> : connection.status === "connected" ? <button className="button button-secondary" type="button" onClick={() => void props.onDisconnect(connection.provider)}>Desconectar</button> : <a className="button button-primary" href={`/api/workspace/oauth/${connection.provider}/start`}>Conectar</a>}</article>; })}</div>
+        <div className="cards-grid">{props.workspaceConnections.map((connection) => { const google = connection.provider === "google_workspace"; return <article className="card integration-card" key={connection.provider}>{google ? <IconBrandGoogleDrive size={30} /> : <IconBrandOffice size={30} />}<h3>{google ? "Google Workspace" : "Microsoft 365"}</h3><p className="muted">{connection.accountLabel}</p><div className="capability-list">{connection.capabilities.map((capability) => <span className="status-chip" key={capability}>{capability}</span>)}</div>{props.mode === "guest" ? <p className="demo-note-compact">Conexión simulada: no se abre OAuth ni se escriben datos externos.</p> : connection.status === "connected" ? <div className="operation-actions"><button className="button button-primary" type="button" disabled={directorySyncing !== null} onClick={() => void syncDirectory(connection.provider)}>{directorySyncing === connection.provider ? "Sincronizando…" : "Sincronizar directorio"}</button><button className="button button-secondary" type="button" onClick={() => void props.onDisconnect(connection.provider)}>Desconectar</button></div> : <a className="button button-primary" href={`/api/workspace/oauth/${connection.provider}/start`}>Conectar</a>}</article>; })}</div>
+        {directoryMessage ? <div className="inline-alert" role="status">{directoryMessage}</div> : null}
         <div className="operations-grid">
           <div className="card mail-composer"><IconMail size={25} /><h3>Preparar correo</h3><p className="muted">La plataforma abre el compositor elegido. No lee el buzón ni envía mensajes.</p><label>Proveedor<select value={mailProvider} onChange={(event) => setMailProvider(event.target.value as WorkspaceProvider)}><option value="google_workspace">Gmail</option><option value="microsoft_365">Outlook</option></select></label><label>Asunto<input value={mailSubject} maxLength={160} onChange={(event) => setMailSubject(event.target.value)} /></label><label>Mensaje<textarea value={mailBody} maxLength={2000} onChange={(event) => setMailBody(event.target.value)} /></label><a className="button button-primary" target="_blank" rel="noreferrer" href={buildMailComposerUrl(mailProvider, { subject: mailSubject, body: mailBody })}><IconMail size={17} />Abrir compositor</a></div>
           <form className="card mail-composer" onSubmit={(event) => { event.preventDefault(); void confirmCalendarEvent(); }}><IconCalendarEvent size={25} /><h3>Crear evento de calendario</h3><p className="muted">El evento solo se crea después de esta confirmación.</p><label>Proveedor<select value={calendarProvider} onChange={(event) => setCalendarProvider(event.target.value as WorkspaceProvider)}><option value="google_workspace">Google Calendar</option><option value="microsoft_365">Outlook Calendar</option></select></label><label>Título<input value={calendarTitle} maxLength={160} onChange={(event) => setCalendarTitle(event.target.value)} /></label><label>Inicio<input type="datetime-local" value={calendarStartsAt} onChange={(event) => setCalendarStartsAt(event.target.value)} /></label><label>Fin<input type="datetime-local" value={calendarEndsAt} onChange={(event) => setCalendarEndsAt(event.target.value)} /></label><button className="button button-primary" type="submit" disabled={calendarTitle.trim().length < 3 || calendarEndsAt <= calendarStartsAt}><IconCalendarEvent size={17} />Confirmar y crear evento</button>{calendarMessage ? <p className="form-hint" role="status">{calendarMessage}</p> : null}</form>

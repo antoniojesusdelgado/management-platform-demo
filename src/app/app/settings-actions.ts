@@ -67,7 +67,7 @@ export async function updateRolePermissionsAction(roleId: string, permissions: P
   } catch (error) { return failure(error); }
 }
 
-export async function createInvitationAction(email: string, roleId: string): Promise<ActionResult> {
+export async function createInvitationAction(email: string, roleId: string): Promise<ActionResult<{ token: string }>> {
   try {
     const payload = invitationInputSchema.parse({ email: email.toLowerCase(), roleId: idSchema.parse(roleId) });
     const access = await requirePermission("settings.workspace.manage");
@@ -76,7 +76,7 @@ export async function createInvitationAction(email: string, roleId: string): Pro
     const supabase = await createClient();
     const { error } = await supabase.from("invitations").insert({ organization_id: access.organizationId, email: payload.email, role_id: payload.roleId, token_hash: tokenHash, expires_at: new Date(Date.now() + 14 * 86_400_000).toISOString(), invited_by: access.userId });
     if (error) return actionFailure("conflict", "No se pudo crear la invitación.");
-    revalidatePath("/app/configuracion"); return actionSuccess();
+    revalidatePath("/app/configuracion"); return actionSuccess({ token });
   } catch (error) { return failure(error); }
 }
 

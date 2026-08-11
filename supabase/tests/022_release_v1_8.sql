@@ -1,0 +1,30 @@
+begin;
+select plan(24);
+
+select has_table('public','organization_onboarding','organization onboarding exists');
+select has_table('public','organization_directory_settings','directory settings exist');
+select has_table('public','directory_identity_links','directory identity links exist');
+select has_table('public','directory_sync_cursors','directory cursors exist');
+select has_table('public','directory_sync_jobs','directory jobs exist');
+select has_column('public','profiles','active_organization_id','profiles persist the active organization');
+select has_column('public','profiles','onboarding_completed_at','profiles preserve onboarding completion');
+select is((select bool_and(relrowsecurity) from pg_class where oid = any(array['public.organization_onboarding'::regclass,'public.organization_directory_settings'::regclass,'public.directory_identity_links'::regclass,'public.directory_sync_cursors'::regclass,'public.directory_sync_jobs'::regclass])),true,'all v1.8 public tables use RLS');
+select is(has_table_privilege('anon','public.organization_onboarding','SELECT'),false,'anonymous users cannot read onboarding');
+select is(has_table_privilege('anon','public.directory_identity_links','SELECT'),false,'anonymous users cannot read directory identities');
+select is(has_table_privilege('anon','public.directory_sync_jobs','SELECT'),false,'anonymous users cannot read sync jobs');
+select col_is_pk('public','organization_directory_settings',array['organization_id','provider'],'directory configuration is independent by provider');
+select col_is_pk('public','directory_sync_cursors',array['organization_id','provider'],'directory cursors are independent by provider');
+select function_privs_are('public','create_organization_v1_8',array['text','text','text'],'anon',array[]::text[],'anonymous users cannot create organizations');
+select function_privs_are('public','create_organization_v1_8',array['text','text','text'],'authenticated',array['EXECUTE'],'authenticated users can request onboarding');
+select function_privs_are('private','provision_organization_v1_8',array['uuid','text','text','text'],'authenticated',array[]::text[],'the provisioning helper is private');
+select function_privs_are('public','apply_directory_sync_batch_v1_8',array['uuid','text','jsonb','text','boolean','text','text'],'authenticated',array['EXECUTE'],'administrators can request a validated directory batch');
+select function_privs_are('private','apply_directory_sync_batch_v1_8',array['uuid','text','jsonb','text','boolean','text','text'],'authenticated',array[]::text[],'the directory batch helper is private');
+select function_privs_are('public','refresh_directory_connection_secret_v1_8',array['uuid','text','text','timestamp with time zone'],'authenticated',array[]::text[],'clients cannot refresh Vault secrets');
+select function_privs_are('public','refresh_directory_connection_secret_v1_8',array['uuid','text','text','timestamp with time zone'],'service_role',array['EXECUTE'],'only the server role refreshes Vault secrets');
+select is((select p.proconfig @> array['search_path=""'] from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='private' and p.proname='apply_directory_sync_batch_v1_8'),true,'the directory helper has an empty search path');
+select is((select count(*)::integer from public.organization_directory_settings),(select count(*)::integer * 2 from public.organizations),'each organization has independent Google and Microsoft settings');
+select is((select count(*)::integer from public.changelog_entries where version='1.8.0'),(select count(*)::integer from public.organizations where exists(select 1 from public.memberships where organization_id=organizations.id and status='active')),'v1.8 release is seeded once per active workspace');
+select ok(not exists(select 1 from public.directory_identity_links group by organization_id,provider,external_id having count(*) > 1),'directory identities cannot be duplicated');
+
+select * from finish();
+rollback;

@@ -16,6 +16,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { useState } from "react";
+import { createInvitationAction } from "@/app/app/settings-actions";
 import { modules, type ModuleId } from "@/domain/modules";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { permissionCatalog, type PermissionCode } from "@/domain/permissions";
@@ -143,10 +144,11 @@ export function SettingsWorkspace({
   onUpdateModule,
   onUpdateRoleMetadata,
   onUpdateRolePermissions,
-  onCreateInvitation,
+  onCreateInvitation: _onCreateInvitation,
   onUpdateMembership,
   onRestoreDataset,
 }: Props) {
+  void _onCreateInvitation;
   const [tab, setTab] = useState<Tab>("identity");
   const [name, setName] = useState(organizationName);
   const [draft, setDraft] = useState(configuration);
@@ -154,6 +156,7 @@ export function SettingsWorkspace({
   const selectedRole =
     roles.find((role) => role.id === selectedRoleId) ?? roles[0];
   const [roleName, setRoleName] = useState(selectedRole?.name ?? "");
+  const [invitationLink, setInvitationLink] = useState("");
   const [roleColor, setRoleColor] = useState(
     selectedRole?.color ?? "#2563eb",
   );
@@ -235,9 +238,11 @@ export function SettingsWorkspace({
       );
       return;
     }
-    if (await onCreateInvitation(parsed.data.email, parsed.data.roleId)) {
+    const result = await createInvitationAction(parsed.data.email, parsed.data.roleId);
+    if (result.ok) {
       setEmail("");
       setError("");
+      setInvitationLink(`${window.location.origin}/app/onboarding?invite=${encodeURIComponent(result.data.token)}`);
     }
   }
 
@@ -367,6 +372,13 @@ export function SettingsWorkspace({
                 <p className="field-error" role="alert">
                   {error}
                 </p>
+              ) : null}
+              {invitationLink ? (
+                <div className="inline-alert" role="status">
+                  <strong>Invitación preparada</strong>
+                  <span>Comparte este enlace por un canal seguro. Solo funcionará con el correo indicado.</span>
+                  <input readOnly aria-label="Enlace de invitación" value={invitationLink} onFocus={(event) => event.currentTarget.select()} />
+                </div>
               ) : null}
               <div className="form-actions">
                 <button className="button button-primary" disabled={pending}>

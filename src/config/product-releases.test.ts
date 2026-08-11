@@ -15,13 +15,13 @@ describe("product release catalog", () => {
     );
   });
 
-  test("keeps releases ordered and publishes v1.7.0 on 10 August 2026", () => {
+  test("keeps releases ordered and publishes v1.8.0 on 11 August 2026", () => {
     expect(PRODUCT_RELEASES.at(-1)).toEqual({
-      version: "1.7.0",
-      title: "Menos tareas repetitivas, más control",
+      version: "1.8.0",
+      title: "Tu empresa, preparada para crecer",
       summary:
-        "Automatizaciones, plantillas, planificación de capacidad e informes conectados reúnen el trabajo operativo en un mismo lugar.",
-      publishedDate: "2026-08-10",
+        "Un nuevo inicio, acceso con Google o Microsoft, varias empresas y sincronización corporativa facilitan la puesta en marcha de cada equipo.",
+      publishedDate: "2026-08-11",
     });
   });
 
@@ -32,6 +32,8 @@ describe("product release catalog", () => {
       "supabase/migrations/20260810121210_release_v1_6_0_productivity.sql",
     ).text()}\n${await Bun.file(
       "supabase/migrations/20260810185850_release_v1_7_operations.sql",
+    ).text()}\n${await Bun.file(
+      "supabase/migrations/20260811124636_release_v1_8_multi_tenant_onboarding.sql",
     ).text()}`;
 
     for (const release of PRODUCT_RELEASES.slice(-4)) {

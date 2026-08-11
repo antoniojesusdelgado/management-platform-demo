@@ -23,7 +23,6 @@ const modules = [
 ] as const;
 
 async function enterGuestDemo(page: Page) {
-  await page.getByRole("button", { name: "Explorar demo sin registro" }).click();
   await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
 }
 
@@ -105,18 +104,28 @@ async function openModule(
   page: Page,
   moduleName: (typeof modules)[number],
 ) {
-  const menuButton = page.getByRole("button", {
-    name: "Abrir menú de módulos",
+  const mobileNavigation = page.getByRole("navigation", {
+    name: "Navegación móvil",
   });
-  if (await menuButton.isVisible()) {
-    await menuButton.click();
+  if (await mobileNavigation.isVisible()) {
+    const directLabel =
+      moduleName === "Personal" ? "Personas" : moduleName === "Analítica" ? "Analítica" : null;
+    if (directLabel) {
+      await mobileNavigation.getByRole("button", { name: directLabel, exact: true }).click();
+    } else {
+      await mobileNavigation.getByRole("button", { name: "Más", exact: true }).click();
+      await page
+        .getByRole("dialog", { name: "Todos los módulos" })
+        .getByRole("button", { name: moduleName, exact: true })
+        .click();
+    }
+  } else if (["Personal", "Analítica", "Configuración"].includes(moduleName)) {
+    const directLabel = moduleName === "Personal" ? "Personas" : moduleName;
+    await page.getByRole("button", { name: directLabel, exact: true }).click();
+  } else {
+    await page.getByRole("button", { name: /Trabajo/ }).click();
+    await page.getByRole("menuitem", { name: moduleName, exact: true }).click();
   }
-  const navigation = page
-    .getByRole("navigation", { name: "Módulos de la plataforma" })
-    .filter({ visible: true });
-  await navigation
-    .getByRole("button", { name: moduleName, exact: true })
-    .click();
   await expect(page.getByRole("heading", { name: moduleName, level: 1 })).toBeVisible();
 }
 
@@ -207,9 +216,9 @@ test("access and every module avoid global horizontal overflow at release sizes"
     await page.setViewportSize(viewport);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(
-      page.getByRole("heading", { name: "Gestión diaria en un solo lugar", level: 1 }),
+      page.getByRole("heading", { name: "Organiza el trabajo sin perder de vista a las personas", level: 1 }),
     ).toBeVisible();
-    await expect(page.getByRole("link", { name: "Probar sin iniciar sesión" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Explorar sin iniciar sesión" })).toBeVisible();
     await expectNoGlobalHorizontalOverflow(page);
 
     await openGuestDemo(page);
@@ -222,7 +231,7 @@ test("access and every module avoid global horizontal overflow at release sizes"
   }
 });
 
-test("desktop sidebar keeps its geometry while a scrolled detail dialog is open", async (
+test("desktop header keeps its width while a scrolled detail dialog locks the background", async (
   { page },
   testInfo,
 ) => {
@@ -231,18 +240,18 @@ test("desktop sidebar keeps its geometry while a scrolled detail dialog is open"
   await openGuestDemo(page);
   await openModule(page, "Vacaciones");
 
-  const sidebar = page.locator(".sidebar");
-  const appMain = page.locator(".app-main");
-  const before = await sidebar.boundingBox();
-  await appMain.evaluate((element) => {
-    element.scrollTop = 600;
-  });
+  const header = page.locator(".v18-header-inner");
+  const before = await header.boundingBox();
+  await page.evaluate(() => window.scrollTo({ top: 600 }));
   await page.getByRole("button", { name: /Ver detalle/ }).first().click();
   await expect(page.locator('[role="dialog"]:visible')).toBeVisible();
-  const during = await sidebar.boundingBox();
+  const during = await header.boundingBox();
 
-  expect(during).toEqual(before);
-  await expect(sidebar).toHaveCSS("height", "900px");
+  expect(during?.x).toBe(before?.x);
+  expect(during?.width).toBe(before?.width);
+  expect(during?.height).toBe(before?.height);
+  await expect(page.locator("body")).toHaveCSS("overflow", "hidden");
+  await expect(header).toBeVisible();
 });
 
 test("mobile filters, tables, Kanban and dialogs stay inside their panels", async (

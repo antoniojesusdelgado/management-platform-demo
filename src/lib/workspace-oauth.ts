@@ -33,6 +33,7 @@ export function getWorkspaceOAuthConfiguration(provider: WorkspaceProvider): OAu
         "https://www.googleapis.com/auth/drive.file",
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/calendar.events",
+        "https://www.googleapis.com/auth/admin.directory.user.readonly",
       ],
     };
   }
@@ -45,7 +46,7 @@ export function getWorkspaceOAuthConfiguration(provider: WorkspaceProvider): OAu
     clientSecret,
     authorizationUrl: `https://login.microsoftonline.com/${encodeURIComponent(tenant)}/oauth2/v2.0/authorize`,
     tokenUrl: `https://login.microsoftonline.com/${encodeURIComponent(tenant)}/oauth2/v2.0/token`,
-    scopes: ["openid", "email", "offline_access", "User.Read", "Files.ReadWrite", "Calendars.ReadWrite"],
+    scopes: ["openid", "email", "offline_access", "User.Read", "User.Read.All", "Files.ReadWrite", "Calendars.ReadWrite"],
   };
 }
 

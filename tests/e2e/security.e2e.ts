@@ -38,12 +38,11 @@ test("only the login and embed routes are frameable public surfaces", async ({
   }
 });
 
-test("Google access always leaves the embedded context", async ({ page }) => {
+test("Google access starts OAuth in the current top-level context", async ({ page }) => {
   await page.goto("/login", { waitUntil: "domcontentloaded" });
   const googleAccess = page.getByRole("link", { name: "Continuar con Google" });
 
-  await expect(googleAccess).toHaveAttribute("target", "_blank");
-  await expect(googleAccess).toHaveAttribute("rel", /noopener/);
+  await expect(googleAccess).not.toHaveAttribute("target", "_blank");
   await expect(googleAccess).toHaveAttribute("href", /\/(auth\/google|app\/inicio)$/);
 });
 
@@ -100,7 +99,6 @@ test("anonymous demo access does not issue marketing cookies", async ({
   context,
 }) => {
   await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
-  await page.getByRole("button", { name: "Explorar demo sin registro" }).click();
   await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
   const cookies = await context.cookies();
 

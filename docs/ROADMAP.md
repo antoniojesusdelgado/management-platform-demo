@@ -1,5 +1,17 @@
 # Hoja de ruta
 
+## v1.8.0 — MVP para pilotos
+
+- [x] Acceso directo a la demo sin pantalla intermedia.
+- [x] Identidad con Google y Microsoft mediante Supabase OAuth.
+- [x] Creación de empresa, invitaciones y plantilla sintética opcional.
+- [x] Selector multiempresa y persistencia de la empresa activa.
+- [x] Navegación superior y navegación inferior móvil de la opción visual 2.
+- [x] Sincronización paginada de Google Directory y Microsoft Graph delta.
+- [x] Ejecución manual y programación diaria firmada compatible con el plan actual.
+- [ ] Activar la frecuencia horaria al disponer de Vercel Pro o un programador externo.
+- [ ] Validación administrativa real con tenants de prueba de Google y Microsoft.
+
 ## Base
 
 - [x] Réplica pública aislada y rama de desarrollo protegida
@@ -113,11 +125,11 @@
 
 - Origen canónico: <https://plataformagestion.app>
 - Alternativa de Vercel: <https://management-platform-demo.vercel.app>
-- Preview estable:
-  <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Versión en validación: `v1.7.0`
-- Historial de base de datos: 36 migraciones ordenadas, hasta
-  `20260807160000_release_v1_6_0_productivity.sql`.
+- Las Preview se generan desde pull requests y se promueven tras completar la
+  validación funcional, visual y de seguridad.
+- Versión publicada: `v1.8.0`
+- Historial de base de datos: 39 migraciones ordenadas, hasta
+  `20260811124636_release_v1_8_multi_tenant_onboarding.sql`.
 - Acceso, cierre de sesión y redirecciones protegidas de Google OAuth validados
   en Preview y producción.
 - Flujos públicos validados en escritorio y móvil con Playwright y Axe.

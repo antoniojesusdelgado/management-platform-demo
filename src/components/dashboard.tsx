@@ -1,11 +1,12 @@
 import {
+  IconAlertCircle,
   IconArrowRight,
   IconCalendarEvent,
   IconChecklist,
-  IconFlag3,
-  IconInbox,
-  IconAlertCircle,
+  IconClock,
   IconFolder,
+  IconPlus,
+  IconUsers,
 } from "@tabler/icons-react";
 import type { ModuleId } from "@/domain/modules";
 
@@ -19,142 +20,60 @@ type DashboardProps = {
   };
 };
 
-const attentionItems = [
-  {
-    title: "Solicitudes de vacaciones",
-    description: "Revisa las solicitudes pendientes de aprobación.",
-    link: "Ver solicitudes",
-    module: "vacaciones",
-    icon: IconCalendarEvent,
-    tone: "",
-  },
-  {
-    title: "Tareas asignadas",
-    description: "Hay trabajo pendiente de revisión y seguimiento.",
-    link: "Ver tareas",
-    module: "tareas",
-    icon: IconChecklist,
-    tone: "cyan",
-  },
-  {
-    title: "Incidencias abiertas",
-    description: "Revisa y prioriza las incidencias en curso.",
-    link: "Ver incidencias",
-    module: "incidencias",
-    icon: IconAlertCircle,
-    tone: "orange",
-  },
-  {
-    title: "Proyectos en seguimiento",
-    description: "Consulta el avance, los riesgos y las fechas previstas.",
-    link: "Ver proyectos",
-    module: "proyectos",
-    icon: IconFolder,
-    tone: "cyan",
-  },
-] as const;
-
 export function Dashboard({ onNavigate, summary }: DashboardProps) {
-  const todaySummary = [
-    {
-      label: "Solicitudes por revisar",
-      value: summary?.pendingLeaveRequests ?? 0,
-      icon: IconCalendarEvent,
-    },
-    {
-      label: "Tareas próximas",
-      value: summary?.upcomingTasks ?? 0,
-      icon: IconChecklist,
-    },
-    {
-      label: "Incidencias prioritarias",
-      value: summary?.priorityIncidents ?? 0,
-      icon: IconAlertCircle,
-    },
-    {
-      label: "Proyectos con riesgo",
-      value: summary?.projectsAtRisk ?? 0,
-      icon: IconFlag3,
-    },
-  ] as const;
+  const upcomingTasks = summary?.upcomingTasks ?? 0;
+  const pendingLeave = summary?.pendingLeaveRequests ?? 0;
+  const priorityIncidents = summary?.priorityIncidents ?? 0;
+  const projectsAtRisk = summary?.projectsAtRisk ?? 0;
+  const workload = Math.min(96, 68 + Math.min(upcomingTasks, 14));
+  const circumference = 2 * Math.PI * 52;
+  const dashOffset = circumference * (1 - workload / 100);
+
   return (
-    <main className="workspace" id="main-content">
-      <div className="page-heading">
-        <div>
-          <p className="eyebrow">Panel operativo</p>
-          <h1>Inicio</h1>
-          <p className="lede">
-            Bienvenido. Aquí tienes una visión general de la jornada y los
-            procesos que requieren atención.
-          </p>
-        </div>
+    <main className="workspace v18-dashboard" id="main-content">
+      <header className="v18-dashboard-heading">
+        <div><p className="eyebrow">Centro operativo</p><h1>Buenos días</h1><p className="lede">Aquí tienes lo más importante para avanzar hoy.</p></div>
+        <button type="button" className="button button-primary" onClick={() => onNavigate("tareas")}><IconPlus size={18} />Crear trabajo</button>
+      </header>
+
+      <div className="v18-dashboard-grid">
+        <section className="v18-panel v18-agenda" aria-labelledby="agenda-title">
+          <div className="v18-panel-heading"><div><p className="eyebrow">Hoy</p><h2 id="agenda-title">Agenda operativa</h2></div><button type="button" className="button button-quiet" onClick={() => onNavigate("operaciones")}>Ver bandeja <IconArrowRight size={16} /></button></div>
+          <div className="v18-timeline">
+            <button type="button" onClick={() => onNavigate("tareas")}><time>09:00</time><span className="v18-timeline-dot blue" /><span><strong>Revisar trabajo próximo</strong><small>{upcomingTasks} tareas requieren seguimiento</small></span></button>
+            <button type="button" onClick={() => onNavigate("vacaciones")}><time>11:30</time><span className="v18-timeline-dot cyan" /><span><strong>Disponibilidad del equipo</strong><small>{pendingLeave} solicitudes pendientes</small></span></button>
+            <button type="button" onClick={() => onNavigate("incidencias")}><time>15:00</time><span className="v18-timeline-dot amber" /><span><strong>Riesgos e incidencias</strong><small>{priorityIncidents} asuntos prioritarios</small></span></button>
+          </div>
+        </section>
+
+        <section className="v18-panel v18-capacity" aria-labelledby="capacity-title">
+          <div className="v18-panel-heading"><div><p className="eyebrow">Esta semana</p><h2 id="capacity-title">Capacidad</h2></div><IconUsers size={21} /></div>
+          <div className="v18-capacity-body">
+            <svg viewBox="0 0 128 128" role="img" aria-label={`${workload}% de capacidad asignada`}>
+              <circle cx="64" cy="64" r="52" className="capacity-ring-track" />
+              <circle cx="64" cy="64" r="52" className="capacity-ring-value" strokeDasharray={circumference} strokeDashoffset={dashOffset} />
+              <text x="64" y="61" textAnchor="middle" className="capacity-ring-number">{workload}%</text>
+              <text x="64" y="80" textAnchor="middle" className="capacity-ring-label">asignada</text>
+            </svg>
+            <div><strong>Ritmo saludable</strong><p>La carga prevista permite absorber cambios sin comprometer la semana.</p><button type="button" className="row-link" onClick={() => onNavigate("operaciones")}>Planificar capacidad <IconArrowRight size={15} /></button></div>
+          </div>
+        </section>
+
+        <section className="v18-panel v18-collaboration" aria-labelledby="collaboration-title">
+          <div className="v18-panel-heading"><div><p className="eyebrow">Equipo</p><h2 id="collaboration-title">Colaboración</h2></div><button type="button" className="v18-icon-button" onClick={() => onNavigate("personal")} aria-label="Abrir personas"><IconArrowRight size={18} /></button></div>
+          <div className="v18-collaboration-list">
+            <button type="button" onClick={() => onNavigate("proyectos")}><span className="v18-avatar lilac">PR</span><span><strong>Proyectos en seguimiento</strong><small>{projectsAtRisk ? `${projectsAtRisk} necesitan atención` : "Sin bloqueos críticos"}</small></span><IconFolder size={18} /></button>
+            <button type="button" onClick={() => onNavigate("vacaciones")}><span className="v18-avatar blue">EQ</span><span><strong>Disponibilidad compartida</strong><small>Coordina ausencias y cobertura</small></span><IconCalendarEvent size={18} /></button>
+          </div>
+        </section>
       </div>
 
-      <section className="hero-panel" aria-labelledby="workday-title">
-        <div>
-          <p className="eyebrow">Hoy</p>
-          <h2 id="workday-title">Resumen del día</h2>
-          <p className="lede">
-            Revisa las tareas próximas, las solicitudes pendientes y las
-            incidencias que requieren seguimiento.
-          </p>
-          <button
-            type="button"
-            className="button button-primary"
-            onClick={() => onNavigate("tareas")}
-          >
-            <IconInbox aria-hidden="true" size={19} />
-            Abrir bandeja de trabajo
-          </button>
-        </div>
-        <div className="dashboard-summary-grid" aria-label="Resumen del día">
-          {todaySummary.map((item) => {
-            const Icon = item.icon;
-            return (
-              <article className="dashboard-summary-item" key={item.label}>
-                <Icon aria-hidden="true" size={20} />
-                <strong>{item.value}</strong>
-                <span>{item.label}</span>
-              </article>
-            );
-          })}
-        </div>
+      <section className="v18-metrics" aria-label="Resumen de actividad">
+        <button type="button" onClick={() => onNavigate("tareas")}><IconChecklist /><span><strong>{upcomingTasks}</strong><small>Tareas próximas</small></span></button>
+        <button type="button" onClick={() => onNavigate("vacaciones")}><IconClock /><span><strong>{pendingLeave}</strong><small>Solicitudes por revisar</small></span></button>
+        <button type="button" onClick={() => onNavigate("incidencias")}><IconAlertCircle /><span><strong>{priorityIncidents}</strong><small>Incidencias prioritarias</small></span></button>
+        <button type="button" onClick={() => onNavigate("proyectos")}><IconFolder /><span><strong>{projectsAtRisk}</strong><small>Proyectos con riesgo</small></span></button>
       </section>
-
-      <section className="section-block" aria-labelledby="attention-title">
-        <div className="section-header">
-          <div>
-            <p className="eyebrow">Seguimiento</p>
-            <h2 id="attention-title">Asuntos pendientes</h2>
-          </div>
-          <p className="muted">Accesos directos a las áreas con actividad.</p>
-        </div>
-        <div className="attention-list">
-          {attentionItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                type="button"
-                className="attention-row"
-                style={{ width: "100%", borderInline: 0, background: "transparent" }}
-                key={item.title}
-                onClick={() => onNavigate(item.module)}
-              >
-                <span className={`attention-icon ${item.tone}`}>
-                  <Icon aria-hidden="true" size={23} />
-                </span>
-                <span className="attention-copy">
-                  <h3>{item.title}</h3>
-                  <p className="muted">{item.description}</p>
-                </span>
-                <span className="row-link">{item.link}</span>
-                <IconArrowRight aria-hidden="true" size={18} />
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
     </main>
   );
 }

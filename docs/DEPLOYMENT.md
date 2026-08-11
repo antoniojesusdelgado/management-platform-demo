@@ -1,5 +1,21 @@
 # Despliegue
 
+## Requisitos de v1.8.0
+
+- Habilitar Google y Azure en Supabase Auth con callback `/auth/callback`.
+- Configurar por separado las aplicaciones de Google Workspace y Microsoft
+  Entra para archivos, hojas de cálculo, calendarios y directorio.
+- Definir `CRON_SECRET`; Vercel invoca `/api/cron/directory-sync` una vez al día
+  en el plan actual.
+- Mantener `SUPABASE_SECRET_KEY`, secretos OAuth y
+  `WORKSPACE_OAUTH_STATE_SECRET` solo en entornos de servidor.
+- Conservar `/demo/embed` como acceso local directo, sin OAuth ni Supabase.
+
+La programación horaria requiere Vercel Pro o un programador externo que llame
+al mismo endpoint firmado. La actualización manual permanece disponible.
+Si no está disponible, el endpoint firmado puede ejecutarse desde un
+programador corporativo equivalente.
+
 ## Modelo de publicación
 
 La ruta pública sin registro funciona sin autenticación ni Supabase. Google
@@ -120,7 +136,7 @@ variables del entorno de producción. Después de la promoción:
 4. Confirmar que Google OAuth utiliza el origen de producción.
 5. Conservar el despliegue anterior como opción de reversión.
 
-## Candidata v1.7.0
+## Despliegue de v1.8.0
 
 La publicación requiere añadir en Preview y Producción las variables descritas
 en `WORKSPACE-INTEGRATIONS.md`. `WORKSPACE_OAUTH_STATE_SECRET`,
@@ -136,21 +152,19 @@ escritura externa y ausencia de OAuth en el modo invitado.
 
 - Origen canónico de producción: <https://plataformagestion.app>
 - Alternativa de Vercel: <https://management-platform-demo.vercel.app>
-- Preview estable de la rama:
-  <https://management-platform-de-git-acc0ac-antonio-jesus-delgado-briones.vercel.app>
-- Versión actual de producción: `v1.5.1`
-- Candidata en validación: `v1.7.0`
+- Las Preview se generan desde cada pull request y se promueven solo después de
+  superar las comprobaciones de producto, accesibilidad y seguridad.
+- Versión actual de producción: `v1.8.0`
 - Región y plan de Supabase: `eu-central-1`, Free
 - Producción y Preview utilizan variables separadas para los orígenes de la
   aplicación y del portfolio.
-- La compilación local y la Preview superaron 64 comprobaciones de extremo a
-  extremo; 6 combinaciones de proyecto o dispositivo se omitieron de forma
-  intencionada.
+- La compilación local superó 80 comprobaciones de extremo a extremo; 6
+  combinaciones de proyecto o dispositivo se omitieron de forma intencionada.
 - La migración más reciente es
-  `20260810185850_release_v1_7_operations.sql` y
-  `20260810190106_harden_v1_7_operation_policies.sql`.
+  `20260811124636_release_v1_8_multi_tenant_onboarding.sql`.
 - El esquema remoto incluye políticas RLS, aprovisionamiento determinista y la
-  integración nocturna neutral programada a las 02:15 UTC.
+  integración nocturna neutral y la sincronización diaria del directorio; el
+  modo horario está preparado para un plan compatible.
 - El refuerzo eliminó los índices de claves foráneas ausentes, las políticas de
   autenticación sin optimizar y las lecturas permisivas duplicadas detectadas
   por los asesores.
