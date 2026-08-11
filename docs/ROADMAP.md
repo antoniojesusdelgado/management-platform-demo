@@ -1,5 +1,16 @@
 # Hoja de ruta
 
+## v1.8.1 — Corrección integral de interfaz y rendimiento
+
+- [x] Acceso compacto sin scroll en los viewports de aceptación.
+- [x] Creación de empresas desde una ruta propia y conservación de empresas previas.
+- [x] Saludo profesional dinámico según alias y zona horaria.
+- [x] Campana y Bandeja unificadas con lectura, descarte y enlaces profundos.
+- [x] Estados separados para acceso, productividad y directorio corporativo.
+- [x] Menús, estados vacíos, tablas y retículas normalizados en móvil y escritorio.
+- [x] Precarga, esqueletos y consultas compartidas para mejorar la respuesta percibida.
+- [ ] QA visual autenticada en Chrome y promoción de la Preview.
+
 ## v1.8.0 — MVP para pilotos
 
 - [x] Acceso directo a la demo sin pantalla intermedia.
@@ -127,7 +138,8 @@
 - Alternativa de Vercel: <https://management-platform-demo.vercel.app>
 - Las Preview se generan desde pull requests y se promueven tras completar la
   validación funcional, visual y de seguridad.
-- Versión publicada: `v1.8.0`
+- Versión preparada: `v1.8.1`; producción permanece en `v1.8.0` hasta aprobar
+  la Preview autenticada.
 - Historial de base de datos: 39 migraciones ordenadas, hasta
   `20260811124636_release_v1_8_multi_tenant_onboarding.sql`.
 - Acceso, cierre de sesión y redirecciones protegidas de Google OAuth validados
@@ -170,7 +182,7 @@
 - [x] Reglas controladas con historial e idempotencia.
 - [x] Plantillas de proyecto y recurrencias diarias, semanales y mensuales.
 - [x] Capacidad semanal con vacaciones, trabajo activo y avisos de sobrecarga.
-- [x] Centro operativo con notificaciones, preferencias y menciones por perfil.
+- [x] Operaciones con notificaciones, preferencias y menciones por perfil.
 - [x] Contrato neutral para Google Workspace y Microsoft 365.
 - [x] CSV y XLSX local; Google Sheets y Excel conectado bajo confirmación.
 - [x] OAuth con PKCE, estado firmado y secretos cifrados en Vault.

@@ -22,6 +22,7 @@ import type {
 import { getWorkspaceAccess } from "@/lib/auth";
 import { hasWorkspacePermission } from "@/lib/authorization";
 import { createClient } from "@/lib/supabase/server";
+import { buildProfessionalGreeting } from "@/lib/greeting";
 import {
   defaultWorkspaceConfiguration,
   parseWorkspaceConfiguration,
@@ -99,22 +100,33 @@ export default async function AppModulePage({
   }
 
   const profileClient = await createClient();
-  const { error: scenarioError } = await profileClient.rpc(
-    "ensure_demo_scenario_current",
-    { expected_organization_id: access.organizationId },
-  );
-  const { data: currentProfile, error: profileError } = await profileClient
-    .from("profiles")
-    .select(
-      "display_name,alias,avatar_path,theme,density,reduced_motion,high_contrast",
-    )
-    .eq("id", access.userId)
-    .single();
-  const { data: currentOrganization, error: organizationError } = await profileClient
-    .from("organizations")
-    .select("scenario_anchor_date,scenario_generated_through_date")
-    .eq("id", access.organizationId)
-    .single();
+  const [profileResult, organizationResult, notificationCountResult] = await Promise.all([
+    profileClient
+      .from("profiles")
+      .select("display_name,alias,avatar_path,timezone,theme,density,reduced_motion,high_contrast")
+      .eq("id", access.userId)
+      .single(),
+    profileClient
+      .from("organizations")
+      .select("scenario_anchor_date,scenario_generated_through_date")
+      .eq("id", access.organizationId)
+      .single(),
+    profileClient
+      .from("operational_notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", access.organizationId)
+      .eq("recipient_profile_id", access.userId)
+      .eq("status", "unread"),
+  ]);
+  const { data: currentProfile, error: profileError } = profileResult;
+  const { data: currentOrganization, error: organizationError } = organizationResult;
+  let scenarioError = null;
+  if (module === "inicio") {
+    const result = await profileClient.rpc("ensure_demo_scenario_current", {
+      expected_organization_id: access.organizationId,
+    });
+    scenarioError = result.error;
+  }
   const signedAvatar = currentProfile?.avatar_path
     ? await profileClient.storage
         .from("profile-avatars")
@@ -684,8 +696,9 @@ export default async function AppModulePage({
   if (module === "operaciones") {
     canManageOperations = await hasWorkspacePermission("operations.automations.manage");
     const supabase = await createClient();
-    const [connectionsResult, rulesResult, runsResult, templatesResult, recurrencesResult, capacityResult, notificationsResult, exportsResult] = await Promise.all([
-      supabase.from("workspace_connections").select("id,provider,status,capabilities,account_label,connected_at").eq("organization_id", access.organizationId).eq("profile_id", access.userId).order("provider"),
+    const [connectionsResult, directorySettingsResult, rulesResult, runsResult, templatesResult, recurrencesResult, capacityResult, notificationsResult, exportsResult] = await Promise.all([
+      supabase.from("workspace_connections").select("id,provider,status,capabilities,account_label,connected_at,granted_scopes,account_kind,directory_authorized").eq("organization_id", access.organizationId).eq("profile_id", access.userId).order("provider"),
+      supabase.from("organization_directory_settings").select("provider,status,last_synced_at,last_error_code").eq("organization_id", access.organizationId),
       supabase.from("automation_rules").select("id,name,trigger_code,action_code,condition_config,enabled,last_run_at").eq("organization_id", access.organizationId).order("created_at", { ascending: false }),
       supabase.from("automation_runs").select("id,rule_id,status,summary,created_at").eq("organization_id", access.organizationId).order("created_at", { ascending: false }).limit(50),
       supabase.from("project_templates").select("id,name,description,duration_days,tasks,role_codes").eq("organization_id", access.organizationId).order("name"),
@@ -694,9 +707,33 @@ export default async function AppModulePage({
       supabase.from("operational_notifications").select("id,title,description,priority,status,source,href,created_at").eq("organization_id", access.organizationId).eq("recipient_profile_id", access.userId).order("created_at", { ascending: false }).limit(100),
       supabase.from("export_jobs").select("id,name,module_id,target,status,row_count,created_at,external_url").eq("organization_id", access.organizationId).eq("profile_id", access.userId).order("created_at", { ascending: false }).limit(100),
     ]);
-    if ([connectionsResult, rulesResult, runsResult, templatesResult, recurrencesResult, capacityResult, notificationsResult, exportsResult].some((result) => result.error)) operationsLoadError = "No se pudo cargar toda la información operativa. Revisa la conexión y vuelve a intentarlo.";
+    if ([connectionsResult, directorySettingsResult, rulesResult, runsResult, templatesResult, recurrencesResult, capacityResult, notificationsResult, exportsResult].some((result) => result.error)) operationsLoadError = "No se pudo cargar toda la información operativa. Revisa la conexión y vuelve a intentarlo.";
     const storedConnections = new Map((connectionsResult.data ?? []).map((connection) => [connection.provider, connection]));
-    workspaceConnections = workspaceConnectionSchema.array().parse(createDefaultOperationsState().workspaceConnections.map((fallback) => { const connection = storedConnections.get(fallback.provider); return connection ? { id: connection.id, provider: connection.provider, status: connection.status, capabilities: connection.capabilities, accountLabel: connection.account_label, connectedAt: connection.connected_at } : { ...fallback, status: "revoked", accountLabel: "Sin conexión" }; }));
+    const directorySettings = new Map((directorySettingsResult.data ?? []).map((setting) => [setting.provider, setting]));
+    workspaceConnections = workspaceConnectionSchema.array().parse(createDefaultOperationsState().workspaceConnections.map((fallback) => {
+      const connection = storedConnections.get(fallback.provider);
+      if (!connection) return { ...fallback, status: "revoked", accountLabel: "Sin conexión", directoryStatus: "not_configured", canSyncDirectory: false };
+      const setting = directorySettings.get(fallback.provider);
+      const directoryStatus = connection.directory_authorized
+        ? setting?.status ?? "ready"
+        : connection.status === "connected"
+          ? "permission_required"
+          : "not_configured";
+      return {
+        id: connection.id,
+        provider: connection.provider,
+        status: connection.status,
+        capabilities: connection.capabilities,
+        accountLabel: connection.account_label,
+        connectedAt: connection.connected_at,
+        grantedScopes: connection.granted_scopes,
+        accountKind: connection.account_kind,
+        directoryStatus,
+        lastSyncedAt: setting?.last_synced_at ?? null,
+        lastErrorCode: setting?.last_error_code ?? null,
+        canSyncDirectory: connection.status === "connected" && connection.directory_authorized && setting?.status === "ready",
+      };
+    }));
     automationRules = automationRuleSchema.array().parse((rulesResult.data ?? []).map((rule) => ({ id: rule.id, name: rule.name, trigger: rule.trigger_code, action: rule.action_code, condition: Object.keys(rule.condition_config ?? {}).length ? rule.condition_config : null, enabled: rule.enabled, lastRunAt: rule.last_run_at })));
     automationRuns = automationRunSchema.array().parse((runsResult.data ?? []).map((run) => ({ id: run.id, ruleId: run.rule_id, status: run.status, summary: run.summary, createdAt: run.created_at })));
     projectTemplates = projectTemplateSchema.array().parse((templatesResult.data ?? []).map((template) => ({ id: template.id, name: template.name, description: template.description, durationDays: template.duration_days, taskCount: Array.isArray(template.tasks) ? template.tasks.length : 0, roleCodes: template.role_codes })));
@@ -718,6 +755,12 @@ export default async function AppModulePage({
       }
       avatarUrl={signedAvatar?.data?.signedUrl ?? null}
       displayName={currentProfile?.alias ?? currentProfile?.display_name}
+      greeting={buildProfessionalGreeting(
+        new Date(),
+        currentProfile?.timezone ?? "Europe/Madrid",
+        currentProfile?.alias ?? currentProfile?.display_name,
+      )}
+      unreadCount={notificationCountResult.count ?? 0}
       theme={
         currentProfile?.theme === "light" ||
         currentProfile?.theme === "dark"

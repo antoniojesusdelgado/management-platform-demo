@@ -17,6 +17,7 @@ import {
 } from "@tabler/icons-react";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { EmptyState } from "@/components/empty-state";
 import type { Person } from "@/domain/people";
 import type { Project } from "@/domain/projects";
 import {
@@ -25,6 +26,7 @@ import {
   automationConditionOperators,
   automationTriggers,
   buildMailComposerUrl,
+  buildMailtoUrl,
   capacityStatus,
   exportTargets,
   recurrenceFrequencies,
@@ -35,6 +37,7 @@ import {
   type ExportTarget,
   type NotificationStatus,
   type OperationsState,
+  type WorkspaceConnection,
   type WorkspaceProvider,
 } from "@/domain/operations";
 
@@ -194,8 +197,8 @@ export function OperationsWorkspace(props: OperationsWorkspaceProps) {
 
       {tab === "automations" ? <section className="operations-panel" aria-labelledby="automations-title">
         <div className="section-header"><div><p className="eyebrow">Reglas controladas</p><h2 id="automations-title">Automatizaciones</h2></div></div>
-        <div className="operations-grid">
-          <div className="operations-list">{props.automationRules.map((rule) => <article className="card operation-item" key={rule.id}><div><strong>{rule.name}</strong><p className="muted">{triggerLabels[rule.trigger]} → {actionLabels[rule.action]}</p></div><div className="operation-actions"><label className="switch-label"><input type="checkbox" checked={rule.enabled} disabled={!props.canManage || props.pending} onChange={(event) => void props.onToggleRule(rule.id, event.target.checked)} /><span>{rule.enabled ? "Activa" : "Pausada"}</span></label><button className="button button-secondary" type="button" disabled={!props.canManage || props.pending || !rule.enabled} onClick={() => void props.onRunRule(rule.id)}><IconPlayerPlay size={17} />Ejecutar</button></div></article>)}</div>
+        <div className={`operations-grid${props.automationRules.length ? "" : " operations-grid-empty"}`}>
+          <div className="operations-list">{props.automationRules.length ? props.automationRules.map((rule) => <article className="card operation-item" key={rule.id}><div><strong>{rule.name}</strong><p className="muted">{triggerLabels[rule.trigger]} → {actionLabels[rule.action]}</p></div><div className="operation-actions"><label className="switch-label"><input type="checkbox" checked={rule.enabled} disabled={!props.canManage || props.pending} onChange={(event) => void props.onToggleRule(rule.id, event.target.checked)} /><span>{rule.enabled ? "Activa" : "Pausada"}</span></label><button className="button button-secondary" type="button" disabled={!props.canManage || props.pending || !rule.enabled} onClick={() => void props.onRunRule(rule.id)}><IconPlayerPlay size={17} />Ejecutar</button></div></article>) : <EmptyState kind="work" title="Todavía no hay automatizaciones" description="Crea la primera regla para preparar avisos o trabajo recurrente de forma controlada." />}</div>
           <form className="card operations-form" onSubmit={(event) => { event.preventDefault(); if (ruleName.trim().length < 3) return; void Promise.resolve(props.onCreateRule({ name: ruleName.trim(), trigger, action, condition: conditionValue.trim() ? { field: conditionField, operator: conditionOperator, value: conditionValue.trim() } : null })).then((ok) => { if (ok) { setRuleName(""); setConditionValue(""); } }); }}>
             <h3>Nueva regla</h3>
             <label>Nombre<input value={ruleName} maxLength={100} onChange={(event) => setRuleName(event.target.value)} /></label>
@@ -208,19 +211,40 @@ export function OperationsWorkspace(props: OperationsWorkspaceProps) {
             <button className="button button-primary" type="submit" disabled={!props.canManage || props.pending || ruleName.trim().length < 3}>Crear regla</button>
           </form>
         </div>
-        <div className="card notification-list"><h3>Centro operativo</h3>{props.operationalNotifications.map((notification) => <article key={notification.id} className={`notification-item priority-${notification.priority}`}><div><strong>{notification.title}</strong><p className="muted">{notification.description}</p></div><div className="operation-actions"><span className="status-chip">{notification.status === "unread" ? "Nueva" : notification.status === "read" ? "Leída" : "Descartada"}</span>{notification.status === "unread" ? <button className="button button-quiet" type="button" onClick={() => void props.onMarkNotification(notification.id, "read")}><IconCheck size={17} />Marcar leída</button> : null}</div></article>)}</div>
+        <div className="card notification-list"><h3>Bandeja de notificaciones</h3>{props.operationalNotifications.length ? props.operationalNotifications.map((notification) => <article key={notification.id} className={`notification-item priority-${notification.priority}`}><div><strong>{notification.title}</strong><p className="muted">{notification.description}</p></div><div className="operation-actions"><span className="status-chip">{notification.status === "unread" ? "Nueva" : notification.status === "read" ? "Leída" : "Descartada"}</span>{notification.status === "unread" ? <button className="button button-quiet" type="button" onClick={() => void props.onMarkNotification(notification.id, "read")}><IconCheck size={17} />Marcar leída</button> : null}</div></article>) : <EmptyState kind="work" title="No hay notificaciones pendientes" description="Los avisos de asignaciones, revisiones y automatizaciones aparecerán aquí." />}</div>
       </section> : null}
 
-      {tab === "templates" ? <section className="operations-panel" aria-labelledby="templates-title"><div className="section-header"><div><p className="eyebrow">Trabajo repetible</p><h2 id="templates-title">Plantillas y recurrencias</h2></div></div><div className="cards-grid">{props.projectTemplates.map((template) => <article className="card" key={template.id}><IconTemplate size={26} aria-hidden="true" /><h3>{template.name}</h3><p>{template.description}</p><p className="muted">{template.taskCount} tareas · {template.durationDays} días</p><button className="button button-primary" type="button" disabled={!props.canManage || props.pending} onClick={() => void props.onApplyTemplate(template.id)}>Crear proyecto desde plantilla</button></article>)}</div><div className="card"><h3>Trabajo recurrente</h3><div className="table-scroll"><table><thead><tr><th>Nombre</th><th>Frecuencia</th><th>Próxima ejecución</th><th>Estado</th></tr></thead><tbody>{props.recurrenceRules.map((rule) => <tr key={rule.id}><td>{rule.name}</td><td>{recurrenceFrequencies.includes(rule.frequency) ? rule.frequency : "—"}</td><td>{rule.nextRunDate}</td><td><span className="status-chip">{rule.enabled ? "Activa" : "Pausada"}</span></td></tr>)}</tbody></table></div></div></section> : null}
+      {tab === "templates" ? (
+        <section className="operations-panel" aria-labelledby="templates-title">
+          <div className="section-header"><div><p className="eyebrow">Trabajo repetible</p><h2 id="templates-title">Plantillas y recurrencias</h2></div></div>
+          <div className="cards-grid">
+            {props.projectTemplates.length ? props.projectTemplates.map((template) => (
+              <article className="card" key={template.id}>
+                <IconTemplate size={26} aria-hidden="true" />
+                <h3>{template.name}</h3>
+                <p>{template.description}</p>
+                <p className="muted">{template.taskCount} tareas · {template.durationDays} días</p>
+                <button className="button button-primary" type="button" disabled={!props.canManage || props.pending} onClick={() => void props.onApplyTemplate(template.id)}>Crear proyecto desde plantilla</button>
+              </article>
+            )) : <EmptyState kind="projects" title="No hay plantillas creadas" description="Las plantillas reúnen tareas, roles y duraciones para iniciar proyectos consistentes." />}
+          </div>
+          <div className="card recurrence-card">
+            <h3>Trabajo recurrente</h3>
+            {props.recurrenceRules.length ? (
+              <div className="table-scroll"><table><thead><tr><th>Nombre</th><th>Frecuencia</th><th>Próxima ejecución</th><th>Estado</th></tr></thead><tbody>{props.recurrenceRules.map((rule) => <tr key={rule.id}><td>{rule.name}</td><td>{recurrenceFrequencies.includes(rule.frequency) ? rule.frequency : "—"}</td><td>{rule.nextRunDate}</td><td><span className="status-chip">{rule.enabled ? "Activa" : "Pausada"}</span></td></tr>)}</tbody></table></div>
+            ) : <EmptyState kind="work" title="No hay recurrencias programadas" description="Las tareas e informes periódicos aparecerán aquí con su próxima ejecución." />}
+          </div>
+        </section>
+      ) : null}
 
       {tab === "capacity" ? <section className="operations-panel" aria-labelledby="capacity-title"><div className="section-header"><div><p className="eyebrow">Planificación semanal</p><h2 id="capacity-title">Capacidad del equipo</h2></div></div><div className="capacity-grid">{summary.map(({ allocation, utilization, remaining, state }) => <article className={`card capacity-card capacity-${state}`} key={allocation.id}><div><strong>{allocation.personName}</strong><p className="muted">{allocation.projectName}</p></div><strong className="capacity-percentage">{utilization}%</strong><div className="capacity-track" aria-label={`${utilization}% de capacidad asignada`}><span style={{ width: `${Math.min(utilization, 100)}%` }} /></div><p>{remaining < 0 ? `${Math.abs(remaining)} h de sobrecarga` : `${remaining} h disponibles`}</p>{state === "over" ? <span className="inline-alert"><IconAlertTriangle size={17} />Revisa la distribución; no se ha bloqueado la asignación.</span> : null}</article>)}</div><form className="card capacity-form" onSubmit={(event) => { event.preventDefault(); if (!personId || !projectId) return; void props.onAddAllocation({ personId, projectId, weekStart: new Date().toISOString().slice(0, 10), allocatedHours: hours, availableHours: 40 }); }}><h3>Nueva asignación</h3><label>Persona<select value={personId} onChange={(event) => setPersonId(event.target.value)}>{props.people.filter((person) => person.status === "active").map((person) => <option key={person.id} value={person.id}>{person.displayName}</option>)}</select></label><label>Proyecto<select value={projectId} onChange={(event) => setProjectId(event.target.value)}>{props.projects.filter((project) => project.status === "active").map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label><label>Horas semanales<input type="number" min={0} max={80} value={hours} onChange={(event) => setHours(Number(event.target.value))} /></label><button className="button button-primary" type="submit" disabled={!props.canManage || props.pending || !personId || !projectId}>Guardar asignación</button></form></section> : null}
 
       {tab === "integrations" ? <section className="operations-panel" aria-labelledby="integrations-title">
-        <div className="section-header"><div><p className="eyebrow">Ecosistema de trabajo</p><h2 id="integrations-title">Google Workspace y Microsoft 365</h2></div></div>
-        <div className="cards-grid">{props.workspaceConnections.map((connection) => { const google = connection.provider === "google_workspace"; return <article className="card integration-card" key={connection.provider}>{google ? <IconBrandGoogleDrive size={30} /> : <IconBrandOffice size={30} />}<h3>{google ? "Google Workspace" : "Microsoft 365"}</h3><p className="muted">{connection.accountLabel}</p><div className="capability-list">{connection.capabilities.map((capability) => <span className="status-chip" key={capability}>{capability}</span>)}</div>{props.mode === "guest" ? <p className="demo-note-compact">Conexión simulada: no se abre OAuth ni se escriben datos externos.</p> : connection.status === "connected" ? <div className="operation-actions"><button className="button button-primary" type="button" disabled={directorySyncing !== null} onClick={() => void syncDirectory(connection.provider)}>{directorySyncing === connection.provider ? "Sincronizando…" : "Sincronizar directorio"}</button><button className="button button-secondary" type="button" onClick={() => void props.onDisconnect(connection.provider)}>Desconectar</button></div> : <a className="button button-primary" href={`/api/workspace/oauth/${connection.provider}/start`}>Conectar</a>}</article>; })}</div>
+        <div className="section-header"><div><p className="eyebrow">Ecosistema de trabajo</p><h2 id="integrations-title">Google Workspace y Microsoft 365</h2><p className="muted">El acceso, las herramientas de productividad y el directorio corporativo se autorizan por separado.</p></div></div>
+        <div className="cards-grid">{props.workspaceConnections.map((connection) => <IntegrationCard key={connection.provider} connection={connection} mode={props.mode} syncing={directorySyncing === connection.provider} syncBlocked={directorySyncing !== null} onSync={() => void syncDirectory(connection.provider)} onDisconnect={() => void props.onDisconnect(connection.provider)} />)}</div>
         {directoryMessage ? <div className="inline-alert" role="status">{directoryMessage}</div> : null}
-        <div className="operations-grid">
-          <div className="card mail-composer"><IconMail size={25} /><h3>Preparar correo</h3><p className="muted">La plataforma abre el compositor elegido. No lee el buzón ni envía mensajes.</p><label>Proveedor<select value={mailProvider} onChange={(event) => setMailProvider(event.target.value as WorkspaceProvider)}><option value="google_workspace">Gmail</option><option value="microsoft_365">Outlook</option></select></label><label>Asunto<input value={mailSubject} maxLength={160} onChange={(event) => setMailSubject(event.target.value)} /></label><label>Mensaje<textarea value={mailBody} maxLength={2000} onChange={(event) => setMailBody(event.target.value)} /></label><a className="button button-primary" target="_blank" rel="noreferrer" href={buildMailComposerUrl(mailProvider, { subject: mailSubject, body: mailBody })}><IconMail size={17} />Abrir compositor</a></div>
+        <div className="operations-grid integration-tools-grid">
+          <div className="card mail-composer"><IconMail size={25} /><h3>Preparar correo</h3><p className="muted">La plataforma abre el compositor elegido. No lee el buzón ni envía mensajes.</p><label>Proveedor<select value={mailProvider} onChange={(event) => setMailProvider(event.target.value as WorkspaceProvider)}><option value="google_workspace">Gmail</option><option value="microsoft_365">Outlook</option></select></label><label>Asunto<input value={mailSubject} maxLength={160} onChange={(event) => setMailSubject(event.target.value)} /></label><label>Mensaje<textarea value={mailBody} maxLength={2000} onChange={(event) => setMailBody(event.target.value)} /></label><div className="operation-actions"><a className="button button-primary" target="_blank" rel="noreferrer" href={buildMailComposerUrl(mailProvider, { subject: mailSubject, body: mailBody })}><IconMail size={17} />{mailProvider === "google_workspace" ? "Abrir Gmail" : "Abrir Outlook Web"}</a>{mailProvider === "microsoft_365" ? <a className="button button-secondary" href={buildMailtoUrl({ subject: mailSubject, body: mailBody })}>Usar aplicación de correo</a> : null}</div></div>
           <form className="card mail-composer" onSubmit={(event) => { event.preventDefault(); void confirmCalendarEvent(); }}><IconCalendarEvent size={25} /><h3>Crear evento de calendario</h3><p className="muted">El evento solo se crea después de esta confirmación.</p><label>Proveedor<select value={calendarProvider} onChange={(event) => setCalendarProvider(event.target.value as WorkspaceProvider)}><option value="google_workspace">Google Calendar</option><option value="microsoft_365">Outlook Calendar</option></select></label><label>Título<input value={calendarTitle} maxLength={160} onChange={(event) => setCalendarTitle(event.target.value)} /></label><label>Inicio<input type="datetime-local" value={calendarStartsAt} onChange={(event) => setCalendarStartsAt(event.target.value)} /></label><label>Fin<input type="datetime-local" value={calendarEndsAt} onChange={(event) => setCalendarEndsAt(event.target.value)} /></label><button className="button button-primary" type="submit" disabled={calendarTitle.trim().length < 3 || calendarEndsAt <= calendarStartsAt}><IconCalendarEvent size={17} />Confirmar y crear evento</button>{calendarMessage ? <p className="form-hint" role="status">{calendarMessage}</p> : null}</form>
         </div>
       </section> : null}
@@ -232,4 +256,59 @@ export function OperationsWorkspace(props: OperationsWorkspaceProps) {
 
 function Tab({ active, onClick, icon, children }: { active: boolean; onClick: () => void; icon: React.ReactNode; children: React.ReactNode }) {
   return <button type="button" role="tab" aria-selected={active} className={active ? "active" : ""} onClick={onClick}>{icon}{children}</button>;
+}
+
+const capabilityLabels = {
+  files: "Archivos",
+  spreadsheets: "Hojas de cálculo",
+  mail: "Compositor",
+  calendar: "Calendario",
+} as const;
+
+function IntegrationCard({
+  connection,
+  mode,
+  syncing,
+  syncBlocked,
+  onSync,
+  onDisconnect,
+}: {
+  connection: WorkspaceConnection;
+  mode: "guest" | "authenticated";
+  syncing: boolean;
+  syncBlocked: boolean;
+  onSync: () => void;
+  onDisconnect: () => void;
+}) {
+  const google = connection.provider === "google_workspace";
+  const providerName = google ? "Google Workspace" : "Microsoft 365";
+  const connectHref = `/api/workspace/oauth/${connection.provider}/start`;
+  const directoryCopy = connection.directoryStatus === "ready"
+    ? connection.lastSyncedAt ? `Directorio autorizado · Última sincronización ${new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(new Date(connection.lastSyncedAt))}` : "Directorio corporativo autorizado"
+    : connection.directoryStatus === "syncing"
+      ? "Sincronización del directorio en curso"
+      : connection.directoryStatus === "error"
+        ? `El directorio requiere revisión${connection.lastErrorCode ? ` (${connection.lastErrorCode})` : ""}`
+        : connection.accountKind === "consumer"
+          ? "Cuenta personal: productividad disponible; el directorio corporativo no aplica"
+          : "Productividad conectada; falta el consentimiento administrativo del directorio";
+
+  return (
+    <article className="card integration-card">
+      <div className="integration-card-heading">
+        {google ? <IconBrandGoogleDrive size={30} aria-hidden="true" /> : <IconBrandOffice size={30} aria-hidden="true" />}
+        <div><h3>{providerName}</h3><p className="muted">{connection.accountLabel}</p></div>
+      </div>
+      <div className="capability-list">{connection.capabilities.map((capability) => <span className="status-chip" key={capability}>{capabilityLabels[capability]}</span>)}</div>
+      {mode === "guest" ? <p className="demo-note-compact">Conexión simulada: no se abre OAuth ni se escriben datos externos.</p> : connection.status === "connected" ? (
+        <>
+          <p className={`integration-readiness readiness-${connection.directoryStatus}`}>{directoryCopy}</p>
+          <div className="operation-actions">
+            {connection.canSyncDirectory ? <button className="button button-primary" type="button" disabled={syncBlocked} onClick={onSync}>{syncing ? "Sincronizando…" : "Sincronizar directorio"}</button> : connection.accountKind !== "consumer" ? <a className="button button-primary" href={connectHref}>Ampliar permisos</a> : null}
+            <button className="button button-secondary" type="button" onClick={onDisconnect}>Desconectar</button>
+          </div>
+        </>
+      ) : <a className="button button-primary" href={connectHref}>Conectar {providerName}</a>}
+    </article>
+  );
 }

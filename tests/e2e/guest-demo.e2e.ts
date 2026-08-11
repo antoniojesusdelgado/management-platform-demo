@@ -19,7 +19,7 @@ async function navigateToModule(
     name: "Navegación móvil",
   });
   if (await mobileNavigation.isVisible()) {
-    const menuLabel = label === "Operaciones" ? "Centro operativo" : label;
+    const menuLabel = label;
     const directLabel =
       label === "Personal" ? "Personas" : ["Inicio", "Analítica"].includes(label) ? label : null;
     if (directLabel) {
@@ -40,7 +40,7 @@ async function navigateToModule(
     return;
   }
   await page.getByRole("button", { name: /Trabajo/ }).click();
-  const menuLabel = label === "Operaciones" ? "Centro operativo" : label;
+  const menuLabel = label;
   await page.getByRole("menuitem", { name: menuLabel, exact: true }).click();
 }
 
@@ -58,14 +58,20 @@ test("navigates through every module", async ({ page }, testInfo) => {
     "Inicio",
   ]) {
     await navigateToModule(page, label, mobile);
-    const heading = label === "Inicio" ? "Buenos días" : label;
-    await expect(page.getByRole("heading", { name: heading, level: 1 })).toBeVisible();
+    const heading =
+      label === "Inicio"
+        ? page.getByRole("heading", {
+            name: /^(Buenos días|Buenas tardes|Buenas noches), Usuario invitado$/,
+            level: 1,
+          })
+        : page.getByRole("heading", { name: label, level: 1 });
+    await expect(heading).toBeVisible();
   }
 });
 
 test("searches globally and opens the selected entity", async ({ page }) => {
   await page.keyboard.press("Control+k");
-  const commandCenter = page.getByRole("dialog", { name: "Centro de trabajo" });
+  const commandCenter = page.getByRole("dialog", { name: "Bandeja de trabajo" });
   await expect(commandCenter).toBeVisible();
   await commandCenter.getByRole("searchbox").fill("soporte");
   const project = commandCenter
@@ -79,7 +85,7 @@ test("searches globally and opens the selected entity", async ({ page }) => {
 
 test("derives a unified inbox and opens its source record", async ({ page }) => {
   await page.getByRole("button", { name: "Bandeja", exact: true }).click();
-  const commandCenter = page.getByRole("dialog", { name: "Centro de trabajo" });
+  const commandCenter = page.getByRole("dialog", { name: "Bandeja de trabajo" });
   await expect(commandCenter.getByRole("tab", { name: "Mi bandeja" })).toHaveAttribute("aria-selected", "true");
   const firstItem = commandCenter.locator('.workspace-command-item[data-kind="leave"]').first();
   await expect(firstItem).toBeVisible();

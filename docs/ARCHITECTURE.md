@@ -1,5 +1,24 @@
 # Arquitectura
 
+## Correcciones v1.8.1
+
+v1.8.1 conserva la arquitectura multiempresa de v1.8.0 y corrige su capa de
+presentación y lectura. El acceso utiliza una composición compacta basada en
+`100dvh`; los módulos comparten una retícula de hasta 1.600 px, márgenes
+adaptativos y estados vacíos consistentes. La navegación precarga los destinos
+principales y cada módulo dispone de un estado `loading.tsx` inmediato.
+
+La creación adicional de empresas vive en `/app/empresas/nueva`. Reutiliza el
+onboarding en modo creación, activa la organización nueva y mantiene las
+membresías anteriores. El saludo se calcula en servidor con la zona horaria del
+perfil para evitar cambios durante la hidratación.
+
+Las conexiones externas distinguen tres conceptos: proveedor de acceso,
+productividad y directorio corporativo. `workspace_connections` conserva los
+ámbitos concedidos, el tipo de cuenta y la autorización administrativa; el
+estado operativo del directorio sigue perteneciendo a
+`organization_directory_settings`.
+
 ## Evolución v1.8.0
 
 La aplicación autenticada ya no crea automáticamente una demostración por
@@ -103,7 +122,7 @@ las publicaciones hasta v1.5.1, V19 a V20 incorpora v1.6.0 y V20 a V21 añade
 operaciones, capacidad, notificaciones y exportaciones sin reconstruir el resto
 de la sesión.
 
-## Centro operativo e integraciones
+## Operaciones e integraciones
 
 `operaciones` agrupa reglas cerradas, plantillas, recurrencias, capacidad,
 notificaciones y trabajos de exportación. Las Server Actions vuelven a validar

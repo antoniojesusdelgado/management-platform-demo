@@ -396,6 +396,7 @@ Configuración actualiza de forma explícita el ancla y registra la operación.
 | v1.6.0 | Búsqueda global, bandeja unificada y enlaces directos a entidades |
 | v1.7.0 | Automatizaciones, capacidad, notificaciones e integraciones de productividad |
 | v1.8.0 | Onboarding, multiempresa, directorio corporativo y nuevo sistema visual |
+| v1.8.1 | Acceso compacto, empresas operativas, bandeja unificada y conexiones verificables |
 
 ### Operaciones e integraciones
 
@@ -405,7 +406,7 @@ capacidades de archivos, hojas de cálculo, correo y calendario, pero cada token
 pertenece a una persona y una organización. PKCE y el estado firmado protegen el
 retorno OAuth; Vault mantiene los tokens fuera de los esquemas expuestos.
 
-El centro operativo conecta reglas cerradas, plantillas, recurrencias,
+Operaciones conecta reglas cerradas, plantillas, recurrencias,
 asignaciones semanales y notificaciones. Las advertencias de capacidad orientan
 la planificación sin bloquearla. Las exportaciones reconstruyen en servidor la
 vista autorizada, imponen un límite de filas y requieren confirmación antes de

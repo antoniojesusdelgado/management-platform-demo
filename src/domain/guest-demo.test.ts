@@ -220,7 +220,7 @@ describe("guest demo", () => {
     expect(migrated?.version).toBe(21);
     expect(migrated?.scenarioVersion).toBe(7);
     expect(migrated?.payrollRuns.length).toBeGreaterThan(0);
-    expect(migrated?.changelogEntries.at(-1)?.version).toBe("1.8.0");
+    expect(migrated?.changelogEntries.at(-1)?.version).toBe("1.8.1");
   });
 
   test("extends version 14 sessions without overwriting operational changes", () => {

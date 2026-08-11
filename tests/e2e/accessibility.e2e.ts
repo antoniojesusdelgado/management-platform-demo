@@ -47,7 +47,7 @@ test("guest dashboard has no detectable WCAG A/AA violations", async ({
 test("workspace command center has no detectable WCAG A/AA violations", async ({ page }) => {
   await openGuestDemo(page);
   await page.keyboard.press("Control+k");
-  const dialog = page.getByRole("dialog", { name: "Centro de trabajo" });
+  const dialog = page.getByRole("dialog", { name: "Bandeja de trabajo" });
   await dialog.getByRole("searchbox").fill("soporte");
   await expect(dialog.locator(".workspace-command-item").first()).toBeVisible();
   const results = await new AxeBuilder({ page })

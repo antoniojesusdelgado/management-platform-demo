@@ -7,6 +7,19 @@ export const directorySyncStatuses = ["not_configured", "ready", "syncing", "err
 export const directoryJobStatuses = ["pending", "running", "succeeded", "partial", "failed"] as const;
 
 export type SignInProvider = (typeof signInProviders)[number];
+export type SignInProviderAvailability = {
+  provider: SignInProvider;
+  enabled: boolean;
+  reason: string | null;
+};
+export type OrganizationCreationMode = "initial" | "additional";
+export type DirectoryPermissionStatus =
+  | "not_configured"
+  | "permission_required"
+  | "ready"
+  | "syncing"
+  | "error"
+  | "paused";
 export type OrganizationOnboardingState = {
   status: "in_progress" | "completed";
   currentStep: (typeof onboardingSteps)[number];

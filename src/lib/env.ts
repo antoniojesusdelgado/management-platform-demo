@@ -17,6 +17,30 @@ export const publicEnv = {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim() || null,
 };
 
+export type SignInProviderAvailability = {
+  enabled: boolean;
+  reason: string | null;
+};
+
+export function getSignInProviderAvailability(): Record<
+  "google" | "azure",
+  SignInProviderAvailability
+> {
+  const configured = isSupabaseConfigured();
+  return {
+    google: {
+      enabled: configured,
+      reason: configured ? null : "La autenticación todavía no está configurada.",
+    },
+    azure: {
+      enabled: configured && process.env.MICROSOFT_SIGN_IN_ENABLED === "true",
+      reason: configured
+        ? "El acceso con Microsoft necesita habilitarse en el entorno de despliegue."
+        : "La autenticación todavía no está configurada.",
+    },
+  };
+}
+
 export function isSupabaseConfigured() {
   return Boolean(publicEnv.supabaseUrl && publicEnv.supabasePublishableKey);
 }

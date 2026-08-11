@@ -1,5 +1,19 @@
 # Despliegue
 
+## Requisitos de v1.8.1
+
+- Aplicar `20260811165623_release_v1_8_1_interface_readiness.sql` de forma
+  aditiva. La migración no elimina conexiones, tokens, empresas ni datos.
+- Verificar de nuevo cada conexión existente: se conserva, pero el directorio
+  queda pendiente hasta confirmar los ámbitos y el consentimiento corporativo.
+- Mantener `MICROSOFT_SIGN_IN_ENABLED=true` únicamente cuando Azure esté
+  configurado en Supabase Auth; de lo contrario el acceso se muestra
+  deshabilitado con una explicación.
+- Validar la Preview a 320×568, 390×844 y 1366×768 antes de promoverla, además
+  de los anchos de módulo habituales.
+- Ejecutar primero `bunx supabase db push --dry-run` y revisar que solo aparezca
+  la migración v1.8.1 prevista.
+
 ## Requisitos de v1.8.0
 
 - Habilitar Google y Azure en Supabase Auth con callback `/auth/callback`.
@@ -154,14 +168,15 @@ escritura externa y ausencia de OAuth en el modo invitado.
 - Alternativa de Vercel: <https://management-platform-demo.vercel.app>
 - Las Preview se generan desde cada pull request y se promueven solo después de
   superar las comprobaciones de producto, accesibilidad y seguridad.
-- Versión actual de producción: `v1.8.0`
+- Versión preparada en esta rama: `v1.8.1`; la promoción a producción solo se
+  completa tras aprobar la Preview autenticada y la QA visual.
 - Región y plan de Supabase: `eu-central-1`, Free
 - Producción y Preview utilizan variables separadas para los orígenes de la
   aplicación y del portfolio.
 - La compilación local superó 80 comprobaciones de extremo a extremo; 6
   combinaciones de proyecto o dispositivo se omitieron de forma intencionada.
 - La migración más reciente es
-  `20260811124636_release_v1_8_multi_tenant_onboarding.sql`.
+  `20260811165623_release_v1_8_1_interface_readiness.sql`.
 - El esquema remoto incluye políticas RLS, aprovisionamiento determinista y la
   integración nocturna neutral y la sincronización diaria del directorio; el
   modo horario está preparado para un plan compatible.

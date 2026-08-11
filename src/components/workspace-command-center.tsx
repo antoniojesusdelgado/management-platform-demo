@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import {
   IconAlertTriangle,
   IconBriefcase,
+  IconBell,
   IconCalendar,
   IconChevronRight,
   IconSearch,
@@ -21,6 +22,7 @@ type WorkspaceCommandCenterProps = {
   search: (query: string) => Promise<ActionResult<WorkspaceSearchResult[]>>;
   loadInbox: () => Promise<ActionResult<WorkspaceWorkItem[]>>;
   onOpenItem?: (item: WorkspaceSearchResult | WorkspaceWorkItem) => void;
+  initialUnreadCount?: number;
 };
 
 const kindLabels = {
@@ -31,7 +33,7 @@ const kindLabels = {
 } as const;
 const priorityLabels = { low: "Baja", medium: "Media", high: "Alta", critical: "Crítica" };
 
-export function WorkspaceCommandCenter({ search, loadInbox, onOpenItem }: WorkspaceCommandCenterProps) {
+export function WorkspaceCommandCenter({ search, loadInbox, onOpenItem, initialUnreadCount = 0 }: WorkspaceCommandCenterProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"search" | "inbox">("search");
@@ -142,9 +144,10 @@ export function WorkspaceCommandCenter({ search, loadInbox, onOpenItem }: Worksp
           <IconSearch size={18} aria-hidden="true" />
           <span>Buscar</span><kbd>Ctrl K</kbd>
         </button>
-        <button type="button" className="button button-quiet workspace-inbox-trigger" aria-label="Bandeja" onClick={openInbox}>
-          <IconBriefcase size={18} aria-hidden="true" />
+        <button type="button" className="button button-quiet workspace-inbox-trigger" aria-label={`Bandeja${initialUnreadCount ? `, ${initialUnreadCount} elementos nuevos` : ""}`} onClick={openInbox}>
+          <IconBell size={18} aria-hidden="true" />
           <span>Bandeja</span>
+          {initialUnreadCount ? <strong className="workspace-unread-count">{initialUnreadCount > 99 ? "99+" : initialUnreadCount}</strong> : null}
         </button>
       </div>
       <Dialog.Root open={open} onOpenChange={(nextOpen) => {
@@ -158,7 +161,7 @@ export function WorkspaceCommandCenter({ search, loadInbox, onOpenItem }: Worksp
           <Dialog.Overlay className="dialog-overlay" />
           <Dialog.Content className="dialog-content workspace-command-dialog" aria-describedby="workspace-command-description">
             <div className="dialog-header">
-              <div><Dialog.Title>Centro de trabajo</Dialog.Title><Dialog.Description id="workspace-command-description" className="muted">Busca cualquier elemento o revisa lo que requiere tu atención.</Dialog.Description></div>
+              <div><Dialog.Title>Bandeja de trabajo</Dialog.Title><Dialog.Description id="workspace-command-description" className="muted">Busca cualquier elemento o revisa lo que requiere tu atención.</Dialog.Description></div>
               <Dialog.Close className="icon-button" aria-label="Cerrar"><IconX size={19} /></Dialog.Close>
             </div>
             <div className="segmented workspace-command-tabs" role="tablist" aria-label="Vista del centro de trabajo">

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { buildMailComposerUrl, capacityStatus, createDefaultOperationsState, operationsStateSchema } from "@/domain/operations";
+import { buildMailComposerUrl, buildMailtoUrl, capacityStatus, createDefaultOperationsState, operationsStateSchema } from "@/domain/operations";
 
 describe("operations domain", () => {
   test("creates a valid deterministic guest state", () => {
@@ -31,8 +31,10 @@ describe("operations domain", () => {
   test("uses provider composers without mailbox permissions", () => {
     const gmail = buildMailComposerUrl("google_workspace", { subject: "Revisión", body: "Contenido seguro" });
     const outlook = buildMailComposerUrl("microsoft_365", { subject: "Revisión", body: "Contenido seguro" });
+    const fallback = buildMailtoUrl({ subject: "Revisión", body: "Contenido seguro" });
     expect(gmail).toStartWith("https://mail.google.com/mail/");
     expect(outlook).toStartWith("https://outlook.office.com/mail/deeplink/compose");
+    expect(fallback).toStartWith("mailto:?");
     expect(decodeURIComponent(gmail.replaceAll("+", " "))).toContain("Contenido seguro");
   });
 });

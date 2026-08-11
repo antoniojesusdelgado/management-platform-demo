@@ -2,11 +2,13 @@
 
 import {
   IconArrowRight,
+  IconArrowLeft,
   IconBuilding,
   IconCheck,
   IconKey,
   IconSparkles,
 } from "@tabler/icons-react";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -19,6 +21,8 @@ import {
 type OrganizationOnboardingProps = {
   existingOrganizationId?: string;
   initialInvitationToken?: string;
+  creationOnly?: boolean;
+  cancelHref?: string;
 };
 
 function slugify(value: string) {
@@ -34,6 +38,8 @@ function slugify(value: string) {
 export function OrganizationOnboarding({
   existingOrganizationId,
   initialInvitationToken = "",
+  creationOnly = false,
+  cancelHref = "/app/inicio",
 }: OrganizationOnboardingProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -87,13 +93,13 @@ export function OrganizationOnboarding({
     <main className="onboarding-page">
       <section className="onboarding-card" aria-labelledby="onboarding-title">
         <div className="onboarding-progress" aria-label="Paso 1 de 2"><span /><i /></div>
-        <p className="eyebrow">Primeros pasos</p>
-        <h1 id="onboarding-title">Prepara tu espacio de trabajo</h1>
-        <p className="lede">Crea una empresa aislada o utiliza una invitación que ya hayas recibido.</p>
-        <div className="onboarding-mode" role="tablist" aria-label="Forma de acceso">
-          <button type="button" role="tab" aria-selected={mode === "create"} onClick={() => setMode("create")}><IconBuilding size={18} />Crear empresa</button>
-          <button type="button" role="tab" aria-selected={mode === "join"} onClick={() => setMode("join")}><IconKey size={18} />Usar invitación</button>
-        </div>
+          <p className="eyebrow">{creationOnly ? "Nueva empresa" : "Primeros pasos"}</p>
+          <h1 id="onboarding-title">{creationOnly ? "Crea otro espacio de trabajo" : "Prepara tu espacio de trabajo"}</h1>
+          <p className="lede">{creationOnly ? "La nueva empresa tendrá sus propios datos, permisos y conexiones." : "Crea una empresa aislada o utiliza una invitación que ya hayas recibido."}</p>
+          {!creationOnly ? <div className="onboarding-mode" role="tablist" aria-label="Forma de acceso">
+            <button type="button" role="tab" aria-selected={mode === "create"} onClick={() => setMode("create")}><IconBuilding size={18} />Crear empresa</button>
+            <button type="button" role="tab" aria-selected={mode === "join"} onClick={() => setMode("join")}><IconKey size={18} />Usar invitación</button>
+          </div> : null}
 
         {mode === "create" ? (
           <form className="onboarding-form" onSubmit={(event) => {
@@ -111,6 +117,7 @@ export function OrganizationOnboarding({
               <label><input type="radio" name="template" checked={templateMode === "synthetic"} onChange={() => setTemplateMode("synthetic")} /><span><strong>Plantilla de ejemplo</strong>Explora el sistema con datos ficticios.</span></label>
             </fieldset>
             <button className="button button-primary onboarding-primary" disabled={pending} type="submit">{pending ? "Creando…" : "Crear empresa"}<IconArrowRight size={18} /></button>
+            {creationOnly ? <button className="button button-quiet onboarding-cancel" type="button" disabled={pending} onClick={() => router.push(cancelHref as Route)}><IconArrowLeft size={17} />Cancelar y volver</button> : null}
           </form>
         ) : (
           <form className="onboarding-form" onSubmit={(event) => {
