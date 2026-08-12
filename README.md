@@ -1,6 +1,6 @@
 # Plataforma de gestión
 
-> v1.8.2 mejora el acceso, el rendimiento y la seguridad: identidad visual unificada, permisos OAuth progresivos y procesamiento protegido de avatares.
+> v1.8.2 mejora el acceso, la privacidad y la seguridad: permisos OAuth progresivos, analítica opcional y supresión de cuenta desde el perfil.
 
 [![CI](https://github.com/antoniojesusdelgado/management-platform-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/antoniojesusdelgado/management-platform-demo/actions/workflows/ci.yml)
 [![Versión](https://img.shields.io/github/v/release/antoniojesusdelgado/management-platform-demo)](https://github.com/antoniojesusdelgado/management-platform-demo/releases/latest)
@@ -85,6 +85,27 @@ GPT-5.5 y GPT-5.6 Sol. La herramienta ha cambiado a lo largo del proyecto, pero
 la responsabilidad sobre requisitos, decisiones, revisión y publicación ha
 permanecido bajo supervisión humana.
 
+La aplicación incluye esta declaración de forma visible en su información
+legal. No utiliza el distintivo europeo de contenido generado por IA porque el
+producto es software revisado y validado por una persona, no contenido
+sintético sujeto a ese etiquetado. El alcance se documenta en
+[Transparencia y privacidad](docs/AI-TRANSPARENCY-AND-PRIVACY.md).
+
+## Privacidad y analítica
+
+Las métricas de Google Analytics 4 son opcionales. El script no se carga antes
+de que el visitante acepte y la opción de rechazo se presenta con la misma
+visibilidad. La decisión puede modificarse desde el pie legal.
+
+Las cuentas autenticadas pueden solicitar su supresión desde “Mi perfil”. La
+identidad se anonimiza, las conexiones y credenciales guardadas por la
+plataforma se eliminan y el acceso queda
+desactivado de forma irreversible; solo se conserva la trazabilidad operativa
+no identificativa necesaria para mantener la integridad de las organizaciones.
+
+Contacto profesional y de privacidad:
+[contacto@antoniodelgado.tech](mailto:contacto@antoniodelgado.tech).
+
 ## Datos de demostración
 
 Los registros de la réplica se generan de forma determinista y no proceden de
@@ -154,6 +175,7 @@ bunx supabase gen types --lang typescript --local
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Navegador  | Clave publicable                 |
 | `PORTFOLIO_ORIGIN`                     | Servidor   | Origen autorizado para el iframe |
 | `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL`    | Navegador  | Contacto legal público           |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID`         | Navegador  | Identificador público de GA4     |
 
 El proyecto no necesita una clave de OpenAI en tiempo de ejecución. Los secretos
 de Google y Supabase no deben almacenarse en el repositorio ni exponerse con el
@@ -169,6 +191,7 @@ prefijo `NEXT_PUBLIC_`.
 - [Despliegue](docs/DEPLOYMENT.md)
 - [Seguridad](SECURITY.md)
 - [Licencias de terceros](docs/THIRD-PARTY-LICENSES.md)
+- [Transparencia y privacidad](docs/AI-TRANSPARENCY-AND-PRIVACY.md)
 
 ## Licencia
 

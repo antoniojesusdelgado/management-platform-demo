@@ -5,6 +5,12 @@ Fecha: 12 de agosto de 2026
 Estado: pendiente de capturas de la Preview final
 Resultado final: **pending**
 
+La implementación local incorpora además el aviso compacto de analítica
+opcional. En móvil se presenta como una superficie inferior con acciones de
+rechazo y aceptación equivalentes; no carga GA4 antes de una decisión
+afirmativa. La captura definitiva se regenerará desde la Preview para no
+confundir evidencia local con producción.
+
 ## Cambios que deben verificarse
 
 - Logotipo canónico en acceso, cabecera, favicon, PWA y tarjeta social.
@@ -89,14 +95,15 @@ El generador reproducible es `bun run visual:review` y guarda las capturas en
 
 - `bun run lint`
 - `bun run typecheck`
-- `bun run test` — 106 pruebas superadas.
+- `bun run test` — 110 pruebas superadas.
 - `bun run content:validate`
 - `bun run security:public-data`
 - `bun run security:secrets`
 - `bun audit --audit-level=high`
 - `bun run build`
 - `bun run e2e` — 86 superadas y 8 omisiones previstas por proyecto.
-- `bun run e2e:a11y` — 20 superadas.
+- `bun run e2e:a11y` — pendiente de repetición completa; los recorridos
+  focalizados de detalle superan axe tras aislar el aviso de consentimiento.
 - `bun run demo:data:validate`
 - `bun run demo:data:report`
 - `bunx supabase db reset`

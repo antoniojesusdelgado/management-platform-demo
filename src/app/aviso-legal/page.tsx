@@ -31,12 +31,23 @@ export default function LegalNoticePage() {
           aplicado medidas de calidad y seguridad, no sustituye a un sistema de
           producción ni constituye asesoramiento laboral, financiero o jurídico.
         </p>
-        <h2>Desarrollo asistido</h2>
+        <h2 id="desarrollo-asistido">Desarrollo asistido con inteligencia artificial</h2>
         <p>
           Esta réplica se ha desarrollado mediante programación asistida con
           ChatGPT Codex, bajo dirección, revisión y validación humana. ChatGPT
           Codex no forma parte del producto en ejecución: la aplicación no llama
           a modelos de inteligencia artificial ni necesita claves de OpenAI.
+        </p>
+        <p>
+          Esta declaración aporta transparencia sobre el proceso de desarrollo.
+          El Reglamento (UE) 2024/1689 exige etiquetar determinados contenidos
+          sintéticos o manipulados, no el software revisado por una persona por
+          el mero hecho de haberse programado con asistencia de IA. Por ello no
+          se muestra el distintivo europeo de contenido generado por IA, que
+          podría atribuir a la interfaz una naturaleza que no tiene.
+        </p>
+        <p>
+          Consulta el <a href="https://eur-lex.europa.eu/eli/reg/2024/1689/oj?locale=es" rel="noreferrer">Reglamento europeo de IA</a> y la <a href="https://digital-strategy.ec.europa.eu/en/policies/eu-icons-labelling-ai-generated-content" rel="noreferrer">información oficial sobre los distintivos europeos</a>.
         </p>
         <Link className="button button-secondary" href="/login">
           Volver al acceso

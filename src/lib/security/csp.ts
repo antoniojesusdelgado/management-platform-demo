@@ -27,7 +27,7 @@ export function createNonceContentSecurityPolicy(
     "font-src 'self' data:",
     "style-src 'self' 'unsafe-inline'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${devScriptPolicy}`,
-    "connect-src 'self' https://*.supabase.co",
+    "connect-src 'self' https://*.supabase.co https://*.google-analytics.com https://www.googletagmanager.com",
     "upgrade-insecure-requests",
   ].join("; ");
 }

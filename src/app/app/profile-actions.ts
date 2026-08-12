@@ -14,6 +14,7 @@ import {
 } from "@/domain/profile";
 import { requirePermission } from "@/lib/authorization";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const MAX_AVATAR_INPUT_BYTES = 10 * 1024 * 1024;
 const MAX_AVATAR_OUTPUT_BYTES = 1024 * 1024;
@@ -122,6 +123,73 @@ export async function updateOwnProfileAction(
     return actionFailure(
       "permission_denied",
       "No tienes permiso para modificar este perfil.",
+    );
+  }
+}
+
+export async function eraseOwnAccountAction(
+  confirmation: string,
+): Promise<ActionResult> {
+  if (confirmation !== "ELIMINAR MI CUENTA") {
+    return actionFailure("validation_error", "La confirmación no coincide.");
+  }
+
+  try {
+    const access = await requirePermission("profile.self.update");
+    const supabase = await createClient();
+    const admin = createAdminClient();
+    if (!admin) {
+      return actionFailure(
+        "unexpected_error",
+        "La supresión no está disponible temporalmente. Contacta con soporte.",
+      );
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("avatar_path")
+      .eq("id", access.userId)
+      .maybeSingle();
+
+    if (profile?.avatar_path) {
+      const { error: avatarError } = await supabase.storage
+        .from("profile-avatars")
+        .remove([profile.avatar_path]);
+      if (avatarError) {
+        return actionFailure(
+          "conflict",
+          "No se pudo eliminar el avatar privado. La cuenta no se ha modificado.",
+        );
+      }
+    }
+
+    const { error: preparationError } = await supabase.rpc(
+      "prepare_own_account_erasure_v1_8_2",
+    );
+    if (preparationError) {
+      return actionFailure(
+        "conflict",
+        "No se pudo preparar la supresión. Tus datos no se han eliminado.",
+      );
+    }
+
+    const { error: deletionError } = await admin.auth.admin.deleteUser(
+      access.userId,
+      true,
+    );
+    if (deletionError) {
+      return actionFailure(
+        "conflict",
+        "La identidad se ha anonimizado, pero no pudo desactivarse. Contacta con soporte.",
+      );
+    }
+
+    await supabase.auth.signOut();
+    return actionSuccess();
+  } catch {
+    return actionFailure(
+      "permission_denied",
+      "No se pudo validar la identidad de la cuenta.",
     );
   }
 }

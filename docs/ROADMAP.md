@@ -7,6 +7,10 @@
 - [x] Login básico separado de productividad y directorio.
 - [x] Microsoft personal y corporativo preparado mediante Azure en Supabase.
 - [x] Procesamiento privado de avatares y directorio reservado al servidor.
+- [x] Consentimiento opcional de GA4 con rechazo equivalente y retirada.
+- [x] Contacto profesional y ejercicio de derechos desde la política de privacidad.
+- [x] Supresión irreversible de cuenta con anonimización y revocación de conexiones.
+- [x] Declaración de desarrollo asistido con Codex alineada con el artículo 50.
 - [ ] Resolución de la verificación pública de Google, dependiente de Google.
 - [ ] Consentimiento administrativo real de Google Workspace Directory.
 

@@ -27,7 +27,9 @@ const rules: BoundaryRule[] = [
     code: "real-email",
     pattern: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/giu,
     message: "Use reserved .test addresses in synthetic fixtures.",
-    allow: (match) => match.toLowerCase().endsWith(".test"),
+    allow: (match) =>
+      match.toLowerCase().endsWith(".test") ||
+      match.toLowerCase() === "contacto@antoniodelgado.tech",
   },
   {
     code: "spanish-iban",

@@ -30,6 +30,10 @@ async function enterGuestDemo(page: Page) {
 async function openGuestDemo(page: Page) {
   await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
   await enterGuestDemo(page);
+  const analyticsDialog = page.getByRole("dialog", { name: "Analítica opcional" });
+  if (await analyticsDialog.isVisible()) {
+    await analyticsDialog.getByRole("button", { name: "Rechazar" }).click();
+  }
 }
 
 async function expectNoGlobalHorizontalOverflow(page: Page) {

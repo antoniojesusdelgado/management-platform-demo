@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { LegalFooter } from "@/components/legal-footer";
 
-const contact = process.env.NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL;
+const contact =
+  process.env.NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL ??
+  "contacto@antoniodelgado.tech";
 
 export default function PrivacyPage() {
   return (
@@ -13,11 +15,7 @@ export default function PrivacyPage() {
           El responsable de esta demostración es Antonio Jesús Delgado Briones.
           Para consultas o para ejercer derechos de acceso, rectificación,
           supresión, oposición, limitación y portabilidad puedes utilizar{" "}
-          {contact ? (
-            <a href={`mailto:${contact}`}>{contact}</a>
-          ) : (
-            "el canal público de contacto indicado en el portfolio"
-          )}
+          <a href={`mailto:${contact}`}>{contact}</a>
           .
         </p>
         <h2>Datos y finalidad</h2>
@@ -41,12 +39,36 @@ export default function PrivacyPage() {
           Google. Estos proveedores pueden realizar transferencias internacionales
           con las garantías indicadas en sus condiciones y mecanismos aplicables.
         </p>
-        <h2>Almacenamiento local y cookies</h2>
+        <h2>Analítica opcional, almacenamiento local y cookies</h2>
         <p>
           La modalidad invitada usa únicamente <code>sessionStorage</code>; sus
           cambios se eliminan al terminar la sesión del navegador. La modalidad
           OAuth emplea cookies técnicas imprescindibles para PKCE, sesión y
-          seguridad. No se instalan cookies de marketing.
+          seguridad.
+        </p>
+        <p>
+          Google Analytics 4 solo se carga si eliges “Aceptar analítica” en el
+          aviso de preferencias. Se utiliza para conocer de forma agregada qué
+          rutas se consultan, detectar problemas de uso y mejorar el producto.
+          No se emplea para publicidad, se desactivan las señales de Google y la
+          personalización de anuncios, y no se envían los datos operativos que
+          introduces en formularios. Puedes rechazarlo con la misma facilidad o
+          retirar el consentimiento en “Preferencias de analítica”, disponible
+          en el pie legal.
+        </p>
+        <p>
+          Google Search Console se utiliza para comprobar el dominio y conocer
+          el rendimiento agregado en el buscador. No instala cookies en esta
+          aplicación ni modifica tu elección de analítica.
+        </p>
+        <h2>Supresión de la cuenta</h2>
+        <p>
+          Desde “Mi perfil” puedes solicitar la supresión irreversible de tu
+          identidad y desactivar el acceso. El correo, la identidad OAuth y la
+          imagen de perfil se eliminan o anonimizan. Los registros operativos que
+          deban conservarse para mantener la integridad y la trazabilidad de una
+          organización quedan desvinculados de tu identidad. También puedes
+          ejercer este derecho escribiendo a <a href={`mailto:${contact}`}>{contact}</a>.
         </p>
         <h2>Seguridad y reclamaciones</h2>
         <p>

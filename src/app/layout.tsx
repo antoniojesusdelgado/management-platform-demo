@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { AnalyticsConsentManager } from "@/components/analytics-consent";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
@@ -74,7 +76,14 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <Suspense fallback={null}>
+            <AnalyticsConsentManager
+              measurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}
+            />
+          </Suspense>
+        </ThemeProvider>
       </body>
     </html>
   );

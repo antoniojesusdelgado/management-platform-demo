@@ -33,6 +33,31 @@ sequenceDiagram
 Todos los diagramas describen la demostración neutral, no procesos internos de
 una organización real.
 
+## Consentimiento analítico
+
+```mermaid
+flowchart LR
+  Visitante["Persona visitante"] --> Estado{"¿Existe una preferencia?"}
+  Estado -->|No| Aviso["Aviso con aceptar y rechazar al mismo nivel"]
+  Aviso -->|Rechazar| SinGA["No cargar Google Analytics"]
+  Aviso -->|Aceptar| GA["Cargar GA4 y medir páginas de forma agregada"]
+  Estado -->|Rechazado| SinGA
+  Estado -->|Aceptado| GA
+  Pie["Preferencias en el pie legal"] --> Aviso
+```
+
+## Supresión de cuenta
+
+```mermaid
+flowchart LR
+  Perfil["Mi perfil"] --> Confirmar["Confirmación textual explícita"]
+  Confirmar --> Revocar["Eliminar conexiones y credenciales guardadas"]
+  Revocar --> Anonimizar["Anonimizar perfil y desvincular directorio"]
+  Anonimizar --> Suspender["Suspender membresías"]
+  Suspender --> Auth["Desactivar identidad en Supabase Auth"]
+  Auth --> Salir["Cerrar sesión y volver al acceso"]
+```
+
 ## Vacaciones
 
 ```mermaid

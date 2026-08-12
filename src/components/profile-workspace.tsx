@@ -22,6 +22,7 @@ import {
 } from "@/domain/profile";
 import { personRoleCodes, type PersonRoleCode } from "@/domain/people";
 import { AvatarUploader } from "@/components/avatar-uploader";
+import { AccountErasure } from "@/components/account-erasure";
 import { useTheme } from "@/components/theme-provider";
 import { formatDateTime } from "@/lib/format";
 
@@ -441,6 +442,9 @@ export function ProfileWorkspace({
           </button>
         </div>
       </form>
+      <div className="profile-layout profile-privacy-layout">
+        <AccountErasure />
+      </div>
     </main>
   );
 }

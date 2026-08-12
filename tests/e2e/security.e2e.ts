@@ -111,3 +111,23 @@ test("anonymous demo access does not issue marketing cookies", async ({
     expect(cookie.sameSite).not.toBe("None");
   }
 });
+
+test("analytics remains disabled until explicit consent and can be rejected", async ({ page }) => {
+  await page.goto("/login", { waitUntil: "domcontentloaded" });
+  const banner = page.getByRole("dialog", { name: "Analítica opcional" });
+  await expect(banner).toBeVisible();
+  await expect(banner.getByRole("button", { name: "Rechazar" })).toBeVisible();
+  await expect(banner.getByRole("button", { name: "Aceptar analítica" })).toBeVisible();
+  await expect(page.locator('script[src*="googletagmanager.com/gtag/js"]')).toHaveCount(0);
+
+  await banner.getByRole("button", { name: "Rechazar" }).click();
+  await expect(banner).toBeHidden();
+  await expect(page.locator('script[src*="googletagmanager.com/gtag/js"]')).toHaveCount(0);
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        window.localStorage.getItem("management-platform-analytics-consent:v1"),
+      ),
+    )
+    .toBe("rejected");
+});

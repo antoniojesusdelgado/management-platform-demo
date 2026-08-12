@@ -49,6 +49,18 @@ ejecutable, inyección SQL y abuso de recursos.
 El nombre, el correo y la imagen de Google no se copian a las tablas públicas de
 la aplicación. El perfil visible usa una identidad ficticia.
 
+La supresión de cuenta se ejecuta en dos fases: primero se eliminan conexiones,
+credenciales guardadas y avatares de la plataforma y se anonimiza el perfil;
+después Supabase Auth desactiva la
+identidad mediante borrado irreversible. La operación exige una sesión válida,
+confirmación explícita y una acción de servidor. No se expone la clave secreta
+al navegador.
+
+Google Analytics 4 permanece desactivado hasta recibir consentimiento. Las
+acciones de aceptar y rechazar tienen la misma jerarquía y la preferencia se
+puede revisar en cualquier momento. Se desactivan las señales de Google y la
+personalización publicitaria.
+
 ## Secretos y variables
 
 Solo las variables expresamente publicables pueden usar el prefijo
@@ -73,6 +85,8 @@ probadas en [docs/SECURITY-ADVISOR.md](docs/SECURITY-ADVISOR.md).
 No publiques credenciales, datos personales ni instrucciones de explotación en
 un issue. Envía el hallazgo de forma privada al propietario del repositorio e
 incluye únicamente la información necesaria para reproducirlo.
+
+Contacto: [contacto@antoniodelgado.tech](mailto:contacto@antoniodelgado.tech).
 
 Al informar, indica la ruta afectada, el impacto estimado y los pasos de
 reproducción. No pruebes el hallazgo contra datos o cuentas de terceros.

@@ -409,6 +409,87 @@ button {
   color: var(--cobalt-700);
 }
 
+.legal-link-button {
+  border: 0;
+  padding: 0;
+  color: var(--cobalt-700);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.legal-link-button:hover,
+.legal-link-button:focus-visible {
+  text-decoration: underline;
+}
+
+.analytics-consent {
+  position: fixed;
+  right: clamp(0.75rem, 2vw, 1.5rem);
+  bottom: max(0.75rem, env(safe-area-inset-bottom));
+  z-index: 120;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  width: min(42rem, calc(100vw - 1.5rem));
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1rem;
+  color: var(--ink-900);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(14px);
+}
+
+.analytics-consent h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+}
+
+.analytics-consent p {
+  margin: 0;
+  color: var(--ink-600);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.analytics-consent a {
+  color: var(--cobalt-700);
+  font-weight: 700;
+}
+
+.analytics-consent-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.analytics-consent-actions .button {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .analytics-consent {
+    left: 0.75rem;
+    right: 0.75rem;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    width: auto;
+    padding: 0.9rem;
+  }
+
+  .analytics-consent-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .analytics-consent-actions .button {
+    width: 100%;
+    padding-inline: 0.65rem;
+  }
+}
+
 .embed-entry {
   min-height: 100svh;
   min-height: 100dvh;
@@ -1515,6 +1596,20 @@ h3 {
 .profile-section-wide,
 .profile-save {
   grid-column: 1 / -1;
+}
+
+.profile-privacy-layout {
+  margin-top: 1rem;
+}
+
+.account-erasure .button-danger {
+  justify-self: start;
+}
+
+.account-erasure-confirmation {
+  display: grid;
+  gap: 0.85rem;
+  max-width: 38rem;
 }
 
 .preference-toggles {

@@ -13,6 +13,14 @@
   operaciones privilegiadas.
 - Aplicar `20260812132007_release_v1_8_2_auth_security_patch.sql` antes del
   despliegue de la aplicación.
+- Configurar `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL=contacto@antoniodelgado.tech`.
+- Configurar `NEXT_PUBLIC_GA_MEASUREMENT_ID` solo cuando exista una propiedad
+  GA4 válida. Es un identificador publicable; la aplicación no carga el script
+  hasta recibir consentimiento.
+- Aplicar `20260812193000_add_privacy_consent_and_erasure.sql` después de la
+  migración principal de v1.8.2. La migración es aditiva y no elimina cuentas.
+- Mantener `SUPABASE_SECRET_KEY` disponible en el runtime de servidor: se
+  utiliza para desactivar de forma irreversible la identidad tras anonimizarla.
 
 ## Requisitos de v1.8.1
 
