@@ -396,6 +396,33 @@ export type Database = {
           },
         ]
       }
+      data_erasure_requests: {
+        Row: {
+          completed_at: string | null
+          id: string
+          requested_at: string
+          retention_until: string
+          status: string
+          subject_reference: string
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          requested_at?: string
+          retention_until?: string
+          status?: string
+          subject_reference: string
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          requested_at?: string
+          retention_until?: string
+          status?: string
+          subject_reference?: string
+        }
+        Relationships: []
+      }
       data_quality_issues: {
         Row: {
           code: string
@@ -443,33 +470,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      data_erasure_requests: {
-        Row: {
-          completed_at: string | null
-          id: string
-          requested_at: string
-          retention_until: string
-          status: string
-          subject_reference: string
-        }
-        Insert: {
-          completed_at?: string | null
-          id?: string
-          requested_at?: string
-          retention_until?: string
-          status?: string
-          subject_reference: string
-        }
-        Update: {
-          completed_at?: string | null
-          id?: string
-          requested_at?: string
-          retention_until?: string
-          status?: string
-          subject_reference?: string
-        }
-        Relationships: []
       }
       demo_scenario_versions: {
         Row: {
@@ -3129,10 +3129,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      prepare_own_account_erasure_v1_8_2: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      prepare_own_account_erasure_v1_8_2: { Args: never; Returns: undefined }
       accept_organization_invitation_v1_8: {
         Args: { invitation_token: string }
         Returns: string
