@@ -12,6 +12,15 @@ test("opens the guest workspace directly", async ({ page }) => {
   ).toBeVisible();
 });
 
+test("guest can close the local session and return to access", async ({ page }) => {
+  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: "Abrir menú de usuario" }).click();
+  await page.getByRole("menuitem", { name: "Cerrar sesión" }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole("heading", { name: "Entra en tu espacio" })).toBeVisible();
+  expect(await page.evaluate(() => sessionStorage.getItem("management-platform-demo:v1"))).toBeNull();
+});
+
 test("does not render the removed intermediate entry screen", async ({ page }) => {
   await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
 

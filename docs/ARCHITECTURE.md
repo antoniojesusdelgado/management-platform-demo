@@ -1,5 +1,18 @@
 # Arquitectura
 
+## Correcciones v1.8.2
+
+v1.8.2 separa tres finalidades OAuth: identidad básica, productividad y
+directorio corporativo. El inicio de sesión no solicita acceso a archivos,
+calendarios ni personas. Los permisos adicionales se conceden desde
+Integraciones y el procesamiento de directorio solo puede ejecutarlo el
+servidor con credenciales protegidas.
+
+El cliente Supabase de servidor se reutiliza durante cada petición y los
+contratos temporales normalizan las fechas válidas a ISO antes de validarlas.
+Los avatares se decodifican, redimensionan y recodifican en WebP desde una
+Server Action autenticada antes de llegar al bucket privado.
+
 ## Correcciones v1.8.1
 
 v1.8.1 conserva la arquitectura multiempresa de v1.8.0 y corrige su capa de

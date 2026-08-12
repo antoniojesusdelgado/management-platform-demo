@@ -4,7 +4,7 @@ import { chromium } from "@playwright/test";
 
 const externalOrigin = process.env.PRODUCT_CAPTURE_ORIGIN;
 const baseUrl = externalOrigin ?? "http://127.0.0.1:3210";
-const outputDirectory = ".artifacts/release-v1.8.1/automated";
+const outputDirectory = ".artifacts/release-v1.8.2/automated";
 const themes = ["light", "dark"];
 const viewports = [
   { name: "desktop", width: 1440, height: 900 },

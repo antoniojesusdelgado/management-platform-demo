@@ -1,5 +1,15 @@
 # Hoja de ruta
 
+## v1.8.2 — Acceso, rendimiento y seguridad
+
+- [x] Identidad visual única en login, PWA, favicon y tarjeta social.
+- [x] Cierre explícito de la demostración invitada.
+- [x] Login básico separado de productividad y directorio.
+- [x] Microsoft personal y corporativo preparado mediante Azure en Supabase.
+- [x] Procesamiento privado de avatares y directorio reservado al servidor.
+- [ ] Resolución de la verificación pública de Google, dependiente de Google.
+- [ ] Consentimiento administrativo real de Google Workspace Directory.
+
 ## v1.8.1 — Corrección integral de interfaz y rendimiento
 
 - [x] Acceso compacto sin scroll en los viewports de aceptación.

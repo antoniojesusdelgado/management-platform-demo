@@ -1,6 +1,6 @@
 # Plataforma de gestión
 
-> v1.8.1 mejora la claridad y la velocidad del MVP: acceso compacto, navegación más fluida, creación multiempresa funcional y permisos corporativos comprensibles.
+> v1.8.2 mejora el acceso, el rendimiento y la seguridad: identidad visual unificada, permisos OAuth progresivos y procesamiento protegido de avatares.
 
 [![CI](https://github.com/antoniojesusdelgado/management-platform-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/antoniojesusdelgado/management-platform-demo/actions/workflows/ci.yml)
 [![Versión](https://img.shields.io/github/v/release/antoniojesusdelgado/management-platform-demo)](https://github.com/antoniojesusdelgado/management-platform-demo/releases/latest)
@@ -44,7 +44,7 @@ ficticios.
 - Informes CSV/XLSX y conexiones opcionales con Google Workspace o Microsoft 365.
 - Tema claro por defecto y tema oscuro opcional.
 
-La versión actual es `v1.8.1`. El historial de publicaciones y sus notas están
+La versión actual es `v1.8.2`. El historial de publicaciones y sus notas están
 disponibles en la sección de releases.
 
 ## Cómo está construida

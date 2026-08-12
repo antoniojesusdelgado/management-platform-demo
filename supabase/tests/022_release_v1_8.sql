@@ -17,7 +17,7 @@ select col_is_pk('public','directory_sync_cursors',array['organization_id','prov
 select function_privs_are('public','create_organization_v1_8',array['text','text','text'],'anon',array[]::text[],'anonymous users cannot create organizations');
 select function_privs_are('public','create_organization_v1_8',array['text','text','text'],'authenticated',array['EXECUTE'],'authenticated users can request onboarding');
 select function_privs_are('private','provision_organization_v1_8',array['uuid','text','text','text'],'authenticated',array[]::text[],'the provisioning helper is private');
-select function_privs_are('public','apply_directory_sync_batch_v1_8',array['uuid','text','jsonb','text','boolean','text','text'],'authenticated',array['EXECUTE'],'administrators can request a validated directory batch');
+select function_privs_are('public','apply_directory_sync_batch_v1_8',array['uuid','text','jsonb','text','boolean','text','text'],'authenticated',array[]::text[],'directory batches remain server-only after release hardening');
 select function_privs_are('private','apply_directory_sync_batch_v1_8',array['uuid','text','jsonb','text','boolean','text','text'],'authenticated',array[]::text[],'the directory batch helper is private');
 select function_privs_are('public','refresh_directory_connection_secret_v1_8',array['uuid','text','text','timestamp with time zone'],'authenticated',array[]::text[],'clients cannot refresh Vault secrets');
 select function_privs_are('public','refresh_directory_connection_secret_v1_8',array['uuid','text','text','timestamp with time zone'],'service_role',array['EXECUTE'],'only the server role refreshes Vault secrets');

@@ -1,5 +1,19 @@
 # Despliegue
 
+## Requisitos de v1.8.2
+
+- `MICROSOFT_SIGN_IN_ENABLED=true` activa Microsoft solo después de configurar
+  Azure en Supabase Auth. El callback es
+  `https://<project-ref>.supabase.co/auth/v1/callback`; Microsoft debe recibir
+  el valor del secreto, no su identificador.
+- Google y Azure para acceso solicitan únicamente `openid profile email`.
+  Los permisos de productividad y directorio se conceden después desde
+  Integraciones.
+- `SUPABASE_SECRET_KEY` permanece solo en servidor y es obligatoria para las
+  operaciones privilegiadas.
+- Aplicar `20260812132007_release_v1_8_2_auth_security_patch.sql` antes del
+  despliegue de la aplicación.
+
 ## Requisitos de v1.8.1
 
 - Aplicar `20260812105351_release_v1_8_1_interface_readiness.sql` de forma

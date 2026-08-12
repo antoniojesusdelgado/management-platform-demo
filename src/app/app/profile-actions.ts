@@ -1,6 +1,8 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import sharp from "sharp";
 import {
   actionFailure,
   actionSuccess,
@@ -12,6 +14,64 @@ import {
 } from "@/domain/profile";
 import { requirePermission } from "@/lib/authorization";
 import { createClient } from "@/lib/supabase/server";
+
+const MAX_AVATAR_INPUT_BYTES = 10 * 1024 * 1024;
+const MAX_AVATAR_OUTPUT_BYTES = 1024 * 1024;
+const ALLOWED_AVATAR_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+export async function uploadOwnAvatarAction(formData: FormData): Promise<ActionResult<{ path: string; signedUrl: string }>> {
+  const file = formData.get("avatar");
+  if (!(file instanceof File) || !ALLOWED_AVATAR_MIME_TYPES.has(file.type) || file.size < 1 || file.size > MAX_AVATAR_INPUT_BYTES) {
+    return actionFailure("validation_error", "Selecciona una imagen JPEG, PNG o WebP de hasta 10 MB.");
+  }
+  try {
+    const access = await requirePermission("profile.self.update");
+    const input = Buffer.from(await file.arrayBuffer());
+    const image = sharp(input, { failOn: "warning", limitInputPixels: 40_000_000 });
+    const metadata = await image.metadata();
+    if (!metadata.format || !["jpeg", "png", "webp"].includes(metadata.format)) {
+      return actionFailure("validation_error", "El archivo no contiene una imagen compatible.");
+    }
+    const output = await image.rotate().resize(512, 512, { fit: "cover", position: "centre" }).webp({ quality: 84 }).toBuffer();
+    if (output.length > MAX_AVATAR_OUTPUT_BYTES) {
+      return actionFailure("validation_error", "La imagen procesada supera el tamaño permitido.");
+    }
+    const supabase = await createClient();
+    const nextPath = `${access.userId}/${randomUUID()}.webp`;
+    const { data: profile } = await supabase.from("profiles").select("avatar_path").eq("id", access.userId).single();
+    const { error: uploadError } = await supabase.storage.from("profile-avatars").upload(nextPath, output, { contentType: "image/webp", cacheControl: "3600", upsert: false });
+    if (uploadError) return actionFailure("conflict", "No se pudo guardar la imagen procesada.");
+    const { error: profileError } = await supabase.rpc("set_own_avatar_path", { target_path: nextPath });
+    if (profileError) {
+      await supabase.storage.from("profile-avatars").remove([nextPath]);
+      return actionFailure("conflict", "No se pudo actualizar la foto de perfil.");
+    }
+    if (profile?.avatar_path) await supabase.storage.from("profile-avatars").remove([profile.avatar_path]);
+    const { data: signedAvatar, error: signedAvatarError } = await supabase.storage.from("profile-avatars").createSignedUrl(nextPath, 3600);
+    if (signedAvatarError || !signedAvatar?.signedUrl) {
+      return actionFailure("conflict", "La foto se guardó, pero no se pudo preparar su vista previa.");
+    }
+    revalidatePath("/app/perfil");
+    return actionSuccess({ path: nextPath, signedUrl: signedAvatar.signedUrl });
+  } catch {
+    return actionFailure("validation_error", "La imagen está dañada o no se puede procesar de forma segura.");
+  }
+}
+
+export async function removeOwnAvatarAction(): Promise<ActionResult> {
+  try {
+    const access = await requirePermission("profile.self.update");
+    const supabase = await createClient();
+    const { data: profile } = await supabase.from("profiles").select("avatar_path").eq("id", access.userId).single();
+    const { error } = await supabase.rpc("clear_own_avatar_path");
+    if (error) return actionFailure("conflict", "No se pudo eliminar la foto de perfil.");
+    if (profile?.avatar_path) await supabase.storage.from("profile-avatars").remove([profile.avatar_path]);
+    revalidatePath("/app/perfil");
+    return actionSuccess();
+  } catch {
+    return actionFailure("permission_denied", "No tienes permiso para modificar este perfil.");
+  }
+}
 
 export async function updateOwnProfileAction(
   input: ProfilePreferencesInput,

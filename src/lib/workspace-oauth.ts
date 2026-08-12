@@ -1,7 +1,8 @@
 import "server-only";
 
 import { createHash, randomBytes } from "node:crypto";
-import type { WorkspaceProvider } from "@/domain/operations";
+import { oauthGrantPurposes, type OAuthGrantPurpose, type WorkspaceProvider } from "@/domain/operations";
+import { getWorkspaceOAuthScopes } from "@/lib/workspace-oauth-scopes";
 export { getWorkspaceOAuthOrigin, signOAuthState, verifyOAuthState } from "@/lib/workspace-oauth-state";
 
 export const workspaceOAuthProviders = ["google_workspace", "microsoft_365"] as const;
@@ -14,6 +15,10 @@ type OAuthConfiguration = {
   scopes: string[];
 };
 
+export function isOAuthGrantPurpose(value: string | null): value is OAuthGrantPurpose {
+  return value !== null && oauthGrantPurposes.includes(value as OAuthGrantPurpose);
+}
+
 export type WorkspaceAccountMetadata = {
   accountLabel: string;
   accountKind: "unknown" | "consumer" | "corporate";
@@ -24,7 +29,7 @@ export function isWorkspaceOAuthProvider(value: string): value is WorkspaceProvi
   return workspaceOAuthProviders.includes(value as WorkspaceProvider);
 }
 
-export function getWorkspaceOAuthConfiguration(provider: WorkspaceProvider): OAuthConfiguration | null {
+export function getWorkspaceOAuthConfiguration(provider: WorkspaceProvider, purpose: Exclude<OAuthGrantPurpose, "sign_in"> = "productivity"): OAuthConfiguration | null {
   if (provider === "google_workspace") {
     const clientId = process.env.GOOGLE_WORKSPACE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_WORKSPACE_CLIENT_SECRET;
@@ -34,13 +39,7 @@ export function getWorkspaceOAuthConfiguration(provider: WorkspaceProvider): OAu
       clientSecret,
       authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth",
       tokenUrl: "https://oauth2.googleapis.com/token",
-      scopes: [
-        "openid", "email",
-        "https://www.googleapis.com/auth/drive.file",
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/calendar.events",
-        "https://www.googleapis.com/auth/admin.directory.user.readonly",
-      ],
+      scopes: getWorkspaceOAuthScopes(provider, purpose),
     };
   }
   const clientId = process.env.MICROSOFT_365_CLIENT_ID;
@@ -52,7 +51,7 @@ export function getWorkspaceOAuthConfiguration(provider: WorkspaceProvider): OAu
     clientSecret,
     authorizationUrl: `https://login.microsoftonline.com/${encodeURIComponent(tenant)}/oauth2/v2.0/authorize`,
     tokenUrl: `https://login.microsoftonline.com/${encodeURIComponent(tenant)}/oauth2/v2.0/token`,
-    scopes: ["openid", "email", "offline_access", "User.Read", "User.Read.All", "Files.ReadWrite", "Calendars.ReadWrite"],
+    scopes: getWorkspaceOAuthScopes(provider, purpose),
   };
 }
 
@@ -62,15 +61,15 @@ export function createPkcePair() {
   return { verifier, challenge };
 }
 
-export function buildAuthorizationUrl(provider: WorkspaceProvider, redirectUri: string, state: string, challenge: string) {
-  const config = getWorkspaceOAuthConfiguration(provider);
+export function buildAuthorizationUrl(provider: WorkspaceProvider, redirectUri: string, state: string, challenge: string, purpose: Exclude<OAuthGrantPurpose, "sign_in"> = "productivity") {
+  const config = getWorkspaceOAuthConfiguration(provider, purpose);
   if (!config) return null;
   const query = new URLSearchParams({ client_id: config.clientId, redirect_uri: redirectUri, response_type: "code", scope: config.scopes.join(" "), state, code_challenge: challenge, code_challenge_method: "S256", access_type: "offline", prompt: "consent" });
   return `${config.authorizationUrl}?${query.toString()}`;
 }
 
-export async function exchangeAuthorizationCode(provider: WorkspaceProvider, code: string, verifier: string, redirectUri: string) {
-  const config = getWorkspaceOAuthConfiguration(provider);
+export async function exchangeAuthorizationCode(provider: WorkspaceProvider, code: string, verifier: string, redirectUri: string, purpose: Exclude<OAuthGrantPurpose, "sign_in"> = "productivity") {
+  const config = getWorkspaceOAuthConfiguration(provider, purpose);
   if (!config) throw new Error("provider_not_configured");
   const response = await fetch(config.tokenUrl, {
     method: "POST",

@@ -1,6 +1,8 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import type { WorkspaceProvider } from "@/domain/operations";
 
+type OAuthGrantPurpose = "sign_in" | "productivity" | "directory";
+
 export function getWorkspaceOAuthOrigin(requestUrl: string) {
   const requestOrigin = new URL(requestUrl).origin;
   const configured = process.env.NEXT_PUBLIC_APP_URL;
@@ -13,12 +15,12 @@ export function getWorkspaceOAuthOrigin(requestUrl: string) {
   }
 }
 
-export function signOAuthState(provider: WorkspaceProvider, nonce: string, verifier: string, origin: string, userId: string, organizationId: string) {
+export function signOAuthState(provider: WorkspaceProvider, purpose: Exclude<OAuthGrantPurpose, "sign_in">, nonce: string, verifier: string, origin: string, userId: string, organizationId: string) {
   const key = getStateEncryptionKey();
   if (!key) throw new Error("WORKSPACE_OAUTH_STATE_SECRET is not configured");
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", key, iv);
-  const payload = Buffer.from(JSON.stringify({ provider, nonce, verifier, origin, userId, organizationId, issuedAt: Date.now() }), "utf8");
+  const payload = Buffer.from(JSON.stringify({ provider, purpose, nonce, verifier, origin, userId, organizationId, issuedAt: Date.now() }), "utf8");
   const encrypted = Buffer.concat([cipher.update(payload), cipher.final()]);
   return `${iv.toString("base64url")}.${encrypted.toString("base64url")}.${cipher.getAuthTag().toString("base64url")}`;
 }
@@ -35,7 +37,7 @@ export function verifyOAuthState(value: string, provider: WorkspaceProvider, ori
     const decipher = createDecipheriv("aes-256-gcm", key, iv);
     decipher.setAuthTag(tag);
     const payload = Buffer.concat([decipher.update(Buffer.from(encodedPayload, "base64url")), decipher.final()]);
-    const parsed = JSON.parse(payload.toString("utf8")) as { provider?: string; nonce?: string; verifier?: string; origin?: string; userId?: string; organizationId?: string; issuedAt?: number };
+    const parsed = JSON.parse(payload.toString("utf8")) as { provider?: string; purpose?: string; nonce?: string; verifier?: string; origin?: string; userId?: string; organizationId?: string; issuedAt?: number };
     const age = typeof parsed.issuedAt === "number" ? Date.now() - parsed.issuedAt : -1;
     const valid = parsed.provider === provider
       && typeof parsed.nonce === "string"
@@ -45,9 +47,10 @@ export function verifyOAuthState(value: string, provider: WorkspaceProvider, ori
       && parsed.origin === origin
       && parsed.userId === userId
       && parsed.organizationId === organizationId
+      && (parsed.purpose === "productivity" || parsed.purpose === "directory")
       && age >= 0
       && age < 10 * 60_000;
-    return valid ? parsed.verifier : null;
+    return valid ? { verifier: parsed.verifier!, purpose: parsed.purpose as Exclude<OAuthGrantPurpose, "sign_in"> } : null;
   } catch {
     return null;
   }

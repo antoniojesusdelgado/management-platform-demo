@@ -1,9 +1,22 @@
-# Revisión visual y de producto — v1.8.1
+# Revisión visual y de producto — v1.8.2
 
 Fecha: 12 de agosto de 2026
 
-Estado: aprobado para publicación
-Resultado final: **passed**
+Estado: pendiente de capturas de la Preview final
+Resultado final: **pending**
+
+## Cambios que deben verificarse
+
+- Logotipo canónico en acceso, cabecera, favicon, PWA y tarjeta social.
+- Acceso sin solapamientos ni scroll ordinario a 320, 360, 390, 768, 1024 y
+  1440 px, en tema claro y oscuro.
+- Cierre de sesión del invitado con limpieza del estado local.
+- Google y Microsoft como identidad básica; permisos adicionales únicamente
+  desde Integraciones.
+- Avatares válidos, corruptos, sobredimensionados y con MIME falseado.
+
+La puntuación y el estado `passed` se actualizarán únicamente después de
+comparar las capturas locales y de Preview y cerrar incidencias P0–P2.
 
 ## Alcance
 

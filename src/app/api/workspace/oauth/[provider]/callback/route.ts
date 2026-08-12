@@ -15,11 +15,11 @@ export async function GET(request: Request, context: OAuthRouteContext) {
   const state = url.searchParams.get("state");
   const access = await getWorkspaceAccess();
   if (access.status !== "active") return NextResponse.redirect(new URL("/login", origin));
-  const verifier = state ? verifyOAuthState(state, provider, origin, access.userId, access.organizationId) : null;
-  if (!code || !state || !verifier) return NextResponse.redirect(new URL("/app/operaciones?connection=invalid_state", origin));
+  const statePayload = state ? verifyOAuthState(state, provider, origin, access.userId, access.organizationId) : null;
+  if (!code || !state || !statePayload) return NextResponse.redirect(new URL("/app/operaciones?connection=invalid_state", origin));
   try {
     const redirectUri = `${origin}/api/workspace/oauth/${provider}/callback`;
-    const token = await exchangeAuthorizationCode(provider, code, verifier, redirectUri);
+    const token = await exchangeAuthorizationCode(provider, code, statePayload.verifier, redirectUri, statePayload.purpose);
     const metadata = await loadWorkspaceAccountMetadata(provider, token.accessToken, token.grantedScopes);
     const capabilities = provider === "google_workspace" ? ["files", "spreadsheets", "calendar"] : ["files", "spreadsheets", "calendar"];
     const supabase = await createClient();

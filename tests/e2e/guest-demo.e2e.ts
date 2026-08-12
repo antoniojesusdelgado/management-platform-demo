@@ -413,7 +413,7 @@ test("filters and paginates the people directory", async ({ page }, testInfo) =>
 
 test("creates, reviews and publishes a changelog entry", async ({ page }, testInfo) => {
   await navigateToModule(page, "Novedades", testInfo.project.name === "mobile");
-  await expect(page.locator(".changelog-card").first()).toContainText("Versión 1.8.1");
+  await expect(page.locator(".changelog-card").first()).toContainText("Versión 1.8.2");
   await page.getByRole("button", { name: "Preparar novedad" }).click();
   const createDialog = page.getByRole("dialog", { name: "Nueva novedad" });
   await createDialog.getByLabel("Versión").fill("99.0.0");

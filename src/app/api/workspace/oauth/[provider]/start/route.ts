@@ -1,13 +1,15 @@
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getWorkspaceAccess } from "@/lib/auth";
-import { buildAuthorizationUrl, createPkcePair, getWorkspaceOAuthOrigin, isWorkspaceOAuthProvider, signOAuthState } from "@/lib/workspace-oauth";
+import { buildAuthorizationUrl, createPkcePair, getWorkspaceOAuthOrigin, isOAuthGrantPurpose, isWorkspaceOAuthProvider, signOAuthState } from "@/lib/workspace-oauth";
 
 type OAuthRouteContext = { params: Promise<{ provider: string }> };
 
 export async function GET(request: Request, context: OAuthRouteContext) {
   const { provider } = await context.params;
   if (!isWorkspaceOAuthProvider(provider)) return NextResponse.json({ error: "Proveedor no válido" }, { status: 404 });
+  const requestedPurpose = new URL(request.url).searchParams.get("purpose");
+  const purpose = isOAuthGrantPurpose(requestedPurpose) && requestedPurpose !== "sign_in" ? requestedPurpose : "productivity";
   const access = await getWorkspaceAccess();
   if (access.status !== "active") return NextResponse.redirect(new URL("/login", request.url));
   const origin = getWorkspaceOAuthOrigin(request.url);
@@ -15,9 +17,9 @@ export async function GET(request: Request, context: OAuthRouteContext) {
   const nonce = randomBytes(24).toString("base64url");
   const { verifier, challenge } = createPkcePair();
   let state: string;
-  try { state = signOAuthState(provider, nonce, verifier, origin, access.userId, access.organizationId); } catch { return NextResponse.redirect(new URL("/app/operaciones?connection=configuration_required", request.url)); }
+  try { state = signOAuthState(provider, purpose, nonce, verifier, origin, access.userId, access.organizationId); } catch { return NextResponse.redirect(new URL("/app/operaciones?connection=configuration_required", request.url)); }
   const redirectUri = `${origin}/api/workspace/oauth/${provider}/callback`;
-  const authorizationUrl = buildAuthorizationUrl(provider, redirectUri, state, challenge);
+  const authorizationUrl = buildAuthorizationUrl(provider, redirectUri, state, challenge, purpose);
   if (!authorizationUrl) return NextResponse.redirect(new URL("/app/operaciones?connection=configuration_required", request.url));
   return NextResponse.redirect(authorizationUrl);
 }

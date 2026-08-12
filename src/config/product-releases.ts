@@ -29,6 +29,7 @@ export const PRODUCT_RELEASES = [
   { version: "1.7.0", title: "Menos tareas repetitivas, más control", summary: "Automatizaciones, plantillas, planificación de capacidad e informes conectados reúnen el trabajo operativo en un mismo lugar.", publishedDate: "2026-08-10" },
   { version: "1.8.0", title: "Tu empresa, preparada para crecer", summary: "Un nuevo inicio, acceso con Google o Microsoft, varias empresas y sincronización corporativa facilitan la puesta en marcha de cada equipo.", publishedDate: "2026-08-11" },
   { version: "1.8.1", title: "Todo resulta más claro y fácil de usar", summary: "Hemos cuidado el acceso, las personas, las novedades y los indicadores para que encuentres antes lo que necesitas.", publishedDate: "2026-08-11" },
+  { version: "1.8.2", title: "Acceso más claro y seguro", summary: "Mejoramos el inicio de sesión, el rendimiento y la protección de la plataforma. Google y Microsoft ahora solicitan solo los permisos necesarios para cada acción.", publishedDate: "2026-08-12" },
 ] as const satisfies readonly ProductRelease[];
 
 export const LATEST_PRODUCT_RELEASE = PRODUCT_RELEASES.at(-1)!;

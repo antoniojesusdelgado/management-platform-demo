@@ -15,13 +15,13 @@ describe("product release catalog", () => {
     );
   });
 
-  test("keeps releases ordered and publishes v1.8.1 on 11 August 2026", () => {
+  test("keeps releases ordered and publishes v1.8.2 on 12 August 2026", () => {
     expect(PRODUCT_RELEASES.at(-1)).toEqual({
-      version: "1.8.1",
-      title: "Todo resulta más claro y fácil de usar",
+      version: "1.8.2",
+      title: "Acceso más claro y seguro",
       summary:
-        "Hemos cuidado el acceso, las personas, las novedades y los indicadores para que encuentres antes lo que necesitas.",
-      publishedDate: "2026-08-11",
+        "Mejoramos el inicio de sesión, el rendimiento y la protección de la plataforma. Google y Microsoft ahora solicitan solo los permisos necesarios para cada acción.",
+      publishedDate: "2026-08-12",
     });
   });
 
@@ -38,6 +38,8 @@ describe("product release catalog", () => {
       "supabase/migrations/20260812105351_release_v1_8_1_interface_readiness.sql",
     ).text()}\n${await Bun.file(
       "supabase/migrations/20260812105402_refresh_v1_8_1_release_copy.sql",
+    ).text()}\n${await Bun.file(
+      "supabase/migrations/20260812132007_release_v1_8_2_auth_security_patch.sql",
     ).text()}`;
 
     for (const release of PRODUCT_RELEASES.slice(-5)) {
