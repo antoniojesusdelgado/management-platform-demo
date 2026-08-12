@@ -227,6 +227,31 @@ test("renders complete monthly and categorical Analytics series", async ({
   ).toHaveCount(6);
 });
 
+test("cross-filters Analytics and opens contextual detail", async ({
+  page,
+}, testInfo) => {
+  await navigateToModule(page, "Analítica", testInfo.project.name === "mobile");
+
+  await expect(page.getByRole("heading", { name: "Lo que merece atención" })).toBeVisible();
+  await page.locator(".analytics-kpi-card").first().click();
+  await expect(page.getByText("Detalle contextual", { exact: true })).toBeVisible();
+  await expect(page.getByText("Indicadores visibles", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Cerrar detalle analítico" }).click();
+
+  await page
+    .getByRole("button", { name: "Equipo y disponibilidad", exact: true })
+    .click();
+  const seriesAction = page
+    .locator(".analytics-chart-card")
+    .filter({ hasText: "Personas activas por equipo" })
+    .locator(".analytics-series-actions button")
+    .first();
+  const selectedLabel = await seriesAction.innerText();
+  await seriesAction.click();
+  await expect(page.locator(".analytics-filter-chip")).toContainText(selectedLabel);
+  await expect(page.getByText("Detalle contextual", { exact: true })).toBeVisible();
+});
+
 test("requires a decision note before rejecting a request", async ({
   page,
 }, testInfo) => {
@@ -361,9 +386,35 @@ test("adds a safe synthetic person profile", async ({ page }, testInfo) => {
   await expect(page.getByRole("button", { name: /Perfil de prueba/ })).toContainText("Operaciones");
 });
 
+test("filters and paginates the people directory", async ({ page }, testInfo) => {
+  await navigateToModule(page, "Personal", testInfo.project.name === "mobile");
+
+  await expect(page.getByRole("navigation", { name: "Paginación del directorio" })).toBeVisible();
+  await page.getByRole("button", { name: /Siguiente/ }).click();
+  await expect(page.getByText(/Página 2 de/)).toBeVisible();
+
+  await page.getByLabel("Buscar perfiles").fill("Lucía");
+  const visibleCards = page.locator(".people-card");
+  await expect(visibleCards.first()).toBeVisible();
+  expect(
+    await visibleCards.evaluateAll((cards) =>
+      cards.every((card) => card.textContent?.includes("Lucía")),
+    ),
+  ).toBe(true);
+
+  await page.getByRole("button", { name: "Limpiar filtros" }).click();
+  await page.getByRole("button", { name: "Organigrama" }).click();
+  const organization = page.getByLabel("Organigrama por equipos");
+  await expect(organization.locator(".organization-team-card")).toHaveCount(6);
+  await organization.locator(".organization-team-card", { hasText: "Operaciones" }).click();
+  await expect(organization.getByRole("heading", { name: "Operaciones" })).toBeVisible();
+  await expect(organization.locator(".organization-node").first()).toBeVisible();
+});
+
 test("creates, reviews and publishes a changelog entry", async ({ page }, testInfo) => {
   await navigateToModule(page, "Novedades", testInfo.project.name === "mobile");
-  await page.getByRole("button", { name: "Nueva entrada" }).click();
+  await expect(page.locator(".changelog-card").first()).toContainText("Versión 1.8.1");
+  await page.getByRole("button", { name: "Preparar novedad" }).click();
   const createDialog = page.getByRole("dialog", { name: "Nueva novedad" });
   await createDialog.getByLabel("Versión").fill("99.0.0");
   await createDialog.getByLabel("Título").fill("Mejoras en el seguimiento de proyectos");
@@ -481,7 +532,7 @@ test("shows payroll participants without amounts and opens the team chart", asyn
   await navigateToModule(page, "Personal", mobile);
   await page.getByRole("button", { name: "Organigrama" }).click();
   const organization = page.getByLabel("Organigrama por equipos");
-  await expect(organization.locator(".organization-team")).toHaveCount(6);
+  await expect(organization.locator(".organization-team-card")).toHaveCount(6);
   await expect(organization.getByText("Responsable").first()).toBeVisible();
 });
 

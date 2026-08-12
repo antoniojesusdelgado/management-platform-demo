@@ -58,6 +58,64 @@ export type AnalyticsSnapshot = {
   alerts: AnalyticsAlert[];
 };
 
+export type AnalyticsSelection = {
+  dimension: "metric" | "period" | "team" | "status" | "service" | "project";
+  value: string;
+  label: string;
+  sourceCode: string;
+};
+
+export type AnalyticsInsight = {
+  code: string;
+  tone: "positive" | "neutral" | "warning";
+  title: string;
+  summary: string;
+  metricCode: string | null;
+};
+
+export type AnalyticsDrilldownState = {
+  selection: AnalyticsSelection;
+  title: string;
+  description: string;
+};
+
+export function buildAnalyticsInsights(snapshot: AnalyticsSnapshot): AnalyticsInsight[] {
+  const insights: AnalyticsInsight[] = snapshot.alerts.slice(0, 2).map((alert) => ({
+    code: `attention-${alert.id}`,
+    tone: alert.severity === "critical" || alert.severity === "warning" ? "warning" : "neutral",
+    title: `${alert.title} requiere seguimiento`,
+    summary: `${alert.context}: ${alert.value}. Abre el detalle para revisar el origen antes de tomar una decisión.`,
+    metricCode: snapshot.kpis.find((item) => item.label === alert.title)?.code ?? null,
+  }));
+  const strongestTrend = [...snapshot.kpis]
+    .filter((item) => item.variation !== null && item.hasData !== false)
+    .sort((left, right) => Math.abs(right.variation ?? 0) - Math.abs(left.variation ?? 0))[0];
+  if (strongestTrend) {
+    const favorable = strongestTrend.favorableDirection === "neutral"
+      ? null
+      : strongestTrend.favorableDirection === "increase"
+        ? (strongestTrend.variation ?? 0) >= 0
+        : (strongestTrend.variation ?? 0) <= 0;
+    insights.push({
+      code: `trend-${strongestTrend.code}`,
+      tone: favorable === null ? "neutral" : favorable ? "positive" : "warning",
+      title: `${strongestTrend.label} marca la principal variación`,
+      summary: `Cambia un ${Math.abs(strongestTrend.variation!).toLocaleString("es-ES", { maximumFractionDigits: 1 })} % frente al periodo anterior.`,
+      metricCode: strongestTrend.code,
+    });
+  }
+  if (!insights.length) {
+    insights.push({
+      code: "stable-period",
+      tone: "positive",
+      title: "El periodo se mantiene estable",
+      summary: "No se detectan desviaciones relevantes con los filtros actuales.",
+      metricCode: snapshot.kpis[0]?.code ?? null,
+    });
+  }
+  return insights.slice(0, 3);
+}
+
 export type MetricDefinition = {
   code: string;
   label: string;

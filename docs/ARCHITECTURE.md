@@ -19,6 +19,12 @@ productividad y directorio corporativo. `workspace_connections` conserva los
 estado operativo del directorio sigue perteneciendo a
 `organization_directory_settings`.
 
+Personal limita el directorio visible a 24 perfiles por página y deriva el
+organigrama desde las relaciones existentes, sin duplicar una segunda fuente
+de verdad. Analítica mantiene el mismo `AnalyticsSnapshot` para indicadores,
+lecturas guiadas, filtros cruzados y detalle contextual. Novedades ordena por
+fecha y versión para que la publicación más reciente sea siempre la primera.
+
 ## Evolución v1.8.0
 
 La aplicación autenticada ya no crea automáticamente una demostración por

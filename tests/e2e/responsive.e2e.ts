@@ -124,7 +124,7 @@ async function openModule(
     const directLabel = moduleName === "Personal" ? "Personas" : moduleName;
     await page.getByRole("button", { name: directLabel, exact: true }).click();
   } else {
-    await page.getByRole("button", { name: /Trabajo/ }).click();
+    await page.getByRole("button", { name: "Trabajo", exact: true }).click();
     await page.getByRole("menuitem", { name: moduleName, exact: true }).click();
   }
   await expect(page.getByRole("heading", { name: moduleName, level: 1 })).toBeVisible();
@@ -217,7 +217,7 @@ test("access and every module avoid global horizontal overflow at release sizes"
     await page.setViewportSize(viewport);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(
-      page.getByRole("heading", { name: "Todo el trabajo, con las personas en el centro", level: 1 }),
+      page.getByRole("heading", { name: "Todo el trabajo, en un solo lugar", level: 1 }),
     ).toBeVisible();
     await expect(page.getByRole("link", { name: "Explorar sin iniciar sesión" })).toBeVisible();
     await expectNoGlobalHorizontalOverflow(page);
@@ -344,5 +344,5 @@ test("mobile filters, tables, Kanban and dialogs stay inside their panels", asyn
   expect(filterWidths.every((width) => width <= 288)).toBe(true);
 
   await openModule(page, "Novedades");
-  await expect(page.getByText("v1.3.1", { exact: true })).toBeVisible();
+  await expect(page.getByText("Versión 1.3.1", { exact: true })).toBeVisible();
 });

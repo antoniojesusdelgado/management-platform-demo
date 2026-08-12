@@ -18,9 +18,9 @@ describe("product release catalog", () => {
   test("keeps releases ordered and publishes v1.8.1 on 11 August 2026", () => {
     expect(PRODUCT_RELEASES.at(-1)).toEqual({
       version: "1.8.1",
-      title: "Una experiencia más clara y ágil",
+      title: "Todo resulta más claro y fácil de usar",
       summary:
-        "El acceso, la navegación, la creación de empresas, las notificaciones y las conexiones corporativas son ahora más sencillos y predecibles.",
+        "Hemos cuidado el acceso, las personas, las novedades y los indicadores para que encuentres antes lo que necesitas.",
       publishedDate: "2026-08-11",
     });
   });
@@ -35,7 +35,9 @@ describe("product release catalog", () => {
     ).text()}\n${await Bun.file(
       "supabase/migrations/20260811124636_release_v1_8_multi_tenant_onboarding.sql",
     ).text()}\n${await Bun.file(
-      "supabase/migrations/20260811165623_release_v1_8_1_interface_readiness.sql",
+      "supabase/migrations/20260812105351_release_v1_8_1_interface_readiness.sql",
+    ).text()}\n${await Bun.file(
+      "supabase/migrations/20260812105402_refresh_v1_8_1_release_copy.sql",
     ).text()}`;
 
     for (const release of PRODUCT_RELEASES.slice(-5)) {

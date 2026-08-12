@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { IconAdjustmentsHorizontal, IconBulb, IconRefresh, IconX } from "@tabler/icons-react";
 import { useEffect, useMemo, useState } from "react";
 import {
   buildAnalyticsServiceDimensions,
@@ -19,9 +20,12 @@ import {
   type AnalyticsView,
 } from "@/domain/analytics-engine";
 import {
+  buildAnalyticsInsights,
   controlCenterMetrics,
+  type AnalyticsDrilldownState,
   type AnalyticsFilter,
   type AnalyticsKpi,
+  type AnalyticsSelection,
   type AnalyticsServiceDimension,
   type AnalyticsSnapshot,
 } from "@/domain/analytics";
@@ -127,6 +131,8 @@ export function ControlCenter({
     service: null,
   });
   const [viewName, setViewName] = useState("");
+  const [filterPanelOpen, setFilterPanelOpen] = useState(true);
+  const [drilldown, setDrilldown] = useState<AnalyticsDrilldownState | null>(null);
   const data = useMemo(
     () => ({
       projects,
@@ -176,6 +182,7 @@ export function ControlCenter({
     };
   }, [activeView, filters, onLoadSnapshot]);
   const snapshot = remoteSnapshot ?? localSnapshot;
+  const insights = useMemo(() => buildAnalyticsInsights(snapshot), [snapshot]);
   const visibleMetricCodes = useMemo(
     () => new Set(snapshot.kpis.map((item) => item.code)),
     [snapshot.kpis],
@@ -215,18 +222,47 @@ export function ControlCenter({
     setFilters((current) => ({ ...current, [key]: value }));
   }
 
+  function resetFilters() {
+    setFilters({ period: "all", comparison: "previous_period", projectId: null, team: null, ownerId: null, status: null, service: null });
+    setDrilldown(null);
+  }
+
+  function clearFilter(key: keyof AnalyticsFilter) {
+    setFilters((current) => ({ ...current, [key]: key === "period" ? "all" : key === "comparison" ? "previous_period" : null }));
+  }
+
+  function openSelection(selection: AnalyticsSelection, description: string) {
+    setDrilldown({ selection, title: selection.label, description });
+  }
+
+  function selectSeriesPoint(seriesCode: string, value: string, label: string) {
+    if (seriesCode === "people_by_team") updateFilter("team", value);
+    else if (["tasks_by_status", "incidents_by_status"].includes(seriesCode)) updateFilter("status", value);
+    else if (seriesCode === "tasks_by_project") updateFilter("projectId", projects.find((project) => project.name === value)?.id ?? null);
+    else if (seriesCode === "incidents_by_service") updateFilter("service", services.find((service) => service.label === value)?.code ?? null);
+    openSelection({ dimension: /^\d{4}-\d{2}$/.test(value) ? "period" : seriesCode === "people_by_team" ? "team" : seriesCode.includes("status") ? "status" : seriesCode.includes("service") ? "service" : seriesCode.includes("project") ? "project" : "period", value, label, sourceCode: seriesCode }, `Selección aplicada desde ${label.toLocaleLowerCase("es")}. Los indicadores y el detalle respetan los filtros activos.`);
+  }
+
+  const activeFilterChips = [
+    filters.period !== "all" ? { key: "period", label: `Periodo: ${filters.period}` } : null,
+    filters.projectId ? { key: "projectId", label: `Proyecto: ${projects.find((item) => item.id === filters.projectId)?.name ?? "seleccionado"}` } : null,
+    filters.team ? { key: "team", label: `Equipo: ${filters.team}` } : null,
+    filters.ownerId ? { key: "ownerId", label: `Responsable: ${people.find((item) => item.id === filters.ownerId)?.displayName ?? "seleccionado"}` } : null,
+    filters.status ? { key: "status", label: `Estado: ${formatAnalyticsTableLabel(filters.status)}` } : null,
+    filters.service ? { key: "service", label: `Servicio: ${services.find((item) => item.code === filters.service)?.label ?? "seleccionado"}` } : null,
+  ].filter((item): item is { key: keyof AnalyticsFilter; label: string } => Boolean(item));
+
   return (
     <main className="workspace" id="main-content">
       <div className="page-heading">
         <div>
+          <p className="eyebrow">Información para decidir</p>
           <h1>Analítica</h1>
           <p className="lede">
-            Consulta los principales indicadores y revisa el detalle de cada área.
+            Explora indicadores, compara periodos y llega al detalle sin perder el contexto.
           </p>
         </div>
-        <span className="status-chip">
-          {analyticsLoading ? "Actualizando datos" : "Datos actualizados"}
-        </span>
+        <div className="analytics-heading-actions"><span className="status-chip">{analyticsLoading ? "Actualizando datos" : "Datos actualizados"}</span><button className="button button-secondary" type="button" aria-expanded={filterPanelOpen} onClick={() => setFilterPanelOpen((current) => !current)}><IconAdjustmentsHorizontal size={18} />{filterPanelOpen ? "Ocultar filtros" : "Mostrar filtros"}</button></div>
       </div>
 
       <nav className="analytics-view-tabs" aria-label="Vistas de Analítica">
@@ -246,7 +282,9 @@ export function ControlCenter({
         ))}
       </nav>
 
-      <section className="analytics-toolbar" aria-label="Filtros de Analítica">
+      <div className="analytics-context-bar"><div className="analytics-filter-chips" aria-label="Filtros activos">{activeFilterChips.length ? activeFilterChips.map((chip) => <button type="button" className="analytics-filter-chip" key={chip.key} onClick={() => clearFilter(chip.key)}>{chip.label}<IconX size={14} aria-hidden="true" /></button>) : <span>Sin filtros adicionales</span>}</div>{activeFilterChips.length ? <button className="button button-quiet" type="button" onClick={resetFilters}><IconRefresh size={16} />Restablecer</button> : null}</div>
+
+      {filterPanelOpen ? <section className="analytics-toolbar" aria-label="Filtros de Analítica">
         <label>
           Periodo
           <select
@@ -376,7 +414,7 @@ export function ControlCenter({
             <button className="button button-secondary" type="submit">Guardar vista</button>
           </form>
         ) : null}
-      </section>
+      </section> : null}
 
       {savedViews.length ? (
         <section className="saved-views" aria-label="Vistas guardadas">
@@ -410,9 +448,11 @@ export function ControlCenter({
 
       <section className="cards-grid analytics-kpis" aria-label="Indicadores">
         {snapshot.kpis.map((item, index) => (
-          <article
+          <button
+            type="button"
             className={`card analytics-kpi-card ${index === 0 ? "analytics-kpi-card-featured" : ""}`}
             key={item.code}
+            onClick={() => openSelection({ dimension: "metric", value: item.code, label: item.label, sourceCode: item.code }, `${item.context}. La variación y los avisos se calculan con el mismo periodo y los mismos filtros que el resto del panel.`)}
           >
             <span>{item.label}</span>
             <strong className="metric-value">{formatKpi(item)}</strong>
@@ -422,8 +462,14 @@ export function ControlCenter({
                 ? "Sin comparación"
                 : `${item.variation > 0 ? "+" : ""}${formatPercent(item.variation, 2)} respecto al periodo anterior`}
             </span>
-          </article>
+            <span className="analytics-kpi-action">Explorar detalle</span>
+          </button>
         ))}
+      </section>
+
+      <section className="analytics-insights" aria-label="Lecturas destacadas">
+        <div className="analytics-section-heading"><div><p className="eyebrow">Lectura guiada</p><h2>Lo que merece atención</h2></div><span>Generado a partir de los filtros actuales</span></div>
+        <div className="analytics-insight-grid">{insights.map((insight) => <article className={`analytics-insight analytics-insight-${insight.tone}`} key={insight.code}><IconBulb size={20} aria-hidden="true" /><span><strong>{insight.title}</strong><small>{insight.summary}</small></span>{insight.metricCode ? <button type="button" className="button button-quiet" onClick={() => { const metric = snapshot.kpis.find((item) => item.code === insight.metricCode); if (metric) openSelection({ dimension: "metric", value: metric.code, label: metric.label, sourceCode: metric.code }, metric.context); }}>Ver dato</button> : null}</article>)}</div>
       </section>
 
       <section className="analytics-grid">
@@ -568,9 +614,12 @@ export function ControlCenter({
                 ))}
               </tbody>
             </table>
+            <div className="analytics-series-actions" aria-label={`Puntos disponibles ${index + 1}`}>{series.points.filter((point) => point.value !== 0).slice(-6).map((point) => <button type="button" className="status-chip" key={point.period} onClick={() => selectSeriesPoint(series.code, point.period, formatAnalyticsTableLabel(point.period))}>{formatAnalyticsTableLabel(point.period)}</button>)}</div>
           </article>
         ))}
       </section>
+
+      {drilldown ? <section className="card analytics-drilldown" aria-live="polite"><div className="analytics-drilldown-heading"><div><p className="eyebrow">Detalle contextual</p><h2>{drilldown.title}</h2><p className="muted">{drilldown.description}</p></div><button className="icon-button" type="button" aria-label="Cerrar detalle analítico" onClick={() => setDrilldown(null)}><IconX size={18} /></button></div><dl className="analytics-drilldown-facts"><div><dt>Vista</dt><dd>{views.find(([id]) => id === activeView)?.[1]}</dd></div><div><dt>Periodo</dt><dd>{formatDate(snapshot.window.current.from)} – {formatDate(snapshot.window.current.to)}</dd></div><div><dt>Selección</dt><dd>{drilldown.selection.label}</dd></div><div><dt>Indicadores visibles</dt><dd>{snapshot.kpis.length}</dd></div></dl></section> : null}
 
       {snapshot.alerts.length ? (
         <section className="card analytics-alerts" aria-label="Avisos del periodo">

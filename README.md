@@ -35,8 +35,8 @@ ficticios.
 - Proyectos y tareas en vistas Kanban, lista y bandeja personal.
 - Incidencias con prioridad, compromisos de atención y seguimiento.
 - Tesorería, conciliación y ciclos de nómina con información agregada.
-- Directorio de personal, equipos y organigrama.
-- Analítica con filtros, comparaciones y vistas guardadas.
+- Directorio paginado, filtros combinables y organigrama interactivo por equipos.
+- Analítica con filtros cruzados, lecturas guiadas, detalle contextual, comparaciones y vistas guardadas.
 - Búsqueda global de personas, proyectos, tareas e incidencias con `Ctrl/Cmd+K`.
 - Bandeja personal con tareas, aprobaciones, compromisos de atención y avisos operativos.
 - Automatizaciones controladas, plantillas y recurrencias sin código arbitrario.

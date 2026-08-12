@@ -2,7 +2,7 @@
 
 ## Requisitos de v1.8.1
 
-- Aplicar `20260811165623_release_v1_8_1_interface_readiness.sql` de forma
+- Aplicar `20260812105351_release_v1_8_1_interface_readiness.sql` de forma
   aditiva. La migración no elimina conexiones, tokens, empresas ni datos.
 - Verificar de nuevo cada conexión existente: se conserva, pero el directorio
   queda pendiente hasta confirmar los ámbitos y el consentimiento corporativo.
@@ -176,7 +176,8 @@ escritura externa y ausencia de OAuth en el modo invitado.
 - La compilación local superó 80 comprobaciones de extremo a extremo; 6
   combinaciones de proyecto o dispositivo se omitieron de forma intencionada.
 - La migración más reciente es
-  `20260811165623_release_v1_8_1_interface_readiness.sql`.
+  `20260812105402_refresh_v1_8_1_release_copy.sql`; actualiza únicamente la
+  redacción canónica no modificada por cada organización.
 - El esquema remoto incluye políticas RLS, aprovisionamiento determinista y la
   integración nocturna neutral y la sincronización diaria del directorio; el
   modo horario está preparado para un plan compatible.

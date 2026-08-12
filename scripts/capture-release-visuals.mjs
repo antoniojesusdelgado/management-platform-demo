@@ -4,7 +4,7 @@ import { chromium } from "@playwright/test";
 
 const externalOrigin = process.env.PRODUCT_CAPTURE_ORIGIN;
 const baseUrl = externalOrigin ?? "http://127.0.0.1:3210";
-const outputDirectory = ".artifacts/release-v1.5.0";
+const outputDirectory = ".artifacts/release-v1.8.1/automated";
 const themes = ["light", "dark"];
 const viewports = [
   { name: "desktop", width: 1440, height: 900 },
@@ -47,15 +47,32 @@ if (server) {
   }
 }
 
-async function openModule(page, viewport, label) {
-  if (viewport.name === "mobile") {
-    await page.getByRole("button", { name: "Abrir menú de módulos" }).click();
+async function openModule(page, label) {
+  const mobileNavigation = page.getByRole("navigation", {
+    name: "Navegación móvil",
+  });
+  if (await mobileNavigation.isVisible()) {
+    const directLabel = label === "Personal"
+      ? "Personas"
+      : ["Inicio", "Analítica"].includes(label) ? label : null;
+    if (directLabel) {
+      await mobileNavigation.getByRole("button", { name: directLabel, exact: true }).click();
+    } else {
+      await mobileNavigation.getByRole("button", { name: "Más", exact: true }).click();
+      await page
+        .getByRole("dialog", { name: "Todos los módulos" })
+        .getByRole("button", { name: label, exact: true })
+        .click();
+    }
+  } else if (["Personal", "Analítica", "Configuración", "Inicio"].includes(label)) {
+    await page.getByRole("button", {
+      name: label === "Personal" ? "Personas" : label,
+      exact: true,
+    }).click();
+  } else {
+    await page.getByRole("button", { name: "Trabajo", exact: true }).click();
+    await page.getByRole("menuitem", { name: label, exact: true }).click();
   }
-  await page
-    .getByRole("navigation", { name: "Módulos de la plataforma" })
-    .filter({ visible: true })
-    .getByRole("button", { name: label, exact: true })
-    .click();
   await page.getByRole("heading", { name: label, level: 1 }).waitFor();
 }
 
@@ -83,11 +100,6 @@ try {
       await page.goto(`${baseUrl}/demo/embed`, {
         waitUntil: "domcontentloaded",
       });
-      const guestAccess = page.getByRole("button", {
-        name: "Explorar demo sin registro",
-      });
-      await guestAccess.waitFor();
-      await guestAccess.click();
       await page.locator("[data-demo-ready='true']").waitFor();
       await page.waitForFunction(
         () =>
@@ -101,13 +113,6 @@ try {
         window.sessionStorage.setItem("management-platform-theme", preference);
       }, theme);
       await page.reload({ waitUntil: "domcontentloaded" });
-      const reloadedGuestAccess = page.getByRole("button", {
-        name: "Explorar demo sin registro",
-      });
-      if (await reloadedGuestAccess.isVisible()) {
-        await reloadedGuestAccess.click();
-      }
-
       await page.locator("[data-demo-ready='true']").waitFor();
 
       await page.screenshot({
@@ -116,7 +121,7 @@ try {
         fullPage: true,
       });
 
-      await openModule(page, viewport, "Vacaciones");
+      await openModule(page, "Vacaciones");
       await page.screenshot({
         path: `${outputDirectory}/vacaciones-${suffix}.png`,
         animations: "disabled",
@@ -134,7 +139,7 @@ try {
       await page.keyboard.press("Escape");
 
       for (const label of ["Tareas", "Incidencias"]) {
-        await openModule(page, viewport, label);
+        await openModule(page, label);
         await page.screenshot({
           path: `${outputDirectory}/${label.toLowerCase()}-${suffix}.png`,
           animations: "disabled",
@@ -142,20 +147,36 @@ try {
         });
       }
 
-      await openModule(page, viewport, "Analítica");
+      await openModule(page, "Personal");
+      await page.screenshot({
+        path: `${outputDirectory}/personal-${suffix}.png`,
+        animations: "disabled",
+        fullPage: true,
+      });
+      await page.getByRole("button", { name: "Organigrama", exact: true }).click();
+      await page.screenshot({
+        path: `${outputDirectory}/organigrama-${suffix}.png`,
+        animations: "disabled",
+        fullPage: true,
+      });
+
+      await openModule(page, "Novedades");
+      await page.screenshot({
+        path: `${outputDirectory}/novedades-${suffix}.png`,
+        animations: "disabled",
+        fullPage: true,
+      });
+
+      await openModule(page, "Analítica");
       for (const [label, slug] of analyticsViews) {
         await page.getByRole("button", { name: label, exact: true }).click();
-        await page.locator(".app-main").evaluate((element) => {
-          element.scrollTop = 0;
-        });
+        await page.evaluate(() => window.scrollTo({ top: 0 }));
         await page.screenshot({
           path: `${outputDirectory}/analitica-${slug}-${suffix}.png`,
           animations: "disabled",
           fullPage: true,
         });
-        await page.locator(".app-main").evaluate((element) => {
-          element.scrollTop = 640;
-        });
+        await page.evaluate(() => window.scrollTo({ top: 640 }));
         await page.screenshot({
           path: `${outputDirectory}/analitica-${slug}-detalle-${suffix}.png`,
           animations: "disabled",

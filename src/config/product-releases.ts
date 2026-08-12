@@ -28,7 +28,7 @@ export const PRODUCT_RELEASES = [
   { version: "1.6.0", title: "Encuentra y prioriza tu trabajo", summary: "Una búsqueda global y una bandeja personal reúnen personas, proyectos, tareas, solicitudes e incidencias que requieren atención.", publishedDate: "2026-08-10" },
   { version: "1.7.0", title: "Menos tareas repetitivas, más control", summary: "Automatizaciones, plantillas, planificación de capacidad e informes conectados reúnen el trabajo operativo en un mismo lugar.", publishedDate: "2026-08-10" },
   { version: "1.8.0", title: "Tu empresa, preparada para crecer", summary: "Un nuevo inicio, acceso con Google o Microsoft, varias empresas y sincronización corporativa facilitan la puesta en marcha de cada equipo.", publishedDate: "2026-08-11" },
-  { version: "1.8.1", title: "Una experiencia más clara y ágil", summary: "El acceso, la navegación, la creación de empresas, las notificaciones y las conexiones corporativas son ahora más sencillos y predecibles.", publishedDate: "2026-08-11" },
+  { version: "1.8.1", title: "Todo resulta más claro y fácil de usar", summary: "Hemos cuidado el acceso, las personas, las novedades y los indicadores para que encuentres antes lo que necesitas.", publishedDate: "2026-08-11" },
 ] as const satisfies readonly ProductRelease[];
 
 export const LATEST_PRODUCT_RELEASE = PRODUCT_RELEASES.at(-1)!;

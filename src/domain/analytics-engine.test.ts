@@ -5,7 +5,7 @@ import {
   calculateVariation,
   createAnalyticsWindow,
 } from "@/domain/analytics-engine";
-import { controlCenterMetrics } from "@/domain/analytics";
+import { buildAnalyticsInsights, controlCenterMetrics } from "@/domain/analytics";
 import { initialGuestDemoState } from "@/domain/guest-demo";
 
 const filters = {
@@ -29,6 +29,24 @@ describe("analytics engine", () => {
   test("returns no comparison when the baseline is zero", () => {
     expect(calculateVariation(4, 0)).toBeNull();
     expect(calculateVariation(12, 10)).toBeCloseTo(20);
+  });
+
+  test("builds deterministic, explainable insights from the visible snapshot", () => {
+    const data = {
+      projects: initialGuestDemoState.projects,
+      tasks: initialGuestDemoState.tasks,
+      incidents: initialGuestDemoState.incidents,
+      people: initialGuestDemoState.people,
+      leaveRequests: initialGuestDemoState.leaveRequests,
+      treasuryEntries: initialGuestDemoState.treasuryEntries,
+      payrollRuns: initialGuestDemoState.payrollRuns,
+      integrationRuns: initialGuestDemoState.integrationRuns,
+    };
+    const snapshot = buildAnalyticsSnapshot(data, filters, "executive", new Date("2026-07-27T12:00:00Z"));
+    const insights = buildAnalyticsInsights(snapshot);
+    expect(insights.length).toBeGreaterThan(0);
+    expect(insights.length).toBeLessThanOrEqual(3);
+    expect(insights.every((item) => item.title.length > 0 && item.summary.length > 0)).toBe(true);
   });
 
   test("recalculates metrics when project and period change", () => {

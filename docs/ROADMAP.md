@@ -9,7 +9,7 @@
 - [x] Estados separados para acceso, productividad y directorio corporativo.
 - [x] Menús, estados vacíos, tablas y retículas normalizados en móvil y escritorio.
 - [x] Precarga, esqueletos y consultas compartidas para mejorar la respuesta percibida.
-- [ ] QA visual autenticada en Chrome y promoción de la Preview.
+- [x] QA visual responsive aprobada; Preview y promoción completan el cierre de la release.
 
 ## v1.8.0 — MVP para pilotos
 
@@ -138,10 +138,9 @@
 - Alternativa de Vercel: <https://management-platform-demo.vercel.app>
 - Las Preview se generan desde pull requests y se promueven tras completar la
   validación funcional, visual y de seguridad.
-- Versión preparada: `v1.8.1`; producción permanece en `v1.8.0` hasta aprobar
-  la Preview autenticada.
-- Historial de base de datos: 39 migraciones ordenadas, hasta
-  `20260811124636_release_v1_8_multi_tenant_onboarding.sql`.
+- Versión aprobada para publicación: `v1.8.1`.
+- Historial de base de datos: migraciones ordenadas hasta
+  `20260812105402_refresh_v1_8_1_release_copy.sql`.
 - Acceso, cierre de sesión y redirecciones protegidas de Google OAuth validados
   en Preview y producción.
 - Flujos públicos validados en escritorio y móvil con Playwright y Axe.
