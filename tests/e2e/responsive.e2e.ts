@@ -20,6 +20,7 @@ const modules = [
   "Personal",
   "Novedades",
   "Configuración",
+  "Operaciones",
 ] as const;
 
 async function enterGuestDemo(page: Page) {
@@ -123,7 +124,7 @@ async function openModule(
     const directLabel = moduleName === "Personal" ? "Personas" : moduleName;
     await page.getByRole("button", { name: directLabel, exact: true }).click();
   } else {
-    await page.getByRole("button", { name: /Trabajo/ }).click();
+    await page.getByRole("button", { name: "Trabajo", exact: true }).click();
     await page.getByRole("menuitem", { name: moduleName, exact: true }).click();
   }
   await expect(page.getByRole("heading", { name: moduleName, level: 1 })).toBeVisible();
@@ -216,7 +217,7 @@ test("access and every module avoid global horizontal overflow at release sizes"
     await page.setViewportSize(viewport);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(
-      page.getByRole("heading", { name: "Organiza el trabajo sin perder de vista a las personas", level: 1 }),
+      page.getByRole("heading", { name: "Todo el trabajo, en un solo lugar", level: 1 }),
     ).toBeVisible();
     await expect(page.getByRole("link", { name: "Explorar sin iniciar sesión" })).toBeVisible();
     await expectNoGlobalHorizontalOverflow(page);
@@ -228,6 +229,25 @@ test("access and every module avoid global horizontal overflow at release sizes"
       await openModule(page, moduleName);
       await expectNoGlobalHorizontalOverflow(page);
     }
+  }
+});
+
+test("the access screen keeps all primary actions inside compact viewports", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "chromium");
+  for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 1366, height: 768 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("link", { name: "Continuar con Google" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Microsoft/ }).or(page.getByRole("link", { name: /Microsoft/ }))).toBeVisible();
+    await expect(page.getByRole("link", { name: "Explorar sin iniciar sesión" })).toBeVisible();
+    const dimensions = await page.evaluate(() => ({
+      viewportHeight: innerHeight,
+      scrollHeight: document.documentElement.scrollHeight,
+      cardBottom: Math.round(document.querySelector(".oauth-card")?.getBoundingClientRect().bottom ?? 0),
+    }));
+    expect(dimensions.scrollHeight).toBeLessThanOrEqual(dimensions.viewportHeight + 1);
+    expect(dimensions.cardBottom).toBeLessThanOrEqual(dimensions.viewportHeight + 1);
+    await expectNoGlobalHorizontalOverflow(page);
   }
 });
 
@@ -324,5 +344,5 @@ test("mobile filters, tables, Kanban and dialogs stay inside their panels", asyn
   expect(filterWidths.every((width) => width <= 288)).toBe(true);
 
   await openModule(page, "Novedades");
-  await expect(page.getByText("v1.3.1", { exact: true })).toBeVisible();
+  await expect(page.getByText("Versión 1.3.1", { exact: true })).toBeVisible();
 });

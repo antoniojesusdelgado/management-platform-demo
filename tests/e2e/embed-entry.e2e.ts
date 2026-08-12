@@ -5,7 +5,11 @@ test("opens the guest workspace directly", async ({ page }) => {
   await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
 
   await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Buenos días" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: /^(Buenos días|Buenas tardes|Buenas noches), Usuario invitado$/,
+    }),
+  ).toBeVisible();
 });
 
 test("does not render the removed intermediate entry screen", async ({ page }) => {

@@ -1,11 +1,12 @@
 import "server-only";
 
+import { cache } from "react";
 import type { PermissionCode } from "@/domain/permissions";
 import { simulatedRoleAllows } from "@/domain/role-simulation";
 import { getWorkspaceAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
-export async function requirePermission(permissionCode: PermissionCode) {
+const getWorkspacePermissionSet = cache(async () => {
   const access = await getWorkspaceAccess();
 
   if (access.status !== "active") {
@@ -38,7 +39,13 @@ export async function requirePermission(permissionCode: PermissionCode) {
     return permissions.map((permission) => permission.code);
   });
 
-  if (!permissionCodes.includes(permissionCode)) {
+  return { access, permissionCodes: new Set(permissionCodes) };
+});
+
+export async function requirePermission(permissionCode: PermissionCode) {
+  const { access, permissionCodes } = await getWorkspacePermissionSet();
+
+  if (!permissionCodes.has(permissionCode)) {
     throw new Error("Permission denied");
   }
   if (

@@ -35,6 +35,7 @@ import type {
   LeaveRequestInput,
   LeaveRequestStatus,
 } from "@/domain/vacations";
+import { buildProfessionalGreeting } from "@/lib/greeting";
 
 const STORAGE_KEY = "management-platform-demo:v1";
 const VacationsWorkspace = dynamic(
@@ -381,6 +382,7 @@ export function GuestDemoApp() {
       return (
         <Dashboard
           onNavigate={navigate}
+          greeting={buildProfessionalGreeting(new Date(), Intl.DateTimeFormat().resolvedOptions().timeZone, "Usuario invitado")}
           summary={{
             pendingLeaveRequests: state.leaveRequests.filter(
               (request) => request.status === "submitted",

@@ -35,6 +35,12 @@ export type WorkspaceConnection = {
   accountLabel: string;
   connectedAt: string | null;
   directoryCapabilities?: DirectoryCapability[];
+  grantedScopes: string[];
+  accountKind: "unknown" | "consumer" | "corporate";
+  directoryStatus: "not_configured" | "permission_required" | "ready" | "syncing" | "error" | "paused";
+  lastSyncedAt: string | null;
+  lastErrorCode: string | null;
+  canSyncDirectory: boolean;
 };
 
 export type AutomationRule = {
@@ -127,6 +133,12 @@ export const workspaceConnectionSchema = z.object({
   capabilities: z.array(z.enum(workspaceCapabilities)).max(workspaceCapabilities.length),
   accountLabel: plainTextSchema({ min: 2, max: 120 }),
   connectedAt: z.iso.datetime({ offset: true }).nullable(),
+  grantedScopes: z.array(z.string().min(1).max(240)).max(32),
+  accountKind: z.enum(["unknown", "consumer", "corporate"]),
+  directoryStatus: z.enum(["not_configured", "permission_required", "ready", "syncing", "error", "paused"]),
+  lastSyncedAt: z.iso.datetime({ offset: true }).nullable(),
+  lastErrorCode: z.string().max(120).nullable(),
+  canSyncDirectory: z.boolean(),
 });
 
 export const automationRuleSchema = z.object({
@@ -237,6 +249,12 @@ export function createDefaultOperationsState(anchorDate = "2026-08-10"): Operati
       capabilities: [...workspaceCapabilities],
       accountLabel: provider === "google_workspace" ? "Google Workspace de demostración" : "Microsoft 365 de demostración",
       connectedAt: null,
+      grantedScopes: [],
+      accountKind: "corporate",
+      directoryStatus: "ready",
+      lastSyncedAt: null,
+      lastErrorCode: null,
+      canSyncDirectory: true,
     })),
     automationRules: [
       { id: "automation-sla", name: "Avisar antes de incumplir un SLA", trigger: "incident_sla_risk", action: "notify", condition: { field: "priority", operator: "in", value: "high,critical" }, enabled: true, lastRunAt: createdAt },
@@ -287,4 +305,9 @@ export function buildMailComposerUrl(
   return provider === "google_workspace"
     ? `https://mail.google.com/mail/?view=cm&fs=1&${query.toString()}`
     : `https://outlook.office.com/mail/deeplink/compose?${query.toString()}`;
+}
+
+export function buildMailtoUrl(input: { to?: string; subject: string; body: string }) {
+  const query = new URLSearchParams({ subject: input.subject, body: input.body });
+  return `mailto:${encodeURIComponent(input.to ?? "")}?${query.toString()}`;
 }

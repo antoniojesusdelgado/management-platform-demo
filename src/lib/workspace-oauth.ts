@@ -14,6 +14,12 @@ type OAuthConfiguration = {
   scopes: string[];
 };
 
+export type WorkspaceAccountMetadata = {
+  accountLabel: string;
+  accountKind: "unknown" | "consumer" | "corporate";
+  directoryAuthorized: boolean;
+};
+
 export function isWorkspaceOAuthProvider(value: string): value is WorkspaceProvider {
   return workspaceOAuthProviders.includes(value as WorkspaceProvider);
 }
@@ -76,9 +82,14 @@ export async function exchangeAuthorizationCode(provider: WorkspaceProvider, cod
     const body = await response.json().catch(() => null) as { error?: string } | null;
     throw new Error(`token_exchange_failed:${response.status}:${body?.error ?? "unknown"}`);
   }
-  const token = await response.json() as { access_token?: string; refresh_token?: string; expires_in?: number };
+  const token = await response.json() as { access_token?: string; refresh_token?: string; expires_in?: number; scope?: string };
   if (!token.access_token) throw new Error("missing_access_token");
-  return { accessToken: token.access_token, refreshToken: token.refresh_token ?? "", expiresAt: new Date(Date.now() + (token.expires_in ?? 3600) * 1000).toISOString() };
+  return {
+    accessToken: token.access_token,
+    refreshToken: token.refresh_token ?? "",
+    expiresAt: new Date(Date.now() + (token.expires_in ?? 3600) * 1000).toISOString(),
+    grantedScopes: token.scope?.split(/\s+/).filter(Boolean) ?? [],
+  };
 }
 
 export async function refreshWorkspaceAccessToken(provider: WorkspaceProvider, refreshToken: string) {
@@ -91,9 +102,43 @@ export async function refreshWorkspaceAccessToken(provider: WorkspaceProvider, r
   return { accessToken: token.access_token, refreshToken: token.refresh_token ?? refreshToken, expiresAt: new Date(Date.now() + (token.expires_in ?? 3600) * 1000).toISOString() };
 }
 
-export async function loadWorkspaceAccountLabel(provider: WorkspaceProvider, accessToken: string) {
+export async function loadWorkspaceAccountMetadata(
+  provider: WorkspaceProvider,
+  accessToken: string,
+  grantedScopes: string[],
+): Promise<WorkspaceAccountMetadata> {
   const response = await fetch(provider === "google_workspace" ? "https://www.googleapis.com/oauth2/v2/userinfo" : "https://graph.microsoft.com/v1.0/me?$select=displayName,mail,userPrincipalName", { headers: { authorization: `Bearer ${accessToken}` }, cache: "no-store" });
-  if (!response.ok) return provider === "google_workspace" ? "Cuenta de Google Workspace" : "Cuenta de Microsoft 365";
-  const profile = await response.json() as { email?: string; displayName?: string; mail?: string; userPrincipalName?: string };
-  return profile.email ?? profile.mail ?? profile.userPrincipalName ?? profile.displayName ?? (provider === "google_workspace" ? "Cuenta de Google Workspace" : "Cuenta de Microsoft 365");
+  if (!response.ok) {
+    return {
+      accountLabel: provider === "google_workspace" ? "Cuenta de Google" : "Cuenta de Microsoft",
+      accountKind: "unknown",
+      directoryAuthorized: false,
+    };
+  }
+  const profile = await response.json() as {
+    email?: string;
+    displayName?: string;
+    mail?: string;
+    userPrincipalName?: string;
+    hd?: string;
+  };
+  const accountLabel = profile.email ?? profile.mail ?? profile.userPrincipalName ?? profile.displayName
+    ?? (provider === "google_workspace" ? "Cuenta de Google" : "Cuenta de Microsoft");
+  const accountKind = provider === "google_workspace"
+    ? profile.hd ? "corporate" as const : "consumer" as const
+    : "corporate" as const;
+  const hasDirectoryScope = provider === "google_workspace"
+    ? grantedScopes.includes("https://www.googleapis.com/auth/admin.directory.user.readonly")
+    : grantedScopes.some((scope) => scope.toLocaleLowerCase() === "user.read.all");
+  if (!hasDirectoryScope || accountKind !== "corporate") {
+    return { accountLabel, accountKind, directoryAuthorized: false };
+  }
+  const probeUrl = provider === "google_workspace"
+    ? "https://admin.googleapis.com/admin/directory/v1/users?customer=my_customer&maxResults=1&projection=basic"
+    : "https://graph.microsoft.com/v1.0/users?$top=1&$select=id";
+  const probe = await fetch(probeUrl, {
+    headers: { authorization: `Bearer ${accessToken}` },
+    cache: "no-store",
+  });
+  return { accountLabel, accountKind, directoryAuthorized: probe.ok };
 }

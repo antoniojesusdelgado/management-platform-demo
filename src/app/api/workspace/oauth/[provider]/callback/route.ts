@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getWorkspaceAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { exchangeAuthorizationCode, getWorkspaceOAuthOrigin, isWorkspaceOAuthProvider, loadWorkspaceAccountLabel, verifyOAuthState } from "@/lib/workspace-oauth";
+import { exchangeAuthorizationCode, getWorkspaceOAuthOrigin, isWorkspaceOAuthProvider, loadWorkspaceAccountMetadata, verifyOAuthState } from "@/lib/workspace-oauth";
 
 type OAuthRouteContext = { params: Promise<{ provider: string }> };
 
@@ -20,10 +20,22 @@ export async function GET(request: Request, context: OAuthRouteContext) {
   try {
     const redirectUri = `${origin}/api/workspace/oauth/${provider}/callback`;
     const token = await exchangeAuthorizationCode(provider, code, verifier, redirectUri);
-    const accountLabel = await loadWorkspaceAccountLabel(provider, token.accessToken);
+    const metadata = await loadWorkspaceAccountMetadata(provider, token.accessToken, token.grantedScopes);
     const capabilities = provider === "google_workspace" ? ["files", "spreadsheets", "calendar"] : ["files", "spreadsheets", "calendar"];
     const supabase = await createClient();
-    const { error } = await supabase.rpc("save_workspace_connection", { expected_organization_id: access.organizationId, expected_profile_id: access.userId, target_provider: provider, target_account_label: accountLabel, target_capabilities: capabilities, target_access_token: token.accessToken, target_refresh_token: token.refreshToken, target_expires_at: token.expiresAt });
+    const { error } = await supabase.rpc("save_workspace_connection_v1_8_1", {
+      expected_organization_id: access.organizationId,
+      expected_profile_id: access.userId,
+      target_provider: provider,
+      target_account_label: metadata.accountLabel,
+      target_capabilities: capabilities,
+      target_granted_scopes: token.grantedScopes,
+      target_account_kind: metadata.accountKind,
+      target_directory_authorized: metadata.directoryAuthorized,
+      target_access_token: token.accessToken,
+      target_refresh_token: token.refreshToken,
+      target_expires_at: token.expiresAt,
+    });
     if (error) throw error;
     return NextResponse.redirect(new URL(`/app/operaciones?connection=${provider}`, origin));
   } catch (error) {

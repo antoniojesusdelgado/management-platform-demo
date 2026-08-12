@@ -3,7 +3,6 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
-  IconBell,
   IconBuilding,
   IconChartBar,
   IconChevronDown,
@@ -16,8 +15,9 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import Image from "next/image";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { useState, useTransition, type ReactNode } from "react";
+import { useEffect, useState, useTransition, type ReactNode } from "react";
 import { toast } from "sonner";
 import { switchActiveOrganizationAction } from "@/app/app/organization-actions";
 import { InitialsAvatar } from "@/components/initials-avatar";
@@ -41,12 +41,13 @@ type AppShellProps = {
   displayName?: string;
   workspaceSearch?: (query: string) => Promise<ActionResult<WorkspaceSearchResult[]>>;
   workspaceInbox?: () => Promise<ActionResult<WorkspaceWorkItem[]>>;
+  unreadCount?: number;
   onOpenWorkspaceItem?: (item: WorkspaceSearchResult | WorkspaceWorkItem) => void;
   children: ReactNode;
 };
 
 const workModules: Array<{ id: ModuleId; label: string }> = [
-  { id: "operaciones", label: "Centro operativo" },
+  { id: "operaciones", label: "Operaciones" },
   { id: "proyectos", label: "Proyectos" },
   { id: "tareas", label: "Tareas" },
   { id: "vacaciones", label: "Vacaciones" },
@@ -81,6 +82,7 @@ export function AppShell({
   displayName,
   workspaceSearch,
   workspaceInbox,
+  unreadCount = 0,
   onOpenWorkspaceItem,
   children,
 }: AppShellProps) {
@@ -89,6 +91,14 @@ export function AppShell({
   const [signingOut, setSigningOut] = useState(false);
   const [switching, startSwitch] = useTransition();
   const workActive = workModules.some((module) => module.id === activeModule);
+
+  useEffect(() => {
+    if (mode !== "authenticated") return;
+    for (const navigationModule of ["inicio", "operaciones", "personal", "analitica", "configuracion"] as ModuleId[]) {
+      router.prefetch(`/app/${navigationModule}`);
+    }
+    router.prefetch("/app/empresas/nueva" as Route);
+  }, [mode, router]);
 
   async function signOut() {
     setSigningOut(true);
@@ -126,22 +136,21 @@ export function AppShell({
               <DropdownMenu.Label className="v18-dropdown-label">Tus empresas</DropdownMenu.Label>
               {organizations.map((organization) => <DropdownMenu.Item key={organization.id} className="v18-dropdown-item" onSelect={() => switchOrganization(organization.id)}><span>{organization.name}</span>{organization.active ? <span className="v18-active-dot">Activa</span> : null}</DropdownMenu.Item>)}
               <DropdownMenu.Separator className="user-menu-separator" />
-              <DropdownMenu.Item className="v18-dropdown-item" onSelect={() => router.push("/app/onboarding")}><span>Crear otra empresa</span><span>+</span></DropdownMenu.Item>
+              <DropdownMenu.Item className="v18-dropdown-item v18-module-menu-item" onSelect={() => router.push("/app/empresas/nueva" as Route)}><IconBuilding size={18} /><span>Crear otra empresa</span><span className="v18-dropdown-trailing">+</span></DropdownMenu.Item>
             </DropdownMenu.Content></DropdownMenu.Portal> : null}
           </DropdownMenu.Root>
 
           <nav className="v18-desktop-nav" aria-label="Navegación principal">
             <NavItem id="inicio" label="Inicio" activeModule={activeModule} onNavigate={onNavigate} />
-            <DropdownMenu.Root><DropdownMenu.Trigger asChild><button type="button" className="v18-nav-link" aria-current={workActive ? "page" : undefined}>Trabajo <IconChevronDown size={14} /></button></DropdownMenu.Trigger><DropdownMenu.Portal><DropdownMenu.Content className="v18-dropdown" align="start" sideOffset={8}>{workModules.map((module) => <DropdownMenu.Item key={module.id} className="v18-dropdown-item" onSelect={() => onNavigate(module.id)}><ModuleIcon module={module.id} size={18} /><span>{module.label}</span></DropdownMenu.Item>)}</DropdownMenu.Content></DropdownMenu.Portal></DropdownMenu.Root>
+            <DropdownMenu.Root><DropdownMenu.Trigger asChild><button type="button" className="v18-nav-link" aria-current={workActive ? "page" : undefined}>Trabajo <IconChevronDown size={14} /></button></DropdownMenu.Trigger><DropdownMenu.Portal><DropdownMenu.Content className="v18-dropdown" align="start" sideOffset={8}>{workModules.map((module) => <DropdownMenu.Item key={module.id} className="v18-dropdown-item v18-module-menu-item" onSelect={() => onNavigate(module.id)}><ModuleIcon module={module.id} size={18} /><span>{module.label}</span></DropdownMenu.Item>)}</DropdownMenu.Content></DropdownMenu.Portal></DropdownMenu.Root>
             <NavItem id="personal" label="Personas" activeModule={activeModule} onNavigate={onNavigate} />
             <NavItem id="analitica" label="Analítica" activeModule={activeModule} onNavigate={onNavigate} />
             <NavItem id="configuracion" label="Configuración" activeModule={activeModule} onNavigate={onNavigate} />
           </nav>
 
           <div className="v18-header-actions">
-            {workspaceSearch && workspaceInbox ? <WorkspaceCommandCenter search={workspaceSearch} loadInbox={workspaceInbox} onOpenItem={onOpenWorkspaceItem} /> : null}
+            {workspaceSearch && workspaceInbox ? <WorkspaceCommandCenter search={workspaceSearch} loadInbox={workspaceInbox} initialUnreadCount={unreadCount} onOpenItem={onOpenWorkspaceItem} /> : null}
             {onReset ? <button type="button" className="v18-icon-button v18-reset" onClick={onReset} aria-label="Restaurar datos"><IconRefresh size={18} /></button> : null}
-            <button type="button" className="v18-icon-button" onClick={() => onNavigate("operaciones")} aria-label="Abrir notificaciones"><IconBell size={18} /></button>
             <DropdownMenu.Root><DropdownMenu.Trigger asChild><button className="profile-indicator" type="button" aria-label="Abrir menú de usuario">{avatarUrl ? <Image className="profile-indicator-image" src={avatarUrl} alt="" width={36} height={36} unoptimized /> : <InitialsAvatar displayName={mode === "guest" ? "Usuario invitado" : displayName ?? "Mi cuenta"} size="small" />}<IconChevronDown size={14} /></button></DropdownMenu.Trigger><DropdownMenu.Portal><DropdownMenu.Content className="user-menu" align="end" sideOffset={8}><div className="user-menu-header"><strong>{mode === "guest" ? "Usuario invitado" : displayName ?? "Mi cuenta"}</strong><span>{mode === "guest" ? `Versión ${PRODUCT_VERSION}` : organizationName}</span></div><DropdownMenu.Separator className="user-menu-separator" /><DropdownMenu.Item className="user-menu-item" onSelect={() => router.push(mode === "authenticated" ? "/app/perfil" : "/app/configuracion")}><IconSettings size={18} />Preferencias</DropdownMenu.Item>{mode === "authenticated" ? <><DropdownMenu.Separator className="user-menu-separator" /><DropdownMenu.Item className="user-menu-item user-menu-danger" disabled={signingOut} onSelect={signOut}><IconLogout size={18} />{signingOut ? "Cerrando sesión…" : "Cerrar sesión"}</DropdownMenu.Item></> : null}</DropdownMenu.Content></DropdownMenu.Portal></DropdownMenu.Root>
           </div>
         </div>

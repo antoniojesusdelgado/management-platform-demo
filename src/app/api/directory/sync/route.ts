@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: connection, error: connectionError } = await supabase
     .from("workspace_connections")
-    .select("id,account_label,capabilities")
+    .select("id,account_label,capabilities,granted_scopes,account_kind,directory_authorized")
     .eq("organization_id", access.organizationId)
     .eq("profile_id", access.userId)
     .eq("provider", parsed.data.provider)
@@ -38,6 +38,15 @@ export async function POST(request: Request) {
     .single();
   if (connectionError || !connection) {
     return NextResponse.json({ error: "Conecta primero la suite corporativa." }, { status: 409 });
+  }
+  if (!connection.directory_authorized) {
+    const consumer = connection.account_kind === "consumer";
+    return NextResponse.json({
+      error: consumer
+        ? "La sincronización de personas requiere una cuenta corporativa administrada."
+        : "Amplía los permisos con una cuenta administradora antes de sincronizar.",
+      code: consumer ? "corporate_account_required" : "admin_consent_required",
+    }, { status: 409 });
   }
 
   const admin = createAdminClient();
@@ -50,12 +59,15 @@ export async function POST(request: Request) {
     if (!secret.access_token) throw new Error("access_token_unavailable");
     if (!secret.expires_at || Date.parse(secret.expires_at) < Date.now() + 60_000) {
       const refreshed = await refreshWorkspaceAccessToken(parsed.data.provider, secret.refresh_token ?? "");
-      const { error: saveError } = await supabase.rpc("save_workspace_connection", {
+      const { error: saveError } = await supabase.rpc("save_workspace_connection_v1_8_1", {
         expected_organization_id: access.organizationId,
         expected_profile_id: access.userId,
         target_provider: parsed.data.provider,
         target_account_label: connection.account_label,
         target_capabilities: connection.capabilities,
+        target_granted_scopes: connection.granted_scopes,
+        target_account_kind: connection.account_kind,
+        target_directory_authorized: connection.directory_authorized,
         target_access_token: refreshed.accessToken,
         target_refresh_token: refreshed.refreshToken,
         target_expires_at: refreshed.expiresAt,

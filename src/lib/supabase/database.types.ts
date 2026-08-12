@@ -3033,9 +3033,12 @@ export type Database = {
       }
       workspace_connections: {
         Row: {
+          account_kind: string
           account_label: string
           capabilities: string[]
           connected_at: string
+          directory_authorized: boolean
+          granted_scopes: string[]
           id: string
           organization_id: string
           profile_id: string
@@ -3046,9 +3049,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          account_kind?: string
           account_label: string
           capabilities?: string[]
           connected_at?: string
+          directory_authorized?: boolean
+          granted_scopes?: string[]
           id?: string
           organization_id: string
           profile_id: string
@@ -3059,9 +3065,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          account_kind?: string
           account_label?: string
           capabilities?: string[]
           connected_at?: string
+          directory_authorized?: boolean
+          granted_scopes?: string[]
           id?: string
           organization_id?: string
           profile_id?: string
@@ -3214,6 +3223,22 @@ export type Database = {
           target_account_label: string
           target_capabilities: string[]
           target_expires_at: string
+          target_provider: string
+          target_refresh_token: string
+        }
+        Returns: string
+      }
+      save_workspace_connection_v1_8_1: {
+        Args: {
+          expected_organization_id: string
+          expected_profile_id: string
+          target_access_token: string
+          target_account_kind: string
+          target_account_label: string
+          target_capabilities: string[]
+          target_directory_authorized: boolean
+          target_expires_at: string
+          target_granted_scopes: string[]
           target_provider: string
           target_refresh_token: string
         }

@@ -1,5 +1,27 @@
 # Integraciones de productividad
 
+## Disponibilidad y permisos en v1.8.1
+
+La interfaz ya no interpreta una cuenta conectada como autorización para leer
+un directorio. Cada conexión informa por separado de:
+
+- los ámbitos OAuth concedidos;
+- el tipo de cuenta (`consumer`, `corporate` o `unknown`);
+- la disponibilidad de archivos, hojas de cálculo, compositor y calendario;
+- el consentimiento administrativo del directorio;
+- el último resultado almacenado en `organization_directory_settings`.
+
+Una cuenta personal de Google puede utilizar Drive, Sheets, Calendar y el
+compositor de Gmail, pero no ofrece sincronización de personas. La misma regla
+se aplica a Microsoft: las capacidades delegadas se mantienen disponibles y el
+directorio solo se activa para una organización Entra autorizada. Las
+conexiones anteriores se conservan y aparecen como pendientes de verificación
+hasta completar un nuevo consentimiento.
+
+Outlook Web se abre mediante su compositor. Si el navegador o la cuenta no
+admiten ese enlace, la interfaz ofrece un `mailto:` con asunto y cuerpo
+codificados, sin leer ni enviar mensajes desde la plataforma.
+
 ## Alcance de v1.8.0
 
 La autorización de la suite es independiente del proveedor usado para iniciar

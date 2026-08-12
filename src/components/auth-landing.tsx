@@ -1,86 +1,130 @@
 import {
-  IconArrowRight,
   IconBrandWindows,
-  IconInfoCircle,
+  IconBuilding,
+  IconCircleCheck,
+  IconHelpCircle,
   IconLock,
+  IconShieldCheck,
+  IconUser,
+  IconUsers,
 } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 import { LegalFooter } from "@/components/legal-footer";
 import { getWorkspaceAccess } from "@/lib/auth";
+import { getSignInProviderAvailability } from "@/lib/env";
 
 const errorMessages = {
   oauth: "No se pudo completar el acceso. Revisa la cuenta elegida e inténtalo de nuevo.",
   workspace: "La identidad se verificó, pero no se pudo cargar tu espacio de trabajo.",
 } as const;
 
+const benefits = [
+  {
+    icon: IconCircleCheck,
+    title: "Conecta tu empresa",
+    copy: "de forma segura",
+  },
+  {
+    icon: IconUsers,
+    title: "Colabora con tu equipo",
+    copy: "en tiempo real",
+  },
+  {
+    icon: IconShieldCheck,
+    title: "Tus datos, siempre",
+    copy: "protegidos",
+  },
+] as const;
+
 type AuthLandingProps = { errorCode?: string };
 
 export async function AuthLanding({ errorCode }: AuthLandingProps) {
-  const access = await getWorkspaceAccess();
+  const [access, providers] = await Promise.all([
+    getWorkspaceAccess(),
+    Promise.resolve(getSignInProviderAvailability()),
+  ]);
   const error = errorCode && errorCode in errorMessages
     ? errorMessages[errorCode as keyof typeof errorMessages]
     : null;
   const authenticatedHref = access.status === "active" ? "/app/inicio" : null;
 
   return (
-    <main className="oauth-page oauth-page-v18">
-      <header className="oauth-header">
+    <main className="oauth-page oauth-page-v181">
+      <header className="oauth-header oauth-header-v181">
         <Link className="oauth-brand" href="/" aria-label="Plataforma de gestión">
-          <Image src="/brand-symbol.svg" alt="" width={44} height={44} priority />
-          <strong>Plataforma de gestión</strong>
-          <small>Operaciones conectadas</small>
+          <span className="oauth-brand-mark" aria-hidden="true"><IconBuilding size={25} /></span>
+          <span className="oauth-brand-copy">
+            <small>Plataforma de gestión</small>
+            <strong>Plataforma de gestión</strong>
+          </span>
         </Link>
+        <a className="oauth-help-link" href="#acceso">
+          <IconHelpCircle aria-hidden="true" size={18} />
+          <span>Ayuda</span>
+        </a>
       </header>
 
-      <section className="oauth-showcase" aria-labelledby="login-title">
-        <div className="oauth-showcase-inner">
+      <div className="oauth-layout-v181">
+        <section className="oauth-showcase oauth-showcase-v181" aria-labelledby="login-title">
           <div className="oauth-showcase-copy">
-            <p className="eyebrow">Tu empresa, en contexto</p>
-            <h1 id="login-title">Organiza el trabajo sin perder de vista a las personas</h1>
-            <p>Coordina proyectos, capacidad, tareas, incidencias y decisiones desde un único espacio.</p>
-            <div className="oauth-feature-row" aria-label="Características principales">
-              <span>Multiempresa</span><span>Google Workspace</span><span>Microsoft 365</span>
+            <p className="eyebrow">Accede a tu espacio</p>
+            <h1 id="login-title">Todo el trabajo, en un solo lugar</h1>
+            <p>Coordina proyectos, capacidad y decisiones desde un espacio claro, seguro y conectado.</p>
+          </div>
+          <div className="oauth-benefit-list" aria-label="Ventajas de la plataforma">
+            {benefits.map(({ icon: Icon, title, copy }) => (
+              <div key={title}>
+                <span aria-hidden="true"><Icon size={21} /></span>
+                <p><strong>{title}</strong><small>{copy}</small></p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="acceso" className="oauth-panel oauth-panel-v181" aria-label="Acceso a la plataforma">
+          <div className="oauth-card oauth-card-v181">
+            <div className="oauth-card-heading">
+              <p className="eyebrow">Acceso seguro</p>
+              <h2>Entra en tu espacio</h2>
+              <p className="muted">Usa tu cuenta corporativa para continuar.</p>
             </div>
+
+            {error ? <div className="inline-alert" role="alert"><strong>No se pudo completar el acceso.</strong><span>{error}</span></div> : null}
+
+            <div className="oauth-provider-grid">
+              <a className="button google-oauth-button" href={authenticatedHref ?? "/auth/google"} aria-disabled={!providers.google.enabled}>
+                <span className="google-oauth-mark" aria-hidden="true"><Image src="/google-g.svg" alt="" width={22} height={22} /></span>
+                Continuar con Google
+              </a>
+              {providers.azure.enabled ? (
+                <a className="button microsoft-oauth-button" href={authenticatedHref ?? "/auth/microsoft"}>
+                  <IconBrandWindows aria-hidden="true" size={20} />
+                  Continuar con Microsoft
+                </a>
+              ) : (
+                <div className="oauth-provider-unavailable">
+                  <button className="button microsoft-oauth-button" type="button" disabled aria-describedby="microsoft-provider-help">
+                    <IconBrandWindows aria-hidden="true" size={20} />
+                    Continuar con Microsoft
+                  </button>
+                  <span id="microsoft-provider-help">La conexión con Microsoft 365 no está configurada.</span>
+                </div>
+              )}
+            </div>
+
+            <div className="oauth-divider"><span>o</span></div>
+            <Link className="button button-secondary oauth-secondary" href="/demo/embed">
+              <IconUser aria-hidden="true" size={22} /> Explorar sin iniciar sesión
+            </Link>
+
+            <p className="oauth-session-note"><IconLock aria-hidden="true" size={15} />Cada empresa mantiene sus datos y permisos aislados.</p>
+            <p className="oauth-legal">Al continuar aceptas la <a href="/privacidad">Privacidad</a>, la <a href="/procedencia-datos">Procedencia de los datos</a> y el <a href="/aviso-legal">Aviso legal</a>.</p>
           </div>
-          <p className="oauth-data-notice">
-            <IconInfoCircle aria-hidden="true" size={20} />
-            La demostración pública utiliza únicamente datos ficticios.
-          </p>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      <section className="oauth-panel" aria-label="Acceso a la plataforma">
-        <div className="oauth-card">
-          <div className="oauth-card-heading">
-            <p className="eyebrow">Acceso seguro</p>
-            <h2>Entra en tu espacio</h2>
-            <p className="muted">Usa tu cuenta corporativa o explora el producto sin registro.</p>
-          </div>
-
-          {error ? <div className="inline-alert" role="alert"><strong>No se pudo completar el acceso.</strong><span>{error}</span></div> : null}
-
-          <div className="oauth-provider-grid">
-            <a className="button google-oauth-button" href={authenticatedHref ?? "/auth/google"}>
-              <Image src="/google-g.svg" alt="" width={20} height={20} />
-              Continuar con Google
-            </a>
-            <a className="button microsoft-oauth-button" href={authenticatedHref ?? "/auth/microsoft"}>
-              <IconBrandWindows aria-hidden="true" size={21} />
-              Continuar con Microsoft
-            </a>
-          </div>
-
-          <div className="oauth-divider"><span>o</span></div>
-          <Link className="button button-secondary oauth-secondary" href="/demo/embed">
-            Explorar sin iniciar sesión <IconArrowRight aria-hidden="true" size={18} />
-          </Link>
-
-          <p className="oauth-session-note"><IconLock aria-hidden="true" size={16} />Cada empresa mantiene sus datos y permisos aislados.</p>
-          <p className="oauth-legal">Al continuar aceptas el uso técnico de la sesión descrito en <a href="/privacidad">Privacidad</a>. Consulta también la <a href="/procedencia-datos">procedencia de los datos</a> y el <a href="/aviso-legal">aviso legal</a>.</p>
-        </div>
-        <LegalFooter />
-      </section>
+      <LegalFooter />
     </main>
   );
 }

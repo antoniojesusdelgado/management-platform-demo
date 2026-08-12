@@ -96,6 +96,8 @@ type AuthenticatedAppProps = {
   highContrast?: boolean;
   avatarUrl?: string | null;
   displayName?: string;
+  greeting?: string;
+  unreadCount?: number;
   leaveRequests?: LeaveRequest[];
   leaveEvents?: LeaveRequestEvent[];
   leaveLoadError?: string;
@@ -170,6 +172,8 @@ export function AuthenticatedApp({
   highContrast = false,
   avatarUrl,
   displayName,
+  greeting = "Buenos días",
+  unreadCount = 0,
   leaveRequests = [],
   leaveEvents = [],
   leaveLoadError,
@@ -270,6 +274,7 @@ export function AuthenticatedApp({
     content = (
       <Dashboard
         onNavigate={navigate}
+        greeting={greeting}
         summary={{
           pendingLeaveRequests: leaveRequests.filter(
             (request) => request.status === "submitted",
@@ -492,6 +497,7 @@ export function AuthenticatedApp({
         displayName={displayName}
         workspaceSearch={searchWorkspaceAction}
         workspaceInbox={loadWorkspaceInboxAction}
+        unreadCount={unreadCount}
       >
         <div aria-busy={pending}>
           {workspaceLoadError ? (

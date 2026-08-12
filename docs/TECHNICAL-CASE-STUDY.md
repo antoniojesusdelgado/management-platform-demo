@@ -286,6 +286,12 @@ representa cada métrica, cómo interpretarla, su fuente funcional y su
 frecuencia, sin exponer tablas ni códigos internos. Los formatos compartidos
 distinguen recuentos, porcentajes, duraciones y moneda.
 
+La interfaz añade lecturas guiadas deterministas, indicadores accionables y
+selecciones sobre series que reutilizan los filtros públicos. Cada selección
+abre un detalle contextual con la vista y el periodo activos; no ejecuta SQL
+generado, no descarga tablas completas y no presenta conclusiones que no
+puedan reconstruirse desde el mismo `AnalyticsSnapshot`.
+
 ## 12. Migraciones, índices y constraints
 
 Las migraciones exclusivamente aditivas cubren:
@@ -396,6 +402,7 @@ Configuración actualiza de forma explícita el ancla y registra la operación.
 | v1.6.0 | Búsqueda global, bandeja unificada y enlaces directos a entidades |
 | v1.7.0 | Automatizaciones, capacidad, notificaciones e integraciones de productividad |
 | v1.8.0 | Onboarding, multiempresa, directorio corporativo y nuevo sistema visual |
+| v1.8.1 | Acceso compacto, Personal y organigrama renovados, Novedades naturales y Analítica interactiva |
 
 ### Operaciones e integraciones
 
@@ -405,7 +412,7 @@ capacidades de archivos, hojas de cálculo, correo y calendario, pero cada token
 pertenece a una persona y una organización. PKCE y el estado firmado protegen el
 retorno OAuth; Vault mantiene los tokens fuera de los esquemas expuestos.
 
-El centro operativo conecta reglas cerradas, plantillas, recurrencias,
+Operaciones conecta reglas cerradas, plantillas, recurrencias,
 asignaciones semanales y notificaciones. Las advertencias de capacidad orientan
 la planificación sin bloquearla. Las exportaciones reconstruyen en servidor la
 vista autorizada, imponen un límite de filas y requieren confirmación antes de

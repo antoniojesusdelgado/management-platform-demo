@@ -12,6 +12,7 @@ import type { ModuleId } from "@/domain/modules";
 
 type DashboardProps = {
   onNavigate: (module: ModuleId) => void;
+  greeting: string;
   summary?: {
     pendingLeaveRequests: number;
     upcomingTasks: number;
@@ -20,7 +21,7 @@ type DashboardProps = {
   };
 };
 
-export function Dashboard({ onNavigate, summary }: DashboardProps) {
+export function Dashboard({ onNavigate, greeting, summary }: DashboardProps) {
   const upcomingTasks = summary?.upcomingTasks ?? 0;
   const pendingLeave = summary?.pendingLeaveRequests ?? 0;
   const priorityIncidents = summary?.priorityIncidents ?? 0;
@@ -32,7 +33,7 @@ export function Dashboard({ onNavigate, summary }: DashboardProps) {
   return (
     <main className="workspace v18-dashboard" id="main-content">
       <header className="v18-dashboard-heading">
-        <div><p className="eyebrow">Centro operativo</p><h1>Buenos días</h1><p className="lede">Aquí tienes lo más importante para avanzar hoy.</p></div>
+        <div><p className="eyebrow">Operaciones</p><h1>{greeting}</h1><p className="lede">Aquí tienes lo más importante para avanzar hoy.</p></div>
         <button type="button" className="button button-primary" onClick={() => onNavigate("tareas")}><IconPlus size={18} />Crear trabajo</button>
       </header>
 
