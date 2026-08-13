@@ -255,7 +255,7 @@ export function createDefaultOperationsState(anchorDate = "2026-08-10"): Operati
       provider,
       status: "simulated",
       capabilities: [...workspaceCapabilities],
-      accountLabel: provider === "google_workspace" ? "Google Workspace de demostración" : "Microsoft 365 de demostración",
+      accountLabel: provider === "google_workspace" ? "Google Workspace simulado" : "Microsoft 365 simulado",
       connectedAt: null,
       grantedScopes: [],
       accountKind: "corporate",

@@ -30,7 +30,8 @@ import type { ActiveOrganization } from "@/domain/organizations";
 import type { WorkspaceSearchResult, WorkspaceWorkItem } from "@/domain/workspace-productivity";
 import { createClient } from "@/lib/supabase/client";
 
-const GUEST_STORAGE_KEY = "management-platform-demo:v1";
+const GUEST_STORAGE_KEY = "management-platform:v1";
+const LEGACY_GUEST_STORAGE_KEY = "management-platform-demo:v1";
 
 type AppShellProps = {
   activeModule: ModuleId;
@@ -106,6 +107,7 @@ export function AppShell({
     setSigningOut(true);
     if (mode === "guest") {
       window.sessionStorage.removeItem(GUEST_STORAGE_KEY);
+      window.sessionStorage.removeItem(LEGACY_GUEST_STORAGE_KEY);
       router.replace("/login");
       router.refresh();
       return;
@@ -136,7 +138,7 @@ export function AppShell({
             <DropdownMenu.Trigger asChild>
               <button type="button" className="v18-company-switcher" disabled={switching} aria-label="Cambiar empresa">
                 <Image className="v18-brand-symbol" src="/brand-symbol.svg" alt="" width={36} height={36} priority />
-                <span><small>{mode === "guest" ? "Demostración" : "Empresa activa"}</small><strong>{mode === "guest" ? "Entorno de ejemplo" : organizationName}</strong></span>
+                <span><small>{mode === "guest" ? "Modo de exploración" : "Empresa activa"}</small><strong>{mode === "guest" ? "Datos ficticios" : organizationName}</strong></span>
                 {mode === "authenticated" ? <IconChevronDown size={16} aria-hidden="true" /> : null}
               </button>
             </DropdownMenu.Trigger>

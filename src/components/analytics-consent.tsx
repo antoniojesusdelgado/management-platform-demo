@@ -60,6 +60,14 @@ export function AnalyticsConsentManager({ measurementId }: AnalyticsConsentManag
   }, [consent, measurementId, pathname]);
 
   function choose(nextConsent: AnalyticsConsent) {
+    if (nextConsent === "rejected") {
+      window.gtag?.("consent", "update", {
+        analytics_storage: "denied",
+        ad_storage: "denied",
+        ad_user_data: "denied",
+        ad_personalization: "denied",
+      });
+    }
     window.localStorage.setItem(ANALYTICS_CONSENT_STORAGE_KEY, nextConsent);
     setConsent(nextConsent);
     setShowPreferences(false);
@@ -70,11 +78,22 @@ export function AnalyticsConsentManager({ measurementId }: AnalyticsConsentManag
     window.dataLayer = window.dataLayer ?? [];
     window.gtag = (...args: unknown[]) => window.dataLayer?.push(args);
     window.gtag("js", new Date());
+    window.gtag("consent", "update", {
+      analytics_storage: "granted",
+      ad_storage: "denied",
+      ad_user_data: "denied",
+      ad_personalization: "denied",
+    });
     window.gtag("config", measurementId, {
       anonymize_ip: true,
       allow_google_signals: false,
       allow_ad_personalization_signals: false,
       send_page_view: false,
+    });
+    window.gtag("event", "page_view", {
+      page_path: pathname,
+      page_title: document.title,
+      send_to: measurementId,
     });
   }
 
@@ -86,7 +105,7 @@ export function AnalyticsConsentManager({ measurementId }: AnalyticsConsentManag
             id="google-analytics-consent-default"
             strategy="afterInteractive"
           >
-            {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)};gtag('consent','default',{'analytics_storage':'granted','ad_storage':'denied','ad_user_data':'denied','ad_personalization':'denied'});`}
+            {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)};gtag('consent','default',{'analytics_storage':'denied','ad_storage':'denied','ad_user_data':'denied','ad_personalization':'denied','wait_for_update':500});`}
           </Script>
           <Script
             id="google-analytics"

@@ -69,7 +69,7 @@ const nextConfig: NextConfig = {
 
     return [
       {
-        source: "/demo/embed",
+        source: "/explorar",
         headers: frameableHeaders,
       },
       {
@@ -77,7 +77,7 @@ const nextConfig: NextConfig = {
         headers: frameableHeaders,
       },
       {
-        source: "/((?!demo/embed|login).*)",
+        source: "/((?!explorar|demo/embed|login).*)",
         headers: [
           ...securityHeaders,
           {
@@ -86,6 +86,15 @@ const nextConfig: NextConfig = {
           },
           { key: "X-Frame-Options", value: "DENY" },
         ],
+      },
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: "/demo/embed",
+        destination: "/explorar",
+        permanent: true,
       },
     ];
   },

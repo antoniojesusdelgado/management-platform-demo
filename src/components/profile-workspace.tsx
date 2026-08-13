@@ -284,7 +284,7 @@ export function ProfileWorkspace({
         <section className="card profile-section" aria-labelledby="role-title">
           <div className="section-header">
             <div>
-              <p className="eyebrow">Demostración</p>
+              <p className="eyebrow">Modo de exploración</p>
               <h2 id="role-title">Simulador de rol</h2>
             </div>
             <IconShieldCheck aria-hidden="true" size={24} />

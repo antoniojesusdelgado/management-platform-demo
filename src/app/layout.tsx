@@ -13,14 +13,14 @@ const metadataOrigin =
 export const metadata: Metadata = {
   metadataBase: new URL(metadataOrigin),
   title: {
-    default: "Plataforma de gestión | Aplicación de demostración",
+    default: "Plataforma de gestión — Todo el trabajo, en un solo lugar",
     template: "%s | Plataforma de gestión",
   },
   description:
-    "Aplicación de demostración para explorar procesos, permisos y flujos de gestión con datos ficticios.",
+    "Plataforma para coordinar personas, proyectos, capacidad, operaciones y decisiones desde un único espacio.",
   robots: {
-    index: false,
-    follow: false,
+    index: true,
+    follow: true,
   },
   manifest: "/manifest.webmanifest",
   icons: {
@@ -32,9 +32,9 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
   openGraph: {
-    title: "Plataforma de gestión | Aplicación de demostración",
+    title: "Plataforma de gestión — Todo el trabajo, en un solo lugar",
     description:
-      "Aplicación de demostración para explorar procesos de gestión con datos ficticios.",
+      "Coordina personas, proyectos, capacidad y decisiones desde un único espacio.",
     type: "website",
     locale: "es_ES",
     images: [{ url: "/social-card.png", width: 1200, height: 630 }],

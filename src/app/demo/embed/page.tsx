@@ -1,14 +1,6 @@
-import type { Metadata } from "next";
-import { EmbedDemoEntry } from "@/components/embed-demo-entry";
-
-export const metadata: Metadata = {
-  title: "Demo interactiva",
-  description:
-    "Acceso sin cuenta a la Plataforma de gestión con datos ficticios.",
-};
-
-export const dynamic = "force-dynamic";
+import type { Route } from "next";
+import { permanentRedirect } from "next/navigation";
 
 export default function GuestDemoPage() {
-  return <EmbedDemoEntry />;
+  permanentRedirect("/explorar" as Route);
 }

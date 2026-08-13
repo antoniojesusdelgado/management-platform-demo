@@ -43,7 +43,7 @@ const social = `
   <rect x="72" y="64" width="1056" height="502" rx="42" fill="#ffffff" stroke="#d9e4f1"/>
   ${symbol}
   <text x="332" y="255" fill="#071a35" font-family="Arial, sans-serif" font-size="62" font-weight="700">Plataforma de gestión</text>
-  <text x="332" y="326" fill="#46607f" font-family="Arial, sans-serif" font-size="31">Personas, trabajo y decisiones en un solo espacio</text>
+  <text x="332" y="326" fill="#46607f" font-family="Arial, sans-serif" font-size="31">Todo el trabajo, en un solo lugar</text>
   <rect x="332" y="378" width="250" height="56" rx="18" fill="#2867ed"/>
   <text x="457" y="415" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="24" font-weight="700">plataformagestion.app</text>
 </svg>`;

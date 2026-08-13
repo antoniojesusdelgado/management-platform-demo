@@ -1,4 +1,4 @@
-const dynamicSurfacePrefixes = ["/app", "/auth", "/login", "/demo/embed"];
+const dynamicSurfacePrefixes = ["/app", "/auth", "/login", "/explorar", "/demo/embed"];
 
 export function isDynamicSurface(pathname: string) {
   return dynamicSurfacePrefixes.some(

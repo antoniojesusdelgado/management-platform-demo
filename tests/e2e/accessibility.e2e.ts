@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
 async function openGuestDemo(page: Page) {
-  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
+  await page.goto("/explorar", { waitUntil: "domcontentloaded" });
   await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
   const analyticsDialog = page.getByRole("dialog", { name: "Analítica opcional" });
   if (await analyticsDialog.isVisible()) {

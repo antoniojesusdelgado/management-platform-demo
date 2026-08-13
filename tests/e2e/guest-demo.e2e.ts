@@ -5,8 +5,13 @@ async function enterGuestDemo(page: Page) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
+  await page.goto("/explorar", { waitUntil: "domcontentloaded" });
   await enterGuestDemo(page);
+  const analyticsDialog = page.getByRole("dialog", { name: "Analítica opcional" });
+  if (await analyticsDialog.isVisible()) {
+    await analyticsDialog.getByRole("button", { name: "Rechazar" }).click();
+    await expect(analyticsDialog).toBeHidden();
+  }
 });
 
 async function navigateToModule(

@@ -2,10 +2,10 @@
 
 > v1.8.2 mejora el acceso, la privacidad y la seguridad: permisos OAuth progresivos, analítica opcional y supresión de cuenta desde el perfil.
 
-[![CI](https://github.com/antoniojesusdelgado/management-platform-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/antoniojesusdelgado/management-platform-demo/actions/workflows/ci.yml)
-[![Versión](https://img.shields.io/github/v/release/antoniojesusdelgado/management-platform-demo)](https://github.com/antoniojesusdelgado/management-platform-demo/releases/latest)
+[![CI](https://github.com/antoniojesusdelgado/management-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/antoniojesusdelgado/management-platform/actions/workflows/ci.yml)
+[![Versión](https://img.shields.io/github/v/release/antoniojesusdelgado/management-platform)](https://github.com/antoniojesusdelgado/management-platform/releases/latest)
 
-Una réplica técnica pública de una plataforma de gestión interna que reúne
+Una plataforma de gestión que reúne
 personas, proyectos, tareas, vacaciones, incidencias, tesorería, nóminas y
 analítica en un mismo espacio.
 
@@ -15,17 +15,17 @@ cálculo y herramientas externas. Antonio Delgado realizó el análisis de
 procesos, la toma de requisitos, el desarrollo, las pruebas, la implantación y
 el despliegue de la solución utilizada por la Fundación.
 
-Este repositorio contiene una réplica posterior y técnicamente aislada. No es
+Este repositorio contiene una implementación pública posterior y técnicamente aislada. No es
 el sistema interno de la Fundación y no incluye su código, datos, documentos,
 credenciales, reglas internas ni conexiones. La mención de la organización
 explica el origen funcional del proyecto y no implica patrocinio o respaldo del
 repositorio público.
 
-**Demo pública:** [plataformagestion.app](https://plataformagestion.app)
+**Aplicación:** [plataformagestion.app](https://plataformagestion.app)
 
-La réplica puede recorrerse sin registro o mediante Google o Microsoft OAuth.
+La plataforma puede explorarse sin registro o utilizarse mediante Google o Microsoft OAuth.
 Las cuentas autenticadas pueden crear empresas, aceptar invitaciones y cambiar
-entre organizaciones aisladas. La demo pública utiliza exclusivamente datos
+entre organizaciones aisladas. El modo de exploración utiliza exclusivamente datos
 ficticios.
 
 ## Qué se puede explorar
@@ -51,7 +51,7 @@ disponibles en la sección de releases.
 
 ```mermaid
 flowchart LR
-  guest["Demo sin registro"] --> session["Estado validado en el navegador"]
+  guest["Exploración sin registro"] --> session["Estado validado en el navegador"]
   user["Google OAuth"] --> app["Next.js"]
   app --> auth["Supabase Auth"]
   app --> db["PostgreSQL + RLS"]
@@ -71,14 +71,14 @@ describe en [Integraciones de productividad](docs/WORKSPACE-INTEGRATIONS.md).
 
 ## Desarrollo asistido con inteligencia artificial
 
-Esta réplica se ha desarrollado mediante programación asistida con ChatGPT
+La plataforma se ha desarrollado mediante programación asistida con ChatGPT
 Codex, bajo dirección, revisión y validación humana. La herramienta se ha
 utilizado para analizar el repositorio, implementar cambios, documentar y
 ejecutar comprobaciones reproducibles.
 
 ChatGPT Codex no forma parte de la aplicación en ejecución: el producto no
 llama a modelos de inteligencia artificial, no necesita una clave de OpenAI y
-sus datos de demostración se generan de forma determinista.
+los datos del modo de exploración se generan de forma determinista.
 
 El desarrollo asistido comenzó con GPT-5.3 Codex y continuó con GPT-5.4,
 GPT-5.5 y GPT-5.6 Sol. La herramienta ha cambiado a lo largo del proyecto, pero
@@ -106,9 +106,9 @@ no identificativa necesaria para mantener la integridad de las organizaciones.
 Contacto profesional y de privacidad:
 [contacto@antoniodelgado.tech](mailto:contacto@antoniodelgado.tech).
 
-## Datos de demostración
+## Datos del modo de exploración
 
-Los registros de la réplica se generan de forma determinista y no proceden de
+Los registros del espacio de exploración se generan de forma determinista y no proceden de
 la Fundación ni de otra empresa real. El repositorio no contiene contactos,
 cuentas bancarias, documentos, salarios individuales ni credenciales de
 terceros.
@@ -121,8 +121,8 @@ La metodología y los límites del conjunto de datos están documentados en
 Requisitos: Bun 1.3.14 y, para la base de datos local, Docker Desktop.
 
 ```powershell
-git clone https://github.com/antoniojesusdelgado/management-platform-demo.git
-Set-Location management-platform-demo
+git clone https://github.com/antoniojesusdelgado/management-platform.git
+Set-Location management-platform
 bun install --frozen-lockfile
 Copy-Item .env.example .env.local
 bun run dev
@@ -132,7 +132,8 @@ Rutas principales:
 
 - `http://localhost:3000/` — acceso público.
 - `http://localhost:3000/login` — acceso embebible desde el portfolio.
-- `http://localhost:3000/demo/embed` — demo sin registro.
+- `http://localhost:3000/explorar` — plataforma sin registro con datos ficticios.
+- `http://localhost:3000/demo/embed` — redirección heredada a `/explorar`.
 - `http://localhost:3000/app/inicio` — aplicación autenticada.
 
 Google OAuth requiere un proyecto Supabase propio. La configuración completa se
@@ -147,7 +148,7 @@ bun run test
 bun run content:validate
 bun run security:public-data
 bun run security:secrets
-bun run demo:data:validate
+bun run scenario:data:validate
 bun audit --audit-level=high
 bun run build
 bun run e2e

@@ -3,7 +3,7 @@
 ## v1.8.2 — Acceso, rendimiento y seguridad
 
 - [x] Identidad visual única en login, PWA, favicon y tarjeta social.
-- [x] Cierre explícito de la demostración invitada.
+- [x] Cierre explícito del modo de exploración.
 - [x] Login básico separado de productividad y directorio.
 - [x] Microsoft personal y corporativo preparado mediante Azure en Supabase.
 - [x] Procesamiento privado de avatares y directorio reservado al servidor.
@@ -11,7 +11,8 @@
 - [x] Contacto profesional y ejercicio de derechos desde la política de privacidad.
 - [x] Supresión irreversible de cuenta con anonimización y revocación de conexiones.
 - [x] Declaración de desarrollo asistido con Codex alineada con el artículo 50.
-- [ ] Resolución de la verificación pública de Google, dependiente de Google.
+- [x] Verificación pública de marca aprobada por Google.
+- [ ] Verificación de permisos sensibles adicionales, solo si se solicitan en el futuro.
 - [ ] Consentimiento administrativo real de Google Workspace Directory.
 
 ## v1.8.1 — Corrección integral de interfaz y rendimiento
@@ -149,12 +150,12 @@
 ## Estado de publicación
 
 - Origen canónico: <https://plataformagestion.app>
-- Alternativa de Vercel: <https://management-platform-demo.vercel.app>
+- Alternativa de Vercel: se actualizará al renombrar el proyecto en el cierre de v1.8.2.
 - Las Preview se generan desde pull requests y se promueven tras completar la
   validación funcional, visual y de seguridad.
-- Versión aprobada para publicación: `v1.8.1`.
+- Versión candidata a publicación: `v1.8.2`.
 - Historial de base de datos: migraciones ordenadas hasta
-  `20260812105402_refresh_v1_8_1_release_copy.sql`.
+  `20260813120000_finalize_v1_8_2_product_copy.sql`.
 - Acceso, cierre de sesión y redirecciones protegidas de Google OAuth validados
   en Preview y producción.
 - Flujos públicos validados en escritorio y móvil con Playwright y Axe.

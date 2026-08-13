@@ -16,10 +16,10 @@
 
 ## Alcance
 
-Este repositorio es una demostración pública construida con datos ficticios. La
-ruta sin registro guarda su estado en `sessionStorage` y no consulta Supabase.
-La aplicación autenticada crea un espacio sintético independiente para cada
-identidad de Google.
+Este repositorio contiene la implementación pública de la plataforma. El modo
+de exploración utiliza datos ficticios, guarda su estado en `sessionStorage` y
+no consulta Supabase. La aplicación autenticada crea un espacio sintético
+independiente para cada identidad autorizada.
 
 No existe un modelo de lenguaje, agente ni entrada conectada a herramientas, por
 lo que la inyección de prompts no forma parte de la superficie de ataque actual.
@@ -40,8 +40,9 @@ ejecutable, inyección SQL y abuso de recursos.
   caracteres de control o marcado ejecutable.
 - La política CSP usa nonces en las superficies dinámicas. Ningún dato de
   usuario llega a `dangerouslySetInnerHTML`.
-- `/demo/embed` también usa nonce y solo admite como ancestro el origen exacto
-  configurado mediante `PORTFOLIO_ORIGIN`.
+- `/explorar` también usa nonce y solo admite como ancestro el origen exacto
+  configurado mediante `PORTFOLIO_ORIGIN`; `/demo/embed` se conserva únicamente
+  como redirección permanente de compatibilidad.
 - PostgREST aplica límites por minuto a las mutaciones y a las operaciones más
   costosas. Vercel aporta la protección de red y las reglas de Firewall
   configuradas para el proyecto.
@@ -71,7 +72,8 @@ gestores de secretos.
 Antes de publicar una versión:
 
 1. Ejecuta `bun run security:secrets` para revisar archivos e historial Git.
-2. Ejecuta `bun run security:public-data` para comprobar los límites de la demo.
+2. Ejecuta `bun run security:public-data` para comprobar los límites del modo
+   de exploración.
 3. Revisa `bun audit --audit-level=high`, CodeQL y Dependency Review.
 4. Comprueba los avisos de Security Advisor y Database Linter en Supabase.
 5. Confirma que previsualización y producción usan variables separadas.

@@ -7,7 +7,7 @@ const playwrightArguments = ["test", ...process.argv.slice(2)];
 
 async function isReady() {
   try {
-    const response = await fetch(`${baseURL}/demo/embed`, {
+    const response = await fetch(`${baseURL}/explorar`, {
       signal: AbortSignal.timeout(2_000),
     });
     return response.ok;

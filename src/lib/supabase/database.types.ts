@@ -3129,7 +3129,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      prepare_own_account_erasure_v1_8_2: { Args: never; Returns: undefined }
       accept_organization_invitation_v1_8: {
         Args: { invitation_token: string }
         Returns: string
@@ -3226,6 +3225,7 @@ export type Database = {
         Args: { target_checksum: string; target_organization_id: string }
         Returns: undefined
       }
+      prepare_own_account_erasure_v1_8_2: { Args: never; Returns: undefined }
       refresh_directory_connection_secret_v1_8: {
         Args: {
           target_access_token: string

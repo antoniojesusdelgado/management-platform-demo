@@ -9,6 +9,7 @@ import {
 } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
+import type { Route } from "next";
 import { LegalFooter } from "@/components/legal-footer";
 import { getWorkspaceAccess } from "@/lib/auth";
 import { getSignInProviderAvailability } from "@/lib/env";
@@ -113,12 +114,12 @@ export async function AuthLanding({ errorCode }: AuthLandingProps) {
             </div>
 
             <div className="oauth-divider"><span>o</span></div>
-            <Link className="button button-secondary oauth-secondary" href="/demo/embed">
-              <IconUser aria-hidden="true" size={22} /> Explorar sin iniciar sesión
+            <Link className="button button-secondary oauth-secondary" href={"/explorar" as Route}>
+              <IconUser aria-hidden="true" size={22} /> Explorar la plataforma
             </Link>
 
             <p className="oauth-session-note"><IconLock aria-hidden="true" size={15} />Cada empresa mantiene sus datos y permisos aislados.</p>
-            <p className="oauth-legal">Al continuar aceptas la <a href="/privacidad">Privacidad</a>, la <a href="/procedencia-datos">Procedencia de los datos</a> y el <a href="/aviso-legal">Aviso legal</a>.</p>
+            <p className="oauth-legal">Al continuar aceptas la <a href="/privacidad">Privacidad</a>, la <a href="/procedencia-datos">Procedencia de los datos</a> y el <a href="/aviso-legal">Aviso legal</a>. Consulta también la <Link href={"/transparencia-ia" as Route}>Transparencia con IA</Link>.</p>
           </div>
         </section>
       </div>

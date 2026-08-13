@@ -12,7 +12,7 @@ export default function PrivacyPage() {
         <p className="eyebrow">Transparencia</p>
         <h1>Política de privacidad</h1>
         <p>
-          El responsable de esta demostración es Antonio Jesús Delgado Briones.
+          El responsable de la Plataforma de gestión es Antonio Jesús Delgado Briones.
           Para consultas o para ejercer derechos de acceso, rectificación,
           supresión, oposición, limitación y portabilidad puedes utilizar{" "}
           <a href={`mailto:${contact}`}>{contact}</a>
@@ -27,7 +27,7 @@ export default function PrivacyPage() {
         </p>
         <p>
           La finalidad es permitir el acceso, mantener la sesión, proteger el
-          aislamiento entre espacios y operar esta demostración. La base jurídica
+          aislamiento entre espacios y prestar el servicio. La base jurídica
           es la solicitud de acceso y el interés legítimo en mantener la seguridad
           del servicio. No se realizan comunicaciones comerciales, perfiles
           publicitarios ni decisiones automatizadas.

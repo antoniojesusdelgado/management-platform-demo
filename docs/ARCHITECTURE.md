@@ -68,7 +68,7 @@ plataforma y nunca se sobrescriben desde el proveedor.
 
 ```mermaid
 flowchart LR
-  Visitor["Portfolio visitor"] --> Embed["/demo/embed"]
+  Visitor["Visitante"] --> Embed["/explorar"]
   Embed --> Session["sessionStorage repository"]
   Visitor --> OAuth["Google OAuth + PKCE"]
   OAuth --> App["/app routes"]

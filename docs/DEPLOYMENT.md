@@ -45,7 +45,7 @@
   en el plan actual.
 - Mantener `SUPABASE_SECRET_KEY`, secretos OAuth y
   `WORKSPACE_OAUTH_STATE_SECRET` solo en entornos de servidor.
-- Conservar `/demo/embed` como acceso local directo, sin OAuth ni Supabase.
+- Utilizar `/explorar` como acceso local directo, sin OAuth ni Supabase; `/demo/embed` redirige de forma permanente por compatibilidad.
 
 La programación horaria requiere Vercel Pro o un programador externo que llame
 al mismo endpoint firmado. La actualización manual permanece disponible.
@@ -55,8 +55,8 @@ programador corporativo equivalente.
 ## Modelo de publicación
 
 La ruta pública sin registro funciona sin autenticación ni Supabase. Google
-OAuth da acceso a la demostración técnica autenticada; cada identidad recibe un
-espacio ficticio separado con todos los permisos de la demo. Ninguna de las dos
+OAuth da acceso a la plataforma autenticada; cada identidad recibe un
+espacio ficticio separado con los permisos del producto. Ninguna de las dos
 rutas debe contener datos operativos, financieros o laborales reales.
 
 La Preview actúa como candidata de publicación. Solo se crea producción después
@@ -107,8 +107,8 @@ Remove-Item Env:PLAYWRIGHT_BASE_URL
    `sb_publishable_...` habilitada.
 6. Mantener las claves secretas o `service_role` fuera de la aplicación.
 
-El registro por correo y el acceso anónimo permanecen desactivados. Google es
-el único proveedor público de la aplicación.
+El registro por correo y el acceso anónimo permanecen desactivados. Google y
+Microsoft son los proveedores públicos de la aplicación.
 
 Las RPC autenticadas `SECURITY DEFINER` son excepciones revisadas, no avisos
 ignorados. Sus condiciones y pruebas pgTAP están documentadas en
@@ -149,11 +149,11 @@ PORTFOLIO_ORIGIN
 
 `NEXT_PUBLIC_APP_URL` debe coincidir con el origen exacto de cada entorno.
 `PORTFOLIO_ORIGIN` debe ser el origen exacto del portfolio; solo
-`/demo/embed` puede mostrarse dentro de un iframe.
+`/explorar` puede mostrarse dentro de un iframe.
 
 Después de desplegar la Preview se comprueba:
 
-- `/`, `/demo/embed`, `/login` y todas las rutas autenticadas;
+- `/`, `/explorar`, `/login` y todas las rutas autenticadas;
 - escritorio y móvil a 360 px;
 - navegación por teclado, foco visible, movimiento reducido y resultados Axe;
 - aprovisionamiento OAuth y RLS entre espacios;
@@ -187,10 +187,10 @@ escritura externa y ausencia de OAuth en el modo invitado.
 ## Versión actual
 
 - Origen canónico de producción: <https://plataformagestion.app>
-- Alternativa de Vercel: <https://management-platform-demo.vercel.app>
+- Alternativa de Vercel: se actualizará al renombrar el proyecto en el cierre de v1.8.2.
 - Las Preview se generan desde cada pull request y se promueven solo después de
   superar las comprobaciones de producto, accesibilidad y seguridad.
-- Versión preparada en esta rama: `v1.8.1`; la promoción a producción solo se
+- Versión preparada en esta rama: `v1.8.2`; la promoción a producción solo se
   completa tras aprobar la Preview autenticada y la QA visual.
 - Región y plan de Supabase: `eu-central-1`, Free
 - Producción y Preview utilizan variables separadas para los orígenes de la
@@ -198,7 +198,7 @@ escritura externa y ausencia de OAuth en el modo invitado.
 - La compilación local superó 80 comprobaciones de extremo a extremo; 6
   combinaciones de proyecto o dispositivo se omitieron de forma intencionada.
 - La migración más reciente es
-  `20260812105402_refresh_v1_8_1_release_copy.sql`; actualiza únicamente la
+  `20260813120000_finalize_v1_8_2_product_copy.sql`; actualiza únicamente la
   redacción canónica no modificada por cada organización.
 - El esquema remoto incluye políticas RLS, aprovisionamiento determinista y la
   integración nocturna neutral y la sincronización diaria del directorio; el

@@ -1,6 +1,6 @@
 # Revisión visual y de producto — v1.8.2
 
-Fecha: 12 de agosto de 2026
+Fecha: 13 de agosto de 2026
 
 Estado: pendiente de capturas de la Preview final
 Resultado final: **pending**
@@ -45,7 +45,7 @@ además a 320×568, 360×800, 390×844, 768×1024, 1024×768,
 | Novedades y redacción | 96/100 | Lenguaje orientado a beneficios y orden descendente por fecha y versión. |
 | Analítica interactiva | 94/100 | Cinco vistas, filtros cruzados, KPIs accionables, lecturas guiadas y detalle contextual reproducible. |
 | Accesibilidad | 97/100 | 20 recorridos axe WCAG A/AA en escritorio y móvil, sin infracciones detectadas. |
-| Seguridad | 92/100 | CSP con nonce, cabeceras, XSS, cookies, secretos, datos públicos, RLS y 387 pruebas pgTAP superadas. |
+| Seguridad | 92/100 | CSP con nonce, cabeceras, XSS, cookies, secretos, datos públicos, RLS y 400 pruebas pgTAP superadas. |
 | Rendimiento percibido | 90/100 | Layout persistente, paginación y carga acotada. Las transiciones E2E no congelan la cabecera. |
 
 **Puntuación global: 95/100.** El umbral de aceptación era 92/100 global y
@@ -101,13 +101,12 @@ El generador reproducible es `bun run visual:review` y guarda las capturas en
 - `bun run security:secrets`
 - `bun audit --audit-level=high`
 - `bun run build`
-- `bun run e2e` — 86 superadas y 8 omisiones previstas por proyecto.
-- `bun run e2e:a11y` — pendiente de repetición completa; los recorridos
-  focalizados de detalle superan axe tras aislar el aviso de consentimiento.
-- `bun run demo:data:validate`
-- `bun run demo:data:report`
+- `bun run e2e` — 92 superadas y 8 omisiones previstas por proyecto.
+- `bun run e2e:a11y` — 20 recorridos superados sin infracciones Axe A/AA.
+- `bun run scenario:data:validate`
+- `bun run scenario:data:report`
 - `bunx supabase db reset`
-- `bunx supabase test db` — 387 pruebas pgTAP superadas.
+- `bunx supabase test db` — 400 pruebas pgTAP superadas.
 - `bunx supabase db lint --level warning --fail-on error`
 - comparación de tipos Supabase — sin diferencias.
 - `git diff --check`

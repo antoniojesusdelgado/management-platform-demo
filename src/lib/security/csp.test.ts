@@ -10,6 +10,7 @@ describe("dynamic CSP", () => {
     expect(isDynamicSurface("/auth/callback")).toBe(true);
     expect(isDynamicSurface("/login")).toBe(true);
     expect(isDynamicSurface("/")).toBe(false);
+    expect(isDynamicSurface("/explorar")).toBe(true);
     expect(isDynamicSurface("/demo/embed")).toBe(true);
   });
 

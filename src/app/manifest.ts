@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Plataforma de gestión | Aplicación de demostración",
+    name: "Plataforma de gestión — Todo el trabajo, en un solo lugar",
     short_name: "Plataforma de gestión",
     description:
-      "Aplicación de demostración para explorar procesos de gestión con datos ficticios.",
+      "Coordina personas, proyectos, capacidad y decisiones desde un único espacio.",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

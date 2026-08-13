@@ -2,10 +2,14 @@
 
 ## Desarrollo asistido con inteligencia artificial
 
-La réplica pública se ha desarrollado mediante programación asistida con
+La plataforma se ha desarrollado mediante programación asistida con
 ChatGPT Codex, bajo dirección, revisión editorial y validación humana. Codex se
 ha utilizado para analizar el repositorio, implementar cambios, preparar
 documentación y ejecutar comprobaciones reproducibles.
+
+El trabajo comenzó con GPT-5.3 Codex y continuó con GPT-5.4, GPT-5.5 y
+GPT-5.6 Sol. La responsabilidad sobre el diseño, las decisiones, la validación
+y la publicación corresponde en todo momento a Antonio Jesús Delgado Briones.
 
 La aplicación en producción no integra un modelo de inteligencia artificial,
 no mantiene conversaciones automatizadas con usuarios y no envía datos a
@@ -21,15 +25,19 @@ contenidos sintéticos o manipulados.
 La asistencia de Codex durante la programación no convierte cada pantalla del
 software en contenido sintético sujeto a distintivo. La interfaz, los textos y
 la documentación se publican bajo revisión y responsabilidad editorial humana.
-Por ello se incorpora una declaración textual clara y no se muestra el icono
-europeo opcional de contenido generado por IA, cuyo uso podría inducir a una
-clasificación incorrecta del producto.
+Por ello se incorpora una declaración textual clara y no se usa como marca de
+agua el distintivo europeo opcional de contenido generado por IA, cuyo uso
+podría inducir a una clasificación incorrecta del producto. El emblema oficial
+de la Unión Europea aparece únicamente como referencia normativa en la página
+de transparencia; la Unión Europea no patrocina, certifica ni respalda esta
+aplicación.
 
 Fuentes oficiales:
 
 - [Reglamento (UE) 2024/1689](https://eur-lex.europa.eu/eli/reg/2024/1689/oj?locale=es)
 - [Distintivos europeos para contenido generado por IA](https://digital-strategy.ec.europa.eu/en/policies/eu-icons-labelling-ai-generated-content)
 - [Directrices de transparencia del artículo 50](https://digital-strategy.ec.europa.eu/en/library/guidelines-transparency-obligations-providers-and-deployers-ai-systems)
+- [Condiciones oficiales de uso del emblema europeo](https://european-union.europa.eu/principles-countries-history/symbols/european-flag_es)
 
 ## Consentimiento analítico
 

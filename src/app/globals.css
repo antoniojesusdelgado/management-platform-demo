@@ -4697,6 +4697,24 @@ h3 {
   .v18-mobile-nav { left: .25rem; right: .25rem; }
 }
 
+.eu-transparency-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: center;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-subtle);
+}
+
+.eu-transparency-card h2 { margin-top: 0; }
+.eu-transparency-card p:last-child { margin-bottom: 0; }
+
+@media (max-width: 520px) {
+  .eu-transparency-card { grid-template-columns: 1fr; }
+}
+
 /* v1.8.1: compact access, shared grid and resilient operational states */
 .oauth-page-v181 {
   width: 100%;

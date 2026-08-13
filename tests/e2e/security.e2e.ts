@@ -21,7 +21,7 @@ test("public responses expose the release security headers", async ({
 test("only the login and embed routes are frameable public surfaces", async ({
   request,
 }) => {
-  for (const pathname of ["/login", "/demo/embed"]) {
+  for (const pathname of ["/login", "/explorar"]) {
     const response = await request.get(pathname);
     const headers = response.headers();
 
@@ -98,7 +98,7 @@ test("anonymous demo access does not issue marketing cookies", async ({
   page,
   context,
 }) => {
-  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
+  await page.goto("/explorar", { waitUntil: "domcontentloaded" });
   await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
   const cookies = await context.cookies();
 
