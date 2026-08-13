@@ -1,5 +1,4 @@
 import {
-  IconBrandWindows,
   IconCircleCheck,
   IconHelpCircle,
   IconLock,
@@ -38,6 +37,21 @@ const benefits = [
 ] as const;
 
 type AuthLandingProps = { errorCode?: string };
+
+function MicrosoftMark() {
+  return (
+    <svg
+      className="microsoft-oauth-mark"
+      viewBox="0 0 22 22"
+      aria-hidden="true"
+    >
+      <rect width="10" height="10" fill="#f25022" />
+      <rect x="12" width="10" height="10" fill="#7fba00" />
+      <rect y="12" width="10" height="10" fill="#00a4ef" />
+      <rect x="12" y="12" width="10" height="10" fill="#ffb900" />
+    </svg>
+  );
+}
 
 export async function AuthLanding({ errorCode }: AuthLandingProps) {
   const [access, providers] = await Promise.all([
@@ -99,13 +113,13 @@ export async function AuthLanding({ errorCode }: AuthLandingProps) {
               </a>
               {providers.azure.enabled ? (
                 <a className="button microsoft-oauth-button" href={authenticatedHref ?? "/auth/microsoft"}>
-                  <IconBrandWindows aria-hidden="true" size={20} />
+                  <MicrosoftMark />
                   Continuar con Microsoft
                 </a>
               ) : (
                 <div className="oauth-provider-unavailable">
                   <button className="button microsoft-oauth-button" type="button" disabled aria-describedby="microsoft-provider-help">
-                    <IconBrandWindows aria-hidden="true" size={20} />
+                    <MicrosoftMark />
                     Continuar con Microsoft
                   </button>
                   <span id="microsoft-provider-help">{providers.azure.reason}</span>

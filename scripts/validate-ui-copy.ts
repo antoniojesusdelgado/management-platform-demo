@@ -29,6 +29,28 @@ const disallowedPhrases = [
   "vs. anterior",
 ] as const;
 
+const disallowedComponentPhrases = [
+  "límite WIP",
+  "WIP en curso",
+  "WIP en revisión",
+  "SLA vencido",
+  "Objetivo SLA",
+  "Riesgo de incumplir un SLA",
+  "No altera la identidad OAuth",
+  "Conexión simulada: no se abre OAuth",
+  "Bandeja administrativa",
+  "Flujo editorial",
+  "settings.workspace.manage",
+  "Conectores activos",
+  "Ejecuciones correctas",
+  "Registros procesados",
+  "Excepciones abiertas",
+  "Simular ahora",
+  "Vista autorizada",
+  "Sincronizar directorio",
+  "consentimiento de directorio",
+] as const;
+
 const corruptedTextSignatures = ["Ã", "Â", "â", "�"] as const;
 
 type CopyViolation = {
@@ -61,6 +83,16 @@ export function findUiCopyViolations(content: string, file: string) {
     while (offset >= 0) {
       violations.push({ file, line: lineAt(content, offset), value: phrase });
       offset = content.indexOf(phrase, offset + phrase.length);
+    }
+  }
+
+  if (file.startsWith("src/components/")) {
+    for (const phrase of disallowedComponentPhrases) {
+      let offset = content.indexOf(phrase);
+      while (offset >= 0) {
+        violations.push({ file, line: lineAt(content, offset), value: phrase });
+        offset = content.indexOf(phrase, offset + phrase.length);
+      }
     }
   }
 

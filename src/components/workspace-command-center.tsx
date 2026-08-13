@@ -32,6 +32,26 @@ const kindLabels = {
   incident: "Incidencias",
 } as const;
 const priorityLabels = { low: "Baja", medium: "Media", high: "Alta", critical: "Crítica" };
+const resultStatusLabels: Record<string, string> = {
+  invited: "Invitada",
+  active: "Activa",
+  suspended: "Suspendida",
+  inactive: "Inactiva",
+  planned: "Planificado",
+  on_hold: "En pausa",
+  completed: "Completado",
+  cancelled: "Cancelado",
+  pending: "Pendiente",
+  in_progress: "En curso",
+  blocked: "Bloqueada",
+  in_review: "En revisión",
+  registered: "Registrada",
+  triaged: "Clasificada",
+  assigned: "Asignada",
+  investigating: "En revisión",
+  resolved: "Resuelta",
+  closed: "Cerrada",
+};
 
 export function WorkspaceCommandCenter({ search, loadInbox, onOpenItem, initialUnreadCount = 0 }: WorkspaceCommandCenterProps) {
   const router = useRouter();
@@ -188,5 +208,5 @@ export function WorkspaceCommandCenter({ search, loadInbox, onOpenItem, initialU
 
 function CommandResult({ item, active, onOpen }: { item: WorkspaceSearchResult; active: boolean; onOpen: () => void }) {
   const Icon = item.kind === "person" ? IconUser : item.kind === "project" ? IconBriefcase : item.kind === "task" ? IconCalendar : item.priority === "critical" ? IconAlertTriangle : IconTicket;
-  return <button type="button" aria-current={active ? "true" : undefined} className={`workspace-command-item${active ? " active" : ""}`} onClick={onOpen}><Icon size={19} aria-hidden="true" /><span><strong>{item.title}</strong><small>{item.description}</small></span>{item.status ? <span className="status">{item.status.replaceAll("_", " ")}</span> : null}<IconChevronRight size={18} aria-hidden="true" /></button>;
+  return <button type="button" aria-current={active ? "true" : undefined} className={`workspace-command-item${active ? " active" : ""}`} onClick={onOpen}><Icon size={19} aria-hidden="true" /><span><strong>{item.title}</strong><small>{item.description}</small></span>{item.status ? <span className="status">{resultStatusLabels[item.status] ?? "Actualizado"}</span> : null}<IconChevronRight size={18} aria-hidden="true" /></button>;
 }

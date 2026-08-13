@@ -43,7 +43,7 @@ export function LoginButton() {
       )}
       Continuar con Google
       {!configured ? (
-        <span className="sr-only">OAuth no configurado en este entorno local</span>
+        <span className="sr-only">El acceso con Google no está disponible en este entorno</span>
       ) : null}
     </button>
   );

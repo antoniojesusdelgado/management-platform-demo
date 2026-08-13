@@ -1,5 +1,24 @@
 # Arquitectura
 
+## Ajustes v1.8.3
+
+v1.8.3 mantiene montada la estructura de navegación mientras cambia el módulo.
+Los enlaces se precargan y un indicador discreto comunica la transición sin
+sustituir toda la pantalla por una superficie blanca. Cada destino sigue
+cargando únicamente su información y conserva los límites de organización y
+permiso existentes.
+
+La interfaz utiliza un lenguaje orientado a tareas y decisiones. Los términos
+internos necesarios permanecen en los contratos y en la base de datos, pero no
+se exponen como instrucciones a las personas usuarias. El acceso Microsoft usa
+su identidad visual oficial sin alterar el flujo OAuth ni sus permisos.
+
+El onboarding conserva `SECURITY INVOKER` y RLS. La migración de esta versión
+concede al rol autenticado únicamente la actualización de
+`profiles.onboarding_completed_at`; no restablece el privilegio de actualización
+de la tabla completa. Una prueba pgTAP verifica ese límite y la publicación de
+Novedades se añade de forma idempotente por organización activa.
+
 ## Correcciones v1.8.2
 
 v1.8.2 separa tres finalidades OAuth: identidad básica, productividad y
@@ -32,7 +51,8 @@ v1.8.1 conserva la arquitectura multiempresa de v1.8.0 y corrige su capa de
 presentación y lectura. El acceso utiliza una composición compacta basada en
 `100dvh`; los módulos comparten una retícula de hasta 1.600 px, márgenes
 adaptativos y estados vacíos consistentes. La navegación precarga los destinos
-principales y cada módulo dispone de un estado `loading.tsx` inmediato.
+principales. Desde v1.8.3, la transición compartida sustituye el estado de carga
+de página completa para mantener la cabecera y el contexto visibles.
 
 La creación adicional de empresas vive en `/app/empresas/nueva`. Reutiliza el
 onboarding en modo creación, activa la organización nueva y mantiene las

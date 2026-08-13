@@ -4,7 +4,7 @@ import { chromium } from "@playwright/test";
 
 const externalOrigin = process.env.PRODUCT_CAPTURE_ORIGIN;
 const baseUrl = externalOrigin ?? "http://127.0.0.1:3210";
-const outputDirectory = ".artifacts/release-v1.8.2/automated";
+const outputDirectory = ".artifacts/release-v1.8.3/automated";
 const themes = ["light", "dark"];
 const viewports = [
   { name: "desktop", width: 1440, height: 900 },
@@ -116,7 +116,9 @@ try {
       await page.locator("[data-demo-ready='true']").waitFor();
       const analyticsDialog = page.getByRole("dialog", { name: "Analítica opcional" });
       if (await analyticsDialog.isVisible()) {
-        await analyticsDialog.getByRole("button", { name: "Rechazar" }).click();
+        await analyticsDialog
+          .getByRole("button", { name: /Ahora no|Rechazar/ })
+          .click();
         await analyticsDialog.waitFor({ state: "hidden" });
       }
 

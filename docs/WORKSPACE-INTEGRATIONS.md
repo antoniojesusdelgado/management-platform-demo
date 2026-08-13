@@ -1,5 +1,18 @@
 # Integraciones de productividad
 
+## Experiencia v1.8.3
+
+Google Workspace y Microsoft 365 mantienen el mismo contrato de permisos
+progresivos. Esta versión mejora únicamente la claridad de sus estados y
+acciones: Microsoft se presenta con su color e icono corporativos cuando el
+proveedor de acceso está realmente disponible, y sigue deshabilitado con una
+explicación cuando falta configuración.
+
+El acceso, la productividad y la sincronización del directorio continúan siendo
+autorizaciones independientes. Un botón activo nunca implica que la plataforma
+pueda leer archivos, calendarios o personas sin el consentimiento posterior
+correspondiente.
+
 ## Disponibilidad y permisos en v1.8.2
 
 La interfaz ya no interpreta una cuenta conectada como autorización para leer

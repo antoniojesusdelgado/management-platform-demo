@@ -69,15 +69,15 @@ export function OrganizationOnboarding({
           <div className="onboarding-progress" aria-label="Paso 2 de 2"><span /><span /></div>
           <p className="eyebrow">Empresa preparada</p>
           <h1 id="suite-title">Conecta tu entorno de trabajo</h1>
-          <p className="lede">La autenticación ya está lista. La autorización de Google Workspace o Microsoft 365 se realiza aparte y siempre con permisos explícitos.</p>
+          <p className="lede">Tu acceso ya está listo. Si conectas Google Workspace o Microsoft 365, podrás elegir por separado qué herramientas quieres usar.</p>
           <div className="onboarding-choice-grid">
             <button className="onboarding-choice" type="button" disabled={pending} onClick={() => finish(organizationId, "/api/workspace/oauth/google_workspace/start")}>
               <strong>Google Workspace</strong>
-              <span>Drive, Sheets, Calendar y directorio corporativo.</span>
+              <span>Drive, Sheets, Calendar y personas de la empresa.</span>
             </button>
             <button className="onboarding-choice" type="button" disabled={pending} onClick={() => finish(organizationId, "/api/workspace/oauth/microsoft_365/start")}>
               <strong>Microsoft 365</strong>
-              <span>OneDrive, Excel, Outlook y Microsoft Entra.</span>
+              <span>OneDrive, Excel, Outlook y personas de la empresa.</span>
             </button>
           </div>
           <button className="button button-primary onboarding-primary" type="button" disabled={pending} onClick={() => finish(organizationId)}>
@@ -111,7 +111,7 @@ export function OrganizationOnboarding({
             });
           }}>
             <label>Nombre de la empresa<input required minLength={2} maxLength={100} value={name} onChange={(event) => setName(event.target.value)} placeholder="Ej. Consultoría Norte" /></label>
-            <label>Identificador<input required minLength={2} maxLength={63} value={suggestedSlug} onChange={(event) => setSlug(slugify(event.target.value))} placeholder="consultoria-norte" /></label>
+            <label>Nombre corto para enlaces<input required minLength={2} maxLength={63} value={suggestedSlug} onChange={(event) => setSlug(slugify(event.target.value))} placeholder="consultoria-norte" /></label>
             <fieldset className="onboarding-template"><legend>Datos iniciales</legend>
               <label><input type="radio" name="template" checked={templateMode === "empty"} onChange={() => setTemplateMode("empty")} /><span><strong>Empresa vacía</strong>Empieza con tu estructura real.</span></label>
               <label><input type="radio" name="template" checked={templateMode === "synthetic"} onChange={() => setTemplateMode("synthetic")} /><span><strong>Plantilla de ejemplo</strong>Explora el sistema con datos ficticios.</span></label>

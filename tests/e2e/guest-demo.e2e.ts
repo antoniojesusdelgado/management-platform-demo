@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { PRODUCT_VERSION } from "../../src/config/product-releases";
 
 async function enterGuestDemo(page: Page) {
   await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
@@ -9,7 +10,7 @@ test.beforeEach(async ({ page }) => {
   await enterGuestDemo(page);
   const analyticsDialog = page.getByRole("dialog", { name: "Analítica opcional" });
   if (await analyticsDialog.isVisible()) {
-    await analyticsDialog.getByRole("button", { name: "Rechazar" }).click();
+    await analyticsDialog.getByRole("button", { name: "Ahora no" }).click();
     await expect(analyticsDialog).toBeHidden();
   }
 });
@@ -107,14 +108,14 @@ test("configures guest operations without contacting external providers", async 
   await expect(page.getByText("Avisar de tareas prioritarias", { exact: true })).toBeVisible();
 
   await page.getByRole("tab", { name: "Integraciones" }).click();
-  await expect(page.getByText(/Conexión simulada: no se abre OAuth/).first()).toBeVisible();
+  await expect(page.getByText(/Vista de ejemplo: no se conecta ninguna cuenta/).first()).toBeVisible();
   await page.getByRole("button", { name: "Confirmar y crear evento" }).click();
   await expect(page.getByText(/Evento simulado preparado/)).toBeVisible();
 
   await page.getByRole("tab", { name: "Informes" }).click();
   await page.getByLabel("Nombre").fill("Informe de prueba");
-  await page.getByLabel("Destino").selectOption("csv");
-  await page.getByRole("button", { name: "Preparar exportación" }).click();
+  await page.getByLabel("Guardar en").selectOption("csv");
+  await page.getByRole("button", { name: "Preparar informe" }).click();
   await expect(page.getByText("Informe de prueba", { exact: true })).toBeVisible();
 });
 
@@ -154,7 +155,7 @@ test("opens a generated request and shows its trace", async ({
 
   await page.getByRole("button", { name: /Ver detalle/ }).first().click();
   const dialog = page.locator('[role="dialog"]:visible');
-  await expect(dialog).toContainText("Trazabilidad");
+  await expect(dialog).toContainText("Historial");
   await expect(dialog).toContainText("Sistema");
 });
 
@@ -386,7 +387,7 @@ test("adds a safe synthetic person profile", async ({ page }, testInfo) => {
   await teamSelect.selectOption("Operaciones");
   await dialog.getByLabel("Puesto").fill("Puesto demostrativo");
   await dialog.getByLabel("Estado").selectOption("active");
-  await dialog.getByLabel("Rol").selectOption("viewer");
+  await dialog.getByLabel("Nivel de acceso").selectOption("viewer");
   await dialog.getByRole("button", { name: "Guardar" }).click();
   await expect(page.getByRole("button", { name: /Perfil de prueba/ })).toContainText("Operaciones");
 });
@@ -394,7 +395,7 @@ test("adds a safe synthetic person profile", async ({ page }, testInfo) => {
 test("filters and paginates the people directory", async ({ page }, testInfo) => {
   await navigateToModule(page, "Personal", testInfo.project.name === "mobile");
 
-  await expect(page.getByRole("navigation", { name: "Paginación del directorio" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Paginación de personas" })).toBeVisible();
   await page.getByRole("button", { name: /Siguiente/ }).click();
   await expect(page.getByText(/Página 2 de/)).toBeVisible();
 
@@ -418,7 +419,9 @@ test("filters and paginates the people directory", async ({ page }, testInfo) =>
 
 test("creates, reviews and publishes a changelog entry", async ({ page }, testInfo) => {
   await navigateToModule(page, "Novedades", testInfo.project.name === "mobile");
-  await expect(page.locator(".changelog-card").first()).toContainText("Versión 1.8.2");
+  await expect(page.locator(".changelog-card").first()).toContainText(
+    `Versión ${PRODUCT_VERSION}`,
+  );
   await page.getByRole("button", { name: "Preparar novedad" }).click();
   const createDialog = page.getByRole("dialog", { name: "Nueva novedad" });
   await createDialog.getByLabel("Versión").fill("99.0.0");
@@ -435,7 +438,7 @@ test("creates, reviews and publishes a changelog entry", async ({ page }, testIn
   await detail.getByLabel("Nota de decisión").fill("Contenido revisado y preparado.");
   await detail.getByRole("button", { name: "Publicada" }).click();
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Vista publicada" }).click();
+  await page.getByRole("button", { name: "Lo que ven los usuarios" }).click();
   await expect(page.getByRole("button", { name: /Mejoras en el seguimiento de proyectos/ })).toBeVisible();
 });
 
@@ -547,12 +550,12 @@ test("configures modules and audits role metadata independently", async ({ page 
   await settings.getByRole("button", { name: "Módulos" }).click();
   const treasuryRow = settings.getByRole("listitem").filter({ hasText: "Tesorería" });
   await treasuryRow.getByRole("checkbox").uncheck();
-  await settings.getByRole("button", { name: "Roles y permisos" }).click();
+  await settings.getByRole("button", { name: "Niveles de acceso" }).click();
   await settings.getByRole("button", { name: "Responsable" }).click();
-  const permission = settings.getByRole("checkbox", { name: /tasks\.items\.manage/ });
+  const permission = settings.getByRole("checkbox", { name: "Tareas: administrar" });
   const checkedBefore = await permission.isChecked();
   await settings.getByLabel("Nombre").fill("Coordinación demo");
-  await settings.getByRole("button", { name: "Guardar metadatos" }).click();
+  await settings.getByRole("button", { name: "Guardar datos del nivel" }).click();
   expect(await permission.isChecked()).toBe(checkedBefore);
   await settings.getByRole("button", { name: "Auditoría" }).click();
   await expect(settings.getByText("Nombre o color del rol actualizado sin alterar permisos.")).toBeVisible();

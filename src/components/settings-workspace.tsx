@@ -84,18 +84,42 @@ type Props = {
   onRestoreDataset?: () => boolean | Promise<boolean>;
 };
 
+const permissionAreaLabels: Record<string, string> = {
+  vacations: "Vacaciones",
+  tasks: "Tareas",
+  incidents: "Incidencias",
+  projects: "Proyectos",
+  profile: "Perfil personal",
+  analytics: "Analítica",
+  integrations: "Integraciones",
+  operations: "Operaciones",
+  treasury: "Tesorería",
+  payroll: "Nóminas",
+  people: "Personal",
+  changelog: "Novedades",
+  settings: "Configuración",
+};
+const permissionActionLabels: Record<string, string> = {
+  view: "consultar",
+  create: "crear",
+  update: "editar",
+  update_assigned: "editar elementos asignados",
+  approve: "revisar y aprobar",
+  manage: "administrar",
+  export: "descargar informes",
+};
 const permissionLabels = Object.fromEntries(
-  permissionCatalog.map((permission) => [
-    permission,
-    permission
-      .replaceAll(".", " · ")
-      .replaceAll("_", " ")
-      .replace("items", "elementos")
-      .replace("manage", "gestionar")
-      .replace("view", "consultar"),
-  ]),
+  permissionCatalog.map((permission) => {
+    const [area, , action] = permission.split(".");
+    return [permission, `${permissionAreaLabels[area] ?? "Plataforma"}: ${permissionActionLabels[action] ?? "usar"}`];
+  }),
 ) as Record<PermissionCode, string>;
-permissionLabels["tasks.items.manage"] = "Tareas · gestionar";
+const invitationStatusLabels = {
+  pending: "Pendiente",
+  accepted: "Aceptada",
+  revoked: "Cancelada",
+  expired: "Caducada",
+} as const;
 
 function NumberField({
   label,
@@ -262,7 +286,7 @@ export function SettingsWorkspace({
     { id: "identity", label: "Identidad y apariencia", icon: IconBuilding },
     { id: "operations", label: "Políticas operativas", icon: IconAdjustments },
     { id: "modules", label: "Módulos", icon: IconCategory },
-    { id: "roles", label: "Roles y permisos", icon: IconLock },
+    { id: "roles", label: "Niveles de acceso", icon: IconLock },
     { id: "access", label: "Accesos", icon: IconUsers },
     { id: "dataset", label: "Datos e integraciones", icon: IconRefresh },
     { id: "audit", label: "Auditoría", icon: IconHistory },
@@ -445,7 +469,7 @@ export function SettingsWorkspace({
                 </h3>
                 <div className="field-grid settings-policy-grid">
                   <NumberField
-                    label="WIP en curso"
+                    label="Máximo de tareas en curso"
                     value={draft.tasks.inProgressWip}
                     min={2}
                     max={50}
@@ -454,7 +478,7 @@ export function SettingsWorkspace({
                     }
                   />
                   <NumberField
-                    label="WIP en revisión"
+                    label="Máximo de tareas en revisión"
                     value={draft.tasks.reviewWip}
                     min={1}
                     max={30}
@@ -463,7 +487,7 @@ export function SettingsWorkspace({
                     }
                   />
                   <NumberField
-                    label="SLA crítico"
+                    label="Plazo para incidencias críticas"
                     value={draft.incidents.criticalSlaHours}
                     min={1}
                     max={24}
@@ -473,7 +497,7 @@ export function SettingsWorkspace({
                     }
                   />
                   <NumberField
-                    label="SLA alto"
+                    label="Plazo para prioridad alta"
                     value={draft.incidents.highSlaHours}
                     min={2}
                     max={72}
@@ -510,7 +534,7 @@ export function SettingsWorkspace({
                     }
                   />
                   <NumberField
-                    label="Objetivo SLA"
+                    label="Objetivo de atención dentro de plazo"
                     value={draft.analytics.slaTargetPercent}
                     min={50}
                     max={100}
@@ -620,7 +644,7 @@ export function SettingsWorkspace({
 
           {tab === "roles" && selectedRole ? (
             <>
-              <h2>Roles y matriz de permisos</h2>
+              <h2>Niveles de acceso y permisos</h2>
               <div className="role-selector">
                 {roles.map((role) => (
                   <button
@@ -655,10 +679,10 @@ export function SettingsWorkspace({
                   />
                 </label>
                 <button className="button button-secondary" disabled={pending}>
-                  Guardar metadatos
+                  Guardar datos del nivel
                 </button>
               </form>
-              <h3 className="settings-subheading">Permisos estables</h3>
+              <h3 className="settings-subheading">Qué puede hacer este nivel</h3>
               <div className="permission-grid">
                 {permissionCatalog.map((permission) => (
                   <label key={permission} className="permission-item">
@@ -670,7 +694,6 @@ export function SettingsWorkspace({
                     />
                     <span>
                       <strong>{permissionLabels[permission]}</strong>
-                      <code>{permission}</code>
                     </span>
                   </label>
                 ))}
@@ -680,13 +703,13 @@ export function SettingsWorkspace({
 
           {tab === "access" ? (
             <>
-              <h2>Membresías e invitaciones</h2>
+              <h2>Personas con acceso e invitaciones</h2>
               <div className="data-table-wrap">
                 <table className="data-table">
                   <thead>
                     <tr>
                       <th>Persona</th>
-                      <th>Rol</th>
+                      <th>Nivel de acceso</th>
                       <th>Estado</th>
                     </tr>
                   </thead>
@@ -694,7 +717,7 @@ export function SettingsWorkspace({
                     {memberships.map((membership) => (
                       <tr key={membership.id}>
                         <td data-label="Persona">{membership.displayName}</td>
-                        <td data-label="Rol">
+                        <td data-label="Nivel de acceso">
                           <select
                             value={membership.roleId}
                             disabled={pending}
@@ -746,7 +769,7 @@ export function SettingsWorkspace({
                   />
                 </label>
                 <label className="field">
-                  <span>Rol</span>
+                  <span>Nivel de acceso</span>
                   <select
                     value={invitationRoleId}
                     onChange={(event) =>
@@ -777,7 +800,7 @@ export function SettingsWorkspace({
                     <span>
                       <strong>{invitation.email}</strong>
                       <span className="muted settings-list-copy">
-                        {invitation.status} · vence{" "}
+                        {invitationStatusLabels[invitation.status]} · vence{" "}
                         {formatDate(invitation.expiresAt)}
                       </span>
                     </span>
@@ -810,7 +833,7 @@ export function SettingsWorkspace({
               </div>
               <div className="field-grid settings-policy-grid">
                 <label className="field">
-                  Ejecución nocturna UTC
+                  Hora de actualización automática (hora universal)
                   <input
                     type="time"
                     value={draft.integrations.scheduleUtc}
@@ -822,7 +845,7 @@ export function SettingsWorkspace({
                   />
                 </label>
                 <NumberField
-                  label="Reintentos por ejecución"
+                  label="Intentos si falla una actualización"
                   value={draft.integrations.retryLimit}
                   min={0}
                   max={5}
@@ -863,17 +886,17 @@ export function SettingsWorkspace({
               </div>
               <p className="muted">
                 Esta acción reemplaza los cambios realizados en los datos de
-                prueba. No altera la identidad OAuth.
+                prueba. No cambia tu cuenta de acceso.
               </p>
             </>
           ) : null}
 
           {tab === "audit" ? (
             <>
-              <h2>Auditoría administrativa</h2>
+              <h2>Historial de administración</h2>
               <p className="muted">
-                Registro inmutable de cambios de configuración, acceso y
-                restauraciones.
+                Consulta los cambios de configuración, acceso y restauración
+                de datos.
               </p>
               {auditEvents.length ? (
                 <ul className="request-timeline">
@@ -883,7 +906,7 @@ export function SettingsWorkspace({
                       <div>
                         <strong>{event.summary}</strong>
                         <p className="muted">
-                          {event.eventType} · {event.actorName} ·{" "}
+                          {event.actorName} ·{" "}
                           {formatDateTime(event.createdAt)}
                         </p>
                       </div>

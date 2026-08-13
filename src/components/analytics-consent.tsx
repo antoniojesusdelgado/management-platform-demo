@@ -125,14 +125,13 @@ export function AnalyticsConsentManager({ measurementId }: AnalyticsConsentManag
           <div>
             <h2 id="analytics-consent-title">Analítica opcional</h2>
             <p id="analytics-consent-description">
-              Puedes permitir métricas de uso agregadas para ayudarnos a mejorar
-              la plataforma. No se activan hasta que aceptes y puedes cambiar tu
-              decisión cuando quieras. <Link href="/privacidad">Más información</Link>.
+              Ayúdanos a mejorar con métricas de uso agregadas. {" "}
+              <Link href="/privacidad">Más información</Link>
             </p>
           </div>
           <div className="analytics-consent-actions">
-            <button className="button button-secondary" type="button" onClick={() => choose("rejected")}>Rechazar</button>
-            <button className="button button-primary" type="button" onClick={() => choose("accepted")}>Aceptar analítica</button>
+            <button className="button button-secondary" type="button" onClick={() => choose("rejected")}>Ahora no</button>
+            <button className="button button-primary" type="button" onClick={() => choose("accepted")}>Permitir</button>
           </div>
         </section>
       ) : null}

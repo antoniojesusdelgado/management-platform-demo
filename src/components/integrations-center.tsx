@@ -71,38 +71,38 @@ export function IntegrationsCenter({
     <section className="section-block integration-center" aria-labelledby="integrations-title">
       <div className="section-header">
         <div>
-          <p className="eyebrow">Automatización neutral · 02:15 UTC</p>
+          <p className="eyebrow">Actualización automática</p>
           <h2 id="integrations-title">
             {kind ? `Sincronización de ${kindLabels[kind]}` : "Integraciones"}
           </h2>
           <p className="muted">
-            Consulta el estado de las sincronizaciones, los registros procesados
-            y las incidencias que requieren revisión.
+            Comprueba qué información se ha actualizado y si hay algo que
+            necesita tu atención.
           </p>
         </div>
         <span className="status-chip">
           <IconClock aria-hidden="true" size={16} />
-          Programación preparada
+          Actualización programada
         </span>
       </div>
 
       <div className="cards-grid integration-metrics">
         <article className="card">
-          <span>Conectores activos</span>
+          <span>Conexiones activas</span>
           <strong className="metric-value">
             {visibleConnectors.filter((connector) => connector.enabled).length}
           </strong>
         </article>
         <article className="card">
-          <span>Ejecuciones correctas</span>
+          <span>Actualizaciones completadas</span>
           <strong className="metric-value">{successful}</strong>
         </article>
         <article className="card">
-          <span>Registros procesados</span>
+          <span>Elementos actualizados</span>
           <strong className="metric-value">{processed}</strong>
         </article>
         <article className="card">
-          <span>Excepciones abiertas</span>
+          <span>Incidencias pendientes</span>
           <strong className="metric-value">{openIssues.length}</strong>
         </article>
       </div>
@@ -120,7 +120,7 @@ export function IntegrationsCenter({
               <div>
                 <strong>{connectorLabels[connector.code] ?? connector.name}</strong>
                 <p className="muted">
-                  {kindLabels[connector.kind]} · {connector.scheduleCron}
+                  {kindLabels[connector.kind]} · Actualización periódica
                 </p>
                 {lastRun ? (
                   <p className="integration-run-summary">
@@ -131,10 +131,10 @@ export function IntegrationsCenter({
                     )}
                     {lastRun.importedCount} importados ·{" "}
                     {lastRun.duplicateCount} duplicados · {lastRun.errorCount}{" "}
-                    excepciones
+                    incidencias
                   </p>
                 ) : (
-                  <p className="muted">Sin ejecuciones en esta sesión.</p>
+                  <p className="muted">No hay actualizaciones en esta sesión.</p>
                 )}
               </div>
               {canManage ? (
@@ -145,7 +145,7 @@ export function IntegrationsCenter({
                   onClick={() => void onSimulate(connector.id)}
                 >
                   <IconPlayerPlay aria-hidden="true" size={17} />
-                  Simular ahora
+                  Probar actualización
                 </button>
               ) : null}
             </article>
@@ -155,8 +155,8 @@ export function IntegrationsCenter({
       {!visibleConnectors.length ? (
         <EmptyState
           kind="integrations"
-          title="No hay conectores configurados"
-          description="Activa una fuente desde Configuración para probar la sincronización."
+          title="No hay conexiones configuradas"
+          description="Activa una fuente desde Configuración para empezar a actualizar la información."
         />
       ) : null}
 

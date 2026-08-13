@@ -15,12 +15,12 @@ describe("product release catalog", () => {
     );
   });
 
-  test("keeps releases ordered and publishes v1.8.2 on 13 August 2026", () => {
+  test("keeps releases ordered and publishes v1.8.3 on 13 August 2026", () => {
     expect(PRODUCT_RELEASES.at(-1)).toEqual({
-      version: "1.8.2",
-      title: "Una plataforma más clara y bajo tu control",
+      version: "1.8.3",
+      title: "Una experiencia más ágil y fácil de entender",
       summary:
-        "Estrenamos una identidad más profesional, acceso con Google o Microsoft y opciones sencillas para gestionar tu privacidad.",
+        "Los cambios de sección son más fluidos, Microsoft se reconoce mejor y hemos simplificado los textos para que cada opción resulte clara.",
       publishedDate: "2026-08-13",
     });
   });
@@ -44,6 +44,8 @@ describe("product release catalog", () => {
       "supabase/migrations/20260812193000_add_privacy_consent_and_erasure.sql",
     ).text()}\n${await Bun.file(
       "supabase/migrations/20260813120000_finalize_v1_8_2_product_copy.sql",
+    ).text()}\n${await Bun.file(
+      "supabase/migrations/20260813170000_release_v1_8_3_product_polish.sql",
     ).text()}`;
 
     for (const release of PRODUCT_RELEASES.slice(-5)) {

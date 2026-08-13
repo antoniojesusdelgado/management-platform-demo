@@ -10,7 +10,7 @@ flowchart LR
   validate --> pending["Trabajo externo pendiente"]
   pending --> confirm["Confirmación explícita"]
   confirm --> provider["Google Sheets o Microsoft Excel"]
-  provider --> notify["Resultado en el centro operativo"]
+  provider --> notify["Resultado en Operaciones"]
 ```
 
 ## Conexión de productividad
@@ -30,8 +30,8 @@ sequenceDiagram
   A-->>U: Mostrar capacidades y estado
 ```
 
-Todos los diagramas describen la demostración neutral, no procesos internos de
-una organización real.
+Todos los diagramas describen el entorno público con datos ficticios, no
+procesos internos de una organización real.
 
 ## Consentimiento analítico
 
@@ -62,90 +62,90 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-  Draft["Draft request"] --> Submit["Submit"]
-  Submit --> Review["Permission and coverage review"]
-  Review -->|Approve| Approved["Approved"]
-  Review -->|Reject| Rejected["Rejected"]
-  Submit -->|Cancel| Cancelled["Cancelled"]
-  Approved -->|Exceptional cancellation| Cancelled
-  Review --> History["Immutable event history"]
+  Borrador["Solicitud en borrador"] --> Enviar["Enviar"]
+  Enviar --> Revisar["Revisar permiso y cobertura"]
+  Revisar -->|Aprobar| Aprobada["Aprobada"]
+  Revisar -->|Rechazar| Rechazada["Rechazada"]
+  Enviar -->|Cancelar| Cancelada["Cancelada"]
+  Aprobada -->|Cancelación excepcional| Cancelada
+  Revisar --> Historial["Historial de cambios"]
 ```
 
 ## Tareas
 
 ```mermaid
 flowchart LR
-  Pending --> InProgress["In progress"] --> InReview["In review"] --> Completed
-  Pending --> Blocked --> InProgress
-  InProgress --> Blocked
+  Pendiente --> EnCurso["En curso"] --> EnRevision["En revisión"] --> Completada
+  Pendiente --> Bloqueada --> EnCurso
+  EnCurso --> Bloqueada
 ```
 
 ## Incidencias
 
 ```mermaid
 flowchart LR
-  Registered --> Triaged --> Assigned --> Investigating --> Resolved --> Closed
-  Resolved -->|Reopen| Investigating
+  Registrada --> Clasificada --> Asignada --> EnInvestigacion["En investigación"] --> Resuelta --> Cerrada
+  Resuelta -->|Reabrir| EnInvestigacion
 ```
 
 ## Tesorería
 
 ```mermaid
 flowchart LR
-  Draft --> Registered --> Reconciled --> Validated --> Closed
-  Draft --> History["Immutable synthetic event history"]
-  Registered --> History
-  Reconciled --> History
-  Validated --> History
-  Closed --> History
+  Borrador --> Registrado --> Conciliado --> Validado --> Cerrado
+  Borrador --> Historial["Historial de cambios"]
+  Registrado --> Historial
+  Conciliado --> Historial
+  Validado --> Historial
+  Cerrado --> Historial
 ```
 
 ## Nóminas
 
 ```mermaid
 flowchart LR
-  Collect["Collect changes"] --> Validate --> Calculate --> Review --> Close
+  Recopilar["Recopilar cambios"] --> Validar --> Calcular --> Revisar --> Cerrar
 ```
 
 Solo pueden editarse los ciclos que están en fase de recopilación. Cada
 transición exige una nota de decisión y añade un evento inmutable. Los valores
 son agregados ficticios; los registros individuales de nómina quedan fuera de
-los límites de la demo.
+los límites del entorno público.
 
 ## Personal
 
 ```mermaid
 flowchart LR
-  Invited --> Active --> AssignRole["Assign role"] --> Maintain
-  Active --> Suspended --> Active
-  Active --> Inactive
+  Invitada --> Activa --> AsignarRol["Asignar función"] --> Mantener
+  Activa --> Suspendida --> Activa
+  Activa --> Inactiva
 ```
 
 ## Novedades
 
 ```mermaid
 flowchart LR
-  Draft --> Review --> Publish --> Notify
+  Borrador --> Revisar --> Publicar --> Notificar
 ```
 
 ## Configuración
 
 ```mermaid
 flowchart LR
-  Define --> ValidatePermissions["Validate permissions"] --> Apply --> Audit
+  Definir --> ValidarPermisos["Validar permisos"] --> Aplicar --> Auditar
 ```
 
-## Escenario incremental de demostración
+## Actualización incremental de datos ficticios
 
 ```mermaid
 flowchart LR
-  Enter["Enter organization"] --> Authenticate
-  Authenticate --> Authorize["Verify active membership"]
-  Authorize --> Lock["Lock organization"]
-  Lock --> Pending{"Missing dates through yesterday?"}
-  Pending -->|No| Load["Load module"]
-  Pending -->|Yes| Generate["Append deterministic interval"]
-  Generate --> Audit["Record counts and audit"]
-  Audit --> Advance["Advance horizon atomically"]
-  Advance --> Load
+  Entrar["Entrar en la empresa"] --> Autenticar
+  Autenticar --> Autorizar["Comprobar pertenencia activa"]
+  Autorizar --> Bloquear["Bloquear la actualización de la empresa"]
+  Bloquear --> Pendiente{"¿Faltan fechas hasta ayer?"}
+  Pendiente -->|No| Cargar["Cargar el módulo"]
+  Pendiente -->|Sí| Generar["Añadir el intervalo pendiente"]
+  Generar --> Auditar["Registrar recuentos y cambios"]
+  Auditar --> Avanzar["Actualizar la fecha de forma atómica"]
+  Avanzar --> Cargar
 ```

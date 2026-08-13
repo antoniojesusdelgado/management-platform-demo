@@ -20,10 +20,10 @@ export default function PrivacyPage() {
         </p>
         <h2>Datos y finalidad</h2>
         <p>
-          Google OAuth verifica la identidad y Supabase Auth conserva el correo,
-          el identificador técnico, la sesión y los registros necesarios para
-          crear un espacio personal aislado. La aplicación no copia el nombre ni
-          el avatar de Google al directorio operativo.
+          Google o Microsoft verifican tu identidad. La plataforma conserva el
+          correo, una referencia interna y la información necesaria para mantener
+          tu sesión y separar los datos de cada empresa. No copia automáticamente
+          tu nombre ni tu imagen a la lista de personal.
         </p>
         <p>
           La finalidad es permitir el acceso, mantener la sesión, proteger el
@@ -41,13 +41,12 @@ export default function PrivacyPage() {
         </p>
         <h2>Analítica opcional, almacenamiento local y cookies</h2>
         <p>
-          La modalidad invitada usa únicamente <code>sessionStorage</code>; sus
-          cambios se eliminan al terminar la sesión del navegador. La modalidad
-          OAuth emplea cookies técnicas imprescindibles para PKCE, sesión y
-          seguridad.
+          El modo de exploración guarda los cambios solo durante la sesión del
+          navegador y los elimina al cerrarla. El acceso con Google o Microsoft
+          utiliza cookies necesarias para mantener la sesión y protegerla.
         </p>
         <p>
-          Google Analytics 4 solo se carga si eliges “Aceptar analítica” en el
+          Google Analytics 4 solo se carga si eliges “Permitir” en el
           aviso de preferencias. Se utiliza para conocer de forma agregada qué
           rutas se consultan, detectar problemas de uso y mejorar el producto.
           No se emplea para publicidad, se desactivan las señales de Google y la
@@ -64,16 +63,16 @@ export default function PrivacyPage() {
         <h2>Supresión de la cuenta</h2>
         <p>
           Desde “Mi perfil” puedes solicitar la supresión irreversible de tu
-          identidad y desactivar el acceso. El correo, la identidad OAuth y la
+          identidad y desactivar el acceso. El correo, la cuenta de acceso y la
           imagen de perfil se eliminan o anonimizan. Los registros operativos que
-          deban conservarse para mantener la integridad y la trazabilidad de una
+          deban conservarse para mantener la integridad y el historial de una
           organización quedan desvinculados de tu identidad. También puedes
           ejercer este derecho escribiendo a <a href={`mailto:${contact}`}>{contact}</a>.
         </p>
         <h2>Seguridad y reclamaciones</h2>
         <p>
-          Se aplican control de acceso, RLS, cifrado en tránsito y registros de
-          auditoría. Si consideras que el tratamiento no es correcto, también
+          Se aplican permisos por empresa, conexiones cifradas y un historial de
+          cambios relevantes. Si consideras que el tratamiento no es correcto, también
           puedes reclamar ante la Agencia Española de Protección de Datos.
         </p>
         <div className="legal-actions">

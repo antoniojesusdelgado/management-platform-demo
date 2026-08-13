@@ -454,7 +454,7 @@ export function VacationsWorkspace({
               </section>
 
               <section aria-labelledby="request-history-title">
-                <h3 id="request-history-title">Trazabilidad</h3>
+                <h3 id="request-history-title">Historial</h3>
                 {selectedEvents.length > 0 ? (
                   <ol className="request-timeline">
                     {selectedEvents.map((event) => (
