@@ -2,8 +2,8 @@
 
 Fecha: 13 de agosto de 2026
 
-Estado: pendiente de capturas de la Preview final
-Resultado final: **pending**
+Estado: aprobado en la Preview final
+Resultado final: **passed**
 
 La implementación local incorpora además el aviso compacto de analítica
 opcional. En móvil se presenta como una superficie inferior con acciones de
@@ -21,8 +21,8 @@ confundir evidencia local con producción.
   desde Integraciones.
 - Avatares válidos, corruptos, sobredimensionados y con MIME falseado.
 
-La puntuación y el estado `passed` se actualizarán únicamente después de
-comparar las capturas locales y de Preview y cerrar incidencias P0–P2.
+La Preview final se comparó con la evidencia local y no conserva incidencias
+P0–P2 abiertas.
 
 ## Alcance
 
@@ -64,6 +64,13 @@ además a 320×568, 360×800, 390×844, 768×1024, 1024×768,
   ninguna RPC en este ajuste visual.
 
 ## Evidencia visual
+
+Preview aprobada: `https://management-platform-demo-g766canws.vercel.app`
+
+La comprobación funcional de la Preview confirma el acceso de Google, el
+acceso Microsoft multicuenta con PKCE hasta el onboarding, la exploración sin
+registro, el consentimiento analítico denegado por defecto y las páginas
+legales y de transparencia.
 
 ### Acceso
 
