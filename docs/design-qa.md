@@ -3,7 +3,8 @@
 Fecha: 13 de agosto de 2026
 
 Estado local: aprobado
-Estado de Preview: PR #20 publicada; validación del artefacto en curso
+Estado de Preview: aprobado — `dpl_EK8zhXghuAXFnEfXErxfmzm3hrnL`
+Estado de producción: aprobado — `dpl_83Ne9sMZbDqcRFHHVYnM9ZEW7So8`
 Resultado local: **passed**
 
 La implementación incorpora el aviso compacto de analítica opcional. En móvil
