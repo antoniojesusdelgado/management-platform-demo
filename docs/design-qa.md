@@ -3,7 +3,7 @@
 Fecha: 13 de agosto de 2026
 
 Estado local: aprobado
-Estado de Preview: pendiente del commit final
+Estado de Preview: PR #20 publicada; validación del artefacto en curso
 Resultado local: **passed**
 
 La implementación incorpora el aviso compacto de analítica opcional. En móvil
@@ -110,8 +110,12 @@ completo en `.artifacts/release-v1.8.3/automated`.
 - `bun run e2e:a11y` — 20 recorridos superados sin infracciones Axe A/AA.
 - `bun run scenario:data:validate`
 - `bun run scenario:data:report`
-- Supabase local, pgTAP, lint, advisors y comparación de tipos se repiten antes
-  del push; no se reutiliza como evidencia el resultado de v1.8.2.
+- La migración remota `20260813170000_release_v1_8_3_product_polish.sql` pasó un
+  `db push --dry-run` legible y se aplicó correctamente el 13 de agosto de 2026.
+- El reset local, pgTAP, lint, advisors y comparación de tipos no se repitieron
+  en este cierre porque Docker Desktop no respondió tras un reinicio controlado.
+  La evidencia histórica permanece vigente, pero esta limitación ambiental se
+  mantiene explícita y no se presenta como una validación nueva.
 - `git diff --check`
 
 La aprobación del usuario recibida el 12 de agosto de 2026 autoriza commit,
