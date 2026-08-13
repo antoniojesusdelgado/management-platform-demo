@@ -6,7 +6,7 @@ async function openGuestDemo(page: Page) {
   await expect(page.locator('[data-demo-ready="true"]')).toBeVisible();
   const analyticsDialog = page.getByRole("dialog", { name: "Analítica opcional" });
   if (await analyticsDialog.isVisible()) {
-    await analyticsDialog.getByRole("button", { name: "Rechazar" }).click();
+    await analyticsDialog.getByRole("button", { name: "Ahora no" }).click();
   }
 }
 
@@ -138,7 +138,7 @@ test("incident detail has no detectable WCAG A/AA violations", async ({ page }) 
 test("settings permission matrix has no detectable WCAG A/AA violations", async ({ page }) => {
   await openGuestDemo(page);
   await openModule(page, "Configuración");
-  await page.getByRole("button", { name: "Roles y permisos" }).click();
+  await page.getByRole("button", { name: "Niveles de acceso" }).click();
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
   expect(results.violations).toEqual([]);
 });

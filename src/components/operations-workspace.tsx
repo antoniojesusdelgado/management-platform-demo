@@ -65,7 +65,7 @@ const triggerLabels: Record<AutomationTrigger, string> = {
   task_status_changed: "Estado de tarea actualizado",
   leave_submitted: "Vacaciones enviadas a revisión",
   leave_approved: "Vacaciones aprobadas",
-  incident_sla_risk: "Riesgo de incumplir un SLA",
+  incident_sla_risk: "Riesgo de superar el plazo de atención",
   scheduled_report: "Informe programado",
 };
 const actionLabels: Record<AutomationAction, string> = {
@@ -80,6 +80,36 @@ const targetLabels: Record<ExportTarget, string> = {
   xlsx: "Excel (.xlsx)",
   google_sheets: "Google Sheets",
   microsoft_excel: "Excel en Microsoft 365",
+};
+const conditionFieldLabels: Record<(typeof automationConditionFields)[number], string> = {
+  priority: "Prioridad",
+  status: "Estado",
+  team: "Equipo",
+  due_window: "Plazo",
+};
+const conditionOperatorLabels: Record<(typeof automationConditionOperators)[number], string> = {
+  equals: "Es igual a",
+  in: "Está entre",
+  before: "Es anterior a",
+};
+const recurrenceLabels: Record<(typeof recurrenceFrequencies)[number], string> = {
+  daily: "Diaria",
+  weekly: "Semanal",
+  monthly: "Mensual",
+};
+const exportStatusLabels = {
+  pending: "Pendiente de confirmación",
+  ready: "Preparada",
+  failed: "No completada",
+  cancelled: "Cancelada",
+} as const;
+const exportModuleLabels: Record<string, string> = {
+  analitica: "Analítica",
+  proyectos: "Proyectos",
+  tareas: "Tareas",
+  incidencias: "Incidencias",
+  personal: "Personal",
+  vacaciones: "Vacaciones",
 };
 
 export function OperationsWorkspace(props: OperationsWorkspaceProps) {
@@ -160,7 +190,7 @@ export function OperationsWorkspace(props: OperationsWorkspaceProps) {
 
   async function syncDirectory(provider: WorkspaceProvider) {
     setDirectorySyncing(provider);
-    setDirectoryMessage("Sincronizando el directorio…");
+    setDirectoryMessage("Actualizando la lista de personas…");
     try {
       const response = await fetch("/api/directory/sync", {
         method: "POST",
@@ -168,7 +198,7 @@ export function OperationsWorkspace(props: OperationsWorkspaceProps) {
         body: JSON.stringify({ provider }),
       });
       const result = await response.json() as { processed?: number; error?: string };
-      setDirectoryMessage(response.ok ? `${result.processed ?? 0} perfiles revisados correctamente.` : result.error ?? "No se pudo sincronizar el directorio.");
+      setDirectoryMessage(response.ok ? `${result.processed ?? 0} perfiles actualizados correctamente.` : result.error ?? "No se pudo actualizar la lista de personas.");
       if (response.ok) router.refresh();
     } finally {
       setDirectorySyncing(null);
@@ -204,10 +234,10 @@ export function OperationsWorkspace(props: OperationsWorkspaceProps) {
             <label>Nombre<input value={ruleName} maxLength={100} onChange={(event) => setRuleName(event.target.value)} /></label>
             <label>Cuando ocurra<select value={trigger} onChange={(event) => setTrigger(event.target.value as AutomationTrigger)}>{automationTriggers.map((value) => <option value={value} key={value}>{triggerLabels[value]}</option>)}</select></label>
             <label>Preparar acción<select value={action} onChange={(event) => setAction(event.target.value as AutomationAction)}>{automationActions.map((value) => <option value={value} key={value}>{actionLabels[value]}</option>)}</select></label>
-            <label>Campo de condición<select value={conditionField} onChange={(event) => setConditionField(event.target.value as (typeof automationConditionFields)[number])}>{automationConditionFields.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
-            <label>Operador<select value={conditionOperator} onChange={(event) => setConditionOperator(event.target.value as (typeof automationConditionOperators)[number])}>{automationConditionOperators.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
-            <label>Valor validado (opcional)<input value={conditionValue} maxLength={80} onChange={(event) => setConditionValue(event.target.value)} /></label>
-            <p className="form-hint">Las condiciones usan campos cerrados. Las acciones externas siempre quedan pendientes de confirmación.</p>
+            <label>Dato que quieres comprobar<select value={conditionField} onChange={(event) => setConditionField(event.target.value as (typeof automationConditionFields)[number])}>{automationConditionFields.map((value) => <option key={value} value={value}>{conditionFieldLabels[value]}</option>)}</select></label>
+            <label>Comparación<select value={conditionOperator} onChange={(event) => setConditionOperator(event.target.value as (typeof automationConditionOperators)[number])}>{automationConditionOperators.map((value) => <option key={value} value={value}>{conditionOperatorLabels[value]}</option>)}</select></label>
+            <label>Valor (opcional)<input value={conditionValue} maxLength={80} onChange={(event) => setConditionValue(event.target.value)} /></label>
+            <p className="form-hint">Elige qué debe cumplirse. Cualquier acción fuera de la plataforma pedirá confirmación antes de realizarse.</p>
             <button className="button button-primary" type="submit" disabled={!props.canManage || props.pending || ruleName.trim().length < 3}>Crear regla</button>
           </form>
         </div>
@@ -231,7 +261,7 @@ export function OperationsWorkspace(props: OperationsWorkspaceProps) {
           <div className="card recurrence-card">
             <h3>Trabajo recurrente</h3>
             {props.recurrenceRules.length ? (
-              <div className="table-scroll"><table><thead><tr><th>Nombre</th><th>Frecuencia</th><th>Próxima ejecución</th><th>Estado</th></tr></thead><tbody>{props.recurrenceRules.map((rule) => <tr key={rule.id}><td>{rule.name}</td><td>{recurrenceFrequencies.includes(rule.frequency) ? rule.frequency : "—"}</td><td>{rule.nextRunDate}</td><td><span className="status-chip">{rule.enabled ? "Activa" : "Pausada"}</span></td></tr>)}</tbody></table></div>
+              <div className="table-scroll"><table><thead><tr><th>Nombre</th><th>Frecuencia</th><th>Próxima fecha</th><th>Estado</th></tr></thead><tbody>{props.recurrenceRules.map((rule) => <tr key={rule.id}><td>{rule.name}</td><td>{recurrenceLabels[rule.frequency]}</td><td>{rule.nextRunDate}</td><td><span className="status-chip">{rule.enabled ? "Activa" : "Pausada"}</span></td></tr>)}</tbody></table></div>
             ) : <EmptyState kind="work" title="No hay recurrencias programadas" description="Las tareas e informes periódicos aparecerán aquí con su próxima ejecución." />}
           </div>
         </section>
@@ -240,16 +270,16 @@ export function OperationsWorkspace(props: OperationsWorkspaceProps) {
       {tab === "capacity" ? <section className="operations-panel" aria-labelledby="capacity-title"><div className="section-header"><div><p className="eyebrow">Planificación semanal</p><h2 id="capacity-title">Capacidad del equipo</h2></div></div><div className="capacity-grid">{summary.map(({ allocation, utilization, remaining, state }) => <article className={`card capacity-card capacity-${state}`} key={allocation.id}><div><strong>{allocation.personName}</strong><p className="muted">{allocation.projectName}</p></div><strong className="capacity-percentage">{utilization}%</strong><div className="capacity-track" aria-label={`${utilization}% de capacidad asignada`}><span style={{ width: `${Math.min(utilization, 100)}%` }} /></div><p>{remaining < 0 ? `${Math.abs(remaining)} h de sobrecarga` : `${remaining} h disponibles`}</p>{state === "over" ? <span className="inline-alert"><IconAlertTriangle size={17} />Revisa la distribución; no se ha bloqueado la asignación.</span> : null}</article>)}</div><form className="card capacity-form" onSubmit={(event) => { event.preventDefault(); if (!personId || !projectId) return; void props.onAddAllocation({ personId, projectId, weekStart: new Date().toISOString().slice(0, 10), allocatedHours: hours, availableHours: 40 }); }}><h3>Nueva asignación</h3><label>Persona<select value={personId} onChange={(event) => setPersonId(event.target.value)}>{props.people.filter((person) => person.status === "active").map((person) => <option key={person.id} value={person.id}>{person.displayName}</option>)}</select></label><label>Proyecto<select value={projectId} onChange={(event) => setProjectId(event.target.value)}>{props.projects.filter((project) => project.status === "active").map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label><label>Horas semanales<input type="number" min={0} max={80} value={hours} onChange={(event) => setHours(Number(event.target.value))} /></label><button className="button button-primary" type="submit" disabled={!props.canManage || props.pending || !personId || !projectId}>Guardar asignación</button></form></section> : null}
 
       {tab === "integrations" ? <section className="operations-panel" aria-labelledby="integrations-title">
-        <div className="section-header"><div><p className="eyebrow">Ecosistema de trabajo</p><h2 id="integrations-title">Google Workspace y Microsoft 365</h2><p className="muted">El acceso, las herramientas de productividad y el directorio corporativo se autorizan por separado.</p></div></div>
+        <div className="section-header"><div><p className="eyebrow">Herramientas de trabajo</p><h2 id="integrations-title">Google Workspace y Microsoft 365</h2><p className="muted">Puedes iniciar sesión y conectar archivos, calendarios o la lista de personas de tu empresa de forma independiente.</p></div></div>
         <div className="cards-grid">{props.workspaceConnections.map((connection) => <IntegrationCard key={connection.provider} connection={connection} mode={props.mode} syncing={directorySyncing === connection.provider} syncBlocked={directorySyncing !== null} onSync={() => void syncDirectory(connection.provider)} onDisconnect={() => void props.onDisconnect(connection.provider)} />)}</div>
         {directoryMessage ? <div className="inline-alert" role="status">{directoryMessage}</div> : null}
         <div className="operations-grid integration-tools-grid">
-          <div className="card mail-composer"><IconMail size={25} /><h3>Preparar correo</h3><p className="muted">La plataforma abre el compositor elegido. No lee el buzón ni envía mensajes.</p><label>Proveedor<select value={mailProvider} onChange={(event) => setMailProvider(event.target.value as WorkspaceProvider)}><option value="google_workspace">Gmail</option><option value="microsoft_365">Outlook</option></select></label><label>Asunto<input value={mailSubject} maxLength={160} onChange={(event) => setMailSubject(event.target.value)} /></label><label>Mensaje<textarea value={mailBody} maxLength={2000} onChange={(event) => setMailBody(event.target.value)} /></label><div className="operation-actions"><a className="button button-primary" target="_blank" rel="noreferrer" href={buildMailComposerUrl(mailProvider, { subject: mailSubject, body: mailBody })}><IconMail size={17} />{mailProvider === "google_workspace" ? "Abrir Gmail" : "Abrir Outlook Web"}</a>{mailProvider === "microsoft_365" ? <a className="button button-secondary" href={buildMailtoUrl({ subject: mailSubject, body: mailBody })}>Usar aplicación de correo</a> : null}</div></div>
-          <form className="card mail-composer" onSubmit={(event) => { event.preventDefault(); void confirmCalendarEvent(); }}><IconCalendarEvent size={25} /><h3>Crear evento de calendario</h3><p className="muted">El evento solo se crea después de esta confirmación.</p><label>Proveedor<select value={calendarProvider} onChange={(event) => setCalendarProvider(event.target.value as WorkspaceProvider)}><option value="google_workspace">Google Calendar</option><option value="microsoft_365">Outlook Calendar</option></select></label><label>Título<input value={calendarTitle} maxLength={160} onChange={(event) => setCalendarTitle(event.target.value)} /></label><label>Inicio<input type="datetime-local" value={calendarStartsAt} onChange={(event) => setCalendarStartsAt(event.target.value)} /></label><label>Fin<input type="datetime-local" value={calendarEndsAt} onChange={(event) => setCalendarEndsAt(event.target.value)} /></label><button className="button button-primary" type="submit" disabled={calendarTitle.trim().length < 3 || calendarEndsAt <= calendarStartsAt}><IconCalendarEvent size={17} />Confirmar y crear evento</button>{calendarMessage ? <p className="form-hint" role="status">{calendarMessage}</p> : null}</form>
+          <div className="card mail-composer"><IconMail size={25} /><h3>Preparar correo</h3><p className="muted">La plataforma abre la aplicación que elijas. No lee el buzón ni envía mensajes.</p><label>Aplicación<select value={mailProvider} onChange={(event) => setMailProvider(event.target.value as WorkspaceProvider)}><option value="google_workspace">Gmail</option><option value="microsoft_365">Outlook</option></select></label><label>Asunto<input value={mailSubject} maxLength={160} onChange={(event) => setMailSubject(event.target.value)} /></label><label>Mensaje<textarea value={mailBody} maxLength={2000} onChange={(event) => setMailBody(event.target.value)} /></label><div className="operation-actions"><a className="button button-primary" target="_blank" rel="noreferrer" href={buildMailComposerUrl(mailProvider, { subject: mailSubject, body: mailBody })}><IconMail size={17} />{mailProvider === "google_workspace" ? "Abrir Gmail" : "Abrir Outlook Web"}</a>{mailProvider === "microsoft_365" ? <a className="button button-secondary" href={buildMailtoUrl({ subject: mailSubject, body: mailBody })}>Usar aplicación de correo</a> : null}</div></div>
+          <form className="card mail-composer" onSubmit={(event) => { event.preventDefault(); void confirmCalendarEvent(); }}><IconCalendarEvent size={25} /><h3>Crear evento de calendario</h3><p className="muted">Revisa los datos y confirma antes de crear el evento.</p><label>Calendario<select value={calendarProvider} onChange={(event) => setCalendarProvider(event.target.value as WorkspaceProvider)}><option value="google_workspace">Google Calendar</option><option value="microsoft_365">Outlook Calendar</option></select></label><label>Título<input value={calendarTitle} maxLength={160} onChange={(event) => setCalendarTitle(event.target.value)} /></label><label>Inicio<input type="datetime-local" value={calendarStartsAt} onChange={(event) => setCalendarStartsAt(event.target.value)} /></label><label>Fin<input type="datetime-local" value={calendarEndsAt} onChange={(event) => setCalendarEndsAt(event.target.value)} /></label><button className="button button-primary" type="submit" disabled={calendarTitle.trim().length < 3 || calendarEndsAt <= calendarStartsAt}><IconCalendarEvent size={17} />Confirmar y crear evento</button>{calendarMessage ? <p className="form-hint" role="status">{calendarMessage}</p> : null}</form>
         </div>
       </section> : null}
 
-      {tab === "exports" ? <section className="operations-panel" aria-labelledby="exports-title"><div className="section-header"><div><p className="eyebrow">Información reutilizable</p><h2 id="exports-title">Informes y exportaciones</h2></div></div><form className="card export-form" onSubmit={(event) => { event.preventDefault(); void props.onCreateExport({ name: exportName, moduleId: exportModule, target: exportTarget }); }}><label>Nombre<input value={exportName} maxLength={120} onChange={(event) => setExportName(event.target.value)} /></label><label>Vista autorizada<select value={exportModule} onChange={(event) => setExportModule(event.target.value)}><option value="analitica">Analítica</option><option value="proyectos">Proyectos</option><option value="tareas">Tareas</option><option value="incidencias">Incidencias</option><option value="personal">Personal</option><option value="vacaciones">Vacaciones</option></select></label><label>Destino<select value={exportTarget} onChange={(event) => setExportTarget(event.target.value as ExportTarget)}>{exportTargets.map((target) => <option value={target} key={target}>{targetLabels[target]}</option>)}</select></label><button className="button button-primary" type="submit" disabled={!props.canManage || props.pending || exportName.trim().length < 3}><IconFileExport size={17} />Preparar exportación</button></form><div className="operations-list">{props.exportJobs.map((job) => <article className="card operation-item" key={job.id}><div><strong>{job.name}</strong><p className="muted">{targetLabels[job.target]} · {job.rowCount} filas · {job.moduleId}</p></div><div className="operation-actions"><span className="status-chip">{job.status === "ready" ? "Preparada" : job.status}</span>{props.mode === "authenticated" && job.status === "ready" && (job.target === "csv" || job.target === "xlsx") ? <a className="button button-secondary" href={`/api/exports/${job.id}/download`}><IconFileExport size={17} />Descargar</a> : null}{props.mode === "authenticated" && job.status === "pending" && (job.target === "google_sheets" || job.target === "microsoft_excel") ? <button className="button button-primary" type="button" disabled={executingExportId === job.id} onClick={() => void executeExternalExport(job.id)}>{executingExportId === job.id ? "Creando…" : "Confirmar y crear"}</button> : null}{job.externalUrl ? <a className="button button-secondary" href={job.externalUrl} target="_blank" rel="noreferrer">Abrir</a> : null}</div></article>)}</div><div className="inline-alert"><IconCalendarEvent size={18} /><span>Los informes programados preparan el trabajo y notifican; una persona confirma siempre el destino externo.</span></div></section> : null}
+      {tab === "exports" ? <section className="operations-panel" aria-labelledby="exports-title"><div className="section-header"><div><p className="eyebrow">Información para compartir</p><h2 id="exports-title">Informes y descargas</h2></div></div><form className="card export-form" onSubmit={(event) => { event.preventDefault(); void props.onCreateExport({ name: exportName, moduleId: exportModule, target: exportTarget }); }}><label>Nombre<input value={exportName} maxLength={120} onChange={(event) => setExportName(event.target.value)} /></label><label>Información que quieres incluir<select value={exportModule} onChange={(event) => setExportModule(event.target.value)}><option value="analitica">Analítica</option><option value="proyectos">Proyectos</option><option value="tareas">Tareas</option><option value="incidencias">Incidencias</option><option value="personal">Personal</option><option value="vacaciones">Vacaciones</option></select></label><label>Guardar en<select value={exportTarget} onChange={(event) => setExportTarget(event.target.value as ExportTarget)}>{exportTargets.map((target) => <option value={target} key={target}>{targetLabels[target]}</option>)}</select></label><button className="button button-primary" type="submit" disabled={!props.canManage || props.pending || exportName.trim().length < 3}><IconFileExport size={17} />Preparar informe</button></form><div className="operations-list">{props.exportJobs.map((job) => <article className="card operation-item" key={job.id}><div><strong>{job.name}</strong><p className="muted">{targetLabels[job.target]} · {job.rowCount} registros · {exportModuleLabels[job.moduleId] ?? "Información de la plataforma"}</p></div><div className="operation-actions"><span className="status-chip">{exportStatusLabels[job.status]}</span>{props.mode === "authenticated" && job.status === "ready" && (job.target === "csv" || job.target === "xlsx") ? <a className="button button-secondary" href={`/api/exports/${job.id}/download`}><IconFileExport size={17} />Descargar</a> : null}{props.mode === "authenticated" && job.status === "pending" && (job.target === "google_sheets" || job.target === "microsoft_excel") ? <button className="button button-primary" type="button" disabled={executingExportId === job.id} onClick={() => void executeExternalExport(job.id)}>{executingExportId === job.id ? "Creando…" : "Confirmar y crear"}</button> : null}{job.externalUrl ? <a className="button button-secondary" href={job.externalUrl} target="_blank" rel="noreferrer">Abrir</a> : null}</div></article>)}</div><div className="inline-alert"><IconCalendarEvent size={18} /><span>Los informes programados quedan preparados para que una persona revise y confirme dónde guardarlos.</span></div></section> : null}
     </main>
   );
 }
@@ -285,14 +315,14 @@ function IntegrationCard({
   const connectHref = `/api/workspace/oauth/${connection.provider}/start?purpose=productivity`;
   const directoryHref = `/api/workspace/oauth/${connection.provider}/start?purpose=directory`;
   const directoryCopy = connection.directoryStatus === "ready"
-    ? connection.lastSyncedAt ? `Directorio autorizado · Última sincronización ${new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(new Date(connection.lastSyncedAt))}` : "Directorio corporativo autorizado"
+    ? connection.lastSyncedAt ? `Personas actualizadas · Última revisión ${new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(new Date(connection.lastSyncedAt))}` : "Permiso para actualizar personas concedido"
     : connection.directoryStatus === "syncing"
-      ? "Sincronización del directorio en curso"
+      ? "Actualizando la lista de personas"
       : connection.directoryStatus === "error"
-        ? `El directorio requiere revisión${connection.lastErrorCode ? ` (${connection.lastErrorCode})` : ""}`
+        ? "No se pudo actualizar la lista de personas. Revisa la conexión e inténtalo de nuevo"
         : connection.accountKind === "consumer"
-          ? "Cuenta personal: productividad disponible; el directorio corporativo no aplica"
-          : "Productividad conectada; falta el consentimiento administrativo del directorio";
+          ? "Cuenta personal: puedes usar archivos y calendario, pero no importar personas de una empresa"
+          : "Archivos y calendario conectados; hace falta permiso de administración para importar personas";
 
   return (
     <article className="card integration-card">
@@ -301,11 +331,11 @@ function IntegrationCard({
         <div><h3>{providerName}</h3><p className="muted">{connection.accountLabel}</p></div>
       </div>
       <div className="capability-list">{connection.capabilities.map((capability) => <span className="status-chip" key={capability}>{capabilityLabels[capability]}</span>)}</div>
-      {mode === "guest" ? <p className="demo-note-compact">Conexión simulada: no se abre OAuth ni se escriben datos externos.</p> : connection.status === "connected" ? (
+      {mode === "guest" ? <p className="demo-note-compact">Vista de ejemplo: no se conecta ninguna cuenta ni se envían datos a otros servicios.</p> : connection.status === "connected" ? (
         <>
           <p className={`integration-readiness readiness-${connection.directoryStatus}`}>{directoryCopy}</p>
           <div className="operation-actions">
-            {connection.canSyncDirectory ? <button className="button button-primary" type="button" disabled={syncBlocked} onClick={onSync}>{syncing ? "Sincronizando…" : "Sincronizar directorio"}</button> : connection.accountKind !== "consumer" ? <a className="button button-primary" href={directoryHref}>Solicitar consentimiento de directorio</a> : null}
+            {connection.canSyncDirectory ? <button className="button button-primary" type="button" disabled={syncBlocked} onClick={onSync}>{syncing ? "Actualizando…" : "Actualizar personas"}</button> : connection.accountKind !== "consumer" ? <a className="button button-primary" href={directoryHref}>Solicitar permiso para importar personas</a> : null}
             <button className="button button-secondary" type="button" onClick={onDisconnect}>Desconectar</button>
           </div>
         </>

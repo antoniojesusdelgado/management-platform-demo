@@ -238,7 +238,7 @@ export function TasksWorkspace({
     const targetCount = tasks.filter((item) => item.status === status).length;
     if (status !== "completed" && targetCount >= wipLimits[status]) {
       setBoardMessage(
-        `La columna ${statusLabels[status]} ha alcanzado su límite WIP de ${wipLimits[status]}.`,
+        `${statusLabels[status]} ya tiene el máximo de ${wipLimits[status]} tareas. Termina o mueve una antes de añadir otra.`,
       );
       return false;
     }

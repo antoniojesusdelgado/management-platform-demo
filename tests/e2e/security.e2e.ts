@@ -116,11 +116,11 @@ test("analytics remains disabled until explicit consent and can be rejected", as
   await page.goto("/login", { waitUntil: "domcontentloaded" });
   const banner = page.getByRole("dialog", { name: "Analítica opcional" });
   await expect(banner).toBeVisible();
-  await expect(banner.getByRole("button", { name: "Rechazar" })).toBeVisible();
-  await expect(banner.getByRole("button", { name: "Aceptar analítica" })).toBeVisible();
+  await expect(banner.getByRole("button", { name: "Ahora no" })).toBeVisible();
+  await expect(banner.getByRole("button", { name: "Permitir" })).toBeVisible();
   await expect(page.locator('script[src*="googletagmanager.com/gtag/js"]')).toHaveCount(0);
 
-  await banner.getByRole("button", { name: "Rechazar" }).click();
+  await banner.getByRole("button", { name: "Ahora no" }).click();
   await expect(banner).toBeHidden();
   await expect(page.locator('script[src*="googletagmanager.com/gtag/js"]')).toHaveCount(0);
   await expect

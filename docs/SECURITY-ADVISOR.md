@@ -1,5 +1,17 @@
 # Revisión de Security Advisor
 
+## Comprobaciones v1.8.3
+
+- La finalización del onboarding dispone únicamente de `UPDATE` sobre
+  `profiles.onboarding_completed_at`; `authenticated` no recupera actualización
+  general de perfiles y `anon` no obtiene ningún privilegio.
+- RLS continúa activo en `public.profiles` y la política limita la escritura a
+  la identidad autenticada correspondiente.
+- La publicación de Novedades usa identificadores deterministas y
+  `ON CONFLICT DO NOTHING`; no sobrescribe contenido operativo.
+- Los cambios visuales y de redacción no amplían permisos OAuth, callbacks,
+  secretos, subida de archivos ni superficies de HTML ejecutable.
+
 ## Endurecimiento v1.8.2
 
 - El login de Google y Microsoft queda limitado a identidad básica.

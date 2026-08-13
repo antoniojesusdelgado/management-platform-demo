@@ -342,9 +342,9 @@ export function GuestDemoApp() {
 
   function createChangelog(input: ChangelogInput) { if (!ready || state.changelogEntries.some((entry) => entry.version === input.version)) return false; dispatch({ type: "create-changelog", input }); notify("Borrador creado"); return true; }
   function updateChangelog(entryId: string, input: ChangelogInput) { if (!ready) return false; dispatch({ type: "update-changelog", entryId, input }); notify("Novedad actualizada"); return true; }
-  function transitionChangelog(entryId: string, status: ChangelogStatus, note: string) { const entry = state.changelogEntries.find((item) => item.id === entryId); if (!ready || !entry || !canTransitionChangelog(entry.status, status)) return false; dispatch({ type: "transition-changelog", entryId, status, note }); notify(status === "published" ? "Novedad publicada" : "Flujo editorial actualizado"); return true; }
+  function transitionChangelog(entryId: string, status: ChangelogStatus, note: string) { const entry = state.changelogEntries.find((item) => item.id === entryId); if (!ready || !entry || !canTransitionChangelog(entry.status, status)) return false; dispatch({ type: "transition-changelog", entryId, status, note }); notify(status === "published" ? "Novedad publicada" : "Revisión actualizada"); return true; }
   function updateModuleSetting(moduleId: ModuleId, enabled: boolean, sortOrder: number) { if (!ready) return false; dispatch({ type: "update-module-setting", moduleId, enabled, sortOrder }); notify("Configuración del módulo actualizada"); return true; }
-  function updateRoleMetadata(roleId: string, name: string, color: string) { if (!ready) return false; dispatch({ type: "update-role-metadata", roleId, name, color }); notify("Metadatos del rol actualizados"); return true; }
+  function updateRoleMetadata(roleId: string, name: string, color: string) { if (!ready) return false; dispatch({ type: "update-role-metadata", roleId, name, color }); notify("Nivel de acceso actualizado"); return true; }
   function updateRolePermissions(roleId: string, permissionCodes: PermissionCode[]) { if (!ready) return false; dispatch({ type: "update-role-permissions", roleId, permissionCodes }); notify("Permisos del rol actualizados"); return true; }
   function createInvitation(email: string, roleId: string) { if (!ready) return false; dispatch({ type: "create-invitation", email, roleId }); notify("Invitación creada"); return true; }
   function updateMembership(membershipId: string, roleId: string, status: WorkspaceMembershipStatus) { if (!ready) return false; dispatch({ type: "update-membership", membershipId, roleId, status }); notify("Acceso actualizado"); return true; }
@@ -363,7 +363,7 @@ export function GuestDemoApp() {
   function saveAnalyticsView(view: SavedAnalyticsView) {
     if (!ready) return false;
     dispatch({ type: "save-analytics-view", view });
-    notify("Vista analítica guardada en esta sesión");
+    notify("Vista guardada en esta sesión");
     return true;
   }
   function createAutomationRule(input: Pick<AutomationRule, "name" | "trigger" | "action">) { if (!ready) return false; dispatch({ type: "create-automation-rule", input }); notify("Regla creada"); return true; }
@@ -372,8 +372,8 @@ export function GuestDemoApp() {
   function applyProjectTemplate(templateId: string) { if (!ready) return false; dispatch({ type: "apply-project-template", templateId }); notify("Proyecto y tareas creados desde la plantilla"); return true; }
   function addCapacityAllocation(input: Omit<CapacityAllocation, "id" | "personName" | "projectName">) { if (!ready) return false; dispatch({ type: "add-capacity-allocation", input }); notify("Asignación guardada"); return true; }
   function markNotification(notificationId: string, status: NotificationStatus) { if (!ready) return false; dispatch({ type: "mark-notification", notificationId, status }); return true; }
-  function createExportJob(input: { name: string; moduleId: string; target: ExportTarget }) { if (!ready) return false; dispatch({ type: "create-export-job", input }); notify("Exportación preparada en modo invitado"); return true; }
-  function disconnectWorkspace(provider: WorkspaceProvider) { if (!ready) return false; dispatch({ type: "disconnect-workspace", provider }); notify("Conector simulado restablecido"); return true; }
+  function createExportJob(input: { name: string; moduleId: string; target: ExportTarget }) { if (!ready) return false; dispatch({ type: "create-export-job", input }); notify("Informe preparado en esta sesión"); return true; }
+  function disconnectWorkspace(provider: WorkspaceProvider) { if (!ready) return false; dispatch({ type: "disconnect-workspace", provider }); notify("Conexión de ejemplo restablecida"); return true; }
 
   function content() {
     if (!ready) return <WorkspaceLoading />;

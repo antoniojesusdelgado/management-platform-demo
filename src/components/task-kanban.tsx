@@ -190,8 +190,8 @@ function KanbanColumn({
           <strong>{statusLabels[status]}</strong>
           <span>{tasks.length}</span>
         </div>
-        <label title="Límite de trabajo en curso">
-          <span>WIP</span>
+        <label title="Máximo de tareas en esta columna">
+          <span>Máximo</span>
           <input
             type="number"
             min={1}

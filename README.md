@@ -1,6 +1,6 @@
 # Plataforma de gestión
 
-> v1.8.2 mejora el acceso, la privacidad y la seguridad: permisos OAuth progresivos, analítica opcional y supresión de cuenta desde el perfil.
+> v1.8.3 hace la experiencia más ágil y comprensible: navegación continua, acceso Microsoft reconocible, onboarding corregido y lenguaje orientado a las personas usuarias.
 
 [![CI](https://github.com/antoniojesusdelgado/management-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/antoniojesusdelgado/management-platform/actions/workflows/ci.yml)
 [![Versión](https://img.shields.io/github/v/release/antoniojesusdelgado/management-platform)](https://github.com/antoniojesusdelgado/management-platform/releases/latest)
@@ -44,7 +44,7 @@ ficticios.
 - Informes CSV/XLSX y conexiones opcionales con Google Workspace o Microsoft 365.
 - Tema claro por defecto y tema oscuro opcional.
 
-La versión actual es `v1.8.2`. El historial de publicaciones y sus notas están
+La versión actual es `v1.8.3`. El historial de publicaciones y sus notas están
 disponibles en la sección de releases.
 
 ## Cómo está construida
@@ -52,7 +52,7 @@ disponibles en la sección de releases.
 ```mermaid
 flowchart LR
   guest["Exploración sin registro"] --> session["Estado validado en el navegador"]
-  user["Google OAuth"] --> app["Next.js"]
+  user["Google o Microsoft OAuth"] --> app["Next.js"]
   app --> auth["Supabase Auth"]
   app --> db["PostgreSQL + RLS"]
   github["GitHub Actions"] --> preview["Vercel Preview"]

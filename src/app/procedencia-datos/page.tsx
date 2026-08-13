@@ -8,29 +8,29 @@ export default function DataProvenancePage() {
         <p className="eyebrow">Procedencia</p>
         <h1>Procedencia de los datos</h1>
         <p>
-          La plataforma genera de forma determinista un conjunto completamente
+          La plataforma genera un conjunto completamente
           ficticio de personas, proyectos, tareas, vacaciones, incidencias,
           tesorería, nóminas agregadas e integraciones. No copia filas, nombres,
           contactos, identificadores ni procesos de organizaciones reales.
         </p>
-        <h2>Escenario y periodo</h2>
+        <h2>Periodo de los datos de ejemplo</h2>
         <p>
-          La versión actual del escenario es la 7. El histórico
-          comienza el 1 de enero de 2025 y termina en el ancla guardada al crear
-          o restaurar cada espacio. La misma semilla y la misma ancla producen el
-          mismo catálogo y checksum.
+          La información de ejemplo comienza el 1 de enero de 2025 y se amplía
+          hasta la fecha preparada para cada espacio. Si se restauran los datos,
+          la plataforma vuelve a crear un conjunto coherente sin utilizar
+          información de personas u organizaciones reales.
         </p>
         <h2>Referencias y transformaciones</h2>
         <p>
-          AdventureWorks (MIT) se usa únicamente como referencia relacional
-          opcional y las estadísticas agregadas del INE (CC BY 4.0) pueden
-          orientar distribuciones. Los adaptadores son offline, no consumen
-          microdatos y solo producen perfiles estadísticos agregados. Toda fila
-          operativa final se genera de nuevo mediante reglas propias.
+          AdventureWorks (MIT) se usa únicamente como referencia opcional para
+          organizar relaciones entre datos. Las estadísticas públicas y
+          agregadas del INE (CC BY 4.0) pueden orientar algunas distribuciones.
+          No se consultan datos individuales y todo el contenido final se crea
+          de nuevo mediante reglas propias.
         </p>
         <p>
-          Los conectores visibles son neutrales y no representan bancos,
-          proveedores de nóminas ni formatos de terceros. Los importes de nómina
+          Las conexiones de ejemplo no representan bancos, servicios de nóminas
+          ni formatos de terceros. Los importes de nómina
           son siempre agregados; la relación de participantes no contiene
           retribuciones individuales.
         </p>

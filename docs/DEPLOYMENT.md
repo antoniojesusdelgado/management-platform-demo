@@ -1,5 +1,21 @@
 # Despliegue
 
+## Requisitos de v1.8.3
+
+- Aplicar primero `20260813152355_fix_onboarding_profile_update_permission.sql`.
+  Solo concede permiso de columna y mantiene RLS y la revocación de actualización
+  sobre la tabla completa.
+- Aplicar después `20260813170000_release_v1_8_3_product_polish.sql`. La
+  publicación es aditiva, idempotente y no modifica entradas de Novedades
+  existentes.
+- Mantener `MICROSOFT_SIGN_IN_ENABLED=true` únicamente en entornos donde Azure
+  siga configurado en Supabase Auth. La apariencia activa del botón no sustituye
+  esta comprobación del servidor.
+- Validar navegación fría y caliente en Preview: la cabecera debe permanecer
+  visible y no debe aparecer una pantalla blanca entre módulos.
+- Regenerar las evidencias con `bun run visual:review` y revisar ambos temas en
+  móvil y escritorio antes de promover el artefacto.
+
 ## Requisitos de v1.8.2
 
 - `MICROSOFT_SIGN_IN_ENABLED=true` activa Microsoft solo después de configurar
@@ -187,19 +203,18 @@ escritura externa y ausencia de OAuth en el modo invitado.
 ## Versión actual
 
 - Origen canónico de producción: <https://plataformagestion.app>
-- Alternativa de Vercel: se actualizará al renombrar el proyecto en el cierre de v1.8.2.
+- Alternativa de Vercel: se obtiene de la Preview asociada al commit validado.
 - Las Preview se generan desde cada pull request y se promueven solo después de
   superar las comprobaciones de producto, accesibilidad y seguridad.
-- Versión preparada en esta rama: `v1.8.2`; la promoción a producción solo se
+- Versión preparada en esta rama: `v1.8.3`; la promoción a producción solo se
   completa tras aprobar la Preview autenticada y la QA visual.
 - Región y plan de Supabase: `eu-central-1`, Free
 - Producción y Preview utilizan variables separadas para los orígenes de la
   aplicación y del portfolio.
-- La compilación local superó 80 comprobaciones de extremo a extremo; 6
-  combinaciones de proyecto o dispositivo se omitieron de forma intencionada.
-- La migración más reciente es
-  `20260813120000_finalize_v1_8_2_product_copy.sql`; actualiza únicamente la
-  redacción canónica no modificada por cada organización.
+- Los resultados exactos de navegador, accesibilidad y base de datos se
+  registran en `docs/design-qa.md` para cada candidato.
+- Las migraciones más recientes corrigen el permiso mínimo del onboarding y
+  publican v1.8.3 sin modificar entradas existentes.
 - El esquema remoto incluye políticas RLS, aprovisionamiento determinista y la
   integración nocturna neutral y la sincronización diaria del directorio; el
   modo horario está preparado para un plan compatible.

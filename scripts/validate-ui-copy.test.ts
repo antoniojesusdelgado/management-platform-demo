@@ -10,6 +10,11 @@ describe("UI copy validation", () => {
     "Backlog",
     "vs. anterior",
     "Operaciones premium",
+    "límite WIP",
+    "SLA vencido",
+    "Bandeja administrativa",
+    "settings.workspace.manage",
+    "Sincronizar directorio",
   ])("rejects the expression %s", (expression) => {
     expect(
       findUiCopyViolations(
@@ -31,7 +36,7 @@ describe("UI copy validation", () => {
   test("accepts the agreed natural alternatives", () => {
     expect(
       findUiCopyViolations(
-        "<p>Resumen · Tareas completadas · Personas activas · Incidencias pendientes</p>",
+        "<p>Resumen · Máximo de tareas · Personas activas · Fuera de plazo · Actualizar personas</p>",
         "src/components/example.tsx",
       ),
     ).toHaveLength(0);

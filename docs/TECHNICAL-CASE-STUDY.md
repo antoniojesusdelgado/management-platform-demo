@@ -1,5 +1,9 @@
 # Caso de estudio técnico
 
+**Estado actual:** v1.8.3, publicada como Plataforma de gestión. La versión
+mantiene Google y Microsoft como accesos independientes, un modo de exploración
+con datos ficticios y organizaciones autenticadas aisladas mediante RLS.
+
 ## Resumen
 
 El proyecto original respondió a una necesidad operativa de Fundación
@@ -26,12 +30,12 @@ funcional del proyecto.
 
 Requisitos funcionales:
 
-- acceso público mediante Google OAuth y modo invitado sin cuenta;
+- acceso público mediante Google o Microsoft y modo de exploración sin cuenta;
 - espacio aislado por identidad, autorización por roles y RLS;
 - trazabilidad inmutable de las transiciones operativas;
 - simulación de integraciones neutrales e idempotentes;
 - analítica filtrable con comparación entre periodos;
-- restauración reproducible del escenario de demostración;
+- actualización reproducible de los datos ficticios;
 - interfaz responsive, accesible por teclado y compatible con movimiento
   reducido.
 

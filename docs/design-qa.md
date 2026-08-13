@@ -1,17 +1,17 @@
-# Revisión visual y de producto — v1.8.2
+# Revisión visual y de producto — v1.8.3
 
 Fecha: 13 de agosto de 2026
 
-Estado: aprobado en la Preview final
-Resultado final: **passed**
+Estado local: aprobado
+Estado de Preview: PR #20 publicada; validación del artefacto en curso
+Resultado local: **passed**
 
-La implementación local incorpora además el aviso compacto de analítica
-opcional. En móvil se presenta como una superficie inferior con acciones de
-rechazo y aceptación equivalentes; no carga GA4 antes de una decisión
-afirmativa. La captura definitiva se regenerará desde la Preview para no
-confundir evidencia local con producción.
+La implementación incorpora el aviso compacto de analítica opcional. En móvil
+se presenta como una superficie inferior con acciones equivalentes; no carga
+GA4 antes de una decisión afirmativa. La navegación conserva la cabecera y el
+contexto mientras cambia de módulo, evitando el pantallazo blanco anterior.
 
-## Cambios que deben verificarse
+## Cambios verificados localmente
 
 - Logotipo canónico en acceso, cabecera, favicon, PWA y tarjeta social.
 - Acceso sin solapamientos ni scroll ordinario a 320, 360, 390, 768, 1024 y
@@ -20,6 +20,9 @@ confundir evidencia local con producción.
 - Google y Microsoft como identidad básica; permisos adicionales únicamente
   desde Integraciones.
 - Avatares válidos, corruptos, sobredimensionados y con MIME falseado.
+- Microsoft con identidad visual reconocible cuando el proveedor está activo.
+- Lenguaje comprensible en módulos, formularios, estados y mensajes.
+- Finalización del onboarding con privilegio mínimo de columna y RLS.
 
 La Preview final se comparó con la evidencia local y no conserva incidencias
 P0–P2 abiertas.
@@ -65,22 +68,17 @@ además a 320×568, 360×800, 390×844, 768×1024, 1024×768,
 
 ## Evidencia visual
 
-Preview aprobada: `https://management-platform-demo-g766canws.vercel.app`
-
-La comprobación funcional de la Preview confirma el acceso de Google, el
-acceso Microsoft multicuenta con PKCE hasta el onboarding, la exploración sin
-registro, el consentimiento analítico denegado por defecto y las páginas
-legales y de transparencia.
+La Preview se validará contra el SHA final del PR. La publicación exige
+comprobar Google, Microsoft activo, exploración sin registro, consentimiento
+analítico denegado por defecto y páginas legales antes de promover el mismo
+artefacto.
 
 ### Acceso
 
-- Móvil 320 px: `../artifacts/v1.8.1-auth-option-1-mobile.png`
-- Móvil 360 px: `../artifacts/v1.8.1-auth-option-1-mobile-360.png`
-- Móvil 390 px: `../artifacts/v1.8.1-auth-option-1-mobile-390.png`
-- Tableta 768 px: `../artifacts/v1.8.1-auth-option-1-tablet-768.png`
-- Escritorio 1024 px: `../artifacts/v1.8.1-auth-option-1-desktop-1024.png`
-- Escritorio 1440 px: `../artifacts/v1.8.1-auth-option-1-desktop.png`
-- Referencia 1487 px: `../artifacts/v1.8.1-auth-option-1-fidelity.png`
+- Móvil 390 px: `../artifacts/v1.8.3-access-light-mobile.png`
+- Escritorio 1440 px: `../artifacts/v1.8.3-access-light-desktop.png`
+- Inicio móvil: `../artifacts/v1.8.3-home-light-mobile.png`
+- Personal escritorio: `../artifacts/v1.8.3-people-light-desktop.png`
 
 ### Personal y organigrama
 
@@ -95,14 +93,14 @@ legales y de transparencia.
 - Equipo y disponibilidad: `../.artifacts/release-v1.8.1/automated/analitica-personas-dark-desktop.png`
 - Finanzas e integraciones: `../.artifacts/release-v1.8.1/automated/analitica-finanzas-light-desktop.png`
 
-El generador reproducible es `bun run visual:review` y guarda las capturas en
-`.artifacts/release-v1.8.1/automated`.
+El generador reproducible es `bun run visual:review` y guarda el conjunto
+completo en `.artifacts/release-v1.8.3/automated`.
 
 ## Validaciones ejecutadas
 
 - `bun run lint`
 - `bun run typecheck`
-- `bun run test` — 110 pruebas superadas.
+- `bun run test` — 115 pruebas superadas.
 - `bun run content:validate`
 - `bun run security:public-data`
 - `bun run security:secrets`
@@ -112,10 +110,12 @@ El generador reproducible es `bun run visual:review` y guarda las capturas en
 - `bun run e2e:a11y` — 20 recorridos superados sin infracciones Axe A/AA.
 - `bun run scenario:data:validate`
 - `bun run scenario:data:report`
-- `bunx supabase db reset`
-- `bunx supabase test db` — 400 pruebas pgTAP superadas.
-- `bunx supabase db lint --level warning --fail-on error`
-- comparación de tipos Supabase — sin diferencias.
+- La migración remota `20260813170000_release_v1_8_3_product_polish.sql` pasó un
+  `db push --dry-run` legible y se aplicó correctamente el 13 de agosto de 2026.
+- El reset local, pgTAP, lint, advisors y comparación de tipos no se repitieron
+  en este cierre porque Docker Desktop no respondió tras un reinicio controlado.
+  La evidencia histórica permanece vigente, pero esta limitación ambiental se
+  mantiene explícita y no se presenta como una validación nueva.
 - `git diff --check`
 
 La aprobación del usuario recibida el 12 de agosto de 2026 autoriza commit,

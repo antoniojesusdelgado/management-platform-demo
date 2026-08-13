@@ -12,8 +12,9 @@ indicaciones internas de diseño ni terminología técnica innecesaria.
   `Revisar solicitudes`, `Entrar sin cuenta`.
 - Explicar los errores con su causa, cuando se conozca, y un siguiente paso
   concreto.
-- Mantener `OAuth`, `SLA`, `CSV` y `Kanban` cuando sean los términos
-  establecidos.
+- Mantener `OAuth`, `CSV` y `Kanban` solo cuando ayuden a identificar una
+  función conocida. Explicar `OAuth` como acceso con Google o Microsoft en las
+  superficies destinadas al público general.
 - Hablar de `organización`, `aplicación` o `espacio personal` según el alcance
   real.
 
@@ -36,6 +37,7 @@ indicaciones internas de diseño ni terminología técnica innecesaria.
 | Proyectos y trabajo | Proyectos y tareas |
 | Personas y capacidad | Equipo y disponibilidad |
 | Servicio y SLA | Incidencias y tiempos |
+| SLA | Compromiso de atención |
 | Finanzas y automatizaciones | Finanzas e integraciones |
 | Throughput | Tareas completadas |
 | Headcount | Personas activas |

@@ -32,7 +32,7 @@ async function openGuestDemo(page: Page) {
   await enterGuestDemo(page);
   const analyticsDialog = page.getByRole("dialog", { name: "Analítica opcional" });
   if (await analyticsDialog.isVisible()) {
-    await analyticsDialog.getByRole("button", { name: "Rechazar" }).click();
+    await analyticsDialog.getByRole("button", { name: "Ahora no" }).click();
   }
 }
 

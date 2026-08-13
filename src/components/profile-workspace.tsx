@@ -46,6 +46,12 @@ const roleLabels: Record<PersonRoleCode, string> = {
   viewer: "Consulta",
 };
 
+const profileStatusLabels: Record<string, string> = {
+  active: "Activo",
+  invited: "Invitado",
+  suspended: "Suspendido",
+};
+
 function formatBytes(value: number) {
   return new Intl.NumberFormat("es-ES", {
     style: "unit",
@@ -101,8 +107,8 @@ export function ProfileWorkspace({
           <p className="eyebrow">Cuenta · preferencias</p>
           <h1>Mi perfil</h1>
           <p className="lede">
-            Personaliza tu experiencia. Los datos operativos administrados
-            están separados de tu identidad OAuth.
+            Personaliza tu experiencia. La información de trabajo se mantiene
+            separada de la cuenta que utilizas para entrar.
           </p>
         </div>
         <span className="status-chip">
@@ -290,7 +296,7 @@ export function ProfileWorkspace({
             <IconShieldCheck aria-hidden="true" size={24} />
           </div>
           <p className="muted">
-            El modo simulado solo puede reducir los permisos de tu rol real.
+            La vista de prueba solo puede reducir los permisos de tu nivel de acceso actual.
             Nunca concede acceso adicional.
           </p>
           <label className="field">
@@ -305,7 +311,7 @@ export function ProfileWorkspace({
                 })
               }
             >
-              <option value="">Rol real · {managed.realRole}</option>
+              <option value="">Nivel de acceso actual · {roleLabels[managed.realRole as PersonRoleCode] ?? managed.realRole}</option>
               {personRoleCodes.map((role) => (
                 <option key={role} value={role}>
                   Simular {roleLabels[role]}
@@ -338,7 +344,7 @@ export function ProfileWorkspace({
             </div>
             <div>
               <dt>Estado</dt>
-              <dd>{managed.status}</dd>
+              <dd>{profileStatusLabels[managed.status] ?? managed.status}</dd>
             </div>
             <div>
               <dt>Disponibilidad</dt>
@@ -354,16 +360,16 @@ export function ProfileWorkspace({
         >
           <div className="section-header">
             <div>
-              <p className="eyebrow">Salud técnica</p>
-              <h2 id="workspace-title">Estado del espacio personal</h2>
+              <p className="eyebrow">Tu espacio</p>
+              <h2 id="workspace-title">Información de la cuenta</h2>
             </div>
           </div>
           {workspaceStatus ? (
             <>
               <dl className="request-facts">
                 <div>
-                  <dt>Escenario</dt>
-                  <dd>V{workspaceStatus.scenarioVersion ?? "—"}</dd>
+                  <dt>Versión de la información</dt>
+                  <dd>{workspaceStatus.scenarioVersion ?? "—"}</dd>
                 </div>
                 <div>
                   <dt>Última actividad</dt>
@@ -372,18 +378,18 @@ export function ProfileWorkspace({
                   </dd>
                 </div>
                 <div>
-                  <dt>Base de datos del proyecto</dt>
+                  <dt>Espacio utilizado</dt>
                   <dd>{formatBytes(workspaceStatus.databaseSizeBytes)}</dd>
                 </div>
                 <div>
-                  <dt>Umbral de solo lectura</dt>
+                  <dt>Límite disponible</dt>
                   <dd>{formatBytes(workspaceStatus.thresholdBytes)}</dd>
                 </div>
               </dl>
               <span
                 className="workspace-size-bar"
                 role="progressbar"
-                aria-label="Uso de la cuota de base de datos"
+                aria-label="Uso del espacio disponible"
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={Math.round(sizeRatio)}

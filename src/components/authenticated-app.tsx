@@ -238,6 +238,7 @@ export function AuthenticatedApp({
 }: AuthenticatedAppProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [navigationPending, startNavigation] = useTransition();
   const [localName, setLocalName] = useState(organizationName);
   const [summaryAnchor] = useState(
     () => new Date(`${scenarioAnchorDate}T12:00:00.000Z`),
@@ -262,7 +263,10 @@ export function AuthenticatedApp({
   }
 
   function navigate(module: ModuleId) {
-    router.push(`/app/${module}`);
+    if (module === activeModule) return;
+    startNavigation(() => {
+      router.push(`/app/${module}`);
+    });
   }
 
   let content;
@@ -340,7 +344,7 @@ export function AuthenticatedApp({
                   service: view.filters.service ?? null,
                 },
               }),
-            "Vista analítica guardada",
+            "Vista guardada",
           )
         }
       />
@@ -441,7 +445,7 @@ export function AuthenticatedApp({
     content = (
       <>
         <PeopleWorkspace people={people} events={peopleEvents} leaveRequests={leaveRequests} referenceDate={scenarioAnchorDate} pending={pending} loadError={peopleLoadError} initialFocusId={focusedEntityId} onCreate={(input: PersonInput) => performAction(() => createPersonAction(input), "Perfil añadido")} onUpdate={(id: string, input: PersonInput) => performAction(() => updatePersonAction(id, input), "Perfil actualizado")} />
-        <IntegrationsCenter connectors={integrationConnectors} runs={integrationRuns} issues={dataQualityIssues} kind="people" pending={pending} canManage={canManageIntegrations} onSimulate={(connectorId) => performAction(() => simulateIntegrationAction(connectorId), "Sincronización completada")} />
+        <IntegrationsCenter connectors={integrationConnectors} runs={integrationRuns} issues={dataQualityIssues} kind="people" pending={pending} canManage={canManageIntegrations} onSimulate={(connectorId) => performAction(() => simulateIntegrationAction(connectorId), "Información actualizada")} />
       </>
     );
   } else if (activeModule === "novedades") {
@@ -457,13 +461,13 @@ export function AuthenticatedApp({
     content = (
       <>
         <PayrollWorkspace runs={payrollRuns} participants={payrollParticipants} events={payrollEvents} pending={pending} loadError={payrollLoadError} canManage={canManagePayroll} onCreate={(input: PayrollInput) => performAction(() => createPayrollAction(input), "Ciclo creado")} onUpdate={(id: string, input: PayrollInput) => performAction(() => updatePayrollAction(id, input), "Recopilación agregada actualizada")} onTransition={(id: string, status: PayrollStatus, note: string) => performAction(() => transitionPayrollAction(id, status, note), "Control de Nóminas registrado")} />
-        <IntegrationsCenter connectors={integrationConnectors} runs={integrationRuns} issues={dataQualityIssues} kind="payroll" pending={pending} canManage={canManageIntegrations} onSimulate={(connectorId) => performAction(() => simulateIntegrationAction(connectorId), "Sincronización agregada completada")} />
+        <IntegrationsCenter connectors={integrationConnectors} runs={integrationRuns} issues={dataQualityIssues} kind="payroll" pending={pending} canManage={canManageIntegrations} onSimulate={(connectorId) => performAction(() => simulateIntegrationAction(connectorId), "Información de nóminas actualizada")} />
       </>
     );
   } else if (activeModule === "operaciones") {
-    content = <OperationsWorkspace mode="authenticated" people={people} projects={projects} workspaceConnections={workspaceConnections} automationRules={automationRules} automationRuns={automationRuns} projectTemplates={projectTemplates} recurrenceRules={recurrenceRules} capacityAllocations={capacityAllocations} operationalNotifications={operationalNotifications} exportJobs={exportJobs} pending={pending} loadError={operationsLoadError} canManage={canManageOperations} onCreateRule={(input) => performAction(() => createAutomationRuleAction(input), "Regla creada")} onToggleRule={(id, enabled) => performAction(() => toggleAutomationRuleAction(id, enabled), enabled ? "Regla activada" : "Regla pausada")} onRunRule={(id) => performAction(() => runAutomationRuleAction(id), "Acción preparada para revisión")} onApplyTemplate={(id) => performAction(() => applyProjectTemplateAction(id), "Proyecto creado desde la plantilla")} onAddAllocation={(input) => performAction(() => addCapacityAllocationAction(input), "Asignación guardada")} onMarkNotification={(id, status) => performAction(() => markOperationalNotificationAction(id, status), "Notificación actualizada")} onCreateExport={(input) => performAction(() => createExportJobAction(input), "Exportación preparada")} onDisconnect={(provider) => performAction(() => disconnectWorkspaceAction(provider), "Proveedor desconectado")} />;
+    content = <OperationsWorkspace mode="authenticated" people={people} projects={projects} workspaceConnections={workspaceConnections} automationRules={automationRules} automationRuns={automationRuns} projectTemplates={projectTemplates} recurrenceRules={recurrenceRules} capacityAllocations={capacityAllocations} operationalNotifications={operationalNotifications} exportJobs={exportJobs} pending={pending} loadError={operationsLoadError} canManage={canManageOperations} onCreateRule={(input) => performAction(() => createAutomationRuleAction(input), "Regla creada")} onToggleRule={(id, enabled) => performAction(() => toggleAutomationRuleAction(id, enabled), enabled ? "Regla activada" : "Regla pausada")} onRunRule={(id) => performAction(() => runAutomationRuleAction(id), "Acción preparada para revisión")} onApplyTemplate={(id) => performAction(() => applyProjectTemplateAction(id), "Proyecto creado desde la plantilla")} onAddAllocation={(input) => performAction(() => addCapacityAllocationAction(input), "Asignación guardada")} onMarkNotification={(id, status) => performAction(() => markOperationalNotificationAction(id, status), "Notificación actualizada")} onCreateExport={(input) => performAction(() => createExportJobAction(input), "Informe preparado")} onDisconnect={(provider) => performAction(() => disconnectWorkspaceAction(provider), "Conexión desconectada")} />;
   } else if (activeModule === "configuracion") {
-    content = canManageSettings ? <SettingsWorkspace organizationName={localName} configuration={workspaceConfiguration} moduleSettings={moduleSettings} roles={roles} memberships={memberships} invitations={invitations} auditEvents={adminAuditEvents} pending={pending} loadError={settingsLoadError} onRenameOrganization={(name: string) => performAction(() => renameOrganizationAction(name), "Identidad actualizada").then((ok) => { if (ok) setLocalName(name); return ok; })} onUpdateConfiguration={(configuration) => performAction(() => updateWorkspaceConfigurationAction(configuration), "Políticas actualizadas")} onUpdateModule={(moduleId: ModuleId, enabled: boolean, sortOrder: number) => performAction(() => updateModuleSettingAction({ moduleId, enabled, sortOrder }), "Módulo actualizado")} onUpdateRoleMetadata={(roleId: string, name: string, color: string) => performAction(() => updateRoleMetadataAction(roleId, name, color), "Rol actualizado")} onUpdateRolePermissions={(roleId: string, permissions: PermissionCode[]) => performAction(() => updateRolePermissionsAction(roleId, permissions), "Permisos actualizados")} onCreateInvitation={(email: string, roleId: string) => performAction(() => createInvitationAction(email, roleId), "Invitación creada sin envío externo")} onUpdateMembership={(membershipId: string, roleId: string, status: WorkspaceMembershipStatus) => performAction(() => updateMembershipAction(membershipId, roleId, status), "Acceso actualizado")} onRestoreDataset={() => performAction(() => restoreDemoScenarioV6Action(), "Datos restablecidos")} /> : <main className="workspace" id="main-content"><div className="page-heading"><div><p className="eyebrow">Administración</p><h1>Configuración</h1><p className="lede">Tu rol no permite realizar cambios administrativos en esta organización.</p></div></div><div className="inline-alert" role="status"><strong>Configuración en modo lectura.</strong><span>Solicita el permiso estable <code>settings.workspace.manage</code> a una persona administradora.</span></div></main>;
+    content = canManageSettings ? <SettingsWorkspace organizationName={localName} configuration={workspaceConfiguration} moduleSettings={moduleSettings} roles={roles} memberships={memberships} invitations={invitations} auditEvents={adminAuditEvents} pending={pending} loadError={settingsLoadError} onRenameOrganization={(name: string) => performAction(() => renameOrganizationAction(name), "Identidad actualizada").then((ok) => { if (ok) setLocalName(name); return ok; })} onUpdateConfiguration={(configuration) => performAction(() => updateWorkspaceConfigurationAction(configuration), "Políticas actualizadas")} onUpdateModule={(moduleId: ModuleId, enabled: boolean, sortOrder: number) => performAction(() => updateModuleSettingAction({ moduleId, enabled, sortOrder }), "Módulo actualizado")} onUpdateRoleMetadata={(roleId: string, name: string, color: string) => performAction(() => updateRoleMetadataAction(roleId, name, color), "Rol actualizado")} onUpdateRolePermissions={(roleId: string, permissions: PermissionCode[]) => performAction(() => updateRolePermissionsAction(roleId, permissions), "Permisos actualizados")} onCreateInvitation={(email: string, roleId: string) => performAction(() => createInvitationAction(email, roleId), "Invitación creada sin envío externo")} onUpdateMembership={(membershipId: string, roleId: string, status: WorkspaceMembershipStatus) => performAction(() => updateMembershipAction(membershipId, roleId, status), "Acceso actualizado")} onRestoreDataset={() => performAction(() => restoreDemoScenarioV6Action(), "Datos restablecidos")} /> : <main className="workspace" id="main-content"><div className="page-heading"><div><p className="eyebrow">Administración</p><h1>Configuración</h1><p className="lede">Tu nivel de acceso no permite realizar cambios en esta organización.</p></div></div><div className="inline-alert" role="status"><strong>Configuración en modo lectura.</strong><span>Pide acceso de administración a una persona responsable de la organización.</span></div></main>;
   } else {
     content = (
       <ModuleWorkspace
@@ -498,6 +502,7 @@ export function AuthenticatedApp({
         workspaceSearch={searchWorkspaceAction}
         workspaceInbox={loadWorkspaceInboxAction}
         unreadCount={unreadCount}
+        navigationPending={navigationPending}
       >
         <div aria-busy={pending}>
           {workspaceLoadError ? (

@@ -30,6 +30,7 @@ export const PRODUCT_RELEASES = [
   { version: "1.8.0", title: "Tu empresa, preparada para crecer", summary: "Un nuevo inicio, acceso con Google o Microsoft, varias empresas y sincronización corporativa facilitan la puesta en marcha de cada equipo.", publishedDate: "2026-08-11" },
   { version: "1.8.1", title: "Todo resulta más claro y fácil de usar", summary: "Hemos cuidado el acceso, las personas, las novedades y los indicadores para que encuentres antes lo que necesitas.", publishedDate: "2026-08-11" },
   { version: "1.8.2", title: "Una plataforma más clara y bajo tu control", summary: "Estrenamos una identidad más profesional, acceso con Google o Microsoft y opciones sencillas para gestionar tu privacidad.", publishedDate: "2026-08-13" },
+  { version: "1.8.3", title: "Una experiencia más ágil y fácil de entender", summary: "Los cambios de sección son más fluidos, Microsoft se reconoce mejor y hemos simplificado los textos para que cada opción resulte clara.", publishedDate: "2026-08-13" },
 ] as const satisfies readonly ProductRelease[];
 
 export const LATEST_PRODUCT_RELEASE = PRODUCT_RELEASES.at(-1)!;

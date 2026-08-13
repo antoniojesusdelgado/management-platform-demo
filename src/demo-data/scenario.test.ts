@@ -164,13 +164,14 @@ describe("synthetic demo scenario", () => {
       scenario.changelogEntries.map((entry) => [
         entry.version,
         entry.publishedAt?.slice(0, 10),
-      ]).slice(-5),
+      ]).slice(-6),
     ).toEqual([
       ["1.6.0", "2026-08-10"],
       ["1.7.0", "2026-08-10"],
       ["1.8.0", "2026-08-11"],
       ["1.8.1", "2026-08-11"],
       ["1.8.2", "2026-08-13"],
+      ["1.8.3", "2026-08-13"],
     ]);
   });
 

@@ -1,5 +1,16 @@
 # Seguridad
 
+## Controles verificados en v1.8.3
+
+- El onboarding solo puede actualizar su marca de finalización y sigue
+  protegido por sesión y RLS.
+- La navegación persistente y los cambios de redacción no añaden endpoints ni
+  amplían los permisos de Google, Microsoft o Supabase.
+- La entrada de Novedades se inserta una vez por organización activa mediante
+  una migración aditiva.
+- Las pruebas de publicación cubren privilegios de columna, RLS, secretos,
+  datos públicos, XSS, cabeceras y aislamiento entre organizaciones.
+
 ## Controles añadidos en v1.8.0
 
 - Google y Microsoft usan OAuth con PKCE; la conexión de la suite es distinta

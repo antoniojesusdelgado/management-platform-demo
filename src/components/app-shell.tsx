@@ -17,7 +17,7 @@ import {
 import Image from "next/image";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition, type ReactNode } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { toast } from "sonner";
 import { switchActiveOrganizationAction } from "@/app/app/organization-actions";
 import { InitialsAvatar } from "@/components/initials-avatar";
@@ -45,6 +45,7 @@ type AppShellProps = {
   workspaceSearch?: (query: string) => Promise<ActionResult<WorkspaceSearchResult[]>>;
   workspaceInbox?: () => Promise<ActionResult<WorkspaceWorkItem[]>>;
   unreadCount?: number;
+  navigationPending?: boolean;
   onOpenWorkspaceItem?: (item: WorkspaceSearchResult | WorkspaceWorkItem) => void;
   children: ReactNode;
 };
@@ -65,13 +66,14 @@ const moreModules: Array<{ id: ModuleId; label: string }> = [
   { id: "configuracion", label: "Configuración" },
 ];
 
-function NavItem({ id, label, activeModule, onNavigate }: {
+function NavItem({ id, label, activeModule, onNavigate, onPrefetch }: {
   id: ModuleId;
   label: string;
   activeModule: ModuleId;
   onNavigate: (module: ModuleId) => void;
+  onPrefetch: (module: ModuleId) => void;
 }) {
-  return <button type="button" className="v18-nav-link" aria-current={activeModule === id ? "page" : undefined} onClick={() => onNavigate(id)}>{label}</button>;
+  return <button type="button" className="v18-nav-link" aria-current={activeModule === id ? "page" : undefined} onClick={() => onNavigate(id)} onFocus={() => onPrefetch(id)} onPointerEnter={() => onPrefetch(id)}>{label}</button>;
 }
 
 export function AppShell({
@@ -86,6 +88,7 @@ export function AppShell({
   workspaceSearch,
   workspaceInbox,
   unreadCount = 0,
+  navigationPending = false,
   onOpenWorkspaceItem,
   children,
 }: AppShellProps) {
@@ -95,13 +98,11 @@ export function AppShell({
   const [switching, startSwitch] = useTransition();
   const workActive = workModules.some((module) => module.id === activeModule);
 
-  useEffect(() => {
-    if (mode !== "authenticated") return;
-    for (const navigationModule of ["inicio", "operaciones", "personal", "analitica", "configuracion"] as ModuleId[]) {
-      router.prefetch(`/app/${navigationModule}`);
+  function prefetchModule(module: ModuleId) {
+    if (mode === "authenticated" && module !== activeModule) {
+      router.prefetch(`/app/${module}`);
     }
-    router.prefetch("/app/empresas/nueva" as Route);
-  }, [mode, router]);
+  }
 
   async function signOut() {
     setSigningOut(true);
@@ -132,7 +133,13 @@ export function AppShell({
 
   return (
     <div className="app-frame app-frame-v18">
-      <header className="v18-header">
+      <header className="v18-header" data-navigation-pending={navigationPending ? "true" : undefined}>
+        {navigationPending ? (
+          <div className="v18-navigation-status" role="status" aria-live="polite">
+            <span className="v18-navigation-progress" aria-hidden="true" />
+            <span className="sr-only">Cargando el módulo solicitado…</span>
+          </div>
+        ) : null}
         <div className="v18-header-inner">
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
@@ -151,11 +158,11 @@ export function AppShell({
           </DropdownMenu.Root>
 
           <nav className="v18-desktop-nav" aria-label="Navegación principal">
-            <NavItem id="inicio" label="Inicio" activeModule={activeModule} onNavigate={onNavigate} />
-            <DropdownMenu.Root><DropdownMenu.Trigger asChild><button type="button" className="v18-nav-link" aria-current={workActive ? "page" : undefined}>Trabajo <IconChevronDown size={14} /></button></DropdownMenu.Trigger><DropdownMenu.Portal><DropdownMenu.Content className="v18-dropdown" align="start" sideOffset={8}>{workModules.map((module) => <DropdownMenu.Item key={module.id} className="v18-dropdown-item v18-module-menu-item" onSelect={() => onNavigate(module.id)}><ModuleIcon module={module.id} size={18} /><span>{module.label}</span></DropdownMenu.Item>)}</DropdownMenu.Content></DropdownMenu.Portal></DropdownMenu.Root>
-            <NavItem id="personal" label="Personas" activeModule={activeModule} onNavigate={onNavigate} />
-            <NavItem id="analitica" label="Analítica" activeModule={activeModule} onNavigate={onNavigate} />
-            <NavItem id="configuracion" label="Configuración" activeModule={activeModule} onNavigate={onNavigate} />
+            <NavItem id="inicio" label="Inicio" activeModule={activeModule} onNavigate={onNavigate} onPrefetch={prefetchModule} />
+            <DropdownMenu.Root><DropdownMenu.Trigger asChild><button type="button" className="v18-nav-link" aria-current={workActive ? "page" : undefined}>Trabajo <IconChevronDown size={14} /></button></DropdownMenu.Trigger><DropdownMenu.Portal><DropdownMenu.Content className="v18-dropdown" align="start" sideOffset={8}>{workModules.map((module) => <DropdownMenu.Item key={module.id} className="v18-dropdown-item v18-module-menu-item" onFocus={() => prefetchModule(module.id)} onPointerMove={() => prefetchModule(module.id)} onSelect={() => onNavigate(module.id)}><ModuleIcon module={module.id} size={18} /><span>{module.label}</span></DropdownMenu.Item>)}</DropdownMenu.Content></DropdownMenu.Portal></DropdownMenu.Root>
+            <NavItem id="personal" label="Personas" activeModule={activeModule} onNavigate={onNavigate} onPrefetch={prefetchModule} />
+            <NavItem id="analitica" label="Analítica" activeModule={activeModule} onNavigate={onNavigate} onPrefetch={prefetchModule} />
+            <NavItem id="configuracion" label="Configuración" activeModule={activeModule} onNavigate={onNavigate} onPrefetch={prefetchModule} />
           </nav>
 
           <div className="v18-header-actions">

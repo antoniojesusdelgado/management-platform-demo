@@ -204,7 +204,7 @@ export function IncidentsWorkspace({
           </strong>
         </article>
         <article className="card">
-          <span className="muted">SLA vencido</span>
+          <span className="muted">Fuera de plazo</span>
           <strong className="metric-value">{overdue}</strong>
         </article>
         <article className="card">
@@ -292,7 +292,7 @@ export function IncidentsWorkspace({
                   <span className="muted">
                     {item.projectName ?? "Sin proyecto"} ·{" "}
                     {categoryLabels[item.category]} ·{" "}
-                    {item.assigneeName ?? "Sin asignar"} · SLA{" "}
+                    {item.assigneeName ?? "Sin asignar"} · Fecha límite{" "}
                     {formatDateTime(item.slaDueAt)}
                   </span>
                 </span>
@@ -573,7 +573,7 @@ export function IncidentsWorkspace({
                     </p>
                   ) : null}
                   <p className="muted">
-                    SLA:{" "}
+                    Fecha límite:{" "}
                     {formatDateTime(selected.slaDueAt)}
                   </p>
                   {selected.resolution ? (

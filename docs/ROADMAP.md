@@ -1,5 +1,17 @@
 # Hoja de ruta
 
+## v1.8.3 — Fluidez y lenguaje claro
+
+- [x] Navegación entre módulos sin pantallazos blancos.
+- [x] Indicador de progreso accesible sin desmontar la cabecera.
+- [x] Acceso Microsoft con identidad visual reconocible y estado real del proveedor.
+- [x] Consentimiento analítico compacto y no intrusivo.
+- [x] Lenguaje de producto comprensible en módulos, formularios y mensajes.
+- [x] Finalización del onboarding con privilegio mínimo de columna y RLS.
+- [x] Novedades v1.8.3 añadidas de forma aditiva por organización.
+- [ ] Consentimiento administrativo real de Google Workspace Directory.
+- [ ] Activar sincronización horaria cuando el plan o programador lo permita.
+
 ## v1.8.2 — Acceso, rendimiento y seguridad
 
 - [x] Identidad visual única en login, PWA, favicon y tarjeta social.
@@ -150,12 +162,12 @@
 ## Estado de publicación
 
 - Origen canónico: <https://plataformagestion.app>
-- Alternativa de Vercel: se actualizará al renombrar el proyecto en el cierre de v1.8.2.
+- Alternativa de Vercel: se obtiene de la Preview asociada al commit validado.
 - Las Preview se generan desde pull requests y se promueven tras completar la
   validación funcional, visual y de seguridad.
-- Versión candidata a publicación: `v1.8.2`.
+- Versión candidata a publicación: `v1.8.3`.
 - Historial de base de datos: migraciones ordenadas hasta
-  `20260813120000_finalize_v1_8_2_product_copy.sql`.
+  `20260813170000_release_v1_8_3_product_polish.sql`.
 - Acceso, cierre de sesión y redirecciones protegidas de Google OAuth validados
   en Preview y producción.
 - Flujos públicos validados en escritorio y móvil con Playwright y Axe.

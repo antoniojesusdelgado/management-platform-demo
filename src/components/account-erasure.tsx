@@ -39,7 +39,7 @@ export function AccountErasure() {
       </div>
       <p className="muted">
         Desconecta tus integraciones, anonimiza tu identidad y desactiva el
-        acceso de forma irreversible. La trazabilidad operativa se conserva sin
+        acceso de forma irreversible. El historial de actividad se conserva sin
         datos que te identifiquen.
       </p>
       {!expanded ? (
