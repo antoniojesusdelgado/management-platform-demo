@@ -36,8 +36,8 @@ function contentSecurityPolicy(frameAncestors: string) {
     "img-src 'self' data: blob: https://*.supabase.co",
     "font-src 'self' data:",
     "style-src 'self' 'unsafe-inline'",
-    `script-src 'self' 'unsafe-inline'${devScriptPolicy}`,
-    "connect-src 'self' https://*.supabase.co",
+    `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com${devScriptPolicy}`,
+    "connect-src 'self' https://*.supabase.co https://*.google-analytics.com https://www.googletagmanager.com",
     "upgrade-insecure-requests",
   ].join("; ");
 }
@@ -69,7 +69,7 @@ const nextConfig: NextConfig = {
 
     return [
       {
-        source: "/demo/embed",
+        source: "/explorar",
         headers: frameableHeaders,
       },
       {
@@ -77,7 +77,7 @@ const nextConfig: NextConfig = {
         headers: frameableHeaders,
       },
       {
-        source: "/((?!demo/embed|login).*)",
+        source: "/((?!explorar|demo/embed|login).*)",
         headers: [
           ...securityHeaders,
           {
@@ -86,6 +86,15 @@ const nextConfig: NextConfig = {
           },
           { key: "X-Frame-Options", value: "DENY" },
         ],
+      },
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: "/demo/embed",
+        destination: "/explorar",
+        permanent: true,
       },
     ];
   },

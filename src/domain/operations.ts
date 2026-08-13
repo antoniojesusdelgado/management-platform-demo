@@ -1,7 +1,14 @@
 import { z } from "zod";
 import { plainTextSchema } from "@/domain/validation";
 
+const normalizedIsoDateTimeSchema = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? value : new Date(timestamp).toISOString();
+}, z.iso.datetime({ offset: true }));
+
 export const workspaceProviders = ["google_workspace", "microsoft_365"] as const;
+export const oauthGrantPurposes = ["sign_in", "productivity", "directory"] as const;
 export const workspaceCapabilities = ["files", "spreadsheets", "mail", "calendar"] as const;
 export const directoryCapabilities = ["directory_users", "directory_teams"] as const;
 export const automationTriggers = [
@@ -19,6 +26,7 @@ export const exportTargets = ["csv", "xlsx", "google_sheets", "microsoft_excel"]
 export const exportStatuses = ["pending", "ready", "failed", "cancelled"] as const;
 
 export type WorkspaceProvider = (typeof workspaceProviders)[number];
+export type OAuthGrantPurpose = (typeof oauthGrantPurposes)[number];
 export type WorkspaceCapability = (typeof workspaceCapabilities)[number];
 export type DirectoryCapability = (typeof directoryCapabilities)[number];
 export type AutomationTrigger = (typeof automationTriggers)[number];
@@ -132,11 +140,11 @@ export const workspaceConnectionSchema = z.object({
   status: z.enum(["simulated", "connected", "expired", "revoked"]),
   capabilities: z.array(z.enum(workspaceCapabilities)).max(workspaceCapabilities.length),
   accountLabel: plainTextSchema({ min: 2, max: 120 }),
-  connectedAt: z.iso.datetime({ offset: true }).nullable(),
+  connectedAt: normalizedIsoDateTimeSchema.nullable(),
   grantedScopes: z.array(z.string().min(1).max(240)).max(32),
   accountKind: z.enum(["unknown", "consumer", "corporate"]),
   directoryStatus: z.enum(["not_configured", "permission_required", "ready", "syncing", "error", "paused"]),
-  lastSyncedAt: z.iso.datetime({ offset: true }).nullable(),
+  lastSyncedAt: normalizedIsoDateTimeSchema.nullable(),
   lastErrorCode: z.string().max(120).nullable(),
   canSyncDirectory: z.boolean(),
 });
@@ -152,7 +160,7 @@ export const automationRuleSchema = z.object({
     value: plainTextSchema({ min: 1, max: 80 }),
   }).nullable(),
   enabled: z.boolean(),
-  lastRunAt: z.iso.datetime({ offset: true }).nullable(),
+  lastRunAt: normalizedIsoDateTimeSchema.nullable(),
 });
 
 export const automationRuleInputSchema = automationRuleSchema.pick({
@@ -164,7 +172,7 @@ export const automationRunSchema = z.object({
   ruleId: z.string().min(1).max(160),
   status: z.enum(["succeeded", "failed", "skipped"]),
   summary: plainTextSchema({ min: 3, max: 240 }),
-  createdAt: z.iso.datetime({ offset: true }),
+  createdAt: normalizedIsoDateTimeSchema,
 });
 
 export const projectTemplateSchema = z.object({
@@ -203,7 +211,7 @@ export const operationalNotificationSchema = z.object({
   status: z.enum(notificationStatuses),
   source: z.enum(["assignment", "review", "deadline", "automation", "mention"]),
   href: z.string().startsWith("/app/").max(240),
-  createdAt: z.iso.datetime({ offset: true }),
+  createdAt: normalizedIsoDateTimeSchema,
 });
 
 export const exportJobSchema = z.object({
@@ -213,7 +221,7 @@ export const exportJobSchema = z.object({
   target: z.enum(exportTargets),
   status: z.enum(exportStatuses),
   rowCount: z.number().int().min(0).max(25_000),
-  createdAt: z.iso.datetime({ offset: true }),
+  createdAt: normalizedIsoDateTimeSchema,
   externalUrl: z.url().nullable(),
 });
 
@@ -247,7 +255,7 @@ export function createDefaultOperationsState(anchorDate = "2026-08-10"): Operati
       provider,
       status: "simulated",
       capabilities: [...workspaceCapabilities],
-      accountLabel: provider === "google_workspace" ? "Google Workspace de demostración" : "Microsoft 365 de demostración",
+      accountLabel: provider === "google_workspace" ? "Google Workspace simulado" : "Microsoft 365 simulado",
       connectedAt: null,
       grantedScopes: [],
       accountKind: "corporate",

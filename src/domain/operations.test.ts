@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { buildMailComposerUrl, buildMailtoUrl, capacityStatus, createDefaultOperationsState, operationsStateSchema } from "@/domain/operations";
+import { buildMailComposerUrl, buildMailtoUrl, capacityStatus, createDefaultOperationsState, operationsStateSchema, workspaceConnectionSchema } from "@/domain/operations";
 
 describe("operations domain", () => {
   test("creates a valid deterministic guest state", () => {
@@ -21,6 +21,15 @@ describe("operations domain", () => {
     });
 
     expect(result.success).toBe(true);
+  });
+
+  test("normalizes PostgreSQL timestamps that omit offset minutes", () => {
+    const connection = createDefaultOperationsState().workspaceConnections[0]!;
+    const result = workspaceConnectionSchema.parse({
+      ...connection,
+      connectedAt: "2026-08-12 09:15:00+00",
+    });
+    expect(result.connectedAt).toBe("2026-08-12T09:15:00.000Z");
   });
 
   test("reports overload without blocking the allocation", () => {

@@ -32,7 +32,7 @@ test("access stays complete and collision-free on web and mobile", async ({
     await expect(page.getByRole("heading", { name: "Todo el trabajo, en un solo lugar" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Entra en tu espacio" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Continuar con Google" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Explorar sin iniciar sesión" })).toBeVisible();
+    await expect(page.locator('a[href="/explorar"]')).toBeVisible();
     await expect(page.getByText("© 2026 Antonio Jesús Delgado Briones. Todos los derechos reservados.")).toBeVisible();
 
     const layout = await page.evaluate(() => {

@@ -37,7 +37,7 @@ export default defineConfig({
     : {
         command:
           "node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3001",
-        url: `${baseURL}/demo/embed`,
+        url: `${baseURL}/explorar`,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
       },

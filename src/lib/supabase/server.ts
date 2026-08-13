@@ -1,9 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { publicEnv } from "@/lib/env";
 import type { Database } from "@/lib/supabase/database.types";
 
-export async function createClient() {
+export const createClient = cache(async function createClient() {
   if (!publicEnv.supabaseUrl || !publicEnv.supabasePublishableKey) {
     throw new Error("Supabase is not configured");
   }
@@ -31,4 +32,4 @@ export async function createClient() {
       },
     },
   );
-}
+});

@@ -21,7 +21,7 @@ export const PRODUCT_RELEASES = [
   { version: "1.3.0", title: "Elige cómo quieres trabajar", summary: "Tema claro por defecto, modo oscuro opcional y una visión de la actividad siempre actualizada.", publishedDate: "2026-06-23" },
   { version: "1.3.1", title: "Más cómoda en móvil y más segura", summary: "Las tareas se consultan mejor desde el teléfono y la protección de los datos se ha reforzado.", publishedDate: "2026-07-29" },
   { version: "1.3.2", title: "Un directorio más cercano y claro", summary: "Todos los perfiles muestran nombres completos y las novedades son ahora más fáciles de entender.", publishedDate: "2026-07-30" },
-  { version: "1.4.0", title: "Un acceso más claro y seguro", summary: "La pantalla inicial permite elegir con claridad entre recorrer la demo o continuar con Google.", publishedDate: "2026-08-03" },
+  { version: "1.4.0", title: "Un acceso más claro y seguro", summary: "La pantalla inicial permite elegir con claridad entre explorar la plataforma o continuar con Google.", publishedDate: "2026-08-03" },
   { version: "1.4.1", title: "Acceso más fiable desde cualquier dispositivo", summary: "El inicio con Google y la recuperación de la sesión funcionan mejor dentro y fuera del móvil.", publishedDate: "2026-08-03" },
   { version: "1.5.0", title: "Seguridad reforzada de principio a fin", summary: "Se han revisado los permisos, las validaciones y los controles que protegen cada publicación.", publishedDate: "2026-08-05" },
   { version: "1.5.1", title: "Novedades siempre al día", summary: "La versión visible coincide ahora con la publicación disponible y se explica cómo se ha desarrollado el proyecto.", publishedDate: "2026-08-07" },
@@ -29,6 +29,7 @@ export const PRODUCT_RELEASES = [
   { version: "1.7.0", title: "Menos tareas repetitivas, más control", summary: "Automatizaciones, plantillas, planificación de capacidad e informes conectados reúnen el trabajo operativo en un mismo lugar.", publishedDate: "2026-08-10" },
   { version: "1.8.0", title: "Tu empresa, preparada para crecer", summary: "Un nuevo inicio, acceso con Google o Microsoft, varias empresas y sincronización corporativa facilitan la puesta en marcha de cada equipo.", publishedDate: "2026-08-11" },
   { version: "1.8.1", title: "Todo resulta más claro y fácil de usar", summary: "Hemos cuidado el acceso, las personas, las novedades y los indicadores para que encuentres antes lo que necesitas.", publishedDate: "2026-08-11" },
+  { version: "1.8.2", title: "Una plataforma más clara y bajo tu control", summary: "Estrenamos una identidad más profesional, acceso con Google o Microsoft y opciones sencillas para gestionar tu privacidad.", publishedDate: "2026-08-13" },
 ] as const satisfies readonly ProductRelease[];
 
 export const LATEST_PRODUCT_RELEASE = PRODUCT_RELEASES.at(-1)!;

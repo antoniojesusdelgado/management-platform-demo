@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 import { LegalFooter } from "@/components/legal-footer";
 
 export default function LegalNoticePage() {
@@ -8,8 +9,8 @@ export default function LegalNoticePage() {
         <p className="eyebrow">Información legal</p>
         <h1>Aviso legal y propiedad intelectual</h1>
         <p>
-          Antonio Jesús Delgado Briones es autor y titular de esta réplica técnica
-          pública, de su código original, documentación, identidad visual y
+          Antonio Jesús Delgado Briones es autor y titular de la Plataforma de
+          gestión, de su código original, documentación, identidad visual y
           materiales propios, salvo los componentes de terceros identificados en
           el inventario de licencias.
         </p>
@@ -21,22 +22,20 @@ export default function LegalNoticePage() {
         </p>
         <p>
           El proyecto original fue realizado e implantado en Fundación
-          Cibervoluntarios. Esta réplica posterior no contiene código, datos,
+          Cibervoluntarios. Esta implementación posterior no contiene código, datos,
           documentos, credenciales, reglas internas, pantallas ni conexiones del
           sistema de la Fundación. Su mención explica el origen funcional y no
           implica patrocinio, afiliación o respaldo del repositorio público.
         </p>
         <p>
-          El servicio se facilita con fines de demostración técnica. Aunque se han
-          aplicado medidas de calidad y seguridad, no sustituye a un sistema de
-          producción ni constituye asesoramiento laboral, financiero o jurídico.
+          El servicio se facilita como producto digital en evolución. Aunque se
+          aplican medidas de calidad y seguridad, su uso no constituye asesoramiento
+          laboral, financiero o jurídico.
         </p>
-        <h2>Desarrollo asistido</h2>
+        <h2>Transparencia del desarrollo</h2>
         <p>
-          Esta réplica se ha desarrollado mediante programación asistida con
-          ChatGPT Codex, bajo dirección, revisión y validación humana. ChatGPT
-          Codex no forma parte del producto en ejecución: la aplicación no llama
-          a modelos de inteligencia artificial ni necesita claves de OpenAI.
+          La metodología, la supervisión humana y las referencias normativas se
+          explican en <Link href={"/transparencia-ia" as Route}>Transparencia con IA</Link>.
         </p>
         <Link className="button button-secondary" href="/login">
           Volver al acceso

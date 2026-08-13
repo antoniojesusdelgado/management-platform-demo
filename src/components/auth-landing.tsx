@@ -1,6 +1,5 @@
 import {
   IconBrandWindows,
-  IconBuilding,
   IconCircleCheck,
   IconHelpCircle,
   IconLock,
@@ -10,6 +9,7 @@ import {
 } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
+import type { Route } from "next";
 import { LegalFooter } from "@/components/legal-footer";
 import { getWorkspaceAccess } from "@/lib/auth";
 import { getSignInProviderAvailability } from "@/lib/env";
@@ -53,7 +53,7 @@ export async function AuthLanding({ errorCode }: AuthLandingProps) {
     <main className="oauth-page oauth-page-v181">
       <header className="oauth-header oauth-header-v181">
         <Link className="oauth-brand" href="/" aria-label="Plataforma de gestión">
-          <span className="oauth-brand-mark" aria-hidden="true"><IconBuilding size={25} /></span>
+          <Image className="oauth-brand-mark" src="/brand-symbol.svg" alt="" width={48} height={48} priority />
           <span className="oauth-brand-copy">
             <small>Plataforma de gestión</small>
             <strong>Plataforma de gestión</strong>
@@ -87,7 +87,7 @@ export async function AuthLanding({ errorCode }: AuthLandingProps) {
             <div className="oauth-card-heading">
               <p className="eyebrow">Acceso seguro</p>
               <h2>Entra en tu espacio</h2>
-              <p className="muted">Usa tu cuenta corporativa para continuar.</p>
+              <p className="muted">Elige cómo quieres acceder.</p>
             </div>
 
             {error ? <div className="inline-alert" role="alert"><strong>No se pudo completar el acceso.</strong><span>{error}</span></div> : null}
@@ -108,18 +108,18 @@ export async function AuthLanding({ errorCode }: AuthLandingProps) {
                     <IconBrandWindows aria-hidden="true" size={20} />
                     Continuar con Microsoft
                   </button>
-                  <span id="microsoft-provider-help">La conexión con Microsoft 365 no está configurada.</span>
+                  <span id="microsoft-provider-help">{providers.azure.reason}</span>
                 </div>
               )}
             </div>
 
             <div className="oauth-divider"><span>o</span></div>
-            <Link className="button button-secondary oauth-secondary" href="/demo/embed">
-              <IconUser aria-hidden="true" size={22} /> Explorar sin iniciar sesión
+            <Link className="button button-secondary oauth-secondary" href={"/explorar" as Route}>
+              <IconUser aria-hidden="true" size={22} /> Explorar la plataforma
             </Link>
 
             <p className="oauth-session-note"><IconLock aria-hidden="true" size={15} />Cada empresa mantiene sus datos y permisos aislados.</p>
-            <p className="oauth-legal">Al continuar aceptas la <a href="/privacidad">Privacidad</a>, la <a href="/procedencia-datos">Procedencia de los datos</a> y el <a href="/aviso-legal">Aviso legal</a>.</p>
+            <p className="oauth-legal">Al continuar aceptas la <a href="/privacidad">Privacidad</a>, la <a href="/procedencia-datos">Procedencia de los datos</a> y el <a href="/aviso-legal">Aviso legal</a>. Consulta también la <Link href={"/transparencia-ia" as Route}>Transparencia con IA</Link>.</p>
           </div>
         </section>
       </div>

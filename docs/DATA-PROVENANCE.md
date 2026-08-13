@@ -2,7 +2,7 @@
 
 ## Finalidad y límite de seguridad
 
-La demo pública contiene únicamente registros ficticios deterministas. No se
+El modo público de exploración contiene únicamente registros ficticios deterministas. No se
 conecta en ejecución a una base de datos SQL pública, no copia filas de fuentes
 externas ni conserva nombres, direcciones, identificadores, descripciones de
 transacciones, documentos, números de cuenta, retribuciones individuales u
@@ -13,7 +13,7 @@ semilla y fecha de referencia producen siempre el mismo grafo de entidades
 ficticias. La configuración de referencia es:
 
 - Versión del escenario: `7`
-- Contrato de estado invitado: `GuestDemoState V21`
+- Contrato activo de estado invitado: `GuestWorkspaceState V21` (alias compatible de `GuestDemoState V21`)
 - Semilla: `management-platform-standard-v7`
 - Intervalo visible: `2025-01-01` a `2026-08-09`
 - Fecha de referencia: `2026-08-09`

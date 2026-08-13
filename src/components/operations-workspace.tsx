@@ -282,7 +282,8 @@ function IntegrationCard({
 }) {
   const google = connection.provider === "google_workspace";
   const providerName = google ? "Google Workspace" : "Microsoft 365";
-  const connectHref = `/api/workspace/oauth/${connection.provider}/start`;
+  const connectHref = `/api/workspace/oauth/${connection.provider}/start?purpose=productivity`;
+  const directoryHref = `/api/workspace/oauth/${connection.provider}/start?purpose=directory`;
   const directoryCopy = connection.directoryStatus === "ready"
     ? connection.lastSyncedAt ? `Directorio autorizado · Última sincronización ${new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(new Date(connection.lastSyncedAt))}` : "Directorio corporativo autorizado"
     : connection.directoryStatus === "syncing"
@@ -304,7 +305,7 @@ function IntegrationCard({
         <>
           <p className={`integration-readiness readiness-${connection.directoryStatus}`}>{directoryCopy}</p>
           <div className="operation-actions">
-            {connection.canSyncDirectory ? <button className="button button-primary" type="button" disabled={syncBlocked} onClick={onSync}>{syncing ? "Sincronizando…" : "Sincronizar directorio"}</button> : connection.accountKind !== "consumer" ? <a className="button button-primary" href={connectHref}>Ampliar permisos</a> : null}
+            {connection.canSyncDirectory ? <button className="button button-primary" type="button" disabled={syncBlocked} onClick={onSync}>{syncing ? "Sincronizando…" : "Sincronizar directorio"}</button> : connection.accountKind !== "consumer" ? <a className="button button-primary" href={directoryHref}>Solicitar consentimiento de directorio</a> : null}
             <button className="button button-secondary" type="button" onClick={onDisconnect}>Desconectar</button>
           </div>
         </>

@@ -1,4 +1,5 @@
 import { IconSettings } from "@tabler/icons-react";
+import type { Route } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AuthenticatedApp } from "@/components/authenticated-app";
@@ -79,8 +80,8 @@ export default async function AppModulePage({
               La aplicación autenticada se activará cuando se autorice el coste
               del proyecto independiente y se configuren las variables.
             </p>
-            <Link className="button button-primary" href="/demo/embed">
-              Entrar sin cuenta
+            <Link className="button button-primary" href={"/explorar" as Route}>
+              Explorar la plataforma
             </Link>
           </div>
           <aside className="demo-note">

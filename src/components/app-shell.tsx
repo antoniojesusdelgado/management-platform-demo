@@ -30,6 +30,9 @@ import type { ActiveOrganization } from "@/domain/organizations";
 import type { WorkspaceSearchResult, WorkspaceWorkItem } from "@/domain/workspace-productivity";
 import { createClient } from "@/lib/supabase/client";
 
+const GUEST_STORAGE_KEY = "management-platform:v1";
+const LEGACY_GUEST_STORAGE_KEY = "management-platform-demo:v1";
+
 type AppShellProps = {
   activeModule: ModuleId;
   organizationName: string;
@@ -102,6 +105,13 @@ export function AppShell({
 
   async function signOut() {
     setSigningOut(true);
+    if (mode === "guest") {
+      window.sessionStorage.removeItem(GUEST_STORAGE_KEY);
+      window.sessionStorage.removeItem(LEGACY_GUEST_STORAGE_KEY);
+      router.replace("/login");
+      router.refresh();
+      return;
+    }
     const { error } = await createClient().auth.signOut({ scope: "local" });
     if (error) { setSigningOut(false); toast.error("No se pudo cerrar la sesión."); return; }
     router.replace("/login");
@@ -127,8 +137,8 @@ export function AppShell({
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
               <button type="button" className="v18-company-switcher" disabled={switching} aria-label="Cambiar empresa">
-                <span className="v18-brand-symbol"><IconBuilding size={18} aria-hidden="true" /></span>
-                <span><small>{mode === "guest" ? "Demostración" : "Empresa activa"}</small><strong>{mode === "guest" ? "Entorno de ejemplo" : organizationName}</strong></span>
+                <Image className="v18-brand-symbol" src="/brand-symbol.svg" alt="" width={36} height={36} priority />
+                <span><small>{mode === "guest" ? "Modo de exploración" : "Empresa activa"}</small><strong>{mode === "guest" ? "Datos ficticios" : organizationName}</strong></span>
                 {mode === "authenticated" ? <IconChevronDown size={16} aria-hidden="true" /> : null}
               </button>
             </DropdownMenu.Trigger>
@@ -151,7 +161,7 @@ export function AppShell({
           <div className="v18-header-actions">
             {workspaceSearch && workspaceInbox ? <WorkspaceCommandCenter search={workspaceSearch} loadInbox={workspaceInbox} initialUnreadCount={unreadCount} onOpenItem={onOpenWorkspaceItem} /> : null}
             {onReset ? <button type="button" className="v18-icon-button v18-reset" onClick={onReset} aria-label="Restaurar datos"><IconRefresh size={18} /></button> : null}
-            <DropdownMenu.Root><DropdownMenu.Trigger asChild><button className="profile-indicator" type="button" aria-label="Abrir menú de usuario">{avatarUrl ? <Image className="profile-indicator-image" src={avatarUrl} alt="" width={36} height={36} unoptimized /> : <InitialsAvatar displayName={mode === "guest" ? "Usuario invitado" : displayName ?? "Mi cuenta"} size="small" />}<IconChevronDown size={14} /></button></DropdownMenu.Trigger><DropdownMenu.Portal><DropdownMenu.Content className="user-menu" align="end" sideOffset={8}><div className="user-menu-header"><strong>{mode === "guest" ? "Usuario invitado" : displayName ?? "Mi cuenta"}</strong><span>{mode === "guest" ? `Versión ${PRODUCT_VERSION}` : organizationName}</span></div><DropdownMenu.Separator className="user-menu-separator" /><DropdownMenu.Item className="user-menu-item" onSelect={() => router.push(mode === "authenticated" ? "/app/perfil" : "/app/configuracion")}><IconSettings size={18} />Preferencias</DropdownMenu.Item>{mode === "authenticated" ? <><DropdownMenu.Separator className="user-menu-separator" /><DropdownMenu.Item className="user-menu-item user-menu-danger" disabled={signingOut} onSelect={signOut}><IconLogout size={18} />{signingOut ? "Cerrando sesión…" : "Cerrar sesión"}</DropdownMenu.Item></> : null}</DropdownMenu.Content></DropdownMenu.Portal></DropdownMenu.Root>
+            <DropdownMenu.Root><DropdownMenu.Trigger asChild><button className="profile-indicator" type="button" aria-label="Abrir menú de usuario">{avatarUrl ? <Image className="profile-indicator-image" src={avatarUrl} alt="" width={36} height={36} unoptimized /> : <InitialsAvatar displayName={mode === "guest" ? "Usuario invitado" : displayName ?? "Mi cuenta"} size="small" />}<IconChevronDown size={14} /></button></DropdownMenu.Trigger><DropdownMenu.Portal><DropdownMenu.Content className="user-menu" align="end" sideOffset={8}><div className="user-menu-header"><strong>{mode === "guest" ? "Usuario invitado" : displayName ?? "Mi cuenta"}</strong><span>{mode === "guest" ? `Versión ${PRODUCT_VERSION}` : organizationName}</span></div><DropdownMenu.Separator className="user-menu-separator" /><DropdownMenu.Item className="user-menu-item" onSelect={() => router.push(mode === "authenticated" ? "/app/perfil" : "/app/configuracion")}><IconSettings size={18} />Preferencias</DropdownMenu.Item><DropdownMenu.Separator className="user-menu-separator" /><DropdownMenu.Item className="user-menu-item user-menu-danger" disabled={signingOut} onSelect={signOut}><IconLogout size={18} />{signingOut ? "Cerrando sesión…" : "Cerrar sesión"}</DropdownMenu.Item></DropdownMenu.Content></DropdownMenu.Portal></DropdownMenu.Root>
           </div>
         </div>
       </header>

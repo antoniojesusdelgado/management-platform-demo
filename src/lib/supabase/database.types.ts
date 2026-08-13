@@ -396,6 +396,33 @@ export type Database = {
           },
         ]
       }
+      data_erasure_requests: {
+        Row: {
+          completed_at: string | null
+          id: string
+          requested_at: string
+          retention_until: string
+          status: string
+          subject_reference: string
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          requested_at?: string
+          retention_until?: string
+          status?: string
+          subject_reference: string
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          requested_at?: string
+          retention_until?: string
+          status?: string
+          subject_reference?: string
+        }
+        Relationships: []
+      }
       data_quality_issues: {
         Row: {
           code: string
@@ -3198,6 +3225,7 @@ export type Database = {
         Args: { target_checksum: string; target_organization_id: string }
         Returns: undefined
       }
+      prepare_own_account_erasure_v1_8_2: { Args: never; Returns: undefined }
       refresh_directory_connection_secret_v1_8: {
         Args: {
           target_access_token: string

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { GuestDemoState } from "@/domain/guest-demo";
+import type { GuestWorkspaceState } from "@/domain/guest-workspace";
 import type { ModuleId } from "@/domain/modules";
 import { plainTextSchema } from "@/domain/validation";
 
@@ -67,7 +67,7 @@ const taskPriority = (priority: string): WorkspacePriority =>
   priority === "urgent" ? "critical" : priority as WorkspacePriority;
 
 export function searchGuestWorkspace(
-  state: GuestDemoState,
+  state: GuestWorkspaceState,
   rawQuery: string,
 ): WorkspaceSearchResult[] {
   const parsed = workspaceSearchQuerySchema.safeParse(rawQuery);
@@ -141,7 +141,7 @@ const priorityOrder: Record<WorkspacePriority, number> = {
 };
 
 export function buildGuestWorkItems(
-  state: GuestDemoState,
+  state: GuestWorkspaceState,
   currentUserName = "Usuario invitado",
 ): WorkspaceWorkItem[] {
   const tasks: WorkspaceWorkItem[] = state.tasks

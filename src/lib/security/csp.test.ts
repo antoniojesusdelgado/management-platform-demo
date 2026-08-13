@@ -10,6 +10,7 @@ describe("dynamic CSP", () => {
     expect(isDynamicSurface("/auth/callback")).toBe(true);
     expect(isDynamicSurface("/login")).toBe(true);
     expect(isDynamicSurface("/")).toBe(false);
+    expect(isDynamicSurface("/explorar")).toBe(true);
     expect(isDynamicSurface("/demo/embed")).toBe(true);
   });
 
@@ -19,6 +20,8 @@ describe("dynamic CSP", () => {
     expect(policy).toContain("script-src 'self' 'nonce-trusted-nonce'");
     expect(policy).toContain("'strict-dynamic'");
     expect(policy).not.toContain("script-src 'self' 'unsafe-inline'");
+    expect(policy).toContain("https://www.googletagmanager.com");
+    expect(policy).toContain("https://*.google-analytics.com");
   });
 
   test("allows only the configured portfolio to frame trusted entry routes", () => {

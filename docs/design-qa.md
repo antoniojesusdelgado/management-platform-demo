@@ -1,9 +1,28 @@
-# Revisión visual y de producto — v1.8.1
+# Revisión visual y de producto — v1.8.2
 
-Fecha: 12 de agosto de 2026
+Fecha: 13 de agosto de 2026
 
-Estado: aprobado para publicación
+Estado: aprobado en la Preview final
 Resultado final: **passed**
+
+La implementación local incorpora además el aviso compacto de analítica
+opcional. En móvil se presenta como una superficie inferior con acciones de
+rechazo y aceptación equivalentes; no carga GA4 antes de una decisión
+afirmativa. La captura definitiva se regenerará desde la Preview para no
+confundir evidencia local con producción.
+
+## Cambios que deben verificarse
+
+- Logotipo canónico en acceso, cabecera, favicon, PWA y tarjeta social.
+- Acceso sin solapamientos ni scroll ordinario a 320, 360, 390, 768, 1024 y
+  1440 px, en tema claro y oscuro.
+- Cierre de sesión del invitado con limpieza del estado local.
+- Google y Microsoft como identidad básica; permisos adicionales únicamente
+  desde Integraciones.
+- Avatares válidos, corruptos, sobredimensionados y con MIME falseado.
+
+La Preview final se comparó con la evidencia local y no conserva incidencias
+P0–P2 abiertas.
 
 ## Alcance
 
@@ -26,7 +45,7 @@ además a 320×568, 360×800, 390×844, 768×1024, 1024×768,
 | Novedades y redacción | 96/100 | Lenguaje orientado a beneficios y orden descendente por fecha y versión. |
 | Analítica interactiva | 94/100 | Cinco vistas, filtros cruzados, KPIs accionables, lecturas guiadas y detalle contextual reproducible. |
 | Accesibilidad | 97/100 | 20 recorridos axe WCAG A/AA en escritorio y móvil, sin infracciones detectadas. |
-| Seguridad | 92/100 | CSP con nonce, cabeceras, XSS, cookies, secretos, datos públicos, RLS y 387 pruebas pgTAP superadas. |
+| Seguridad | 92/100 | CSP con nonce, cabeceras, XSS, cookies, secretos, datos públicos, RLS y 400 pruebas pgTAP superadas. |
 | Rendimiento percibido | 90/100 | Layout persistente, paginación y carga acotada. Las transiciones E2E no congelan la cabecera. |
 
 **Puntuación global: 95/100.** El umbral de aceptación era 92/100 global y
@@ -45,6 +64,13 @@ además a 320×568, 360×800, 390×844, 768×1024, 1024×768,
   ninguna RPC en este ajuste visual.
 
 ## Evidencia visual
+
+Preview aprobada: `https://management-platform-demo-g766canws.vercel.app`
+
+La comprobación funcional de la Preview confirma el acceso de Google, el
+acceso Microsoft multicuenta con PKCE hasta el onboarding, la exploración sin
+registro, el consentimiento analítico denegado por defecto y las páginas
+legales y de transparencia.
 
 ### Acceso
 
@@ -76,18 +102,18 @@ El generador reproducible es `bun run visual:review` y guarda las capturas en
 
 - `bun run lint`
 - `bun run typecheck`
-- `bun run test` — 106 pruebas superadas.
+- `bun run test` — 110 pruebas superadas.
 - `bun run content:validate`
 - `bun run security:public-data`
 - `bun run security:secrets`
 - `bun audit --audit-level=high`
 - `bun run build`
-- `bun run e2e` — 86 superadas y 8 omisiones previstas por proyecto.
-- `bun run e2e:a11y` — 20 superadas.
-- `bun run demo:data:validate`
-- `bun run demo:data:report`
+- `bun run e2e` — 92 superadas y 8 omisiones previstas por proyecto.
+- `bun run e2e:a11y` — 20 recorridos superados sin infracciones Axe A/AA.
+- `bun run scenario:data:validate`
+- `bun run scenario:data:report`
 - `bunx supabase db reset`
-- `bunx supabase test db` — 387 pruebas pgTAP superadas.
+- `bunx supabase test db` — 400 pruebas pgTAP superadas.
 - `bunx supabase db lint --level warning --fail-on error`
 - comparación de tipos Supabase — sin diferencias.
 - `git diff --check`

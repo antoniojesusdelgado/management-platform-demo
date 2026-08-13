@@ -28,8 +28,12 @@ async function enterGuestDemo(page: Page) {
 }
 
 async function openGuestDemo(page: Page) {
-  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
+  await page.goto("/explorar", { waitUntil: "domcontentloaded" });
   await enterGuestDemo(page);
+  const analyticsDialog = page.getByRole("dialog", { name: "Analítica opcional" });
+  if (await analyticsDialog.isVisible()) {
+    await analyticsDialog.getByRole("button", { name: "Rechazar" }).click();
+  }
 }
 
 async function expectNoGlobalHorizontalOverflow(page: Page) {
@@ -155,12 +159,12 @@ test("light and dark resolve before content at every release width", async ({
       await expect
         .poll(() =>
           page.evaluate(() =>
-            window.sessionStorage.getItem("management-platform-demo:v1"),
+            window.sessionStorage.getItem("management-platform:v1"),
           ),
         )
         .not.toBeNull();
       await page.evaluate((preference) => {
-        const key = "management-platform-demo:v1";
+        const key = "management-platform:v1";
         const raw = window.sessionStorage.getItem(key);
         if (!raw) throw new Error("Guest state was not initialized");
         const state = JSON.parse(raw) as {
@@ -219,7 +223,7 @@ test("access and every module avoid global horizontal overflow at release sizes"
     await expect(
       page.getByRole("heading", { name: "Todo el trabajo, en un solo lugar", level: 1 }),
     ).toBeVisible();
-    await expect(page.getByRole("link", { name: "Explorar sin iniciar sesión" })).toBeVisible();
+    await expect(page.locator('a[href="/explorar"]')).toBeVisible();
     await expectNoGlobalHorizontalOverflow(page);
 
     await openGuestDemo(page);
@@ -239,7 +243,7 @@ test("the access screen keeps all primary actions inside compact viewports", asy
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("link", { name: "Continuar con Google" })).toBeVisible();
     await expect(page.getByRole("button", { name: /Microsoft/ }).or(page.getByRole("link", { name: /Microsoft/ }))).toBeVisible();
-    await expect(page.getByRole("link", { name: "Explorar sin iniciar sesión" })).toBeVisible();
+    await expect(page.locator('a[href="/explorar"]')).toBeVisible();
     const dimensions = await page.evaluate(() => ({
       viewportHeight: innerHeight,
       scrollHeight: document.documentElement.scrollHeight,

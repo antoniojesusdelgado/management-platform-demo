@@ -8,11 +8,11 @@ import { Dashboard } from "@/components/dashboard";
 import { ControlCenter } from "@/components/control-center";
 import { IntegrationsCenter } from "@/components/integrations-center";
 import {
-  guestDemoReducer,
-  initialGuestDemoState,
-  parseGuestDemoState,
-  type GuestDemoState,
-} from "@/domain/guest-demo";
+  guestWorkspaceReducer,
+  initialGuestWorkspaceState,
+  parseGuestWorkspaceState,
+  type GuestWorkspaceState,
+} from "@/domain/guest-workspace";
 import type { ModuleId } from "@/domain/modules";
 import { buildGuestWorkItems, searchGuestWorkspace, type WorkspaceSearchResult, type WorkspaceWorkItem } from "@/domain/workspace-productivity";
 import { canTransitionChangelog, type ChangelogInput, type ChangelogStatus } from "@/domain/changelog";
@@ -37,7 +37,8 @@ import type {
 } from "@/domain/vacations";
 import { buildProfessionalGreeting } from "@/lib/greeting";
 
-const STORAGE_KEY = "management-platform-demo:v1";
+const STORAGE_KEY = "management-platform:v1";
+const LEGACY_STORAGE_KEY = "management-platform-demo:v1";
 const VacationsWorkspace = dynamic(
   () =>
     import("@/components/vacations-workspace").then(
@@ -89,7 +90,7 @@ const OperationsWorkspace = dynamic(
 );
 
 type StoredStateResult = {
-  state: GuestDemoState;
+  state: GuestWorkspaceState;
   warning?: string;
 };
 
@@ -110,19 +111,21 @@ function WorkspaceLoading() {
 
 function readStoredState(): StoredStateResult {
   try {
-    const stored = window.sessionStorage.getItem(STORAGE_KEY);
-    if (!stored) return { state: initialGuestDemoState };
-    const parsed = parseGuestDemoState(JSON.parse(stored));
+    const stored =
+      window.sessionStorage.getItem(STORAGE_KEY) ??
+      window.sessionStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!stored) return { state: initialGuestWorkspaceState };
+    const parsed = parseGuestWorkspaceState(JSON.parse(stored));
     if (!parsed) {
       return {
-        state: initialGuestDemoState,
+        state: initialGuestWorkspaceState,
         warning: "La sesión guardada no era válida y se han restaurado los datos iniciales.",
       };
     }
     return { state: parsed };
   } catch {
     return {
-      state: initialGuestDemoState,
+      state: initialGuestWorkspaceState,
       warning: "El almacenamiento de sesión no está disponible; los cambios se mantendrán en memoria.",
     };
   }
@@ -130,8 +133,8 @@ function readStoredState(): StoredStateResult {
 
 export function GuestDemoApp() {
   const [state, dispatch] = useReducer(
-    guestDemoReducer,
-    initialGuestDemoState,
+    guestWorkspaceReducer,
+    initialGuestWorkspaceState,
   );
   const hydrated = useRef(false);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -165,6 +168,7 @@ export function GuestDemoApp() {
           STORAGE_KEY,
           JSON.stringify(stored.state),
         );
+        window.sessionStorage.removeItem(LEGACY_STORAGE_KEY);
       } catch {
         setStorageAvailable(false);
       }

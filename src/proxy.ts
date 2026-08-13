@@ -13,6 +13,7 @@ export async function proxy(request: NextRequest) {
 
   const nonce = createNonce();
   const frameAncestors =
+    request.nextUrl.pathname === "/explorar" ||
     request.nextUrl.pathname === "/demo/embed" ||
     request.nextUrl.pathname === "/login"
       ? getPortfolioFrameAncestor()

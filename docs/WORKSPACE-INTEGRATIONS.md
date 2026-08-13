@@ -1,6 +1,6 @@
 # Integraciones de productividad
 
-## Disponibilidad y permisos en v1.8.1
+## Disponibilidad y permisos en v1.8.2
 
 La interfaz ya no interpreta una cuenta conectada como autorización para leer
 un directorio. Cada conexión informa por separado de:
@@ -98,7 +98,7 @@ CSV, XLSX local, Google Sheets o Excel en Microsoft 365. Las escrituras externas
 se dividen en lotes y permanecen pendientes hasta que una persona confirma el
 destino.
 
-## Modo invitado
+## Modo de exploración
 
-La demo sin registro utiliza conectores simulados deterministas. Nunca inicia
+El modo sin registro utiliza conectores simulados deterministas. Nunca inicia
 OAuth, consulta Vault ni escribe en servicios externos.

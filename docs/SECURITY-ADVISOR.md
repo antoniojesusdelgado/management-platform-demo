@@ -1,5 +1,19 @@
 # Revisión de Security Advisor
 
+## Endurecimiento v1.8.2
+
+- El login de Google y Microsoft queda limitado a identidad básica.
+- Productividad y directorio usan consentimientos separados y estado OAuth
+  firmado ligado a proveedor, usuario, organización y finalidad.
+- `apply_directory_sync_batch_v1_8` solo puede ejecutarse con `service_role`.
+- El avatar se valida y recodifica en servidor: JPEG, PNG o WebP reales,
+  10 MB de entrada, 40 megapíxeles y WebP privado 512×512 inferior a 1 MB.
+- El WAF exterior complementa la cuota de PostgREST y se activa después de
+  observar falsos positivos en OAuth.
+
+No se aceptan HTML de usuario, SQL dinámico, rutas aportadas por el cliente ni
+secretos con prefijo público.
+
 ## Situación de la versión
 
 La demo sin registro no se conecta a Supabase. Las identidades autenticadas con

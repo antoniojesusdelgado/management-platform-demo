@@ -4,7 +4,7 @@ import { chromium } from "@playwright/test";
 
 const externalOrigin = process.env.PRODUCT_CAPTURE_ORIGIN;
 const baseUrl = externalOrigin ?? "http://127.0.0.1:3210";
-const outputDirectory = ".artifacts/release-v1.8.1/automated";
+const outputDirectory = ".artifacts/release-v1.8.2/automated";
 const themes = ["light", "dark"];
 const viewports = [
   { name: "desktop", width: 1440, height: 900 },
@@ -39,7 +39,7 @@ if (server) {
   const deadline = Date.now() + 60_000;
   while (Date.now() < deadline) {
     try {
-      const response = await fetch(`${baseUrl}/demo/embed`);
+      const response = await fetch(`${baseUrl}/explorar`);
       if (response.ok) break;
     } catch {
       await new Promise((resolve) => setTimeout(resolve, 200));
@@ -97,16 +97,16 @@ try {
         fullPage: true,
       });
 
-      await page.goto(`${baseUrl}/demo/embed`, {
+      await page.goto(`${baseUrl}/explorar`, {
         waitUntil: "domcontentloaded",
       });
       await page.locator("[data-demo-ready='true']").waitFor();
       await page.waitForFunction(
         () =>
-          window.sessionStorage.getItem("management-platform-demo:v1") !== null,
+          window.sessionStorage.getItem("management-platform:v1") !== null,
       );
       await page.evaluate((preference) => {
-        const key = "management-platform-demo:v1";
+        const key = "management-platform:v1";
         const state = JSON.parse(window.sessionStorage.getItem(key));
         state.preferences.theme = preference;
         window.sessionStorage.setItem(key, JSON.stringify(state));
@@ -114,6 +114,11 @@ try {
       }, theme);
       await page.reload({ waitUntil: "domcontentloaded" });
       await page.locator("[data-demo-ready='true']").waitFor();
+      const analyticsDialog = page.getByRole("dialog", { name: "Analítica opcional" });
+      if (await analyticsDialog.isVisible()) {
+        await analyticsDialog.getByRole("button", { name: "Rechazar" }).click();
+        await analyticsDialog.waitFor({ state: "hidden" });
+      }
 
       await page.screenshot({
         path: `${outputDirectory}/inicio-${suffix}.png`,
@@ -131,7 +136,7 @@ try {
         .getByRole("button", { name: /Ver detalle/ })
         .first()
         .click();
-      await page.locator('[role="dialog"]:visible').waitFor();
+      await page.locator('[role="dialog"].request-detail').waitFor();
       await page.screenshot({
         path: `${outputDirectory}/vacaciones-dialogo-${suffix}.png`,
         animations: "disabled",

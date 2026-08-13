@@ -1,5 +1,31 @@
 # Arquitectura
 
+## Correcciones v1.8.2
+
+v1.8.2 separa tres finalidades OAuth: identidad básica, productividad y
+directorio corporativo. El inicio de sesión no solicita acceso a archivos,
+calendarios ni personas. Los permisos adicionales se conceden desde
+Integraciones y el procesamiento de directorio solo puede ejecutarlo el
+servidor con credenciales protegidas.
+
+El cliente Supabase de servidor se reutiliza durante cada petición y los
+contratos temporales normalizan las fechas válidas a ISO antes de validarlas.
+Los avatares se decodifican, redimensionan y recodifican en WebP desde una
+Server Action autenticada antes de llegar al bucket privado.
+
+La capa raíz incluye un gestor de consentimiento local. Google Analytics 4 no
+se descarga hasta recibir una elección afirmativa; el cambio de preferencia
+está disponible desde cualquier pie legal. La configuración de Content Security
+Policy permite únicamente los hosts necesarios de Google Analytics y mantiene
+el resto de scripts bajo nonce en las superficies dinámicas.
+
+La supresión de cuenta se orquesta desde una Server Action autenticada. Una RPC
+anonimiza el perfil, desvincula las personas, suspende membresías y elimina los
+secretos de integración. A continuación, el cliente administrativo de Supabase
+realiza un borrado irreversible de la identidad Auth. La clave secreta permanece
+en servidor y la base conserva únicamente una prueba criptográfica no
+identificativa de la solicitud.
+
 ## Correcciones v1.8.1
 
 v1.8.1 conserva la arquitectura multiempresa de v1.8.0 y corrige su capa de
@@ -42,7 +68,7 @@ plataforma y nunca se sobrescriben desde el proveedor.
 
 ```mermaid
 flowchart LR
-  Visitor["Portfolio visitor"] --> Embed["/demo/embed"]
+  Visitor["Visitante"] --> Embed["/explorar"]
   Embed --> Session["sessionStorage repository"]
   Visitor --> OAuth["Google OAuth + PKCE"]
   OAuth --> App["/app routes"]

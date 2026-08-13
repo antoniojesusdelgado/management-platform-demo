@@ -5,8 +5,13 @@ async function enterGuestDemo(page: Page) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/demo/embed", { waitUntil: "domcontentloaded" });
+  await page.goto("/explorar", { waitUntil: "domcontentloaded" });
   await enterGuestDemo(page);
+  const analyticsDialog = page.getByRole("dialog", { name: "Analítica opcional" });
+  if (await analyticsDialog.isVisible()) {
+    await analyticsDialog.getByRole("button", { name: "Rechazar" }).click();
+    await expect(analyticsDialog).toBeHidden();
+  }
 });
 
 async function navigateToModule(
@@ -413,7 +418,7 @@ test("filters and paginates the people directory", async ({ page }, testInfo) =>
 
 test("creates, reviews and publishes a changelog entry", async ({ page }, testInfo) => {
   await navigateToModule(page, "Novedades", testInfo.project.name === "mobile");
-  await expect(page.locator(".changelog-card").first()).toContainText("Versión 1.8.1");
+  await expect(page.locator(".changelog-card").first()).toContainText("Versión 1.8.2");
   await page.getByRole("button", { name: "Preparar novedad" }).click();
   const createDialog = page.getByRole("dialog", { name: "Nueva novedad" });
   await createDialog.getByLabel("Versión").fill("99.0.0");

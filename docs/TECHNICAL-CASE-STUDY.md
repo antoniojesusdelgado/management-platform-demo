@@ -9,7 +9,7 @@ realizó el análisis de procesos, la toma de requisitos, la definición
 funcional, el desarrollo, las pruebas, la implantación y el despliegue de la
 solución utilizada por la organización.
 
-Este repositorio es una réplica full-stack posterior y técnicamente aislada.
+Este repositorio es una implementación full-stack posterior y técnicamente aislada.
 Combina una experiencia sin registro, limitada a la sesión, con un espacio
 OAuth aislado respaldado por PostgreSQL y Row Level Security. Todos los
 registros operativos son deterministas y ficticios; no contiene código, datos,
@@ -18,10 +18,10 @@ de Fundación Cibervoluntarios.
 
 ## 1. Objetivo, alcance y restricciones
 
-La réplica demuestra cómo organizar proyectos, tareas, vacaciones,
+La plataforma permite organizar proyectos, tareas, vacaciones,
 incidencias, tesorería, nóminas agregadas, personas, novedades, configuración
 y analítica en una única interfaz. Su independencia se refiere al aislamiento
-de infraestructura, identidad y datos de la demostración pública, no al origen
+de infraestructura, identidad y datos de la implementación pública, no al origen
 funcional del proyecto.
 
 Requisitos funcionales:
@@ -57,7 +57,7 @@ Requisitos no funcionales:
 | Navegador | Playwright, Axe | Recorridos E2E, responsive y accesibilidad |
 | Entrega | Bun, GitHub Actions, Vercel | Dependencias, CI, Preview y producción |
 
-El desarrollo de esta réplica se ha realizado mediante programación asistida
+El desarrollo de esta plataforma se ha realizado mediante programación asistida
 con ChatGPT Codex, bajo dirección y revisión humana. Esta herramienta forma
 parte del proceso de ingeniería, no del producto en ejecución: no recibe datos
 del sistema, no interviene en las decisiones visibles y no requiere claves de
@@ -86,7 +86,7 @@ flowchart TB
   subgraph next["Aplicación Next.js"]
     routes["App Router y Server Components"]
     actions["Server Actions"]
-    guest["Reducer invitado y GuestDemoState V21"]
+    guest["Reducer invitado y GuestWorkspaceState V21"]
     analytics["Motor analítico puro"]
     ui["Módulos React responsive"]
   end
@@ -247,7 +247,7 @@ credenciales ni payloads sensibles.
 
 El escenario V7 comienza el `2025-01-01` y crece hasta ayer en
 `Europe/Madrid`. La misma semilla y ancla producen el mismo checksum.
-`GuestDemoState V21` conserva las entidades y preferencias de versiones
+`GuestWorkspaceState V21` conserva las entidades y preferencias de versiones
 anteriores y añade únicamente las novedades ausentes hasta v1.7.0, sin
 regenerar el escenario ni sobrescribir cambios operativos. La migración V14 a
 V15 continúa anexando únicamente IDs deterministas ausentes.
