@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { actionFailure, actionSuccess, type ActionResult } from "@/domain/action-result";
-import { invitationTokenSchema, organizationSetupSchema } from "@/domain/organizations";
+import {
+  invitationTokenSchema,
+  organizationDeletionSchema,
+  organizationFounderProfileSchema,
+  organizationSetupSchema,
+} from "@/domain/organizations";
 import { createClient } from "@/lib/supabase/server";
 
 const organizationIdSchema = z.uuid();
@@ -92,6 +97,66 @@ export async function completeOrganizationOnboardingAction(
     if (error) return actionFailure("permission_denied", "No tienes permiso para completar la configuración.");
     revalidatePath("/app", "layout");
     return actionSuccess();
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function completeFounderProfileAction(
+  input: z.infer<typeof organizationFounderProfileSchema>,
+): Promise<ActionResult> {
+  try {
+    const payload = organizationFounderProfileSchema.parse(input);
+    const supabase = await authenticatedClient();
+    const rpc = supabase.rpc.bind(supabase) as unknown as OrganizationRpc;
+    const { error } = await rpc("complete_founder_profile_v1_8_3_hotfix_1", {
+      target_organization_id: payload.organizationId,
+      target_display_name: payload.displayName,
+      target_team: payload.team,
+      target_position_title: payload.positionTitle,
+      target_contract_type: payload.employmentContractType,
+      target_start_date: payload.employmentStartDate,
+    });
+    if (error) {
+      return actionFailure("permission_denied", "No se pudo guardar tu ficha profesional.");
+    }
+    revalidatePath("/app", "layout");
+    return actionSuccess();
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function deleteOrganizationAction(
+  input: z.infer<typeof organizationDeletionSchema>,
+): Promise<ActionResult<{ nextOrganizationId: string | null }>> {
+  try {
+    const payload = organizationDeletionSchema.parse(input);
+    const supabase = await authenticatedClient();
+    const rpc = supabase.rpc.bind(supabase) as unknown as OrganizationRpc;
+    const { data, error } = await rpc("delete_organization_v1_8_3_hotfix_1", {
+      target_organization_id: payload.organizationId,
+      confirmation_name: payload.confirmationName,
+    });
+    if (error || (data !== null && typeof data !== "string")) {
+      return actionFailure(
+        "permission_denied",
+        "No se pudo eliminar la empresa. Comprueba el nombre y tus permisos.",
+      );
+    }
+    const cookieStore = await cookies();
+    if (typeof data === "string") {
+      cookieStore.set("active-organization", data, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+      });
+    } else {
+      cookieStore.delete("active-organization");
+    }
+    revalidatePath("/app", "layout");
+    return actionSuccess({ nextOrganizationId: typeof data === "string" ? data : null });
   } catch (error) {
     return failure(error);
   }

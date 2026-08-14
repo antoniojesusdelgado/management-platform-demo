@@ -4631,6 +4631,9 @@ h3 {
 .onboarding-progress { margin-bottom: 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
 .onboarding-progress span, .onboarding-progress i { height: 4px; border-radius: 999px; background: var(--border); }
 .onboarding-progress span { background: var(--accent); }
+.onboarding-progress-three { grid-template-columns: repeat(3, 1fr); }
+.onboarding-profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.onboarding-profile-grid > label { display: grid; gap: .4rem; font-weight: 700; }
 .onboarding-mode { margin: 1.5rem 0; padding: .3rem; display: grid; grid-template-columns: 1fr 1fr; gap: .3rem; border-radius: 12px; background: var(--surface-subtle); }
 .onboarding-mode button { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: .45rem; border: 0; border-radius: 9px; color: var(--text-muted); background: transparent; font-weight: 700; cursor: pointer; }
 .onboarding-mode button[aria-selected="true"] { color: var(--text); background: var(--surface); box-shadow: 0 2px 8px rgb(25 50 80 / 8%); }
@@ -4649,6 +4652,9 @@ h3 {
 .onboarding-choice { background: var(--surface); text-align: left; cursor: pointer; }
 .onboarding-choice:hover { border-color: var(--accent); background: var(--accent-soft); }
 .onboarding-choice span { color: var(--text-muted); font-size: .88rem; }
+.settings-danger-zone { margin-top: 1.5rem; padding: 1.25rem; display: grid; gap: 1rem; border: 1px solid var(--danger); border-radius: var(--radius-md); background: color-mix(in srgb, var(--danger) 6%, var(--surface)); }
+.settings-danger-zone h3 { margin: 0 0 .35rem; color: var(--danger); }
+.settings-danger-zone .button { width: fit-content; }
 
 .oauth-page-v18 { min-height: 100dvh; grid-template-columns: minmax(0, 1.05fr) minmax(440px, .95fr); grid-template-rows: auto 1fr; background: #eef3f9; }
 .oauth-page-v18 .oauth-header { grid-column: 1 / -1; min-height: 76px; padding: .8rem clamp(1rem, 4vw, 3rem); background: transparent; }
@@ -4701,7 +4707,7 @@ h3 {
   .v18-mobile-module-grid button { min-width: 0; min-height: 54px; padding: .7rem; display: flex; align-items: center; gap: .55rem; border: 1px solid var(--border); border-radius: 12px; color: var(--text); background: var(--surface-subtle); text-align: left; }
   .onboarding-page { padding: .5rem; align-items: start; }
   .onboarding-card { padding: 1.25rem; border-radius: 18px; }
-  .onboarding-template, .onboarding-choice-grid { grid-template-columns: 1fr; }
+  .onboarding-template, .onboarding-choice-grid, .onboarding-profile-grid { grid-template-columns: 1fr; }
   .oauth-page-v18 { display: block; }
   .oauth-page-v18 .oauth-header { min-height: 66px; }
   .oauth-page-v18 .oauth-showcase { min-height: auto; }

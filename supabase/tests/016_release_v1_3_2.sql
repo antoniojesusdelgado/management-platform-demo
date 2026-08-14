@@ -16,7 +16,7 @@ values (
   now()
 );
 
-select has_function(
+select extensions.has_function(
   'private',
   'scenario_v7_person_name',
   array['integer'],
