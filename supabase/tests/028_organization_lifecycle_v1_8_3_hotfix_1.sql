@@ -1,11 +1,20 @@
 begin;
 
-select plan(14);
+select plan(15);
 
 select has_table('private', 'platform_administrators', 'platform administrators are stored outside the Data API');
 select has_table('private', 'organization_deletion_audit', 'organization deletions keep a private audit trail');
 select function_privs_are('public', 'is_platform_administrator_v1_8_3_hotfix_1', array[]::text[], 'anon', array[]::text[], 'anonymous users cannot inspect platform administration');
 select function_privs_are('public', 'is_platform_administrator_v1_8_3_hotfix_1', array[]::text[], 'authenticated', array['EXECUTE'], 'authenticated users can inspect their own platform administration flag');
+select is(
+  (
+    select provolatile::text
+    from pg_proc
+    where oid = 'public.is_platform_administrator_v1_8_3_hotfix_1()'::regprocedure
+  ),
+  'v',
+  'platform administrator inspection keeps PostgREST pre-request checks in a read-write transaction'
+);
 select function_privs_are('private', 'is_platform_administrator', array['uuid'], 'authenticated', array[]::text[], 'the platform administrator helper remains private');
 select function_privs_are('public', 'assign_platform_administrator_v1_8_3_hotfix_1', array['uuid'], 'authenticated', array[]::text[], 'clients cannot assign platform administrators');
 select function_privs_are('public', 'assign_platform_administrator_v1_8_3_hotfix_1', array['uuid'], 'service_role', array['EXECUTE'], 'only the server role can assign a platform administrator');
