@@ -33,7 +33,7 @@ test("access stays complete and collision-free on web and mobile", async ({
     await expect(page.getByRole("heading", { name: "Todo el trabajo, en un solo lugar" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Entra en tu espacio" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Continuar con Google" })).toBeVisible();
-    await expect(page.locator('a[href="/explorar"]')).toBeVisible();
+    await expect(page.locator('a[href="/explorar?fresh=1"]')).toBeVisible();
     await expect(page.locator(".oauth-brand-copy strong")).toHaveText("Plataforma de gestión");
     await expect(page.locator(".oauth-brand-copy small")).toHaveCount(0);
     await expect(page.getByText("Tus cambios quedan solo en esta pestaña.")).toBeVisible();

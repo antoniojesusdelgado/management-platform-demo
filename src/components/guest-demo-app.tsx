@@ -111,6 +111,19 @@ function WorkspaceLoading() {
 
 function readStoredState(): StoredStateResult {
   try {
+    const currentUrl = new URL(window.location.href);
+    if (currentUrl.searchParams.get("fresh") === "1") {
+      window.sessionStorage.removeItem(STORAGE_KEY);
+      window.sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+      currentUrl.searchParams.delete("fresh");
+      window.history.replaceState(
+        window.history.state,
+        "",
+        `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`,
+      );
+      return { state: initialGuestWorkspaceState };
+    }
+
     const stored =
       window.sessionStorage.getItem(STORAGE_KEY) ??
       window.sessionStorage.getItem(LEGACY_STORAGE_KEY);

@@ -22,7 +22,7 @@ export function GuestAccessLink() {
   return (
     <Link
       className="button button-secondary oauth-secondary"
-      href="/explorar"
+      href="/explorar?fresh=1"
       onClick={startFreshWorkspace}
     >
       <IconUser aria-hidden="true" size={22} />
