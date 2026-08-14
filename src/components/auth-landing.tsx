@@ -3,12 +3,12 @@ import {
   IconHelpCircle,
   IconLock,
   IconShieldCheck,
-  IconUser,
   IconUsers,
 } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
+import { GuestAccessLink } from "@/components/guest-access-link";
 import { LegalFooter } from "@/components/legal-footer";
 import { getWorkspaceAccess } from "@/lib/auth";
 import { getSignInProviderAvailability } from "@/lib/env";
@@ -69,7 +69,6 @@ export async function AuthLanding({ errorCode }: AuthLandingProps) {
         <Link className="oauth-brand" href="/" aria-label="Plataforma de gestión">
           <Image className="oauth-brand-mark" src="/brand-symbol.svg" alt="" width={48} height={48} priority />
           <span className="oauth-brand-copy">
-            <small>Plataforma de gestión</small>
             <strong>Plataforma de gestión</strong>
           </span>
         </Link>
@@ -128,9 +127,8 @@ export async function AuthLanding({ errorCode }: AuthLandingProps) {
             </div>
 
             <div className="oauth-divider"><span>o</span></div>
-            <Link className="button button-secondary oauth-secondary" href={"/explorar" as Route}>
-              <IconUser aria-hidden="true" size={22} /> Explorar la plataforma
-            </Link>
+            <GuestAccessLink />
+            <p className="oauth-explore-note">Tus cambios quedan solo en esta pestaña.</p>
 
             <p className="oauth-session-note"><IconLock aria-hidden="true" size={15} />Cada empresa mantiene sus datos y permisos aislados.</p>
             <p className="oauth-legal">Al continuar aceptas la <a href="/privacidad">Privacidad</a>, la <a href="/procedencia-datos">Procedencia de los datos</a> y el <a href="/aviso-legal">Aviso legal</a>. Consulta también la <Link href={"/transparencia-ia" as Route}>Transparencia con IA</Link>.</p>

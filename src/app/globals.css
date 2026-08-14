@@ -4778,8 +4778,8 @@ h3 {
 
 .oauth-page-v181 .oauth-brand { gap: 17px; color: var(--text); }
 .oauth-page-v181 .oauth-brand > .oauth-brand-mark { width: 48px; height: 48px; margin: 0; display: block; flex: 0 0 auto; border-radius: 14px; box-shadow: 0 8px 18px rgb(7 26 53 / 18%); }
-.oauth-page-v181 .oauth-brand > .oauth-brand-copy { width: auto; height: auto; margin: 0; display: grid; gap: 3px; background: transparent; }
-.oauth-page-v181 .oauth-brand-copy strong { font-size: 1.18rem; line-height: 1.1; white-space: nowrap; }
+.oauth-page-v181 .oauth-brand > .oauth-brand-copy { width: auto; height: 48px; margin: 0; display: flex; align-items: center; background: transparent; }
+.oauth-page-v181 .oauth-brand-copy strong { font-size: 1.18rem; line-height: 1.15; white-space: nowrap; }
 .oauth-page-v181 .oauth-brand-copy small { color: var(--text-muted); font-size: .8rem; line-height: 1; letter-spacing: .02em; text-transform: uppercase; }
 .oauth-help-link { min-height: 44px; padding: 0 12px; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; color: var(--cobalt-600); font-size: 1rem; font-weight: 700; text-decoration: none; }
 .oauth-help-link:hover { color: var(--accent-strong); background: var(--accent-soft); }
@@ -4885,6 +4885,7 @@ h3 {
 }
 .oauth-page-v181 .oauth-divider { margin: 20px 0; }
 .oauth-page-v181 .oauth-secondary { gap: 12px; color: var(--cobalt-600); border-color: var(--cobalt-500); }
+.oauth-page-v181 .oauth-explore-note { margin: 8px 0 0; color: var(--text-muted); font-size: .72rem; line-height: 1.4; text-align: center; }
 .oauth-page-v181 .oauth-session-note,
 .oauth-page-v181 .oauth-legal { margin: 0; line-height: 1.4; }
 .oauth-page-v181 .oauth-session-note { margin-top: 16px; font-size: .8rem; }
@@ -4919,6 +4920,7 @@ h3 {
   .oauth-layout-v181 { height: 100%; padding: .65rem .35rem; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); align-content: start; gap: .75rem; }
   .oauth-page-v181 .oauth-header-v181 { min-height: 52px; padding-block: .35rem; border-radius: 15px; }
   .oauth-page-v181 .oauth-brand > .oauth-brand-mark { width: 34px; height: 34px; border-radius: 9px; }
+  .oauth-page-v181 .oauth-brand > .oauth-brand-copy { height: 34px; }
   .oauth-showcase-v181 { display: block; transform: none; }
   .oauth-showcase-v181 .eyebrow,
   .oauth-benefit-list { display: none; }
@@ -4934,6 +4936,7 @@ h3 {
   .oauth-page-v181 .oauth-divider { margin: .75rem 0; }
   .oauth-page-v181 .oauth-session-note,
   .oauth-page-v181 .oauth-legal { font-size: .7rem; }
+  .oauth-page-v181 .oauth-explore-note { font-size: .66rem; }
   .oauth-page-v181 .oauth-session-note { margin-top: .65rem; }
   .oauth-page-v181 .oauth-legal { margin-top: .8rem; }
   .oauth-page-v181 > .legal-footer { padding: .45rem .25rem; font-size: .64rem; }

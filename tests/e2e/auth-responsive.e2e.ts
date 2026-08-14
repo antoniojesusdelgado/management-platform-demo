@@ -28,11 +28,15 @@ test("access stays complete and collision-free on web and mobile", async ({
   for (const viewport of accessViewports) {
     await page.setViewportSize(viewport);
     await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: "instant" }));
 
     await expect(page.getByRole("heading", { name: "Todo el trabajo, en un solo lugar" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Entra en tu espacio" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Continuar con Google" })).toBeVisible();
     await expect(page.locator('a[href="/explorar"]')).toBeVisible();
+    await expect(page.locator(".oauth-brand-copy strong")).toHaveText("Plataforma de gestión");
+    await expect(page.locator(".oauth-brand-copy small")).toHaveCount(0);
+    await expect(page.getByText("Tus cambios quedan solo en esta pestaña.")).toBeVisible();
     await expect(page.getByText("© 2026 Antonio Jesús Delgado Briones. Todos los derechos reservados.")).toBeVisible();
 
     const layout = await page.evaluate(() => {
@@ -63,6 +67,7 @@ test("access stays complete and collision-free on web and mobile", async ({
         scrollWidth: document.documentElement.scrollWidth,
         clientHeight: document.documentElement.clientHeight,
         scrollHeight: document.documentElement.scrollHeight,
+        scrollY: window.scrollY,
         boxes,
         collisions,
       };
@@ -70,6 +75,7 @@ test("access stays complete and collision-free on web and mobile", async ({
 
     expect(layout.scrollWidth, JSON.stringify(layout)).toBeLessThanOrEqual(layout.clientWidth);
     expect(layout.scrollHeight, JSON.stringify(layout)).toBeLessThanOrEqual(layout.clientHeight + 1);
+    expect(layout.scrollY, JSON.stringify(layout)).toBe(0);
     expect(
       layout.boxes.every(({ left, right, top, bottom }) =>
         left >= -1 && right <= viewport.width + 1 && top >= -1 && bottom <= viewport.height + 1,
