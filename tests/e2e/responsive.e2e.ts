@@ -223,7 +223,7 @@ test("access and every module avoid global horizontal overflow at release sizes"
     await expect(
       page.getByRole("heading", { name: "Todo el trabajo, en un solo lugar", level: 1 }),
     ).toBeVisible();
-    await expect(page.locator('a[href="/explorar"]')).toBeVisible();
+    await expect(page.locator('a[href="/explorar?fresh=1"]')).toBeVisible();
     await expectNoGlobalHorizontalOverflow(page);
 
     await openGuestDemo(page);
@@ -243,7 +243,7 @@ test("the access screen keeps all primary actions inside compact viewports", asy
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("link", { name: "Continuar con Google" })).toBeVisible();
     await expect(page.getByRole("button", { name: /Microsoft/ }).or(page.getByRole("link", { name: /Microsoft/ }))).toBeVisible();
-    await expect(page.locator('a[href="/explorar"]')).toBeVisible();
+    await expect(page.locator('a[href="/explorar?fresh=1"]')).toBeVisible();
     const dimensions = await page.evaluate(() => ({
       viewportHeight: innerHeight,
       scrollHeight: document.documentElement.scrollHeight,
