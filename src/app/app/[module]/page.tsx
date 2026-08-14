@@ -747,8 +747,10 @@ export default async function AppModulePage({
   return (
     <AuthenticatedApp
       activeModule={module}
+      organizationId={access.organizationId}
       organizationName={access.organizationName}
       organizations={access.organizations}
+      isPlatformAdministrator={access.isPlatformAdministrator}
       scenarioAnchorDate={
         currentOrganization?.scenario_generated_through_date ??
         currentOrganization?.scenario_anchor_date ??

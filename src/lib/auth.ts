@@ -20,6 +20,8 @@ export type WorkspaceAccess =
       simulatedRole: "admin" | "manager" | "collaborator" | "viewer" | null;
       organizations: ActiveOrganization[];
       onboardingComplete: boolean;
+      onboardingStep: "company" | "people" | "suite" | "review" | "completed";
+      isPlatformAdministrator: boolean;
     };
 
 export const getWorkspaceAccess = cache(async (): Promise<WorkspaceAccess> => {
@@ -77,11 +79,21 @@ export const getWorkspaceAccess = cache(async (): Promise<WorkspaceAccess> => {
       active: candidate.organization_id === membership.organization_id,
     };
   });
-  const { data: onboarding } = await supabase
-    .from("organization_onboarding")
-    .select("status")
-    .eq("organization_id", membership.organization_id)
-    .maybeSingle();
+  const platformAdminRpc = supabase.rpc.bind(supabase) as unknown as (
+    name: "is_platform_administrator_v1_8_3_hotfix_1",
+  ) => PromiseLike<{ data: boolean | null; error: { message: string } | null }>;
+  const [{ data: onboarding }, { data: isPlatformAdministrator }] = await Promise.all([
+    supabase
+      .from("organization_onboarding")
+      .select("status,current_step")
+      .eq("organization_id", membership.organization_id)
+      .maybeSingle(),
+    platformAdminRpc("is_platform_administrator_v1_8_3_hotfix_1"),
+  ]);
+  const onboardingStep = onboarding?.current_step;
+  const normalizedOnboardingStep = (
+    ["company", "people", "suite", "review", "completed"] as const
+  ).find((step) => step === onboardingStep) ?? "completed";
 
   return {
     status: "active",
@@ -93,5 +105,7 @@ export const getWorkspaceAccess = cache(async (): Promise<WorkspaceAccess> => {
     simulatedRole: profile?.simulated_role ?? null,
     organizations,
     onboardingComplete: onboarding?.status === "completed",
+    onboardingStep: normalizedOnboardingStep,
+    isPlatformAdministrator: isPlatformAdministrator === true,
   };
 });

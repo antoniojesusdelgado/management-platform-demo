@@ -13,9 +13,11 @@ import {
   IconLock,
   IconMail,
   IconRefresh,
+  IconTrash,
   IconUsers,
 } from "@tabler/icons-react";
 import { useState } from "react";
+import { deleteOrganizationAction } from "@/app/app/organization-actions";
 import { createInvitationAction } from "@/app/app/settings-actions";
 import { modules, type ModuleId } from "@/domain/modules";
 import { formatDate, formatDateTime } from "@/lib/format";
@@ -45,7 +47,9 @@ type Tab =
   | "audit";
 
 type Props = {
+  organizationId?: string;
   organizationName: string;
+  canDeleteOrganizations?: boolean;
   configuration: WorkspaceConfiguration;
   moduleSettings: ModuleSetting[];
   roles: ConfigurableRole[];
@@ -154,7 +158,9 @@ function NumberField({
 }
 
 export function SettingsWorkspace({
+  organizationId,
   organizationName,
+  canDeleteOrganizations = false,
   configuration,
   moduleSettings,
   roles,
@@ -189,6 +195,8 @@ export function SettingsWorkspace({
     roles[0]?.id ?? "",
   );
   const [error, setError] = useState("");
+  const [deletionConfirmation, setDeletionConfirmation] = useState("");
+  const [deletingOrganization, setDeletingOrganization] = useState(false);
   const orderedModules = [...moduleSettings].sort(
     (a, b) => a.sortOrder - b.sortOrder,
   );
@@ -227,6 +235,27 @@ export function SettingsWorkspace({
       return;
     }
     if (await onUpdateConfiguration(parsed.data)) setError("");
+  }
+
+  async function deleteOrganization() {
+    if (!organizationId) return;
+    if (deletionConfirmation !== organizationName) {
+      setError("Escribe el nombre exacto de la empresa para confirmar.");
+      return;
+    }
+    setDeletingOrganization(true);
+    const result = await deleteOrganizationAction({
+      organizationId,
+      confirmationName: deletionConfirmation,
+    });
+    if (!result.ok) {
+      setError(result.message);
+      setDeletingOrganization(false);
+      return;
+    }
+    window.location.assign(
+      result.data.nextOrganizationId ? "/app/inicio" : "/app/onboarding",
+    );
   }
 
   async function saveRoleMetadata(event: React.FormEvent) {
@@ -417,6 +446,38 @@ export function SettingsWorkspace({
                   Aplicar apariencia
                 </button>
               </div>
+              {canDeleteOrganizations ? (
+                <section className="settings-danger-zone" aria-labelledby="delete-organization-title">
+                  <div>
+                    <h3 id="delete-organization-title">Eliminar esta empresa</h3>
+                    <p className="muted">
+                      Se eliminarán definitivamente sus personas, proyectos, tareas,
+                      conexiones y configuración. Las demás empresas no cambiarán.
+                    </p>
+                  </div>
+                  <label className="field">
+                    Escribe <strong>{organizationName}</strong> para confirmar
+                    <input
+                      value={deletionConfirmation}
+                      onChange={(event) => setDeletionConfirmation(event.target.value)}
+                      autoComplete="off"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="button button-danger"
+                    disabled={
+                      pending ||
+                      deletingOrganization ||
+                      deletionConfirmation !== organizationName
+                    }
+                    onClick={deleteOrganization}
+                  >
+                    <IconTrash size={18} />
+                    {deletingOrganization ? "Eliminando…" : "Eliminar empresa"}
+                  </button>
+                </section>
+              ) : null}
             </form>
           ) : null}
 

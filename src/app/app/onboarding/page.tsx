@@ -16,6 +16,9 @@ export default async function OrganizationOnboardingPage({
   return (
     <OrganizationOnboarding
       existingOrganizationId={access.status === "active" ? access.organizationId : undefined}
+      initialProfileCompleted={
+        access.status === "active" ? access.onboardingStep !== "people" : false
+      }
       initialInvitationToken={typeof invite === "string" ? invite : undefined}
     />
   );

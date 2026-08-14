@@ -3145,8 +3145,23 @@ export type Database = {
         }
         Returns: string
       }
+      assign_platform_administrator_v1_8_3_hotfix_1: {
+        Args: { target_profile_id: string }
+        Returns: undefined
+      }
       check_management_request_rate_limit: { Args: never; Returns: undefined }
       clear_own_avatar_path: { Args: never; Returns: undefined }
+      complete_founder_profile_v1_8_3_hotfix_1: {
+        Args: {
+          target_contract_type: string
+          target_display_name: string
+          target_organization_id: string
+          target_position_title: string
+          target_start_date: string
+          target_team: string
+        }
+        Returns: undefined
+      }
       complete_organization_onboarding_v1_8: {
         Args: { target_organization_id: string }
         Returns: undefined
@@ -3180,6 +3195,10 @@ export type Database = {
           target_currency: string
           target_entry_date: string
         }
+        Returns: string
+      }
+      delete_organization_v1_8_3_hotfix_1: {
+        Args: { confirmation_name: string; target_organization_id: string }
         Returns: string
       }
       disconnect_workspace_connection: {
@@ -3220,6 +3239,10 @@ export type Database = {
       get_workspace_connection_secret: {
         Args: { target_connection_id: string }
         Returns: Json
+      }
+      is_platform_administrator_v1_8_3_hotfix_1: {
+        Args: never
+        Returns: boolean
       }
       mark_demo_scenario_v2_restored: {
         Args: { target_checksum: string; target_organization_id: string }

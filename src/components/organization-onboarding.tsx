@@ -15,14 +15,17 @@ import { toast } from "sonner";
 import {
   acceptOrganizationInvitationAction,
   completeOrganizationOnboardingAction,
+  completeFounderProfileAction,
   createOrganizationAction,
 } from "@/app/app/organization-actions";
+import { employmentContractLabels, employmentContractTypes } from "@/domain/people";
 
 type OrganizationOnboardingProps = {
   existingOrganizationId?: string;
   initialInvitationToken?: string;
   creationOnly?: boolean;
   cancelHref?: string;
+  initialProfileCompleted?: boolean;
 };
 
 function slugify(value: string) {
@@ -40,6 +43,7 @@ export function OrganizationOnboarding({
   initialInvitationToken = "",
   creationOnly = false,
   cancelHref = "/app/inicio",
+  initialProfileCompleted = false,
 }: OrganizationOnboardingProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -49,6 +53,12 @@ export function OrganizationOnboarding({
   const [templateMode, setTemplateMode] = useState<"empty" | "synthetic">("empty");
   const [token, setToken] = useState(initialInvitationToken);
   const [organizationId, setOrganizationId] = useState(existingOrganizationId);
+  const [profileCompleted, setProfileCompleted] = useState(initialProfileCompleted);
+  const [displayName, setDisplayName] = useState("");
+  const [team, setTeam] = useState("Dirección");
+  const [positionTitle, setPositionTitle] = useState("Administración de la empresa");
+  const [employmentContractType, setEmploymentContractType] = useState<(typeof employmentContractTypes)[number]>("indefinite_ordinary");
+  const [employmentStartDate, setEmploymentStartDate] = useState(() => new Date().toISOString().slice(0, 10));
   const suggestedSlug = useMemo(() => slug || slugify(name), [name, slug]);
 
   function finish(targetOrganizationId: string, next = "/app/inicio") {
@@ -62,11 +72,48 @@ export function OrganizationOnboarding({
     });
   }
 
+  if (organizationId && !profileCompleted) {
+    return (
+      <main className="onboarding-page">
+        <section className="onboarding-card" aria-labelledby="profile-title">
+          <div className="onboarding-progress onboarding-progress-three" aria-label="Paso 2 de 3"><span /><span /><i /></div>
+          <p className="eyebrow">Tu ficha profesional</p>
+          <h1 id="profile-title">Añádete al equipo</h1>
+          <p className="lede">Completa tu perfil inicial. Quedarás vinculado a esta empresa como su persona administradora.</p>
+          <form className="onboarding-form" onSubmit={(event) => {
+            event.preventDefault();
+            startTransition(async () => {
+              const result = await completeFounderProfileAction({
+                organizationId,
+                displayName,
+                team,
+                positionTitle,
+                employmentContractType,
+                employmentStartDate,
+              });
+              if (!result.ok) { toast.error(result.message); return; }
+              setProfileCompleted(true);
+            });
+          }}>
+            <div className="field-grid onboarding-profile-grid">
+              <label>Nombre y apellidos<input required minLength={2} maxLength={100} autoComplete="name" value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="Ej. Ana Martínez" /></label>
+              <label>Equipo<input required minLength={2} maxLength={100} value={team} onChange={(event) => setTeam(event.target.value)} /></label>
+              <label>Puesto<input required minLength={2} maxLength={120} value={positionTitle} onChange={(event) => setPositionTitle(event.target.value)} /></label>
+              <label>Tipo de contrato<select value={employmentContractType} onChange={(event) => setEmploymentContractType(event.target.value as (typeof employmentContractTypes)[number])}>{employmentContractTypes.map((type) => <option key={type} value={type}>{employmentContractLabels[type]}</option>)}</select></label>
+              <label>Fecha de incorporación<input required type="date" value={employmentStartDate} onChange={(event) => setEmploymentStartDate(event.target.value)} /></label>
+            </div>
+            <button className="button button-primary onboarding-primary" disabled={pending} type="submit">{pending ? "Guardando…" : "Guardar ficha y continuar"}<IconArrowRight size={18} /></button>
+          </form>
+        </section>
+      </main>
+    );
+  }
+
   if (organizationId) {
     return (
       <main className="onboarding-page">
         <section className="onboarding-card" aria-labelledby="suite-title">
-          <div className="onboarding-progress" aria-label="Paso 2 de 2"><span /><span /></div>
+          <div className="onboarding-progress onboarding-progress-three" aria-label="Paso 3 de 3"><span /><span /><span /></div>
           <p className="eyebrow">Empresa preparada</p>
           <h1 id="suite-title">Conecta tu entorno de trabajo</h1>
           <p className="lede">Tu acceso ya está listo. Si conectas Google Workspace o Microsoft 365, podrás elegir por separado qué herramientas quieres usar.</p>
@@ -92,7 +139,7 @@ export function OrganizationOnboarding({
   return (
     <main className="onboarding-page">
       <section className="onboarding-card" aria-labelledby="onboarding-title">
-        <div className="onboarding-progress" aria-label="Paso 1 de 2"><span /><i /></div>
+        <div className="onboarding-progress onboarding-progress-three" aria-label="Paso 1 de 3"><span /><i /><i /></div>
           <p className="eyebrow">{creationOnly ? "Nueva empresa" : "Primeros pasos"}</p>
           <h1 id="onboarding-title">{creationOnly ? "Crea otro espacio de trabajo" : "Prepara tu espacio de trabajo"}</h1>
           <p className="lede">{creationOnly ? "La nueva empresa tendrá sus propios datos, permisos y conexiones." : "Crea una empresa aislada o utiliza una invitación que ya hayas recibido."}</p>

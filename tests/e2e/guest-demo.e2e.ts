@@ -6,6 +6,12 @@ async function enterGuestDemo(page: Page) {
 }
 
 test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "management-platform-analytics-consent:v1",
+      "rejected",
+    );
+  });
   await page.goto("/explorar", { waitUntil: "domcontentloaded" });
   await enterGuestDemo(page);
   const analyticsDialog = page.getByRole("dialog", { name: "Analítica opcional" });

@@ -82,4 +82,23 @@ export const organizationSetupSchema = z.object({
   templateMode: z.enum(["empty", "synthetic"]),
 });
 
+export const organizationFounderProfileSchema = z.object({
+  organizationId: z.uuid(),
+  displayName: plainTextSchema({ min: 2, max: 100 }),
+  team: plainTextSchema({ min: 2, max: 100 }),
+  positionTitle: plainTextSchema({ min: 2, max: 120 }),
+  employmentContractType: z.enum([
+    "indefinite_ordinary",
+    "permanent_discontinuous",
+    "temporary_production",
+    "temporary_substitution",
+  ]),
+  employmentStartDate: z.iso.date(),
+});
+
+export const organizationDeletionSchema = z.object({
+  organizationId: z.uuid(),
+  confirmationName: plainTextSchema({ min: 2, max: 100 }),
+});
+
 export const invitationTokenSchema = z.string().trim().min(16).max(200);
