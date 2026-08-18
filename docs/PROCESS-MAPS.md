@@ -1,6 +1,6 @@
 # Mapas de procesos
 
-## Exportación conectada v1.7.0
+## Exportación conectada
 
 ```mermaid
 flowchart LR

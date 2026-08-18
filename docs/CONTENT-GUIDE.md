@@ -45,7 +45,7 @@ indicaciones internas de diseño ni terminología técnica innecesaria.
 | vs. anterior | respecto al periodo anterior |
 | Responsive | Cómoda desde distintos dispositivos |
 | Backfill | Información histórica disponible |
-| Scenario | Datos de demostración actualizados |
+| Scenario | Datos de exploración actualizados |
 
 Las entradas canónicas de Novedades utilizan un título breve centrado en el
 beneficio y una sola frase que explica qué cambia para quien usa la plataforma.

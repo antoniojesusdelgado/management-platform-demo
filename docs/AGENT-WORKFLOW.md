@@ -1,6 +1,6 @@
 # Flujo de desarrollo asistido
 
-Esta demostración se desarrolla mediante flujos supervisados con ChatGPT Codex.
+Este producto se desarrolla mediante flujos supervisados con ChatGPT Codex.
 La herramienta ayuda a revisar el repositorio, implementar cambios, documentar
 y ejecutar validaciones reproducibles bajo dirección humana.
 

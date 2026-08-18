@@ -1,356 +1,189 @@
 # Despliegue
 
-## Requisitos de v1.8.3
-
-- Aplicar primero `20260813152355_fix_onboarding_profile_update_permission.sql`.
-  Solo concede permiso de columna y mantiene RLS y la revocación de actualización
-  sobre la tabla completa.
-- Aplicar después `20260813170000_release_v1_8_3_product_polish.sql`. La
-  publicación es aditiva, idempotente y no modifica entradas de Novedades
-  existentes.
-- Mantener `MICROSOFT_SIGN_IN_ENABLED=true` únicamente en entornos donde Azure
-  siga configurado en Supabase Auth. La apariencia activa del botón no sustituye
-  esta comprobación del servidor.
-- Validar navegación fría y caliente en Preview: la cabecera debe permanecer
-  visible y no debe aparecer una pantalla blanca entre módulos.
-- Regenerar las evidencias con `bun run visual:review` y revisar ambos temas en
-  móvil y escritorio antes de promover el artefacto.
-
-## Requisitos de v1.8.2
-
-- `MICROSOFT_SIGN_IN_ENABLED=true` activa Microsoft solo después de configurar
-  Azure en Supabase Auth. El callback es
-  `https://<project-ref>.supabase.co/auth/v1/callback`; Microsoft debe recibir
-  el valor del secreto, no su identificador.
-- Google y Azure para acceso solicitan únicamente `openid profile email`.
-  Los permisos de productividad y directorio se conceden después desde
-  Integraciones.
-- `SUPABASE_SECRET_KEY` permanece solo en servidor y es obligatoria para las
-  operaciones privilegiadas.
-- Aplicar `20260812132007_release_v1_8_2_auth_security_patch.sql` antes del
-  despliegue de la aplicación.
-- Configurar `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL=contacto@antoniodelgado.tech`.
-- Configurar `NEXT_PUBLIC_GA_MEASUREMENT_ID` solo cuando exista una propiedad
-  GA4 válida. Es un identificador publicable; la aplicación no carga el script
-  hasta recibir consentimiento.
-- Aplicar `20260812193000_add_privacy_consent_and_erasure.sql` después de la
-  migración principal de v1.8.2. La migración es aditiva y no elimina cuentas.
-- Mantener `SUPABASE_SECRET_KEY` disponible en el runtime de servidor: se
-  utiliza para desactivar de forma irreversible la identidad tras anonimizarla.
-
-## Requisitos de v1.8.1
-
-- Aplicar `20260812105351_release_v1_8_1_interface_readiness.sql` de forma
-  aditiva. La migración no elimina conexiones, tokens, empresas ni datos.
-- Verificar de nuevo cada conexión existente: se conserva, pero el directorio
-  queda pendiente hasta confirmar los ámbitos y el consentimiento corporativo.
-- Mantener `MICROSOFT_SIGN_IN_ENABLED=true` únicamente cuando Azure esté
-  configurado en Supabase Auth; de lo contrario el acceso se muestra
-  deshabilitado con una explicación.
-- Validar la Preview a 320×568, 390×844 y 1366×768 antes de promoverla, además
-  de los anchos de módulo habituales.
-- Ejecutar primero `bunx supabase db push --dry-run` y revisar que solo aparezca
-  la migración v1.8.1 prevista.
-
-## Requisitos de v1.8.0
-
-- Habilitar Google y Azure en Supabase Auth con callback `/auth/callback`.
-- Configurar por separado las aplicaciones de Google Workspace y Microsoft
-  Entra para archivos, hojas de cálculo, calendarios y directorio.
-- Definir `CRON_SECRET`; Vercel invoca `/api/cron/directory-sync` una vez al día
-  en el plan actual.
-- Mantener `SUPABASE_SECRET_KEY`, secretos OAuth y
-  `WORKSPACE_OAUTH_STATE_SECRET` solo en entornos de servidor.
-- Utilizar `/explorar` como acceso local directo, sin OAuth ni Supabase; `/demo/embed` redirige de forma permanente por compatibilidad.
-
-La programación horaria requiere Vercel Pro o un programador externo que llame
-al mismo endpoint firmado. La actualización manual permanece disponible.
-Si no está disponible, el endpoint firmado puede ejecutarse desde un
-programador corporativo equivalente.
-
 ## Modelo de publicación
 
-La ruta pública sin registro funciona sin autenticación ni Supabase. Google
-OAuth da acceso a la plataforma autenticada; cada identidad recibe un
-espacio ficticio separado con los permisos del producto. Ninguna de las dos
-rutas debe contener datos operativos, financieros o laborales reales.
+Cada cambio se valida primero en una rama y en Vercel Preview. Producción se
+obtiene promoviendo exactamente el artefacto revisado; no se reconstruye un
+candidato diferente. Las migraciones de Supabase se aplican antes de promover
+la aplicación cuando el código depende de ellas.
 
-La Preview actúa como candidata de publicación. Solo se crea producción después
-de superar las comprobaciones de base de datos, navegador, accesibilidad y
-seguridad.
+```mermaid
+flowchart LR
+  branch["Rama"] --> ci["CI"]
+  ci --> preview["Vercel Preview"]
+  migrations["Supabase dry-run"] --> review["Revisión SQL"]
+  review --> database["Migraciones remotas"]
+  preview --> qa["QA funcional, visual y seguridad"]
+  database --> qa
+  qa --> production["Promoción a producción"]
+  production --> smoke["Smoke tests"]
+  smoke --> release["Tag y GitHub Release"]
+```
 
-## 1. Control de calidad local
+## 1. Preparación local
+
+Requisitos:
+
+- Bun 1.3.14.
+- Docker Desktop para Supabase local.
+- Supabase CLI y Vercel CLI autenticadas cuando se opere contra servicios
+  remotos.
+- Variables locales basadas en `.env.example`, nunca en secretos de
+  producción copiados al repositorio.
 
 ```powershell
 bun install --frozen-lockfile
 bunx supabase start
 bunx supabase db reset
 bunx supabase test db
-bunx supabase db lint --level warning --fail-on error
-bunx supabase inspect db index-stats --local
+bunx supabase db lint --local --level warning --fail-on error
 bunx supabase gen types --lang typescript --local
 bun run lint
 bun run typecheck
 bun run test
+bun run content:validate
 bun run security:public-data
+bun run security:secrets
+bun run scenario:data:validate
+bun audit --audit-level=high
 bun run build
 bun run e2e
+bun run e2e:a11y
 git diff --check
 ```
 
-Los servicios locales usan el rango `56420–56429`, elegido para evitar los
-rangos dinámicos que Windows puede reservar para Hyper-V y Docker. Este ajuste
-solo afecta al entorno local; las URLs de Preview y producción no cambian.
+Los tipos generados deben coincidir con
+`src/lib/supabase/database.types.ts`. Si una comprobación genera archivos,
+revísalos y restaura los que no pertenezcan al cambio antes de publicar.
 
-El resultado generado debe coincidir con
-`src/lib/supabase/database.types.ts`.
+## 2. Supabase
 
-Para ejecutar la misma suite de navegador contra una Preview ya desplegada:
+### Revisión local
+
+1. Ejecutar un reset completo desde cero.
+2. Confirmar que pgTAP y Database Linter no introducen errores.
+3. Ejecutar dos veces cualquier migración idempotente relevante.
+4. Comparar los tipos generados con el archivo versionado.
+5. Revisar las funciones `SECURITY DEFINER` y sus privilegios.
+
+### Revisión remota
+
+```powershell
+bunx supabase link --project-ref <project-ref>
+bunx supabase migration list --linked
+bunx supabase db push --dry-run
+```
+
+El historial local y remoto debe entenderse antes de aplicar cambios. Si existen
+migraciones solo locales o solo remotas, no se debe forzar el push: primero hay
+que reconciliar el historial y comprobar su procedencia.
+
+Aplicar únicamente después de obtener un dry-run legible, aditivo y compatible:
+
+```powershell
+bunx supabase db push
+```
+
+Después del push, repetir `migration list --linked`, revisar Security Advisor y
+comprobar aislamiento con al menos dos organizaciones de prueba.
+
+## 3. Proveedores de acceso
+
+Supabase Auth utiliza el callback:
+
+```text
+https://<project-ref>.supabase.co/auth/v1/callback
+```
+
+Google y Microsoft para inicio de sesión solicitan identidad básica. Los
+permisos de Drive, Sheets, OneDrive, Excel, Calendar o directorio se conceden
+mediante aplicaciones y callbacks independientes, descritos en
+[Integraciones de productividad](WORKSPACE-INTEGRATIONS.md).
+
+`MICROSOFT_SIGN_IN_ENABLED=true` solo debe activarse cuando Azure esté
+configurado correctamente en Supabase Auth. Una interfaz activa no sustituye la
+validación real del proveedor.
+
+## 4. Variables de entorno
+
+| Variable | Entorno | Finalidad |
+| --- | --- | --- |
+| `NEXT_PUBLIC_APP_URL` | Público | Origen canónico |
+| `NEXT_PUBLIC_VERCEL_URL` | Público | Origen de Preview |
+| `NEXT_PUBLIC_SUPABASE_URL` | Público | URL del proyecto |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Público | Clave publicable |
+| `PORTFOLIO_ORIGIN` | Servidor | Origen autorizado para framing |
+| `NEXT_PUBLIC_PRIVACY_CONTACT_EMAIL` | Público | Contacto legal |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Público | Identificador de GA4 |
+| `MICROSOFT_SIGN_IN_ENABLED` | Servidor | Disponibilidad del acceso Microsoft |
+| `SUPABASE_SECRET_KEY` | Servidor | Operaciones administrativas autorizadas |
+| `WORKSPACE_OAUTH_STATE_SECRET` | Servidor | Protección del estado OAuth |
+| Secretos Google y Microsoft 365 | Servidor | Integraciones de productividad |
+
+Los secretos deben configurarse por separado en Preview y Production. Nunca se
+declaran con `NEXT_PUBLIC_`, se imprimen en logs ni se copian a documentación.
+
+## 5. Preview
+
+1. Crear o actualizar el pull request.
+2. Esperar CI, CodeQL y Dependency Review.
+3. Identificar la Preview asociada al SHA exacto.
+4. Ejecutar Playwright contra ese host:
 
 ```powershell
 $env:PLAYWRIGHT_BASE_URL = "https://<preview-host>"
 bun run e2e
+bun run e2e:a11y
 Remove-Item Env:PLAYWRIGHT_BASE_URL
 ```
 
-## 2. Supabase
-
-1. Crear un proyecto dedicado en `eu-central-1`.
-2. Revisar las migraciones con `supabase db push --dry-run`.
-3. Aplicar únicamente las migraciones revisadas.
-4. Ejecutar Database Linter y Security Advisor.
-5. Configurar en Vercel la URL del proyecto y una clave
-   `sb_publishable_...` habilitada.
-6. Mantener las claves secretas o `service_role` fuera de la aplicación.
-
-El registro por correo y el acceso anónimo permanecen desactivados. Google y
-Microsoft son los proveedores públicos de la aplicación.
-
-Las RPC autenticadas `SECURITY DEFINER` son excepciones revisadas, no avisos
-ignorados. Sus condiciones y pruebas pgTAP están documentadas en
-[SECURITY-ADVISOR.md](./SECURITY-ADVISOR.md).
-
-## 3. Google OAuth
-
-Crear una aplicación web en Google Auth Platform y añadir:
-
-- Orígenes JavaScript autorizados: el origen exacto de producción y el origen
-  estable de Preview utilizado para QA de OAuth.
-- URI de redirección autorizada:
-  `https://<project-ref>.supabase.co/auth/v1/callback`.
-
-El identificador y el secreto de Google se configuran únicamente en Supabase
-Auth. En la configuración de URL de Supabase:
-
-- definir Site URL con el origen de producción;
-- añadir `http://localhost:3000/**` para desarrollo;
-- añadir la ruta exacta de callback de producción;
-- añadir un comodín de Vercel Preview solo para el proyecto y cuenta de este
-  repositorio.
-
-Debe validarse el acceso correcto, callback PKCE, renovación de cookies, cierre
-de sesión y aislamiento con dos identidades de prueba. Ningún dato de identidad
-del proveedor debe copiarse a `public.profiles`.
-
-## 4. Vercel Preview
-
-Configurar las variables de Preview y producción:
-
-```text
-NEXT_PUBLIC_APP_URL
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-PORTFOLIO_ORIGIN
-```
-
-`NEXT_PUBLIC_APP_URL` debe coincidir con el origen exacto de cada entorno.
-`PORTFOLIO_ORIGIN` debe ser el origen exacto del portfolio; solo
-`/explorar` puede mostrarse dentro de un iframe.
-
-Después de desplegar la Preview se comprueba:
-
-- `/`, `/explorar`, `/login` y todas las rutas autenticadas;
-- escritorio y móvil a 360 px;
-- navegación por teclado, foco visible, movimiento reducido y resultados Axe;
-- aprovisionamiento OAuth y RLS entre espacios;
-- CSP, `frame-ancestors`, política de referencia y cabeceras MIME;
-- ausencia de errores, secretos, datos personales o peticiones externas
-  inesperadas.
-
-## 5. Producción
-
-Solo debe promoverse la revisión de código que superó QA en Preview, usando las
-variables del entorno de producción. Después de la promoción:
-
-1. Repetir las pruebas rápidas en las rutas pública, integrada y autenticada.
-2. Revisar errores de ejecución y registros del despliegue.
-3. Confirmar el origen autorizado del iframe del portfolio.
-4. Confirmar que Google OAuth utiliza el origen de producción.
-5. Conservar el despliegue anterior como opción de reversión.
-
-## Despliegue de v1.8.0
-
-La publicación requiere añadir en Preview y Producción las variables descritas
-en `WORKSPACE-INTEGRATIONS.md`. `WORKSPACE_OAUTH_STATE_SECRET`,
-`SUPABASE_SECRET_KEY` y los secretos de cliente son variables exclusivas del
-servidor. Después de configurarlas se deben registrar exactamente los callbacks
-de Google Workspace y Microsoft Entra para cada dominio autorizado.
-
-Antes de promover la Preview se comprueban por separado: OAuth válido, estado
-manipulado, revocación, permisos incompletos, exportación local, confirmación de
-escritura externa y ausencia de OAuth en el modo invitado.
-
-## Versión actual
-
-- Origen canónico de producción: <https://plataformagestion.app>
-- Alternativa de Vercel: se obtiene de la Preview asociada al commit validado.
-- Las Preview se generan desde cada pull request y se promueven solo después de
-  superar las comprobaciones de producto, accesibilidad y seguridad.
-- Versión preparada en esta rama: `v1.8.3`; la promoción a producción solo se
-  completa tras aprobar la Preview autenticada y la QA visual.
-- Región y plan de Supabase: `eu-central-1`, Free
-- Producción y Preview utilizan variables separadas para los orígenes de la
-  aplicación y del portfolio.
-- Los resultados exactos de navegador, accesibilidad y base de datos se
-  registran en `docs/design-qa.md` para cada candidato.
-- Las migraciones más recientes corrigen el permiso mínimo del onboarding y
-  publican v1.8.3 sin modificar entradas existentes.
-- El esquema remoto incluye políticas RLS, aprovisionamiento determinista y la
-  integración nocturna neutral y la sincronización diaria del directorio; el
-  modo horario está preparado para un plan compatible.
-- El refuerzo eliminó los índices de claves foráneas ausentes, las políticas de
-  autenticación sin optimizar y las lecturas permisivas duplicadas detectadas
-  por los asesores.
-- El aislamiento con una segunda identidad de Google sigue siendo una
-  comprobación manual. pgTAP cubre el aislamiento multiorganización.
-
-## Versión v1.5.1
-
-`v1.5.1` corrige la diferencia entre la versión publicada y la mostrada en
-Novedades:
-
-1. `package.json`, el catálogo de producto y la interfaz deben informar la
-   misma versión.
-2. `GuestDemoState V19` añade únicamente las novedades ausentes y conserva
-   cualquier contenido modificado en la sesión.
-3. La migración SQL inserta `v1.4.0`, `v1.4.1`, `v1.5.0` y `v1.5.1` mediante
-   identificadores deterministas y `ON CONFLICT DO NOTHING`.
-4. `bunx supabase db push --dry-run` debe mostrar solo la migración de
-   alineación antes de aplicarla al proyecto remoto.
-5. La Preview debe validarse en modo invitado y OAuth antes de promover el
-   mismo artefacto a producción.
-6. GitHub, Vercel y Novedades deben terminar apuntando a `v1.5.1`.
-
-## Versión v1.3.2
-
-`v1.3.2` se preparó en `codex/management-platform-v1-3-2` como una corrección
-aditiva del directorio y los contenidos:
-
-1. Registrar por organización el total de personas, nombres provisionales,
-   nombres distintos y grupos duplicados.
-2. Ejecutar `bunx supabase db push --dry-run` y revisar solo la migración
-   pendiente de v1.3.2.
-3. Restaurar la base de datos local, ejecutar pgTAP y confirmar que la
-   correspondencia de nombres SQL coincide con el generador TypeScript.
-4. Aplicar la migración y comprobar que el total y los identificadores no
-   cambian y que los nombres provisionales y duplicados quedan a cero.
-5. Subir la rama, validar su Vercel Preview y promover exactamente ese
-   despliegue.
-6. Probar Personal y Novedades tanto sin registro como con Google. Confirmar que
-   v1.3.2 muestra la fecha 30 de julio de 2026 y utiliza lenguaje no técnico.
-
-La migración no inserta ni elimina personas. Solo renombra identificadores V7
-deterministas que aún conservan el marcador generado e instala la misma
-correspondencia para inserciones incrementales posteriores.
-
-## Versión v1.3.1
-
-`v1.3.1` se entregó desde `codex/management-platform-v1-3-1` como corrección
-inmutable sobre v1.3.0:
-
-1. Ejecutar la matriz completa de aplicación y Supabase local.
-2. Revisar `supabase db push --dry-run` y registrar los recuentos antes de la
-   migración aditiva.
-3. Subir el commit de la versión, abrir el PR y validar la Preview a
-   320/360/390 px y en escritorio.
-4. Preparar las reglas de Vercel Firewall únicamente en modo de registro. La
-   publicación se realiza desde el panel después de revisar el tráfico.
-5. Aplicar la migración y verificar `scenario_v7_backfilled_at`, un evento
-   `backfilled`, las filas editadas sin cambios y entre 245 y 255 personas
-   activas.
-6. Probar la demo sin registro y una identidad de Google existente, ejecutar
-   ZAP pasivo y revisar Security Advisor.
-7. Promover la Preview validada, fusionar el PR autorizado y etiquetar el commit
-   incluido en `main` como `v1.3.1`.
-
-El procedimiento de base de datos se encuentra en
-[SCENARIO-V7-BACKFILL.md](./SCENARIO-V7-BACKFILL.md). El limitador de PostgREST
-se aplica en la migración compatible. La observación exterior por IP y las
-limitaciones del plan se documentan en
-[VERCEL-FIREWALL-V1.3.1.md](./VERCEL-FIREWALL-V1.3.1.md).
-
-## Versión v1.3.0
-
-`v1.3.0` se finalizó en `codex/management-platform-v1-3-1`. Antes de publicarla
-se ejecutaron la suite local completa, generación de Scenario V7, restauración,
-pgTAP, lint de base de datos, asesores y comparación de tipos. El proceso fue:
-
-1. Subir el commit revisado y abrir un PR en borrador.
-2. Validar la Preview de Vercel con tema claro predeterminado y oscuro manual.
-3. Ejecutar ZAP Baseline pasivo contra el host permitido y conservar el
+5. Validar acceso, exploración, onboarding, cambio de empresa y módulos
+   principales en móvil y escritorio.
+6. Comprobar tema claro y oscuro, teclado, foco, ausencia de overflow y estados
+   de carga.
+7. Revisar OAuth real solo con cuentas de prueba autorizadas.
+8. Ejecutar ZAP Baseline contra el host validado y conservar el informe como
    artefacto.
-4. Revisar `supabase db push --dry-run` y aplicar la migración aditiva.
-5. Verificar callback PKCE, renovación, cierre de sesión y aislamiento.
-6. Promover exactamente el artefacto validado.
-7. Tras la fusión autorizada, confirmar la igualdad del árbol, etiquetar
-   `v1.3.0` y publicar la Release de GitHub.
 
-La migración no elimina registros operativos.
-`ensure_demo_scenario_current` mantiene un bloqueo transaccional por
-organización y añade únicamente el intervalo que falta hasta ayer en
-`Europe/Madrid`.
+## 6. Producción
 
-La corrección posterior publicó manualmente la entrada v1.3.0 con fecha
-editorial `2026-06-23` y reparó únicamente las cadenas ficticias con problemas
-conocidos de codificación. El formulario de Personal obtiene sus equipos de los
-datos persistidos y vuelve a validar el equipo antes de guardar las fechas
-profesionales. Una migración aditiva final alineó las organizaciones existentes
-y nuevas con `scenario_version = 7` incluso cuando no quedaba intervalo diario
-por generar.
+Promover la Preview aprobada mediante Vercel. Después:
 
-## Versión v1.2.0
+- comprobar `/login`, `/explorar` y `/app/inicio`;
+- validar Google, Microsoft y cierre de sesión;
+- confirmar consentimiento analítico y páginas legales;
+- ejecutar una lectura y una mutación autorizada en dos organizaciones aisladas;
+- revisar logs de errores, funciones y Firewall;
+- confirmar que el árbol desplegado corresponde al SHA aprobado.
 
-`v1.2.0` se desarrolló en `codex/management-platform-v1-2`. Añadió una migración
-idempotente para Scenario V3, restauró una sola vez las organizaciones V2 y
-conservó el bucket privado de avatares y la configuración OAuth.
+Si el merge genera otro despliegue, comparar ambos árboles. Si difieren o el
+nuevo artefacto falla, restaurar como producción la Preview ya validada.
 
-La secuencia incluyó restauración local, pgTAP, comprobaciones de aplicación,
-Preview, restauración V3 en una organización de prueba, OAuth, revisión móvil,
-promoción del mismo artefacto, restauración idempotente, prueba rápida de
-producción, etiqueta y Release de GitHub.
+## 7. Release
 
-## Versión v1.2.1
+La etiqueta se crea sobre el commit incluido en `main`. Las notas deben estar
+en español y describir:
 
-`v1.2.1` se desarrolló en `codex/management-platform-v1-2-1`. Su migración
-Scenario V4 conservó el esquema, sustituyó una sola vez el escenario ficticio
-de seis meses en organizaciones V3 y registró
-`demo.scenario.v4_restored`.
+- cambios visibles;
+- migraciones aplicadas;
+- validaciones ejecutadas;
+- riesgos o limitaciones conocidos;
+- pasos de actualización cuando sean necesarios.
 
-Se mantuvo la misma secuencia: restauración local, pgTAP, comprobaciones,
-Preview, simulación de migración remota, migración compatible, promoción,
-prueba rápida, etiqueta y Release.
+El historial detallado pertenece a
+[GitHub Releases](https://github.com/antoniojesusdelgado/management-platform/releases),
+no a este runbook.
 
-## Versión v1.2.2
+## Recuperación
 
-`v1.2.2` se desarrolló en `codex/management-platform-v1-2-2`. Scenario V5
-amplió el intervalo operativo ficticio del 1 de enero de 2025 al 17 de junio de
-2026, añadió participantes de nómina sin importes individuales y la jerarquía de
-personal, y restauró una sola vez las organizaciones V4 con un evento de
-auditoría.
+- **Aplicación:** promover el último despliegue estable en Vercel.
+- **Variable:** restaurar el valor anterior desde el gestor de secretos.
+- **Proveedor OAuth:** desactivar la capacidad afectada sin deshabilitar el
+  resto de accesos.
+- **Base de datos:** utilizar una migración correctiva hacia delante. No editar
+  migraciones ya aplicadas ni ejecutar resets en remoto.
+- **Integración externa:** revocar la conexión y solicitar consentimiento de
+  nuevo; no reconstruir tokens manualmente.
 
-El mantenimiento posterior conservó inmutable la etiqueta `v1.2.2` e introdujo
-Scenario V6 y `GuestDemoState V14`. Añadió modalidades contractuales,
-reequilibró las tareas, aseguró la coherencia entre progreso y estado de
-proyecto y mejoró las definiciones y formatos analíticos visibles. La entrega
-continuó utilizando una Preview revisada antes de la migración compatible y la
-promoción del mismo artefacto.
+La configuración de límites y falsos positivos se mantiene en
+[Vercel Firewall](VERCEL-FIREWALL.md).

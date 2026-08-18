@@ -1,11 +1,14 @@
-# ADR 0003: Demo sin registro integrada
+# ADR 0003: Exploración sin registro integrada
 
-- Estado: Aceptada
+- Estado: Sustituida parcialmente
 - Fecha: 2026-07-20
+
+La ruta canónica actual es `/explorar`. `/demo/embed` permanece como
+redirección permanente para conservar enlaces históricos.
 
 ## Decisión
 
-Publicar una aplicación sin registro en `/demo/embed`. Utiliza datos ficticios
+Publicar una aplicación sin registro. Utiliza datos ficticios
 iniciales, conserva los cambios únicamente en `sessionStorage` y permite
 restaurarlos desde la interfaz.
 

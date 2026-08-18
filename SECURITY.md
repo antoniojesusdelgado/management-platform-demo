@@ -1,105 +1,80 @@
 # Seguridad
 
-## Controles verificados en v1.8.3
+## Modelo de seguridad
 
-- El onboarding solo puede actualizar su marca de finalización y sigue
-  protegido por sesión y RLS.
-- La navegación persistente y los cambios de redacción no añaden endpoints ni
-  amplían los permisos de Google, Microsoft o Supabase.
-- La entrada de Novedades se inserta una vez por organización activa mediante
-  una migración aditiva.
-- Las pruebas de publicación cubren privilegios de columna, RLS, secretos,
-  datos públicos, XSS, cabeceras y aislamiento entre organizaciones.
+Plataforma de gestión aplica defensa en profundidad. La aplicación valida la
+sesión y el permiso en el servidor; PostgreSQL vuelve a limitar cada operación
+mediante Row Level Security (RLS). El identificador de organización recibido
+del navegador nunca concede acceso por sí solo.
 
-## Controles añadidos en v1.8.0
-
-- Google y Microsoft usan OAuth con PKCE; la conexión de la suite es distinta
-  del inicio de sesión.
-- El selector multiempresa solo acepta organizaciones con membresía activa y
-  la base de datos vuelve a validar el aislamiento.
-- Los vínculos de directorio son únicos por organización, proveedor e
-  identificador externo. Las bajas desactivan perfiles y no borran histórico.
-- La sincronización programada exige `CRON_SECRET`; las credenciales se leen y
-  actualizan exclusivamente mediante Supabase Vault y `service_role` en
-  servidor.
-- Las funciones privilegiadas nuevas usan `search_path` vacío y revocan los
-  privilegios de `PUBLIC`.
-
-## Alcance
-
-Este repositorio contiene la implementación pública de la plataforma. El modo
-de exploración utiliza datos ficticios, guarda su estado en `sessionStorage` y
-no consulta Supabase. La aplicación autenticada crea un espacio sintético
-independiente para cada identidad autorizada.
-
-No existe un modelo de lenguaje, agente ni entrada conectada a herramientas, por
-lo que la inyección de prompts no forma parte de la superficie de ataque actual.
-Las entradas de texto se tratan como datos y se protegen frente a XSS, marcado
-ejecutable, inyección SQL y abuso de recursos.
+El modo de exploración utiliza un estado local validado y no consulta ni escribe
+en Supabase. El área autenticada mantiene organizaciones, membresías y datos
+operativos separados.
 
 ## Controles principales
 
-- Google OAuth utiliza PKCE y cookies seguras.
-- Las sesiones, la pertenencia a la organización y los permisos se comprueban
-  de nuevo en el servidor.
-- Todas las tablas de aplicación tienen Row Level Security (RLS).
-- Las funciones con privilegios elevados usan permisos mínimos y un
-  `search_path` vacío.
-- Las consultas se realizan con parámetros; no se construye SQL a partir de
-  texto introducido por el usuario.
-- Los esquemas Zod normalizan el texto, limitan su longitud y rechazan
-  caracteres de control o marcado ejecutable.
-- La política CSP usa nonces en las superficies dinámicas. Ningún dato de
-  usuario llega a `dangerouslySetInnerHTML`.
-- `/explorar` también usa nonce y solo admite como ancestro el origen exacto
-  configurado mediante `PORTFOLIO_ORIGIN`; `/demo/embed` se conserva únicamente
-  como redirección permanente de compatibilidad.
-- PostgREST aplica límites por minuto a las mutaciones y a las operaciones más
-  costosas. Vercel aporta la protección de red y las reglas de Firewall
-  configuradas para el proyecto.
+- Google y Microsoft utilizan OAuth con PKCE para la identidad básica.
+- El acceso, la productividad y la sincronización de directorio son
+  autorizaciones independientes.
+- Las Server Actions normalizan y validan entradas con Zod antes de procesarlas.
+- Las consultas son parametrizadas; no se construye SQL desde texto de usuario.
+- Las funciones privilegiadas autorizan identidad, organización y permiso,
+  usan `search_path` vacío y revocan el acceso de `PUBLIC`.
+- Los tokens de productividad solo se procesan en servidor y se referencian
+  mediante Supabase Vault.
+- Los avatares se validan por firma, se decodifican y se recodifican en WebP en
+  servidor antes de almacenarse en un bucket privado.
+- La Content Security Policy utiliza nonce en superficies dinámicas, restringe
+  el framing y evita HTML de usuario ejecutable.
+- PostgREST limita mutaciones y operaciones costosas; Vercel Firewall actúa
+  como capa exterior de observación y protección de red.
+- Google Analytics 4 permanece desactivado hasta recibir consentimiento.
+- El escaneo de secretos, CodeQL, Dependency Review y ZAP forman parte de la
+  cadena de validación.
 
-El nombre, el correo y la imagen de Google no se copian a las tablas públicas de
-la aplicación. El perfil visible usa una identidad ficticia.
+La lista de RPC privilegiadas y sus excepciones técnicas se mantiene en
+[Revisión de Security Advisor](docs/SECURITY-ADVISOR.md). La configuración
+operativa de red se documenta en [Vercel Firewall](docs/VERCEL-FIREWALL.md).
 
-La supresión de cuenta se ejecuta en dos fases: primero se eliminan conexiones,
-credenciales guardadas y avatares de la plataforma y se anonimiza el perfil;
-después Supabase Auth desactiva la
-identidad mediante borrado irreversible. La operación exige una sesión válida,
-confirmación explícita y una acción de servidor. No se expone la clave secreta
-al navegador.
+## Datos y privacidad
 
-Google Analytics 4 permanece desactivado hasta recibir consentimiento. Las
-acciones de aceptar y rechazar tienen la misma jerarquía y la preferencia se
-puede revisar en cualquier momento. Se desactivan las señales de Google y la
-personalización publicitaria.
+Los espacios públicos utilizan datos sintéticos y no copian el nombre, correo o
+imagen del proveedor OAuth a las tablas visibles. Las conexiones de Google
+Workspace y Microsoft 365 pertenecen a una persona y una organización; RLS
+impide consultar o revocar conexiones ajenas.
 
-## Secretos y variables
+La supresión de cuenta exige sesión válida y confirmación explícita. El proceso
+revoca conexiones, elimina el avatar, anonimiza el perfil, suspende membresías y
+desactiva la identidad. Se conserva únicamente la trazabilidad operativa no
+identificativa necesaria para mantener la integridad de las organizaciones.
 
-Solo las variables expresamente publicables pueden usar el prefijo
-`NEXT_PUBLIC_`. El secreto de Google, las claves privadas de Supabase, los
-tokens y las credenciales de base de datos deben permanecer en sus respectivos
-gestores de secretos.
+## Gestión de secretos
 
-Antes de publicar una versión:
+Solo las variables expresamente publicables pueden utilizar el prefijo
+`NEXT_PUBLIC_`. Los secretos OAuth, las claves privadas de Supabase, los tokens
+y las credenciales de base de datos deben permanecer en los gestores de
+secretos de Supabase y Vercel.
 
-1. Ejecuta `bun run security:secrets` para revisar archivos e historial Git.
-2. Ejecuta `bun run security:public-data` para comprobar los límites del modo
-   de exploración.
-3. Revisa `bun audit --audit-level=high`, CodeQL y Dependency Review.
-4. Comprueba los avisos de Security Advisor y Database Linter en Supabase.
-5. Confirma que previsualización y producción usan variables separadas.
-6. Revisa el informe pasivo de ZAP generado contra el despliegue validado.
+Antes de publicar:
 
-Las excepciones de seguridad necesarias para las RPC están justificadas y
-probadas en [docs/SECURITY-ADVISOR.md](docs/SECURITY-ADVISOR.md).
+1. Ejecutar `bun run security:secrets` y `bun run security:public-data`.
+2. Revisar `bun audit --audit-level=high`, CodeQL y Dependency Review.
+3. Ejecutar las pruebas pgTAP, Database Linter y Security Advisor.
+4. Validar cabeceras, CSP, framing, OAuth y aislamiento en Preview.
+5. Ejecutar ZAP Baseline únicamente contra el host aprobado.
+
+## Versiones compatibles
+
+Las correcciones de seguridad se publican sobre la versión activa. No se
+mantienen ramas antiguas con soporte prolongado. Se recomienda utilizar siempre
+la última release publicada y revisar sus notas antes de actualizar.
 
 ## Comunicar una vulnerabilidad
 
-No publiques credenciales, datos personales ni instrucciones de explotación en
-un issue. Envía el hallazgo de forma privada al propietario del repositorio e
-incluye únicamente la información necesaria para reproducirlo.
+No publiques credenciales, datos personales, payloads activos ni instrucciones
+de explotación en un issue. Envía el hallazgo de forma privada a
+[contacto@antoniodelgado.tech](mailto:contacto@antoniodelgado.tech).
 
-Contacto: [contacto@antoniodelgado.tech](mailto:contacto@antoniodelgado.tech).
-
-Al informar, indica la ruta afectada, el impacto estimado y los pasos de
-reproducción. No pruebes el hallazgo contra datos o cuentas de terceros.
+Incluye la ruta afectada, el impacto estimado, los pasos mínimos de reproducción
+y una forma segura de contacto. No pruebes el hallazgo contra cuentas o datos de
+terceros.

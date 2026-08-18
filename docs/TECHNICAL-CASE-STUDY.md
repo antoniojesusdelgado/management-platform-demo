@@ -20,6 +20,21 @@ registros operativos son deterministas y ficticios; no contiene código, datos,
 documentos, credenciales, reglas internas, pantallas ni conexiones del sistema
 de Fundación Cibervoluntarios.
 
+### Lectura para evaluación profesional
+
+| Dimensión | Evidencia |
+| --- | --- |
+| Necesidad | Procesos e información repartidos entre herramientas sin un contexto común |
+| Intervención | Análisis, modelado funcional, diseño de producto e implementación full-stack |
+| Resultado técnico | Plataforma modular, responsive, multiempresa y protegida por permisos |
+| Riesgo principal | Exponer información real o cruzar datos entre organizaciones |
+| Respuesta | Datos sintéticos, RLS, validación en servidor, auditoría y entrega mediante Preview |
+| Evolución | Automatizaciones, capacidad, analítica e integraciones con permisos progresivos |
+
+La evaluación no depende de métricas inventadas ni de una narrativa comercial:
+el repositorio aporta contratos, migraciones, pruebas, diagramas y una
+aplicación funcional que permiten revisar las decisiones.
+
 ## 1. Objetivo, alcance y restricciones
 
 La plataforma permite organizar proyectos, tareas, vacaciones,
@@ -380,7 +395,7 @@ Las variables públicas se documentan en `.env.example`. Las credenciales del
 proveedor Google se configuran en Supabase Auth. Restaurar datos desde
 Configuración actualiza de forma explícita el ancla y registra la operación.
 
-## 18. Trazabilidad por hitos
+## 18. Trazabilidad por etapas
 
 | Hito | Resultado |
 | --- | --- |
@@ -390,23 +405,13 @@ Configuración actualiza de forma explícita el ancla y registra la operación.
 | Incidencias y Personal | SLA, directorio, disponibilidad, equipos cerrados y organigrama |
 | Tesorería y Nóminas | Flujos agregados, conciliación y controles |
 | Proyectos e integraciones | Planificación transversal y automatización neutral |
-| v1.0.0 | Primera demostración estable con OAuth y RLS |
-| v1.1.0 | Perfil, sistema visual y Analítica |
-| v1.2.0 | Escenario equilibrado y ventanas dinámicas |
-| v1.2.1 | Gráficos, diálogos y consistencia temporal |
-| v1.2.2 | OAuth final, V5, participantes y organigrama |
-| Mantenimiento v1.2.2 | V6, contratos, tareas, proyectos y documentación |
-| v1.3.0 | Tema completo, V7 incremental, contratos analíticos, equipos cerrados y seguridad |
-| v1.3.1 | Tareas móviles, backfill V7 aditivo, rate limiting, CSP y escaneo de secretos |
-| v1.3.2 | Nombres naturales compartidos, Novedades orientadas a usuarios y migración idempotente |
-| v1.4.0 | Acceso inicial seguro para la demo y procedencia profesional documentada |
-| v1.4.1 | Recuperación del acceso OAuth, móvil e iframe autorizado |
-| v1.5.0 | Privilegios de base de datos y cadena de entrega reforzados |
-| v1.5.1 | Catálogo de versiones alineado y desarrollo asistido documentado |
-| v1.6.0 | Búsqueda global, bandeja unificada y enlaces directos a entidades |
-| v1.7.0 | Automatizaciones, capacidad, notificaciones e integraciones de productividad |
-| v1.8.0 | Onboarding, multiempresa, directorio corporativo y nuevo sistema visual |
-| v1.8.1 | Acceso compacto, Personal y organigrama renovados, Novedades naturales y Analítica interactiva |
+| Fundamentos | OAuth, RLS, contratos de dominio y primer recorrido completo |
+| Profundidad funcional | Proyectos, tareas, incidencias, personas, finanzas agregadas y analítica |
+| Escenario reproducible | Datos sintéticos deterministas, evolución incremental y compatibilidad |
+| Operación | Búsqueda, bandeja, automatizaciones, recurrencias y capacidad |
+| Ecosistema | Google Workspace, Microsoft 365, exportaciones y permisos progresivos |
+| Producto multiempresa | Onboarding, empresas aisladas, directorio y navegación persistente |
+| Endurecimiento | CSP, rate limiting, secretos, funciones privilegiadas y supresión de cuenta |
 
 ### Operaciones e integraciones
 
@@ -422,10 +427,9 @@ la planificación sin bloquearla. Las exportaciones reconstruyen en servidor la
 vista autorizada, imponen un límite de filas y requieren confirmación antes de
 crear un archivo o evento externo.
 
-Las fechas editoriales se muestran en Novedades; v1.3.0 utiliza el 23 de junio
-de 2026, v1.3.1 el 29 de julio, v1.3.2 el 30 de julio, v1.4.0 y v1.4.1 el 3 de
-agosto, v1.5.0 el 5 de agosto, v1.5.1 el 7 de agosto y v1.6.0 el 10 de agosto de 2026. Git, PostgreSQL
-y Vercel conservan sus timestamps técnicos reales.
+Las fechas editoriales se muestran en Novedades. Git, PostgreSQL y Vercel
+conservan sus timestamps técnicos reales; el historial público se mantiene en
+GitHub Releases para no duplicarlo en este caso de estudio.
 
 El tema claro es el valor inicial y el modo oscuro se activa manualmente desde
 Perfil. La compatibilidad migra cualquier preferencia histórica `system` a
@@ -439,8 +443,8 @@ Perfil. La compatibilidad migra cualquier preferencia histórica `system` a
   privacidad, disponibilidad, licencias y reproducibilidad.
 - La nómina agregada evita modelar compensaciones individuales innecesarias.
 - Server Actions más RLS centralizan validación, autorización y auditoría.
-- Las subidas privadas se procesan en WebP en cliente sin transformaciones de
-  pago.
+- Las subidas privadas se validan y recodifican en WebP en servidor antes de
+  almacenarse.
 
 Documentos relacionados: [Arquitectura](./ARCHITECTURE.md),
 [Permisos](./PERMISSIONS.md), [Procedencia](./DATA-PROVENANCE.md),

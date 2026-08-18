@@ -36,7 +36,9 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Iniciar la base de datos local
-        run: bunx supabase start
+        # El buzón de correo local no participa en estas comprobaciones y su
+        # puerto puede estar ocupado por servicios preinstalados del runner.
+        run: bunx supabase start --exclude inbucket
 
       - name: Aplicar migraciones y datos iniciales
         run: bunx supabase db reset

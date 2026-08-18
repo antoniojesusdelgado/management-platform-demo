@@ -1,117 +1,121 @@
 # Integraciones de productividad
 
-## Experiencia v1.8.3
+## Principio de diseño
 
-Google Workspace y Microsoft 365 mantienen el mismo contrato de permisos
-progresivos. Esta versión mejora únicamente la claridad de sus estados y
-acciones: Microsoft se presenta con su color e icono corporativos cuando el
-proveedor de acceso está realmente disponible, y sigue deshabilitado con una
-explicación cuando falta configuración.
+La cuenta utilizada para acceder a Plataforma de gestión no concede acceso
+automático a archivos, calendarios o directorios. El producto separa tres
+finalidades:
 
-El acceso, la productividad y la sincronización del directorio continúan siendo
-autorizaciones independientes. Un botón activo nunca implica que la plataforma
-pueda leer archivos, calendarios o personas sin el consentimiento posterior
-correspondiente.
+| Finalidad | Alcance |
+| --- | --- |
+| Acceso | Identidad básica mediante Google o Microsoft |
+| Productividad | Archivos, hojas de cálculo y calendario autorizados |
+| Directorio | Personas corporativas con consentimiento administrativo |
 
-## Disponibilidad y permisos en v1.8.2
+Una persona puede iniciar sesión con Google y conectar Microsoft 365, o al
+revés. Cada conexión pertenece a una persona y a una organización.
 
-La interfaz ya no interpreta una cuenta conectada como autorización para leer
-un directorio. Cada conexión informa por separado de:
+## Capacidades
 
-- los ámbitos OAuth concedidos;
-- el tipo de cuenta (`consumer`, `corporate` o `unknown`);
-- la disponibilidad de archivos, hojas de cálculo, compositor y calendario;
-- el consentimiento administrativo del directorio;
-- el último resultado almacenado en `organization_directory_settings`.
+- **Archivos:** Drive o OneDrive, con acceso limitado a la aplicación.
+- **Hojas de cálculo:** Google Sheets o libros Excel compatibles.
+- **Calendario:** creación de eventos después de confirmación.
+- **Correo:** apertura del compositor de Gmail u Outlook; la plataforma no lee
+  buzones ni envía mensajes automáticamente.
+- **Directorio:** sincronización de solo lectura para una cuenta corporativa
+  autorizada.
 
-Una cuenta personal de Google puede utilizar Drive, Sheets, Calendar y el
-compositor de Gmail, pero no ofrece sincronización de personas. La misma regla
-se aplica a Microsoft: las capacidades delegadas se mantienen disponibles y el
-directorio solo se activa para una organización Entra autorizada. Las
-conexiones anteriores se conservan y aparecen como pendientes de verificación
-hasta completar un nuevo consentimiento.
+Las descargas CSV y XLSX locales permanecen disponibles sin conectar un
+proveedor.
 
-Outlook Web se abre mediante su compositor. Si el navegador o la cuenta no
-admiten ese enlace, la interfaz ofrece un `mailto:` con asunto y cuerpo
-codificados, sin leer ni enviar mensajes desde la plataforma.
+## Estados visibles
 
-## Alcance de v1.8.0
+La interfaz distingue:
 
-La autorización de la suite es independiente del proveedor usado para iniciar
-sesión. Una persona puede entrar con Google y conectar Microsoft 365, o al
-revés. Cada conexión sigue perteneciendo a una persona y a una organización.
+- proveedor disponible o no configurado;
+- conexión pendiente, activa, expirada o revocada;
+- capacidades concedidas;
+- cuenta personal, corporativa o todavía no verificada;
+- consentimiento administrativo del directorio;
+- última sincronización y error recuperable.
 
-La sincronización de directorio es de solo lectura hacia la plataforma. Google
-usa `admin.directory.user.readonly`; Microsoft usa `User.Read.All` y
-`users/delta`. Nombre, correo corporativo, equipo y estado proceden de la suite;
-los campos operativos permanecen bajo control local. Una baja externa desactiva
-el perfil vinculado sin eliminar su actividad.
+Un botón de acceso activo no implica que las capacidades de productividad o
+directorio estén concedidas.
 
-La plataforma ofrece un contrato común para `google_workspace` y
-`microsoft_365`. Cada conexión pertenece a una persona y a una organización;
-no se comparte entre usuarios y no sustituye al inicio de sesión de la
-aplicación.
+## Google Workspace
 
-Las capacidades son `files`, `spreadsheets`, `mail` y `calendar`. Drive,
-Sheets, OneDrive, Excel y Calendar solo se utilizan después de una confirmación
-explícita. El correo abre el compositor de Gmail u Outlook: la aplicación no
-lee buzones, no guarda borradores por API y no envía mensajes.
-
-## Google Cloud
-
-1. Crear una aplicación web OAuth en Google Cloud y activar Drive API, Sheets
-   API y Calendar API.
-2. Añadir como URI de redirección
+1. Crear una aplicación web OAuth y activar las API necesarias.
+2. Añadir
    `https://<dominio>/api/workspace/oauth/google_workspace/callback`.
 3. Configurar `GOOGLE_WORKSPACE_CLIENT_ID` y
-   `GOOGLE_WORKSPACE_CLIENT_SECRET` solo en el entorno del servidor.
-4. Revisar la pantalla de consentimiento y solicitar únicamente `drive.file`,
-   `spreadsheets`, `calendar.events`, `openid` y `email`.
+   `GOOGLE_WORKSPACE_CLIENT_SECRET` solo en servidor.
+4. Solicitar permisos de forma incremental.
 
-`drive.file` limita el acceso a archivos creados o seleccionados para la
-aplicación. No se solicita acceso general a Drive ni ningún alcance de Gmail.
+`drive.file` limita Drive a archivos creados o seleccionados para la
+aplicación. Sheets y Calendar se habilitan únicamente cuando la persona solicita
+esas capacidades. El acceso al directorio requiere una cuenta Google Workspace
+administrada y un consentimiento separado; no se ofrece a cuentas personales.
 
-## Microsoft Entra
+## Microsoft 365
 
-1. Registrar una aplicación web en Microsoft Entra.
+1. Registrar una aplicación de productividad en Microsoft Entra.
 2. Añadir
-   `https://<dominio>/api/workspace/oauth/microsoft_365/callback` como URI de
-   redirección.
-3. Configurar `MICROSOFT_365_CLIENT_ID`, `MICROSOFT_365_CLIENT_SECRET` y, si la
-   organización lo necesita, `MICROSOFT_365_TENANT_ID`.
-4. Conceder permisos delegados `User.Read`, `Files.ReadWrite` y
-   `Calendars.ReadWrite`.
+   `https://<dominio>/api/workspace/oauth/microsoft_365/callback`.
+3. Configurar `MICROSOFT_365_CLIENT_ID`,
+   `MICROSOFT_365_CLIENT_SECRET` y `MICROSOFT_365_TENANT_ID` en servidor.
+4. Conceder únicamente los permisos delegados necesarios.
 
-Excel conectado trabaja con libros `.xlsx` en OneDrive empresarial o
-SharePoint. Las cuentas que no dispongan de ese entorno mantienen la descarga
-local de XLSX y CSV.
+Excel conectado trabaja con libros `.xlsx` almacenados en OneDrive empresarial
+o SharePoint. La sincronización de personas usa Microsoft Graph y solo se
+habilita para una organización Entra con consentimiento administrativo. Las
+cuentas personales mantienen las capacidades que admita el proveedor, pero no
+simulan un directorio corporativo.
 
-## Estado, PKCE y secretos
+## OAuth, PKCE y secretos
 
-El flujo usa Authorization Code con PKCE. El parámetro `state` contiene el
-proveedor, la organización, la identidad, el verificador y la caducidad; se
-cifra y autentica con AES-256-GCM mediante `WORKSPACE_OAUTH_STATE_SECRET` y se
-comprueba en el callback. La clave debe contener exactamente 32 bytes codificados
-en Base64 URL-safe. Las
-redirecciones se construyen desde `NEXT_PUBLIC_APP_URL`, no desde valores
-enviados por el navegador.
+El flujo utiliza Authorization Code con PKCE. El parámetro `state` protege
+proveedor, identidad, organización, caducidad y retorno; se cifra y autentica
+mediante `WORKSPACE_OAUTH_STATE_SECRET`. Las redirecciones se construyen desde
+`NEXT_PUBLIC_APP_URL`, no desde valores enviados por el navegador.
 
-Los tokens solo pasan por código de servidor. Supabase Vault conserva el
-contenido cifrado y `workspace_connections` guarda únicamente la referencia al
-secreto, el propietario, las capacidades, el estado y metadatos no sensibles.
-El cliente administrativo utiliza `SUPABASE_SECRET_KEY`; nunca debe declararse
-con el prefijo `NEXT_PUBLIC_`.
+Los tokens solo se intercambian en servidor. Supabase Vault conserva el secreto
+cifrado y `workspace_connections` almacena una referencia, el propietario,
+las capacidades y metadatos no sensibles. `SUPABASE_SECRET_KEY` nunca debe
+aparecer en el cliente ni usar el prefijo `NEXT_PUBLIC_`.
+
+## Sincronización de directorio
+
+Google se pagina y Microsoft conserva el cursor incremental de Graph. La clave
+`(organization_id, provider, external_id)` evita duplicados. Una baja externa
+desactiva el perfil vinculado sin borrar tareas, proyectos ni auditoría; una
+reactivación recupera el mismo vínculo.
+
+Nombre corporativo, correo, equipo y estado pueden proceder del proveedor.
+Roles, permisos, asignaciones y actividad pertenecen a la plataforma y no se
+sobrescriben durante la sincronización.
 
 ## Exportaciones
 
-El servidor acepta un identificador cerrado de módulo y reconstruye la consulta
-con RLS, organización y columnas permitidas. No acepta SQL, nombres de tabla ni
-columnas arbitrarias. Los trabajos tienen un máximo de 25.000 filas y producen
-CSV, XLSX local, Google Sheets o Excel en Microsoft 365. Las escrituras externas
-se dividen en lotes y permanecen pendientes hasta que una persona confirma el
-destino.
+El servidor recibe un identificador cerrado de módulo y reconstruye filtros,
+organización, permisos y columnas. No acepta SQL, nombres de tabla ni columnas
+arbitrarias enviados por el cliente.
 
-## Modo de exploración
+Los trabajos grandes se paginan, tienen límite operativo y permanecen
+pendientes hasta que una persona confirma el destino externo. Cada resultado
+registra estado y error recuperable.
 
-El modo sin registro utiliza conectores simulados deterministas. Nunca inicia
-OAuth, consulta Vault ni escribe en servicios externos.
+## Exploración sin registro
+
+El modo de exploración utiliza conectores simulados deterministas. Nunca inicia
+OAuth, consulta Vault ni escribe en servicios de Google o Microsoft.
+
+## Validación
+
+Antes de habilitar un proveedor en producción:
+
+1. comprobar callback, PKCE, `state` manipulado y caducidad;
+2. validar revocación, renovación y permisos incompletos;
+3. probar cuentas personales y corporativas según el alcance;
+4. confirmar aislamiento entre organizaciones y propietarios;
+5. revisar secretos, logs y mensajes de error;
+6. ejecutar el recorrido completo en Preview con una cuenta de prueba.

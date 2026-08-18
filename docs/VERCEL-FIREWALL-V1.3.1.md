@@ -1,5 +1,8 @@
 # Vercel Firewall en v1.3.1
 
+> Documento histórico. La referencia operativa vigente es
+> [Vercel Firewall y límites de peticiones](VERCEL-FIREWALL.md).
+
 ## Estado actual
 
 La regla del callback OAuth se revisó y publicó desde el panel de Vercel:
