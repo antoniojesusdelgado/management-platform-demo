@@ -28,7 +28,7 @@ secretos con prefijo público.
 
 ## Situación de la versión
 
-La demo sin registro no se conecta a Supabase. Las identidades autenticadas con
+La exploración sin registro no se conecta a Supabase. Las identidades autenticadas con
 Google reciben espacios ficticios separados y todas las tablas expuestas de la
 aplicación tienen Row Level Security.
 

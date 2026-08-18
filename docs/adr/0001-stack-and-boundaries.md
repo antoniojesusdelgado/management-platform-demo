@@ -20,6 +20,6 @@ de paquetes.
 - El portfolio enlaza una aplicación desplegada por separado.
 - Supabase y Vercel necesitan aprovisionamiento y aprobación de costes
   independientes.
-- La demo sin registro sigue siendo útil cuando los servicios externos no están
+- La exploración sin registro sigue siendo útil cuando los servicios externos no están
   disponibles.
 - La aplicación en ejecución no depende de la API de OpenAI.

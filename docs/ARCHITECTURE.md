@@ -1,244 +1,164 @@
 # Arquitectura
 
-## Ajustes v1.8.3
+## Objetivo
 
-v1.8.3 mantiene montada la estructura de navegación mientras cambia el módulo.
-Los enlaces se precargan y un indicador discreto comunica la transición sin
-sustituir toda la pantalla por una superficie blanca. Cada destino sigue
-cargando únicamente su información y conserva los límites de organización y
-permiso existentes.
+Plataforma de gestión separa con claridad la experiencia pública, el área
+autenticada y los proveedores externos. La arquitectura busca mantener tres
+propiedades: aislamiento entre organizaciones, datos públicos seguros y
+recorridos de producto verificables.
 
-La interfaz utiliza un lenguaje orientado a tareas y decisiones. Los términos
-internos necesarios permanecen en los contratos y en la base de datos, pero no
-se exponen como instrucciones a las personas usuarias. El acceso Microsoft usa
-su identidad visual oficial sin alterar el flujo OAuth ni sus permisos.
-
-El onboarding conserva `SECURITY INVOKER` y RLS. La migración de esta versión
-concede al rol autenticado únicamente la actualización de
-`profiles.onboarding_completed_at`; no restablece el privilegio de actualización
-de la tabla completa. Una prueba pgTAP verifica ese límite y la publicación de
-Novedades se añade de forma idempotente por organización activa.
-
-## Correcciones v1.8.2
-
-v1.8.2 separa tres finalidades OAuth: identidad básica, productividad y
-directorio corporativo. El inicio de sesión no solicita acceso a archivos,
-calendarios ni personas. Los permisos adicionales se conceden desde
-Integraciones y el procesamiento de directorio solo puede ejecutarlo el
-servidor con credenciales protegidas.
-
-El cliente Supabase de servidor se reutiliza durante cada petición y los
-contratos temporales normalizan las fechas válidas a ISO antes de validarlas.
-Los avatares se decodifican, redimensionan y recodifican en WebP desde una
-Server Action autenticada antes de llegar al bucket privado.
-
-La capa raíz incluye un gestor de consentimiento local. Google Analytics 4 no
-se descarga hasta recibir una elección afirmativa; el cambio de preferencia
-está disponible desde cualquier pie legal. La configuración de Content Security
-Policy permite únicamente los hosts necesarios de Google Analytics y mantiene
-el resto de scripts bajo nonce en las superficies dinámicas.
-
-La supresión de cuenta se orquesta desde una Server Action autenticada. Una RPC
-anonimiza el perfil, desvincula las personas, suspende membresías y elimina los
-secretos de integración. A continuación, el cliente administrativo de Supabase
-realiza un borrado irreversible de la identidad Auth. La clave secreta permanece
-en servidor y la base conserva únicamente una prueba criptográfica no
-identificativa de la solicitud.
-
-## Correcciones v1.8.1
-
-v1.8.1 conserva la arquitectura multiempresa de v1.8.0 y corrige su capa de
-presentación y lectura. El acceso utiliza una composición compacta basada en
-`100dvh`; los módulos comparten una retícula de hasta 1.600 px, márgenes
-adaptativos y estados vacíos consistentes. La navegación precarga los destinos
-principales. Desde v1.8.3, la transición compartida sustituye el estado de carga
-de página completa para mantener la cabecera y el contexto visibles.
-
-La creación adicional de empresas vive en `/app/empresas/nueva`. Reutiliza el
-onboarding en modo creación, activa la organización nueva y mantiene las
-membresías anteriores. El saludo se calcula en servidor con la zona horaria del
-perfil para evitar cambios durante la hidratación.
-
-Las conexiones externas distinguen tres conceptos: proveedor de acceso,
-productividad y directorio corporativo. `workspace_connections` conserva los
-ámbitos concedidos, el tipo de cuenta y la autorización administrativa; el
-estado operativo del directorio sigue perteneciendo a
-`organization_directory_settings`.
-
-Personal limita el directorio visible a 24 perfiles por página y deriva el
-organigrama desde las relaciones existentes, sin duplicar una segunda fuente
-de verdad. Analítica mantiene el mismo `AnalyticsSnapshot` para indicadores,
-lecturas guiadas, filtros cruzados y detalle contextual. Novedades ordena por
-fecha y versión para que la publicación más reciente sea siempre la primera.
-
-## Evolución v1.8.0
-
-La aplicación autenticada ya no crea automáticamente una demostración por
-identidad. Después de Google o Microsoft OAuth, la persona recupera su última
-empresa activa, acepta una invitación o completa el onboarding. La empresa
-activa se persiste en el perfil y en una cookie `httpOnly`; cada consulta sigue
-validando membresía, permiso y organización mediante RLS.
-
-Google Workspace y Microsoft 365 se autorizan después del login. Los tokens se
-mantienen en Vault y el directorio sincroniza únicamente identidad corporativa,
-equipo y estado. Roles, permisos, asignaciones e histórico pertenecen a la
-plataforma y nunca se sobrescriben desde el proveedor.
-
-## Límites del sistema
+## Contexto del sistema
 
 ```mermaid
 flowchart LR
-  Visitor["Visitante"] --> Embed["/explorar"]
-  Embed --> Session["sessionStorage repository"]
-  Visitor --> OAuth["Google OAuth + PKCE"]
-  OAuth --> App["/app routes"]
-  App --> Provision["Isolated synthetic workspace"]
-  Provision --> DAL
-  App --> DAL["Server data access and permission checks"]
-  DAL --> RLS["Supabase PostgreSQL + RLS"]
+  visitor["Persona visitante"] --> public["Exploración sin registro"]
+  member["Persona autenticada"] --> oauth["Google o Microsoft OAuth"]
+  oauth --> app["Next.js"]
+  public --> local["Estado local validado"]
+  app --> auth["Supabase Auth"]
+  app --> postgres["PostgreSQL + RLS"]
+  app --> storage["Storage privado"]
+  app --> providers["Google Workspace / Microsoft 365"]
+  github["GitHub Actions"] --> preview["Vercel Preview"]
+  preview --> production["Vercel Production"]
 ```
 
-Las rutas sin registro y autenticada comparten tipos de dominio y componentes
-visuales, pero utilizan repositorios de datos separados. El código de la demo
-sin registro no puede obtener credenciales de base de datos ni escribir en
-Supabase.
+La exploración y el área autenticada comparten contratos de dominio y
+componentes visuales, pero no el repositorio de datos. La primera conserva un
+estado sintético en el navegador; la segunda utiliza Supabase y vuelve a
+comprobar autorización en cada lectura o mutación.
 
-Google OAuth es una entrada pública a la demostración, no un límite de tenencia
-compartida. Una función de base de datos idempotente y con privilegios crea una
-organización aislada por identidad de Google y asigna un rol del sistema con
-todos los permisos estables de la demo. El perfil de aplicación utiliza un alias
-ficticio y no copia el nombre, el correo ni el avatar del proveedor.
+## Capas
 
-ChatGPT Codex interviene únicamente en el proceso supervisado de desarrollo. No
-es un contenedor, servicio ni dependencia del sistema desplegado, no recibe
-datos de ejecución y no necesita credenciales en Vercel o Supabase.
+| Capa | Responsabilidad |
+| --- | --- |
+| Presentación | App Router, React, componentes accesibles, estados de carga y navegación persistente |
+| Aplicación | Server Components, Server Actions, loaders por módulo y orquestación de casos de uso |
+| Dominio | Contratos TypeScript, transiciones cerradas, validación Zod y cálculos puros |
+| Acceso a datos | Consultas acotadas, proyecciones por módulo y resolución de permisos |
+| Persistencia | PostgreSQL, RLS, RPC autorizadas, auditoría, Storage y Vault |
+| Entrega | Migraciones, GitHub Actions, Vercel Preview y promoción controlada |
 
-## Capas de ejecución
+Los módulos cargan solo la información que necesitan. La empresa activa, el
+perfil y los permisos se resuelven una vez por petición y se reutilizan durante
+el recorrido del módulo.
 
-1. **Interfaz:** Next.js App Router, React, Tailwind CSS y primitivas de Radix.
-2. **Dominio:** módulos tipados, códigos estables de permiso y transiciones
-   explícitas para Vacaciones, Tareas, Incidencias, Novedades, Tesorería y
-   Nóminas.
-3. **Aplicación:** reducer de la demo en cliente y acciones autenticadas en
-   servidor.
-4. **Acceso a datos:** clientes de Supabase adaptados al navegador, servidor y
-   proxy.
-5. **Base de datos:** esquema PostgreSQL multiorganización con RLS y eventos de
-   transición inmutables.
+## Dos recorridos de datos
 
-El centro de trabajo es una capacidad transversal del shell. En la demo sin
-registro deriva búsqueda y bandeja del estado local ya validado; en el acceso
-OAuth utiliza Server Actions autenticadas, consultas acotadas y RLS. Los
-resultados solo contienen una proyección mínima y sus enlaces abren la entidad
-concreta. La bandeja no crea otro estado: ordena tareas, solicitudes,
-incidencias y avisos que siguen perteneciendo a sus módulos de origen.
+### Exploración sin registro
 
-El catálogo TypeScript de versiones alimenta el escenario invitado y la versión
-visible. Una prueba lo compara con `package.json` y con la copia SQL que se
-inserta de forma aditiva en las organizaciones autenticadas.
+`/explorar` carga `GuestWorkspaceState`, validado con Zod y almacenado en
+`sessionStorage`. Los cambios pertenecen a esa pestaña y no llegan a Supabase
+ni a servicios externos. La clave actual migra automáticamente el estado
+compatible de versiones anteriores.
+
+`/demo/embed` se conserva como redirección permanente por compatibilidad con
+enlaces históricos.
+
+### Área autenticada
+
+Google o Microsoft autentican mediante Supabase OAuth con PKCE. Tras el
+callback, la aplicación recupera una empresa activa, una invitación pendiente o
+el onboarding. La cookie de empresa activa mejora la navegación, pero no
+autoriza: la membresía y RLS se comprueban de nuevo en servidor y base de datos.
 
 ## Modelo multiorganización
 
-Cada registro operativo incluye `organization_id`. Las pertenencias relacionan
-un perfil, una organización y un rol. Los nombres y colores de los roles son
-metadatos editables; los códigos de permiso permanecen como contratos estables
-de la aplicación.
-
-Los metadatos de rol y la asignación de permisos utilizan mutaciones separadas.
-Los cambios administrativos de identidad, módulos, roles, invitaciones y
-pertenencias producen eventos de auditoría inmutables.
-
-Tesorería almacena únicamente conceptos agregados ficticios, fechas, importes
-enteros en unidades menores y códigos de moneda ISO. Su flujo de estados
-monótono se ejecuta mediante RPC con privilegios que repiten las comprobaciones
-de autenticación, organización y permiso. Los roles autenticados no reciben
-permisos directos de inserción o actualización en las tablas de Tesorería. La
-creación, edición de borradores y transición de estados añade eventos
-inmutables.
-
-Nóminas almacena solo periodos, recuentos ficticios de personas y totales
-agregados de bruto, deducciones y neto calculado por la base de datos. Excluye
-retribuciones individuales, identificadores fiscales, recibos y documentos.
-Las ediciones y transiciones se ejecutan mediante RPC con privilegios y añaden
-eventos inmutables; los roles autenticados no escriben directamente en sus
-tablas.
-
-El estado invitado está en la versión 21 y utiliza Scenario V7. Zod valida las
-sesiones restauradas antes de mostrarlas. La migración V14 a V15 conserva los
-cambios operativos y preferencias y añade solo las entidades deterministas que
-faltan. V15 a V16 incorpora la entrada editorial v1.3.0 sin regenerar el
-escenario diario. V16 a V17 añade v1.3.1 una sola vez y conserva el grafo de la
-sesión. V17 a V18 incorpora v1.3.2 y actualiza únicamente el texto canónico
-publicado, sin modificar entradas editoriales personalizadas. V18 a V19 añade
-las publicaciones hasta v1.5.1, V19 a V20 incorpora v1.6.0 y V20 a V21 añade
-operaciones, capacidad, notificaciones y exportaciones sin reconstruir el resto
-de la sesión.
-
-## Operaciones e integraciones
-
-`operaciones` agrupa reglas cerradas, plantillas, recurrencias, capacidad,
-notificaciones y trabajos de exportación. Las Server Actions vuelven a validar
-los datos y permisos; el cliente no puede enviar SQL, JavaScript, URLs ni nombres
-de tablas. Las recurrencias se procesan en una función privada programada y
-utilizan identificadores deterministas por serie y periodo.
-
-Los proveedores externos implementan el mismo contrato de capacidades. OAuth
-usa PKCE y estado firmado; los tokens quedan cifrados en Vault y solo el servidor
-puede recuperarlos. La descarga local y los compositores de correo funcionan sin
-conceder acceso a archivos o buzones externos.
-
-La elección de tema es explícita: los espacios nuevos y antiguos utilizan
-`light` de forma predeterminada y `dark` se activa manualmente desde el perfil.
-La aplicación no sigue cambios de color del sistema operativo; los valores
-históricos `system` se normalizan a `light` tanto en la sesión como en la
-migración SQL compatible.
-
-La creación y edición de personas reutiliza los equipos distintos ya
-almacenados en la organización activa. La interfaz los presenta en un selector
-cerrado y la Server Action autenticada vuelve a comprobar su existencia dentro
-de la organización antes de guardar el perfil. Las fechas profesionales de
-inicio y fin se almacenan junto al resto de datos laborales.
-
-Las personas de Scenario V7 comparten un único contrato de nombres naturales
-deterministas entre el generador invitado y PostgreSQL. Un trigger privado
-sustituye únicamente los marcadores numerados conocidos. La migración v1.3.2
-actualiza esos identificadores existentes sin insertar, eliminar ni cambiar
-perfiles editados por el usuario.
-
-Los espacios autenticados llaman a `ensure_demo_scenario_current` antes de
-consultar los módulos. PostgreSQL bloquea la fila de la organización, genera
-solo el intervalo que falte hasta ayer en `Europe/Madrid`, inserta
-identificadores deterministas con `ON CONFLICT DO NOTHING`, añade los eventos de
-evolución y auditoría y avanza el horizonte de forma atómica.
-
-En organizaciones antiguas, `scenario_v7_backfilled_at` es independiente de la
-fecha diaria generada. La RPC comprueba esa marca antes de finalizar, completa
-solo las filas deterministas ausentes, conserva los registros existentes y
-registra un único evento `backfilled` en la misma transacción.
-
-Las superficies dinámicas `/app`, `/auth` y `/login` reciben un nonce de script
-por solicitud en `proxy.ts`; las rutas públicas estáticas conservan una CSP
-compatible con caché. PostgREST utiliza una comprobación previa en la base de
-datos para ráfagas de mutaciones y Vercel Firewall actúa como capa exterior de
-observación por IP.
-
-Analítica expone `AnalyticsServiceDimension { code, label, kind }`. Los UUID de
-conectores y las etiquetas históricas de incidencias quedan como relaciones
-internas. Los filtros guardados, indicadores, comparaciones, alertas, detalle y
-tablas accesibles utilizan el mismo código estable de servicio.
-
-El servidor comprueba la autorización cerca de cada escritura y RLS repite el
-límite dentro de PostgreSQL. El identificador de organización enviado por el
-cliente nunca se considera suficiente por sí solo.
-
-## Recorrido de datos de Scenario V7
+Cada registro operativo incluye `organization_id`. Las membresías relacionan
+perfil, organización y rol; los roles agrupan códigos de permiso estables. Los
+nombres y colores pueden cambiar, pero un código no puede reutilizarse con otra
+finalidad.
 
 ```mermaid
 flowchart LR
-  Route["Authenticated organization entry"] --> RPC["Guarded public RPC"]
-  RPC --> Lock["Organization row lock"]
-  Lock --> Private["Private interval generator"]
-  Private --> Append["Deterministic inserts"]
-  Append --> Audit["Evolution and audit events"]
-  Audit --> Horizon["Atomic generated-through update"]
+  identity["auth.users"] --> profile["profiles"]
+  profile --> membership["memberships"]
+  membership --> organization["organizations"]
+  membership --> role["roles"]
+  role --> permission["role_permissions"]
+  organization --> records["Registros operativos"]
 ```
+
+Las Server Actions verifican sesión, empresa y permiso cerca de cada escritura.
+RLS repite el límite en PostgreSQL. Las funciones con privilegios elevados son
+excepciones explícitas: viven en esquemas internos cuando corresponde, usan
+`search_path` vacío y revocan `EXECUTE` a `PUBLIC`.
+
+## Módulos
+
+- **Trabajo:** proyectos, tareas, incidencias y bandeja personal.
+- **Personas:** directorio, organigrama, vacaciones y disponibilidad.
+- **Operaciones:** automatizaciones cerradas, plantillas, recurrencias,
+  capacidad, notificaciones y exportaciones.
+- **Gestión:** tesorería y nóminas con información ficticia agregada.
+- **Analítica:** indicadores, filtros cruzados, comparaciones, detalle y vistas
+  guardadas sobre dimensiones estables.
+
+Los eventos de transición mantienen trazabilidad sin crear una segunda fuente
+de verdad. Las colecciones crecientes se paginan y los comentarios o
+dependencias se limitan a la página visible.
+
+## Integraciones
+
+La identidad de acceso y la autorización de productividad son procesos
+independientes. Una persona puede iniciar sesión con Google y conectar
+Microsoft 365, o al revés.
+
+```mermaid
+sequenceDiagram
+  participant U as Persona
+  participant A as Aplicación
+  participant P as Proveedor
+  participant V as Vault
+  U->>A: Solicita conectar una capacidad
+  A->>P: Authorization Code + PKCE + state protegido
+  P-->>A: Código autorizado
+  A->>A: Valida identidad, empresa, caducidad y state
+  A->>P: Intercambia el código en servidor
+  A->>V: Guarda el token cifrado
+  A-->>U: Muestra capacidades concedidas
+```
+
+Los contratos comunes cubren archivos, hojas de cálculo, correo y calendario.
+Las acciones externas requieren confirmación y los trabajos grandes se
+ejecutan por lotes. La sincronización de directorio solo se habilita para una
+cuenta corporativa con consentimiento administrativo.
+
+## Datos sintéticos y evolución
+
+Scenario V7 genera un conjunto reproducible para la exploración y para espacios
+autenticados de evaluación. Los identificadores son deterministas y las
+actualizaciones son aditivas e idempotentes: no eliminan ni sobrescriben
+registros operativos modificados.
+
+Las organizaciones antiguas distinguen la actualización diaria del backfill
+histórico. PostgreSQL bloquea la organización, inserta únicamente entidades
+ausentes, registra auditoría y avanza el horizonte de forma atómica.
+
+Los nombres históricos `GuestDemoState`, `demo:data:*` y
+`ensure_demo_scenario_current` permanecen como contratos de compatibilidad.
+Las superficies activas utilizan `GuestWorkspaceState`, `scenario:data:*` y
+la denominación «modo de exploración».
+
+## Seguridad, privacidad y observabilidad
+
+- CSP con nonce en superficies dinámicas y framing restringido.
+- Validación Unicode, límites de longitud y rechazo de marcado ejecutable.
+- Consultas parametrizadas y RLS en todas las tablas de aplicación.
+- Tokens en servidor y referencias cifradas mediante Vault.
+- Consentimiento analítico denegado por defecto.
+- Procesamiento de avatares en servidor y almacenamiento privado.
+- CodeQL, revisión de dependencias, escaneo de secretos, pgTAP y ZAP.
+
+ChatGPT Codex forma parte del proceso supervisado de ingeniería, no de la
+arquitectura desplegada. La aplicación no necesita una clave de OpenAI ni envía
+datos a OpenAI.
+
+## Decisiones relacionadas
+
+- [ADR 0001: tecnologías y límites](adr/0001-stack-and-boundaries.md)
+- [ADR 0002: autenticación y RLS](adr/0002-authentication-and-rls.md)
+- [ADR 0003: exploración integrada](adr/0003-embedded-demo.md)
+- [Modelo de permisos](PERMISSIONS.md)
+- [Integraciones de productividad](WORKSPACE-INTEGRATIONS.md)
+- [Procedencia de los datos](DATA-PROVENANCE.md)

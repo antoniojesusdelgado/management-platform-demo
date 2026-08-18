@@ -1,5 +1,8 @@
 # Revisión de Vercel Firewall para v1.5.0
 
+> Documento histórico. La referencia operativa vigente es
+> [Vercel Firewall y límites de peticiones](VERCEL-FIREWALL.md).
+
 ## Finalidad
 
 Esta revisión complementa la protección DDoS automática de Vercel. No pretende
