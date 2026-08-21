@@ -1,107 +1,107 @@
 # Plataforma de gestión
 
-[![CI](https://github.com/antoniojesusdelgado/management-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/antoniojesusdelgado/management-platform/actions/workflows/ci.yml)
-[![Versión](https://img.shields.io/github/v/release/antoniojesusdelgado/management-platform)](https://github.com/antoniojesusdelgado/management-platform/releases/latest)
+**Todo el trabajo, en un solo lugar**
 
-**Todo el trabajo, en un solo lugar.**
+[![Versión publicada](https://img.shields.io/github/v/release/antoniojesusdelgado/management-platform?label=versi%C3%B3n)](https://github.com/antoniojesusdelgado/management-platform/releases/latest)
+[![Calidad](https://github.com/antoniojesusdelgado/management-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/antoniojesusdelgado/management-platform/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/antoniojesusdelgado/management-platform/actions/workflows/codeql.yml/badge.svg)](https://github.com/antoniojesusdelgado/management-platform/actions/workflows/codeql.yml)
+![Derechos reservados](https://img.shields.io/badge/licencia-derechos%20reservados-24507a)
 
-Plataforma modular para coordinar personas, proyectos, operaciones y analítica
-desde un espacio común. El producto combina una experiencia pública de
-exploración con un entorno autenticado, multiempresa y protegido por permisos.
+Plataforma modular para centralizar personas, proyectos, tareas, incidencias, administración y analítica en un espacio común. Puede explorarse sin registro o utilizarse mediante Google y Microsoft OAuth en organizaciones aisladas por permisos.
 
-[Explorar la plataforma](https://plataformagestion.app) ·
-[Ver el caso de estudio](https://antoniodelgado.tech/proyectos/plataforma-de-gestion) ·
-[Consultar la documentación](docs/README.md)
+[Abrir la plataforma](https://plataformagestion.app) · [Ver el caso en el portfolio](https://antoniodelgado.tech/proyectos/plataforma-de-gestion) · [Consultar la última versión](https://github.com/antoniojesusdelgado/management-platform/releases/latest)
 
-![Plataforma de gestión](public/social-card.png)
+[![Portada de Plataforma de gestión](https://antoniodelgado.tech/images/projects/management-platform/launch-poster.webp)](https://plataformagestion.app)
 
-## El problema que aborda
+## Visión general
 
-Cuando la información vive en hojas de cálculo, conversaciones y herramientas
-separadas, aumenta el esfuerzo necesario para coordinar el trabajo y obtener
-una visión fiable. Plataforma de gestión reúne los principales recorridos de
-una empresa y mantiene el contexto entre personas, tareas y decisiones.
+| | |
+| --- | --- |
+| **Necesidad** | Centralizar una operativa distribuida entre hojas de cálculo y diferentes herramientas. |
+| **Aportación** | Análisis de procesos, toma de requisitos, definición funcional, desarrollo, pruebas, implantación y despliegue. |
+| **Solución** | Una plataforma modular que conecta trabajo, personas, gestión y analítica con permisos por organización. |
+| **Evidencia** | Aplicación pública recorrible, caso profesional, código, documentación, releases y comprobaciones automatizadas. |
+
+El proyecto original responde a una necesidad operativa real de Fundación Cibervoluntarios. Este repositorio contiene una implementación pública posterior, independiente y técnicamente aislada; no es el sistema interno de la Fundación ni implica patrocinio o respaldo.
+
+## Aportación profesional
+
+- **Análisis funcional:** procesos, requisitos, reglas de negocio, permisos y criterios de aceptación para once módulos conectados.
+- **Coordinación de la solución:** alineación entre necesidades operativas, diseño funcional, implementación y puesta en producción.
+- **Business Intelligence:** indicadores, filtros, comparaciones y vistas de seguimiento dentro del mismo entorno de trabajo.
+- **Validación:** pruebas funcionales, UAT, accesibilidad, seguridad, aislamiento de datos y revisión previa a cada publicación.
+- **Evolución del producto:** entregas incrementales, documentación trazable y mejora continua a partir del uso real.
 
 ## Capacidades principales
 
-| Área | Capacidades |
-| --- | --- |
-| Trabajo | Proyectos, tareas en Kanban y lista, incidencias y bandeja personal |
-| Personas | Directorio, organigrama, vacaciones, disponibilidad y capacidad |
-| Operaciones | Automatizaciones controladas, plantillas, recurrencias y notificaciones |
-| Gestión | Tesorería agregada, ciclos de nómina e información multiempresa |
-| Analítica | Indicadores, filtros cruzados, comparaciones, vistas guardadas y exportaciones |
-| Ecosistema | Acceso con Google o Microsoft e integraciones opcionales de productividad |
+- Inicio operativo con prioridades, agenda, actividad y bandeja personal.
+- Proyectos, tareas, incidencias, vacaciones y planificación de capacidad.
+- Directorio, equipos, organigrama, permisos y aislamiento por organización.
+- Tesorería agregada, ciclos de nómina y seguimiento administrativo sin datos reales.
+- Analítica con filtros, comparaciones, vistas guardadas y exportaciones.
+- Automatizaciones controladas, plantillas, recurrencias y notificaciones.
+- Búsqueda global y diseño adaptable con tema claro u oscuro.
+- Recorrido público con información sintética y acceso autenticado con Google o Microsoft.
 
-La búsqueda global permite localizar personas, proyectos, tareas e incidencias
-con `Ctrl/Cmd+K`. La interfaz está preparada para escritorio y móvil, admite
-teclado y movimiento reducido, y ofrece tema claro u oscuro por elección
-explícita.
-
-## Qué demuestra este repositorio
-
-- Diseño de producto modular con recorridos conectados y lenguaje orientado a
-  personas usuarias.
-- Arquitectura Next.js y Supabase con separación entre presentación, dominio,
-  acceso a datos y persistencia.
-- Aislamiento por organización mediante Row Level Security, permisos estables
-  y validación en servidor.
-- Datos sintéticos deterministas para evaluar el producto sin publicar
-  información empresarial o personal real.
-- Entrega trazable mediante migraciones, CI, Preview, pruebas de navegador,
-  accesibilidad y controles de seguridad.
-
-## Arquitectura resumida
+## Recorrido funcional
 
 ```mermaid
 flowchart LR
-  visitor["Exploración sin registro"] --> local["Estado local validado"]
-  identity["Google o Microsoft OAuth"] --> app["Next.js App Router"]
-  app --> auth["Supabase Auth"]
-  app --> db["PostgreSQL + RLS"]
-  app --> vault["Vault para integraciones"]
-  github["GitHub Actions"] --> preview["Vercel Preview"]
-  preview --> production["Vercel Production"]
+  A[Entender la necesidad] --> B[Organizar procesos y requisitos]
+  B --> C[Configurar personas y permisos]
+  C --> D[Coordinar la operativa]
+  D --> E[Validar tareas y decisiones]
+  E --> F[Consultar resultados y analítica]
 ```
 
-La exploración sin registro funciona en el navegador y no escribe en
-Supabase. El área autenticada vuelve a comprobar sesión, organización y permiso
-en el servidor; PostgreSQL repite el límite mediante RLS. Las autorizaciones de
-Google Workspace y Microsoft 365 son opcionales e independientes del inicio de
-sesión.
+El objetivo no es reunir módulos aislados, sino conservar el contexto entre personas, trabajo, datos y decisiones.
 
-Consulta [Arquitectura](docs/ARCHITECTURE.md), [Permisos](docs/PERMISSIONS.md)
-y [Seguridad](SECURITY.md) para el detalle técnico.
+## Arquitectura
 
-## Origen y límites del proyecto público
+```mermaid
+flowchart LR
+  Guest[Exploración sin registro] --> Local[Estado local validado]
+  User[Google o Microsoft OAuth] --> App[Next.js]
+  App --> Auth[Supabase Auth]
+  App --> DB[PostgreSQL + RLS]
+  App --> Vault[Supabase Vault]
+  CI[GitHub Actions] --> Preview[Vercel Preview]
+  Preview --> Production[Vercel Production]
+```
 
-El proyecto nació del análisis de una necesidad operativa de Fundación
-Cibervoluntarios: centralizar procesos repartidos entre hojas de cálculo y
-herramientas externas. Antonio Delgado realizó el análisis de procesos, la
-toma de requisitos, el desarrollo, las pruebas, la implantación y el
-despliegue de la solución utilizada por la organización.
+El modo de exploración funciona en el navegador y no escribe en Supabase. El área autenticada vuelve a comprobar sesión, organización y permisos en el servidor; PostgreSQL repite el aislamiento mediante Row Level Security.
 
-Este repositorio es una implementación pública posterior y técnicamente
-aislada. No contiene el código, los datos, los documentos, las credenciales,
-las reglas internas ni las conexiones de la Fundación. La referencia explica
-el origen funcional y no implica patrocinio ni respaldo de este repositorio.
+Consulta [Arquitectura](docs/ARCHITECTURE.md), [Permisos](docs/PERMISSIONS.md) y [Seguridad](SECURITY.md) para el detalle técnico.
+
+## Tecnologías
+
+| Capa | Tecnologías |
+| --- | --- |
+| Interfaz | Next.js, React, TypeScript y Tailwind CSS |
+| Datos | Supabase, PostgreSQL, Row Level Security y Zod |
+| Identidad | Google OAuth, Microsoft OAuth y permisos por organización |
+| Calidad | Bun, Playwright, Axe, GitHub Actions y CodeQL |
+| Publicación | Vercel, Preview protegida, dominio propio y HTTPS |
+
+## Estructura del repositorio
+
+```text
+src/app/          Rutas, acciones de servidor y páginas
+src/components/   Módulos y componentes de la experiencia
+src/domain/       Reglas de negocio y contratos funcionales
+src/lib/          Autenticación, autorización y acceso a datos
+supabase/         Migraciones, configuración y pruebas de base de datos
+tests/            Pruebas de navegador y accesibilidad
+docs/             Arquitectura, procesos, seguridad y operación
+```
 
 ## Datos, privacidad y transparencia
 
-El modo de exploración utiliza exclusivamente datos ficticios generados de
-forma determinista. No contiene contactos reales, cuentas bancarias,
-documentos, salarios individuales ni credenciales de terceros. La metodología
-se documenta en [Procedencia de los datos](docs/DATA-PROVENANCE.md).
+El modo público utiliza exclusivamente información sintética y no contiene datos, documentos, credenciales, reglas internas ni conexiones de Fundación Cibervoluntarios o de otra organización real.
 
-Google Analytics 4 solo se carga después de una elección afirmativa. Las
-cuentas autenticadas disponen de un flujo irreversible de supresión y pueden
-revocar sus conexiones de productividad. Contacto profesional y de privacidad:
-[contacto@antoniodelgado.tech](mailto:contacto@antoniodelgado.tech).
+Las integraciones son opcionales, los secretos se procesan únicamente en servidor y las cuentas disponen de un flujo de supresión. La analítica solo se carga después de una aceptación expresa.
 
-El desarrollo se ha realizado con asistencia de ChatGPT Codex, bajo dirección,
-revisión y validación humana. La aplicación desplegada no llama a modelos de
-OpenAI ni envía datos a OpenAI. El alcance completo está en
-[Transparencia, privacidad y analítica](docs/AI-TRANSPARENCY-AND-PRIVACY.md).
+El desarrollo se ha realizado con asistencia de Inteligencia Artificial bajo dirección, revisión y validación humana. La aplicación desplegada no llama a modelos de OpenAI ni envía datos a OpenAI. El alcance completo está documentado en [Transparencia y privacidad](docs/AI-TRANSPARENCY-AND-PRIVACY.md).
 
 ## Desarrollo local
 
@@ -115,17 +115,9 @@ Copy-Item .env.example .env.local
 bun run dev
 ```
 
-Rutas útiles:
+La configuración completa de Supabase, OAuth y Vercel se encuentra en [Despliegue](docs/DEPLOYMENT.md).
 
-- `http://localhost:3000/login`: acceso con Google, Microsoft o exploración.
-- `http://localhost:3000/explorar`: recorrido sin registro con datos ficticios.
-- `http://localhost:3000/app/inicio`: área autenticada.
-- `/demo/embed`: redirección heredada a `/explorar`.
-
-La configuración completa de Supabase, OAuth y Vercel se encuentra en
-[Despliegue](docs/DEPLOYMENT.md).
-
-## Verificación
+## Validación
 
 ```powershell
 bun run lint
@@ -142,26 +134,22 @@ bun run e2e:a11y
 git diff --check
 ```
 
-Las comprobaciones de base de datos requieren Docker:
-
-```powershell
-bunx supabase start
-bunx supabase db reset
-bunx supabase test db
-bunx supabase db lint --local --level warning --fail-on error
-bunx supabase gen types --lang typescript --local
-```
+Las comprobaciones de base de datos requieren Docker y se documentan en la guía de despliegue.
 
 ## Documentación
 
-El [índice de documentación](docs/README.md) organiza las guías por audiencia:
-producto, arquitectura, seguridad, operación y decisiones técnicas. El historial
-de cambios pertenece a [GitHub Releases](https://github.com/antoniojesusdelgado/management-platform/releases)
-y no se duplica en los manuales activos.
+| Documento | Contenido |
+| --- | --- |
+| [Caso técnico](docs/TECHNICAL-CASE-STUDY.md) | Decisiones de producto, arquitectura y validación |
+| [Arquitectura](docs/ARCHITECTURE.md) | Componentes, límites y flujos principales |
+| [Mapa de procesos](docs/PROCESS-MAPS.md) | Recorridos y reglas funcionales |
+| [Permisos](docs/PERMISSIONS.md) | Roles, autorización y aislamiento |
+| [Procedencia de los datos](docs/DATA-PROVENANCE.md) | Origen sintético y controles de publicación |
+| [Despliegue](docs/DEPLOYMENT.md) | Configuración local, OAuth, Supabase y Vercel |
+| [Seguridad](SECURITY.md) | Modelo de seguridad y comunicación responsable |
 
-## Uso y colaboración
+## Derechos
 
-El código, la documentación y la identidad visual son propietarios. Consulta
-[LICENSE](LICENSE) antes de copiar, modificar o redistribuir el proyecto.
-[CONTRIBUTING.md](CONTRIBUTING.md) explica cómo comunicar propuestas y
-[SUPPORT.md](SUPPORT.md) reúne los canales de ayuda y seguridad.
+Copyright © 2026 Antonio Jesús Delgado Briones. Todos los derechos reservados.
+
+El repositorio es público para consulta profesional, pero no concede permiso de uso, modificación o redistribución. Consulta [LICENSE](LICENSE) y [THIRD-PARTY-LICENSES.md](docs/THIRD-PARTY-LICENSES.md).
