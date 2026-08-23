@@ -46,14 +46,16 @@ export default function PrivacyPage() {
           utiliza cookies necesarias para mantener la sesión y protegerla.
         </p>
         <p>
-          Google Analytics 4 solo se carga si eliges “Permitir” en el
-          aviso de preferencias. Se utiliza para conocer de forma agregada qué
-          rutas se consultan, detectar problemas de uso y mejorar el producto.
-          No se emplea para publicidad, se desactivan las señales de Google y la
-          personalización de anuncios, y no se envían los datos operativos que
-          introduces en formularios. Puedes rechazarlo con la misma facilidad o
-          retirar el consentimiento en “Preferencias de analítica”, disponible
-          en el pie legal.
+          Google Analytics 4 y Vercel Web Analytics solo se cargan si eliges
+          “Permitir” en el aviso de preferencias. Se utilizan para conocer de
+          forma agregada qué rutas se consultan, detectar problemas de uso y
+          mejorar el producto. Vercel Web Analytics no utiliza cookies y sus
+          métricas no se asocian a una identidad personal. Google Analytics 4
+          no se emplea para publicidad, mantiene desactivadas las señales de
+          Google y la personalización de anuncios, y no recibe los datos
+          operativos que introduces en formularios. Puedes rechazar ambas
+          herramientas con la misma facilidad o retirar el consentimiento en
+          “Preferencias de analítica”, disponible en el pie legal.
         </p>
         <p>
           Google Search Console se utiliza para comprobar el dominio y conocer
