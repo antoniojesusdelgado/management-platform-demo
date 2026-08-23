@@ -116,7 +116,7 @@ test("analytics remains disabled until explicit consent and can be rejected", as
   await page.goto("/login", { waitUntil: "domcontentloaded" });
   const banner = page.getByRole("dialog", { name: "Analítica opcional" });
   const vercelAnalyticsScript = page.locator(
-    'script[src*="/_vercel/insights/script.js"], script[src*="va.vercel-scripts.com"]',
+    'script[data-sdkn^="@vercel/analytics"]',
   );
   await expect(banner).toBeVisible();
   await expect(banner.getByRole("button", { name: "Ahora no" })).toBeVisible();
@@ -141,7 +141,7 @@ test("Vercel Analytics loads only after explicit consent", async ({ page }) => {
   await page.goto("/login", { waitUntil: "domcontentloaded" });
   const banner = page.getByRole("dialog", { name: "Analítica opcional" });
   const vercelAnalyticsScript = page.locator(
-    'script[src*="/_vercel/insights/script.js"], script[src*="va.vercel-scripts.com"]',
+    'script[data-sdkn^="@vercel/analytics"]',
   );
 
   await expect(banner).toBeVisible();
