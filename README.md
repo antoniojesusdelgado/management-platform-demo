@@ -10,6 +10,7 @@ Plataforma de gestión centralizada para coordinar personas, proyectos, tareas,
 vacaciones, incidencias, tesorería, nóminas y analítica en un mismo entorno.
 
 [Probar la plataforma](https://plataformagestion.app) ·
+[Ver el caso profesional](https://antoniodelgado.tech/proyectos/plataforma-de-gestion) ·
 [Ver la última versión](https://github.com/antoniojesusdelgado/management-platform/releases/latest) ·
 [Consultar seguridad](SECURITY.md) · [Configurar el proyecto](docs/DEPLOYMENT.md)
 
@@ -25,9 +26,9 @@ entre hojas de cálculo y herramientas externas.
 
 ### Intervención
 
-Antonio Delgado realizó el análisis de procesos, la toma de requisitos, el
-desarrollo, las pruebas, la implantación y el despliegue de la solución
-utilizada por la Fundación.
+Como Analista Funcional, analicé los procesos, recogí requisitos y coordiné el
+diseño, el desarrollo, las pruebas, la implantación y el despliegue de la
+solución utilizada por la Fundación.
 
 ### Solución
 
