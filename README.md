@@ -115,8 +115,9 @@ Los registros del modo de exploración son ficticios y se generan de forma
 determinista. No proceden de la Fundación ni de otra empresa real. La metodología
 y sus límites están descritos en [Procedencia de los datos](docs/DATA-PROVENANCE.md).
 
-Google Analytics 4 es opcional y solo se carga tras la aceptación del visitante.
-Las cuentas autenticadas pueden solicitar su supresión desde «Mi perfil».
+Google Analytics 4 y Vercel Web Analytics son opcionales y solo se cargan tras
+la aceptación del visitante. Las cuentas autenticadas pueden solicitar su
+supresión desde «Mi perfil».
 
 Contacto profesional y de privacidad:
 [contacto@antoniodelgado.tech](mailto:contacto@antoniodelgado.tech).

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Analytics } from "@vercel/analytics/next";
 import { AnalyticsConsentManager } from "@/components/analytics-consent";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
@@ -85,7 +84,6 @@ export default function RootLayout({
             />
           </Suspense>
         </ThemeProvider>
-        <Analytics />
       </body>
     </html>
   );

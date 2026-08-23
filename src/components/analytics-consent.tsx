@@ -5,8 +5,13 @@ import Script from "next/script";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
+  Analytics,
+  type BeforeSendEvent,
+} from "@vercel/analytics/next";
+import {
   ANALYTICS_CONSENT_STORAGE_KEY,
   analyticsConsentSchema,
+  hasAcceptedAnalyticsConsent,
   type AnalyticsConsent,
 } from "@/domain/analytics-consent";
 
@@ -23,6 +28,20 @@ export const OPEN_ANALYTICS_PREFERENCES_EVENT =
 type AnalyticsConsentManagerProps = {
   measurementId?: string;
 };
+
+function filterVercelAnalyticsEvent(
+  event: BeforeSendEvent,
+): BeforeSendEvent | null {
+  try {
+    return hasAcceptedAnalyticsConsent(
+      window.localStorage.getItem(ANALYTICS_CONSENT_STORAGE_KEY),
+    )
+      ? event
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 export function AnalyticsConsentManager({ measurementId }: AnalyticsConsentManagerProps) {
   const pathname = usePathname();
@@ -99,20 +118,25 @@ export function AnalyticsConsentManager({ measurementId }: AnalyticsConsentManag
 
   return (
     <>
-      {consent === "accepted" && measurementId ? (
+      {hasAcceptedAnalyticsConsent(consent) ? (
         <>
-          <Script
-            id="google-analytics-consent-default"
-            strategy="afterInteractive"
-          >
-            {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)};gtag('consent','default',{'analytics_storage':'denied','ad_storage':'denied','ad_user_data':'denied','ad_personalization':'denied','wait_for_update':500});`}
-          </Script>
-          <Script
-            id="google-analytics"
-            src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`}
-            strategy="afterInteractive"
-            onLoad={configureAnalytics}
-          />
+          <Analytics beforeSend={filterVercelAnalyticsEvent} />
+          {measurementId ? (
+            <>
+              <Script
+                id="google-analytics-consent-default"
+                strategy="afterInteractive"
+              >
+                {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)};gtag('consent','default',{'analytics_storage':'denied','ad_storage':'denied','ad_user_data':'denied','ad_personalization':'denied','wait_for_update':500});`}
+              </Script>
+              <Script
+                id="google-analytics"
+                src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`}
+                strategy="afterInteractive"
+                onLoad={configureAnalytics}
+              />
+            </>
+          ) : null}
         </>
       ) : null}
       {ready && (consent === null || showPreferences) ? (

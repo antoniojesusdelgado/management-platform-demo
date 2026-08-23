@@ -115,14 +115,19 @@ test("anonymous demo access does not issue marketing cookies", async ({
 test("analytics remains disabled until explicit consent and can be rejected", async ({ page }) => {
   await page.goto("/login", { waitUntil: "domcontentloaded" });
   const banner = page.getByRole("dialog", { name: "Analítica opcional" });
+  const vercelAnalyticsScript = page.locator(
+    'script[src*="/_vercel/insights/script.js"], script[src*="va.vercel-scripts.com"]',
+  );
   await expect(banner).toBeVisible();
   await expect(banner.getByRole("button", { name: "Ahora no" })).toBeVisible();
   await expect(banner.getByRole("button", { name: "Permitir" })).toBeVisible();
   await expect(page.locator('script[src*="googletagmanager.com/gtag/js"]')).toHaveCount(0);
+  await expect(vercelAnalyticsScript).toHaveCount(0);
 
   await banner.getByRole("button", { name: "Ahora no" }).click();
   await expect(banner).toBeHidden();
   await expect(page.locator('script[src*="googletagmanager.com/gtag/js"]')).toHaveCount(0);
+  await expect(vercelAnalyticsScript).toHaveCount(0);
   await expect
     .poll(() =>
       page.evaluate(() =>
@@ -130,4 +135,25 @@ test("analytics remains disabled until explicit consent and can be rejected", as
       ),
     )
     .toBe("rejected");
+});
+
+test("Vercel Analytics loads only after explicit consent", async ({ page }) => {
+  await page.goto("/login", { waitUntil: "domcontentloaded" });
+  const banner = page.getByRole("dialog", { name: "Analítica opcional" });
+  const vercelAnalyticsScript = page.locator(
+    'script[src*="/_vercel/insights/script.js"], script[src*="va.vercel-scripts.com"]',
+  );
+
+  await expect(banner).toBeVisible();
+  await expect(vercelAnalyticsScript).toHaveCount(0);
+  await banner.getByRole("button", { name: "Permitir" }).click();
+  await expect(banner).toBeHidden();
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        window.localStorage.getItem("management-platform-analytics-consent:v1"),
+      ),
+    )
+    .toBe("accepted");
+  await expect(vercelAnalyticsScript).toHaveCount(1);
 });
